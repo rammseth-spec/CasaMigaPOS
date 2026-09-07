@@ -1,6 +1,6 @@
-# Operación de caja y respaldo — FASE 1B
+# Operación de caja, venta y respaldo — FASE 1E
 
-Sólo desarrollo; no hay ventas, hardware ni uso de producción.
+Sólo desarrollo; venta y cobro efectivo implementados en 1E, sin hardware ni uso de producción. Los apartados previos por fase conservan su contexto histórico; el apartado 1E contiene las reglas vigentes.
 
 ## Inicio y conteo
 
@@ -72,3 +72,15 @@ Cart is transient and not a sale. Nombre y precio capturados no cambian con el c
 Diagnósticos fatales: diagnostics/failure-ID.json, política ADR-009. Si aparece cierre por error, anotar referencia, reiniciar e inspeccionar caja antes de continuar; no asumir que una operación previa quedó sin confirmar. El log omite mensajes arbitrarios, hashes y credenciales. La prueba fatal de desarrollo está aislada y no equivale a un fallo comercial.
 
 development.settings.json ignorado permite PreviewWidth/PreviewHeight y DiagnosticCrashOnStartup exclusivamente con IsDevelopment=true. No activar el fallo deliberado fuera de una instalación sintética. Tamaños de WPF están en DIP: 1920×1080 físicos al 125% no equivalen a una ventana de 1920×1080 DIP. Usar maximización para probar el monitor; en 1D se comprobó además ventana de 1366×768 DIP. No se cambió la configuración de Windows.
+
+## Venta y cobro — FASE 1E (vigente)
+
+Las fórmulas sin ventas de 1B y la ausencia de cobro de 1D son históricas. Ahora Cobrar abre captura de efectivo, no persiste todavía. Introducir MXN con punto decimal, máximo dos decimales y sin separadores de miles. Recibido debe cubrir el total. Volver antes de confirmar conserva carrito; confirmar registra venta/partidas/pago/auditoría juntos. Después de éxito se muestra folio, total, recibido y cambio. Volver al POS acepta el resultado y permite continuar. La X/Escape del resultado no lo acepta: usar Volver al POS.
+
+Ante resultado pendiente, no volver a recibir dinero ni borrar checkout.pending. Usar Verificar resultado e iniciar con el mismo usuario. Si existe la venta, se muestra el resultado original; si la consulta confirma ausencia, se libera el intento y se conserva el carrito que todavía exista en memoria. Si la base no responde o el marcador está corrupto, se bloquea operación para revisión técnica. No hay recuperación administrativa implementada para una cuenta original desactivada/sin permiso: no eludir autorización editando datos.
+
+Esperado = fondo + efectivo aplicado por ventas de la caja. $53 vendidos con $100 recibidos y $47 de cambio aumentan esperado en $53. Conteo sigue siendo ciego y definitivo; desde confirmarlo ya no se vende. sales.complete es explícito para los tres roles, adicional a catalog.view y pos.use. Los permisos de cierre previos no cambian.
+
+Backup incluye todas las ventas/pagos y sus snapshots en SQLite. No incluye carrito ni checkout.pending: antes de respaldo operativo aceptar/verificar resultados pendientes y cerrar normalmente. Tras restaurar un backup, revisar el último cobro conocido y conciliar efectivo antes de operar; no reproducir automáticamente un carrito ni asumir que un backup antiguo contiene cobros posteriores. Una restauración no sustituye resolución del intento de la instalación original. Conservar original y paquete; activar sólo un entorno.
+
+La publicación de desarrollo está en artifacts/development. Smoke WPF de 1E parcial por limitación del control de ventanas; el recorrido completo de cobro/recuperación/cierre se verificó por servicios y SQLite, además de backup y restore CLI. Consultar PHASE_1E_REPORT.md antes de dar aceptación visual.

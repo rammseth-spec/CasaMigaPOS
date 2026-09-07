@@ -1,0 +1,7 @@
+  Determinando los proyectos que se van a restaurar...
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Domain\CasaMiga.Domain.csproj (en 152 ms).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Application\CasaMiga.Application.csproj (en 152 ms).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Infrastructure\CasaMiga.Infrastructure.csproj (en 181 ms).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Presentation\CasaMiga.Presentation.csproj (en 181 ms).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Maintenance\CasaMiga.Maintenance.csproj (en 181 ms).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\tests\CasaMiga.Tests\CasaMiga.Tests.csproj (en 213 ms).

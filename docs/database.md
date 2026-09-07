@@ -83,3 +83,13 @@ Agrega únicamente permission(pos.use) y sus concesiones a Administrator, Manage
 ListPosCategories aplica active=1 y EXISTS de product activo; QueryProducts aplica actividad de ambos lados en SQL. Categorías ordenadas por SortOrder/nombre normalizado/ID; productos por nombre normalizado/ID, páginas de 50, búsqueda nombre/SKU. Prueba de 2,002 productos instrumenta llamadas para detectar consultas por cada botón.
 
 Cart is transient and not a sale. No hay cart, sales, sale_items ni payments en SQLite. Sus mutaciones tampoco generan audit_entry. .cmbackup no cambia de formato y no incorpora el carrito; catálogo, caja, auditoría y terminal siguen restaurándose.
+
+## Migración 006 — venta y pago en efectivo (vigente)
+
+La descripción de venta/pago propuesta arriba queda sustituida en 1E por este esquema implementado. Cuatro tablas STRICT: sale_sequence(terminal_id PK/FK,last_value Int64); sale(id PK,operation_id UNIQUE,user_id FK,terminal_id FK,cash_session_id FK,sequence,confirmed_utc,subtotal_cents,total_cents); sale_item(sale_id FK,position,product_id FK,product_name,unit_price_cents,quantity,line_total_cents); payment(id PK,sale_id UNIQUE/FK,method CASH,applied_cents,received_cents,change_cents). Sale tiene UNIQUE(terminal_id,sequence); sale_item PK(sale_id,position) y UNIQUE(sale_id,product_id). Sólo un pago por venta.
+
+Las FK de partidas/pago al encabezado son diferidas. Se insertan hijos antes del encabezado; el trigger sale_complete valida agregado completo, total, pago, caja OPEN sin conteo, terminal y actividad de producto/categoría. El commit rechaza huérfanos. Triggers prohíben UPDATE/DELETE y anexos después de confirmar. CHECK evita overflow de multiplicación antes de calcular el producto. SUM usa INTEGER, nunca TOTAL flotante; overflow aborta.
+
+Checkout crea secuencia, partidas, pago, venta y audit_entry sale.completed dentro de una sola transacción inmediata. Índice único de auditoría por entidad. El permiso sales.complete se concede a Administrator, Manager y Cashier; total 14 permisos, seis migraciones. Un índice por caja permite sumar efectivo aplicado. El estado comercial es implícitamente confirmado; no hay borradores persistidos.
+
+001–005 intactas byte por byte. .gitattributes marca migrations/*.sql -text porque los hashes aplicados dependen de sus bytes; no renormalizar scripts históricos. El backup conserva estas tablas sin cambiar .cmbackup. checkout.pending no pertenece al backup ni es un carrito serializado.

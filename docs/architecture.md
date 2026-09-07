@@ -53,3 +53,13 @@ La consulta POS reutiliza QueryProducts con IncludeInactive=false, y ListPosCate
 Cart is transient and not a sale. No hay serializador/repositorio de carrito, ni venta/pago nuevo. Migración 005 sólo instala pos.use. No hay librerías adicionales.
 
 Captura global instalada en el constructor de App antes de inicializar: DispatcherUnhandledException, AppDomain.UnhandledException y UnobservedTaskException. UnhandledFailureDiagnostics escribe un informe técnico acotado y best effort fuera del bloqueo de negocio. La política estricta termina el proceso en vez de ocultar el fallo; detalles, límites y documentación oficial en ADR-009.
+
+## FASE 1E implementada (vigente)
+
+Sale/SaleItem/Payment viven en Domain; CheckoutService coordina autorización, contexto, snapshot, secuencia y auditoría. Infrastructure añade Store parcial SqliteSaleStore y CheckoutJournal. ILocalStore incorpora NextSaleSequence, AddSale, FindSaleByOperation y CashSalesTotal. No se añaden paquetes ni dependencias de UI al dominio.
+
+Orden de bloqueos: UserSession y después transacción SQLite inmediata. El UUID del intento se escribe y fuerza a disco antes de la transacción comercial. El marcador no almacena importe ni partidas. Confirm encuentra primero un resultado por operación; si existe valida actor/contexto/contenido y devuelve la misma venta sin insertar nada. Si falla Run, una lectura independiente determina si hubo commit. Si tampoco puede leer, conserva el marcador y carrito y exige recuperación; nunca vuelve a cobrar automáticamente.
+
+Sólo la confirmación conocida permite vaciar la misma instancia de carrito. No se borra un carrito nuevo al devolver una operación antigua. El marcador permanece hasta Acknowledge después de mostrar el resultado: un reinicio entre commit y pantalla puede recuperarlo. Un reintento conflictivo no borra un marcador anterior. PosService, descarte y conteo/cierre bloquean intentos pendientes también desde Application. Nueva sesión de usuario puede iniciar login para recuperar el UUID persistido; no recupera el carrito transitorio.
+
+CashClosingService suma efectivo aplicado de ventas dentro de su unidad de trabajo. La exclusión de ventas al confirmar conteo y la serialización SQLite mantienen consistente el resultado al competir cobro y conteo. CheckoutDialog/ViewModel agregan captura de recibido, cambio, confirmación explícita y recuperación. El resto del POS conserva comportamiento y recursos visuales aprobados.

@@ -1,20 +1,13 @@
-# Estado actual — FASE 1D
+# Estado actual — FASE 1E
 
-Fecha: 2026-09-07. FASE 1C aprobada. POS y carrito transitorio implementados; no iniciar 1E sin autorización.
+Fecha: 2026-09-07. FASE 1D aprobada, baseline verificable `92c5ef795b6da8e1cdf7f34ec9fb1b01cce4a5d2`: exportado y probado, 120 pruebas. Git local: Rammseth, `rammstudioworkshop\@gmail.com`. Sin remoto.
 
-- Baseline previo: clean/restore/build Release y 82 pruebas aprobadas. Sin regresión previa.
-- Captura global implementada antes del POS: Dispatcher, AppDomain y tareas no observadas. Diagnóstico mínimo sin mensajes arbitrarios ni secretos; terminación según ADR-009. Fallo Dispatcher controlado probado en WPF publicada y carpeta aislada.
-- Cart/CartLine inmutables en memoria, asociados a usuario/terminal/caja; cantidades enteras >=1, Money Int64 checked, snapshot al agregar. Repetidos aumentan una línea; desde 1 se elimina con botón explícito. Precio cero permitido.
-- PosService revalida usuario activo, catalog.view, pos.use, caja OPEN y ausencia de conteo confirmado. No se pasa un carrito no vacío a otro usuario/caja. Cierre/conteo/logout exigen descarte también en Application.
-- POS separado de administración: categorías activas con productos activos, orden SortOrder/nombre/ID; productos activos con categoría activa, nombre/ID, búsqueda nombre/SKU y páginas de 50. Prueba con 2,002 productos y comprobación de consultas sin N+1.
-- Migración 005 sólo agrega pos.use a Administrator, Manager y Cashier. 001–004 intactas; sin nuevas dependencias ni tablas comerciales.
-- Validación: 120 pruebas, 0 fallidas/omitidas; Release sin errores ni advertencias de compilación. Publicación autocontenida win-x64. Aviso del runner por reemplazo de TRX existente.
-- Smoke real A–H: totales DEMO 38/53/58/53/38/0, rechazo sin caja, descarte al salir/cerrar y reinicio vacío. UI en ventana 1366×768 DIP y monitor 1920×1080 al 125%, maximizada; teclado y foco comprobados. Matices y evidencia en PHASE_1D_REPORT.md.
+1E autorizada e implementada en `18fd3a8e56c79ef7a5710443da09d364f965f6fa`: Domain comercial inmutable; migración 006; checkout efectivo atómico con auditoría; identificador único y recuperación durable; ExpectedCash integrado; UI mínima Cobrar. Sin nuevas dependencias, rediseño ni funcionalidades fuera de alcance. 001–005 mantienen sus bytes originales. Verificación final: 153 aprobadas, cero fallidas/omitidas, build sin errores/advertencias.
 
-Cart is transient and not a sale. No se guarda en SQLite ni en .cmbackup. Catálogo y caja se conservan al reiniciar; el carrito se pierde. Cambios de catálogo no reemplazan snapshots agregados. Una venta futura deberá revalidar comerciabilidad bajo política explícita.
+Cart sigue siendo transitorio. Sólo un commit confirmado crea una venta; un rollback conserva las partidas. El marcador checkout.pending sólo contiene UUID y permanece hasta que el operador acepta el resultado. El reinicio recupera el resultado comercial, no el carrito perdido. Un resultado incierto bloquea nuevas operaciones.
 
-## Riesgos y continuidad
+La política aprobada conserva nombre/precio del carrito y revalida producto/categoría activos al cobrar. Esperado = fondo + suma del efectivo aplicado de ventas de esa caja; recibido y cambio no se suman dos veces. No se vende después de confirmar conteo.
 
-Git master sigue sin commits, identidad ni remoto. Snapshot de fuentes aprobadas 1C en work/phase1d-before; no sustituye historial Git. No se inventó autor.
+Estado de aceptación: implementación y pruebas automatizadas completas; smoke WPF parcial. Se verificaron ventana, total, apertura de Cobrar, confirmación deshabilitada sin recibido y cancelación conservando carrito. La herramienta de Windows no consiguió introducir texto en el diálogo modal. El cobro completo y recuperación se verificaron por servicios reales y SQLite, pero esto no sustituye el recorrido visual pendiente. No declarar 1E totalmente cerrada hasta completar ese recorrido. Consultar PHASE_1E_REPORT.md y evidencia.
 
-Pantalla táctil física, otras escalas/monitores, recuperación administrativa, retención/segunda copia/cifrado y fallos físicos siguen pendientes. Diagnóstico best effort: no garantiza captura ante terminación del sistema, disco inaccesible o proceso corrupto. No usar para ventas reales. Reporte completo: PHASE_1D_REPORT.md.
+Límites: instalación de desarrollo; no producción, hardware, pantalla táctil física ni fallo eléctrico certificado. Backup incluye ventas y pagos en la base, no carrito ni marcador de intento; restaurar sólo a carpeta nueva y reconciliar el último cobro antes de operar. No modificar manualmente datos comerciales para resolver incidencias.

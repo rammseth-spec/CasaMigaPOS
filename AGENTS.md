@@ -1,7 +1,7 @@
 # Continuidad
 
 Lee README.md, docs/CURRENT_STATE.md y docs/NEXT_STEPS.md antes de trabajar. Luego sólo los ADRs y archivos pertinentes.
-Alcance autorizado: FASE 1D (POS y carrito transitorio; sin venta persistida ni cobro). Detenerse al completar; no ventas ni hardware.
+Alcance autorizado: FASE 1E, venta confirmada y cobro efectivo transaccional. Trabajar 1E.1–1E.5 y cierre con pruebas. Sin stock, descuentos, devoluciones, tarjetas, fiscalidad, hardware, rediseño ni fullscreen. Baseline 1D: 92c5ef795b6da8e1cdf7f34ec9fb1b01cce4a5d2.
 No copiar código copyleft ni elegir licencia del producto sin autorización expresa.
 Domain no referencia infraestructura ni UI. Operaciones críticas atómicas; efectos físicos posteriores al commit.
 No modificar migraciones aplicadas: agregar una nueva. Nunca editar manualmente producción.

@@ -1,0 +1,18 @@
+[
+  {
+    "Path": "C:\\Users\\ramms\\Documents\\ChatGPT\\Casa Miga POS V1\\artifacts\\development\\CasaMiga.Presentation.exe",
+    "Hash": "57D0568D63A9D850A940A0EA4C85B5AB677F10D87C6861683791586E7801E528"
+  },
+  {
+    "Path": "C:\\Users\\ramms\\Documents\\ChatGPT\\Casa Miga POS V1\\artifacts\\development\\CasaMiga.Presentation.dll",
+    "Hash": "5CF809CA781D6F38AD747D765E0423FF628B7F35CD2779BB4673C46C468D68E1"
+  },
+  {
+    "Path": "C:\\Users\\ramms\\Documents\\ChatGPT\\Casa Miga POS V1\\artifacts\\development\\CasaMiga.Application.dll",
+    "Hash": "C5777AEE08FB2367EE24DB2BEB1F93D65BF3BA894BAD844E337B085CF572D13E"
+  },
+  {
+    "Path": "C:\\Users\\ramms\\Documents\\ChatGPT\\Casa Miga POS V1\\artifacts\\development\\CasaMiga.Infrastructure.dll",
+    "Hash": "723EFD184B2DFA747525C728E536081E6399ED7EA5502DDCEAC4E14795562E9E"
+  }
+]

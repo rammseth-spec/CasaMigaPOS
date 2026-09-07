@@ -1,18 +1,13 @@
 # Próximos pasos
 
-Detenerse después del reporte 1D. Esperar revisión y autorización explícita antes de 1E. No implementar venta persistida, pagos, cobro, ticket ni hardware con la autorización actual.
+Completar únicamente aceptación de FASE 1E; no iniciar otra fase.
 
-Para acordar 1E: revalidación de comerciabilidad/precio de snapshots temporales, alcance de venta y pago, idempotencia y atomicidad, productos controlados, congelamiento desde conteo confirmado y manejo de fallos. Cart is transient and not a sale; no tratarlo como una venta pendiente persistida.
+Pendiente: smoke manual de la aplicación publicada. En instalación sintética, crear carrito de $53.00 (2 conchas de $19.00 y 3 bolillos de $5.00); recibido $50.00 debe deshabilitar confirmación; $100.00 debe mostrar $47.00 de cambio. Confirmar una sola vez, comprobar folio/total/recibido/cambio; Volver al POS debe vaciar carrito. Reiniciar y verificar venta conservada. Con fondo cero, contar $53.00 debe producir esperado $53.00 y diferencia cero. Confirmar cierre. Registrar evidencia visual y comparar la base. El recorrido por servicios/SQLite ya pasó, pero no equivale a smoke completo de UI.
 
-Antes de producción: precios/reglas comerciales, administración y recuperación de usuarios, política de cierre para cajeros, correcciones auditadas de conteo, zona horaria comercial, activación/rollback de restauración, retención/segunda copia/cifrado y pruebas táctiles/físicas. No editar producción para eludir reglas.
+El bloqueo observado fue de la herramienta de Windows: activar el destino padre quitaba foco al diálogo y set_value devolvía elemento no disponible. No se alteró el diseño para eludir esa limitación. Reintentar con control funcional o realizar la comprobación manual; no asumir un defecto de binding sin evidencia.
 
-Mantener inmutables migraciones 001–005 y catalog_key_v1. ADR-009 documenta captura fatal implementada; no usarla para ocultar errores ni continuar tras estado desconocido.
+Después, actualizar reporte/estado con resultado real y cerrar 1E. La autorización de 1E ya existe; no pedirla otra vez. Nuevas funcionalidades requieren alcance y autorización posteriores.
 
-Git carece de identidad y commits. El propietario debe ejecutar con sus datos reales:
+Mantener inmutables migraciones 001–006 y catalog_key_v1. Baseline 1D: 92c5ef7. Nunca ejecutar 1D contra una base v6. Recuperar fuentes con git archive en otra carpeta y datos desde .cmbackup compatible.
 
-```powershell
-git config user.name "Tu nombre real"
-git config user.email "Tu correo real"
-```
-
-Después, recuperar el baseline aprobado 1C desde work/phase1d-before en un procedimiento revisable y registrar 1D por separado. No sustituir el árbol actual sin conservar sus cambios. No se requiere remoto ni elegir licencia para continuar localmente.
+Antes de producción siguen pendientes administración/recuperación de usuarios, reglas comerciales definitivas, correcciones formales de conteo, retención/segunda copia/cifrado, activación de restauración, pruebas físicas y licencia/distribución. No editar producción para eludir reglas.

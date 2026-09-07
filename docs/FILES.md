@@ -1,4 +1,4 @@
-# Inventario de fuentes y documentación — FASE 1D
+# Inventario de fuentes y documentación — FASE 1E
 
 Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 
@@ -20,6 +20,7 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - docs/decisions/ADR-007-count-and-installation-backup.md
 - docs/decisions/ADR-008-catalog-normalization-and-audit.md
 - docs/decisions/ADR-009-unhandled-failure-policy.md
+- docs/decisions/ADR-010-cash-checkout.md
 - docs/dependencies.md
 - docs/domain.md
 - docs/evidence/dependency-licenses.json
@@ -68,6 +69,22 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - docs/evidence/phase1d-smoke-and-restore.json
 - docs/evidence/phase1d-source-review.json
 - docs/evidence/phase1d-verification.txt
+- docs/evidence/phase1e-baseline-recovered.txt
+- docs/evidence/phase1e-baseline.txt
+- docs/evidence/phase1e-checkout.txt
+- docs/evidence/phase1e-clean.txt
+- docs/evidence/phase1e-cli-backup.txt
+- docs/evidence/phase1e-cli-restore.txt
+- docs/evidence/phase1e-closing.txt
+- docs/evidence/phase1e-domain.txt
+- docs/evidence/phase1e-persistence.txt
+- docs/evidence/phase1e-publication-hashes.json
+- docs/evidence/phase1e-publish.txt
+- docs/evidence/phase1e-restore-comparison.json
+- docs/evidence/phase1e-restore.txt
+- docs/evidence/phase1e-service-smoke.txt
+- docs/evidence/phase1e-ui-smoke.md
+- docs/evidence/phase1e-verification.txt
 - docs/evidence/verification.txt
 - docs/FILES.md
 - docs/NEXT_STEPS.md
@@ -78,6 +95,8 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - docs/PHASE_1B_REPORT.md
 - docs/PHASE_1C_REPORT.md
 - docs/PHASE_1D_REPORT.md
+- docs/PHASE_1E_PROGRESS.md
+- docs/PHASE_1E_REPORT.md
 - docs/roadmap.md
 - docs/USER_REQUIREMENTS_PHASE_1A.md
 - docs/USER_REQUIREMENTS_PHASE_1B.md
@@ -90,6 +109,7 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - migrations/003_cash_closing.sql
 - migrations/004_catalog.sql
 - migrations/005_pos_permission.sql
+- migrations/006_cash_sales.sql
 - NuGet.Config
 - README.md
 - research/hardware/qian-qop-t80ul-ri-02.md
@@ -100,6 +120,7 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - src/CasaMiga.Application/CashClosingService.cs
 - src/CasaMiga.Application/CashService.cs
 - src/CasaMiga.Application/CatalogService.cs
+- src/CasaMiga.Application/CheckoutService.cs
 - src/CasaMiga.Application/IdentityService.cs
 - src/CasaMiga.Application/LocalPorts.cs
 - src/CasaMiga.Application/packages.lock.json
@@ -111,8 +132,10 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - src/CasaMiga.Domain/Catalog.cs
 - src/CasaMiga.Domain/Money.cs
 - src/CasaMiga.Domain/packages.lock.json
+- src/CasaMiga.Domain/Sale.cs
 - src/CasaMiga.Infrastructure/BackupService.cs
 - src/CasaMiga.Infrastructure/CasaMiga.Infrastructure.csproj
+- src/CasaMiga.Infrastructure/CheckoutJournal.cs
 - src/CasaMiga.Infrastructure/Database.cs
 - src/CasaMiga.Infrastructure/FoundationRuntime.cs
 - src/CasaMiga.Infrastructure/InstallationBackup.cs
@@ -120,6 +143,7 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - src/CasaMiga.Infrastructure/packages.lock.json
 - src/CasaMiga.Infrastructure/SqliteCatalogStore.cs
 - src/CasaMiga.Infrastructure/SqliteLocalUnitOfWork.cs
+- src/CasaMiga.Infrastructure/SqliteSaleStore.cs
 - src/CasaMiga.Infrastructure/TerminalConfiguration.cs
 - src/CasaMiga.Infrastructure/UnhandledFailureDiagnostics.cs
 - src/CasaMiga.Maintenance/CasaMiga.Maintenance.csproj
@@ -132,6 +156,9 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - src/CasaMiga.Presentation/CatalogView.xaml
 - src/CasaMiga.Presentation/CatalogView.xaml.cs
 - src/CasaMiga.Presentation/CatalogViewModel.cs
+- src/CasaMiga.Presentation/CheckoutDialog.xaml
+- src/CasaMiga.Presentation/CheckoutDialog.xaml.cs
+- src/CasaMiga.Presentation/CheckoutViewModel.cs
 - src/CasaMiga.Presentation/DiscardDialog.xaml
 - src/CasaMiga.Presentation/DiscardDialog.xaml.cs
 - src/CasaMiga.Presentation/MainViewModel.cs
@@ -147,7 +174,11 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - tests/CasaMiga.Tests/CashClosingTests.cs
 - tests/CasaMiga.Tests/CashIdentityTests.cs
 - tests/CasaMiga.Tests/CatalogTests.cs
+- tests/CasaMiga.Tests/CheckoutTests.cs
 - tests/CasaMiga.Tests/FailureDiagnosticsTests.cs
 - tests/CasaMiga.Tests/FoundationTests.cs
 - tests/CasaMiga.Tests/packages.lock.json
 - tests/CasaMiga.Tests/PosTests.cs
+- tests/CasaMiga.Tests/SalePersistenceTests.cs
+- tests/CasaMiga.Tests/SalesClosingTests.cs
+- tests/CasaMiga.Tests/SaleTests.cs

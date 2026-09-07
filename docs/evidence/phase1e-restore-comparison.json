@@ -1,0 +1,47 @@
+{
+  "schema_migration": {
+    "rows": 6,
+    "equal": true
+  },
+  "terminal": {
+    "rows": 1,
+    "equal": true
+  },
+  "category": {
+    "rows": 1,
+    "equal": true
+  },
+  "product": {
+    "rows": 2,
+    "equal": true
+  },
+  "cash_session": {
+    "rows": 1,
+    "equal": true
+  },
+  "cash_count": {
+    "rows": 1,
+    "equal": true
+  },
+  "sale": {
+    "rows": 1,
+    "equal": true
+  },
+  "sale_item": {
+    "rows": 2,
+    "equal": true
+  },
+  "payment": {
+    "rows": 1,
+    "equal": true
+  },
+  "sale_sequence": {
+    "rows": 1,
+    "equal": true
+  },
+  "audit_entry": {
+    "rows": 8,
+    "equal": true
+  },
+  "terminalConfigurationEqual": true
+}

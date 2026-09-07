@@ -54,3 +54,13 @@ Money usa centavos Int64 checked en multiplicación y suma. Total preliminar=Sub
 Nombre/precio se capturan al agregar por primera vez. Agregar de nuevo valida actividad actual pero conserva el snapshot anterior; cambios de nombre/precio o desactivación no reescriben partidas existentes. Incrementar/disminuir una partida existente mantiene su snapshot incluso inactiva. Antes de una venta futura será obligatoria la revalidación de comerciabilidad según política de 1E.
 
 PosService exige usuario activo, catalog.view y pos.use, terminal válida, caja OPEN y sin conteo confirmado. Logout/cambio de usuario, conteo/cierre de caja y cambio de contexto no heredan partidas: exigen descarte explícito. Cerrar normalmente la app también pregunta; un fallo fatal termina y pierde el carrito. No existe auditoría comercial ni escritura SQLite por editar el carrito.
+
+## Venta y efectivo implementados — FASE 1E (vigente)
+
+Las propuestas generales anteriores no son estados implementados. No se persiste PENDING: Cart sigue en memoria hasta confirmar. Sale es un agregado inmutable con Id, OperationId, UserId, TerminalId, CashSessionId, Sequence, ConfirmedAt UTC, Items y Payment. Folio = terminal GUID sin guiones + secuencia de al menos ocho dígitos; único por terminal/secuencia, no fiscal. MXN es la política única de Money, no multimoneda.
+
+SaleItem conserva ProductId, nombre vendido, precio unitario, cantidad Int32 y total checked. Nombre y precio permanecen como en el carrito, incluso si cambian en catálogo. Producto y categoría deben seguir activos al cobrar. No hay costo, descuento ni impuesto comercial añadido. Subtotal=Total=suma exacta de líneas. Precio cero y venta total cero permitidos; carrito vacío rechazado.
+
+Payment único por Sale: método CASH, aplicado=Total, recibido>=Total, cambio=recibido−Total. Sale/SaleItem/Payment no tienen setters y SQLite impide actualización, eliminación y anexar partidas a la venta confirmada. La fecha del pago es la ConfirmedAt del agregado, confirmado en la misma transacción.
+
+ExpectedCash vigente = fondo + suma de Payment.Applied de ventas de esa CashSession. Ejemplo: fondo $500 + venta $53, recibido $100 y cambio $47 → esperado $553. No se suma recibido ni se resta cambio de nuevo. No hay ventas después de cash_count confirmado.

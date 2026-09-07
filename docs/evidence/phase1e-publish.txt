@@ -1,0 +1,10 @@
+  Determinando los proyectos que se van a restaurar...
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Application\CasaMiga.Application.csproj (en 170 ms).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Domain\CasaMiga.Domain.csproj (en 167 ms).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Infrastructure\CasaMiga.Infrastructure.csproj (en 227 ms).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Presentation\CasaMiga.Presentation.csproj (en 227 ms).
+  CasaMiga.Domain -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Domain\bin\Release\net10.0\CasaMiga.Domain.dll
+  CasaMiga.Application -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Application\bin\Release\net10.0\CasaMiga.Application.dll
+  CasaMiga.Infrastructure -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Infrastructure\bin\Release\net10.0\CasaMiga.Infrastructure.dll
+  CasaMiga.Presentation -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Presentation\bin\Release\net10.0-windows\win-x64\CasaMiga.Presentation.dll
+  CasaMiga.Presentation -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\artifacts\development\

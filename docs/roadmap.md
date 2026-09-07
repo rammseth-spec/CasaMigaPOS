@@ -10,7 +10,7 @@
 | 5 | Administración, reportes, seguridad y backup avanzados | Restauración operativa ensayada y permisos revisados |
 | 6 | Sólo bajo necesidad: servidor/PostgreSQL/multiterminal/sucursales | Nuevo ADR y pruebas de concurrencia; no compartir archivo SQLite |
 
-El ledger mínimo necesario para vender productos controlados debe adelantarse a FASE 1; de otro modo sólo habilitar productos no controlados bajo decisión explícita. No afirmar control de existencias antes de implementar movimientos.
+Decisión explícita de 1E: vender sin inventario dentro del alcance autorizado. TrackInventory continúa como metadato y no comprueba existencias. El ledger deberá definirse en una fase posterior; no afirmar control de stock antes de implementarlo.
 
 v0.1 exige hardware real y corte confiable: FASE 1 sola no cumple el hito. Fuera de alcance: CFDI/SAT, nómina, CRM, web tienda, nube compleja, lealtad, IA y móvil.
 
@@ -24,7 +24,8 @@ Definition of Done por tarea: compila sin nuevas advertencias relevantes; prueba
 | 1B: cierre básico | Implementado: conteo ciego, cierre/auditoría atómicos, historial persistido y backup completo restaurado; 49 tests. Sin ventas ni hardware. |
 | 1C: catálogo base | Implementado y verificado: categorías/productos, permisos, auditoría, 82 tests y smoke A–F. |
 | 1D: POS y carrito transitorio | Implementado: 120 pruebas, smoke A–H, captura fatal, UI y backup. Sin venta persistida ni cobro. |
-| 1E y posteriores | Sin iniciar; requieren alcance y autorización nuevos. |
+| 1E: venta persistida y cobro efectivo | Autorizada e implementada: 153 pruebas, recuperación y backup/restore; smoke visual final pendiente. |
+| Posteriores a 1E | Sin iniciar; requieren alcance y autorización nuevos. |
 
 ## Actualización FASE 1B
 
@@ -33,6 +34,6 @@ Definition of Done por tarea: compila sin nuevas advertencias relevantes; prueba
 Actualización 1C: 1B aprobada; catálogo implementado, migración 004, smoke y backup/restore verificados. Detenerse al entregar reporte 1C. El resto del roadmap permanece como propuesta.
 
 
-## Actualización FASE 1D (vigente)
+## Actualización FASE 1D (histórica)
 
 1C aprobada. 1D implementa captura fatal, POS y carrito transitorio; 120 pruebas y smoke A–H, publicación y respaldo. Cart is transient and not a sale. Detenerse al entregar el reporte; 1E requiere autorización y definición comercial nuevas. Las notas de detención 1A–1C anteriores son históricas, no el alcance vigente.
