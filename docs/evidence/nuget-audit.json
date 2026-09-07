@@ -1,0 +1,46 @@
+{
+  "checkedUtc": "2026-09-06T03:48:16.110Z",
+  "source": "https://api.nuget.org/v3/vulnerabilities/index.json",
+  "packages": [
+    "microsoft.data.sqlite",
+    "microsoft.data.sqlite.core",
+    "sqlitepclraw.bundle_e_sqlite3",
+    "sqlitepclraw.core",
+    "sqlitepclraw.lib.e_sqlite3",
+    "sqlitepclraw.provider.e_sqlite3",
+    "casamiga.application",
+    "casamiga.domain",
+    "microsoft.net.test.sdk",
+    "mstest.testadapter",
+    "mstest.testframework",
+    "microsoft.applicationinsights",
+    "microsoft.codecoverage",
+    "microsoft.testing.extensions.telemetry",
+    "microsoft.testing.extensions.trxreport.abstractions",
+    "microsoft.testing.extensions.vstestbridge",
+    "microsoft.testing.platform",
+    "microsoft.testing.platform.msbuild",
+    "microsoft.testplatform.adapterutilities",
+    "microsoft.testplatform.objectmodel",
+    "microsoft.testplatform.testhost",
+    "mstest.analyzers",
+    "newtonsoft.json",
+    "casamiga.infrastructure"
+  ],
+  "advisoriesForPackageIds": {
+    "sqlitepclraw.lib.e_sqlite3": [
+      {
+        "url": "https://github.com/advisories/GHSA-2m69-gcr7-jv3q",
+        "severity": 2,
+        "versions": "(, 2.1.11]"
+      }
+    ],
+    "newtonsoft.json": [
+      {
+        "url": "https://github.com/advisories/GHSA-5crp-9r3c-p9vr",
+        "severity": 2,
+        "versions": "(, 13.0.1)"
+      }
+    ]
+  }
+}

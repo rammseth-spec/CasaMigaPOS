@@ -1,0 +1,43 @@
+No se pudo agregar "C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\work\cli\.dotnet\tools" a la variable de entorno PATH. Agregue este directorio a PATH para usar las herramientas instaladas con "dotnet tool install".
+
+Esto es .NET 10.0.
+---------------------
+Versión del SDK: 10.0.400
+
+----------------
+Instalar un certificado de desarrollo HTTPS de ASP.NET Core.
+Para confiar en el certificado, ejecute "dotnet dev-certs https --trust"
+Obtenga información sobre HTTPS: https://aka.ms/dotnet-https
+
+----------------
+Escribir su primera aplicación: https://aka.ms/dotnet-hello-world
+Descubra las novedades: https://aka.ms/dotnet-whats-new
+Explore la documentación: https://aka.ms/dotnet-docs
+Notificar problemas y encontrar el código fuente en GitHub: https://github.com/dotnet/core
+Use "dotnet --help" para ver los comandos disponibles o visite: https://aka.ms/dotnet-cli
+--------------------------------------------------------------------------------------
+Se encontró un problema al comprobar las cargas de trabajo. Para obtener más información, ejecute "dotnet workload update".
+  Determinando los proyectos que se van a restaurar...
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Application\CasaMiga.Application.csproj (en 107 ms).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Domain\CasaMiga.Domain.csproj (en 107 ms).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Infrastructure\CasaMiga.Infrastructure.csproj (en 1.72 s).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Presentation\CasaMiga.Presentation.csproj (en 1.72 s).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Maintenance\CasaMiga.Maintenance.csproj (en 1.72 s).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\tests\CasaMiga.Tests\CasaMiga.Tests.csproj (en 1.84 s).
+  CasaMiga.Domain -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Domain\bin\Release\net10.0\CasaMiga.Domain.dll
+  CasaMiga.Application -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Application\bin\Release\net10.0\CasaMiga.Application.dll
+  CasaMiga.Infrastructure -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Infrastructure\bin\Release\net10.0\CasaMiga.Infrastructure.dll
+  CasaMiga.Maintenance -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Maintenance\bin\Release\net10.0\CasaMiga.Maintenance.dll
+  CasaMiga.Tests -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\tests\CasaMiga.Tests\bin\Release\net10.0\CasaMiga.Tests.dll
+  CasaMiga.Presentation -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Presentation\bin\Release\net10.0-windows\CasaMiga.Presentation.dll
+
+Compilación correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:06.88
+Serie de pruebas para C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\tests\CasaMiga.Tests\bin\Release\net10.0\CasaMiga.Tests.dll (.NETCoreApp,Version=v10.0)
+1 archivos de prueba en total coincidieron con el patrón especificado.
+Archivo de resultados: C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\TestResults\foundation.trx
+
+Correctas! - Con error:     0, Superado:    11, Omitido:     0, Total:    11, Duración: 729 ms - CasaMiga.Tests.dll (net10.0)

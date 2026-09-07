@@ -1,0 +1,47 @@
+{
+  "scope": "Synthetic smoke application log, phase 1C",
+  "events": [
+    {
+      "timestamp": "2026-09-06T23:46:57.3663139+00:00",
+      "eventName": "foundation.ready",
+      "errorType": null
+    },
+    {
+      "timestamp": "2026-09-06T23:48:01.9040861+00:00",
+      "eventName": "catalog.saved",
+      "errorType": null
+    },
+    {
+      "timestamp": "2026-09-06T23:49:30.0316438+00:00",
+      "eventName": "foundation.ready",
+      "errorType": null
+    },
+    {
+      "timestamp": "2026-09-06T23:51:30.8517246+00:00",
+      "eventName": "catalog.saved",
+      "errorType": null
+    },
+    {
+      "timestamp": "2026-09-06T23:52:16.2609205+00:00",
+      "eventName": "catalog.saved",
+      "errorType": null
+    },
+    {
+      "timestamp": "2026-09-06T23:52:42.0727819+00:00",
+      "eventName": "catalog.saved",
+      "errorType": null
+    },
+    {
+      "timestamp": "2026-09-06T23:53:45.8983537+00:00",
+      "eventName": "catalog.saved",
+      "errorType": null
+    },
+    {
+      "timestamp": "2026-09-06T23:55:56.7852549+00:00",
+      "eventName": "foundation.ready",
+      "errorType": null
+    }
+  ],
+  "knownWindowsRuntimeIncident": "Initial WPF read-only IsActive TwoWay binding exception corrected; not captured by application logger",
+  "credentialsInLog": false
+}

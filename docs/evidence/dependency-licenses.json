@@ -1,0 +1,134 @@
+[
+  {
+    "Id": "Microsoft.ApplicationInsights",
+    "Version": "2.23.0",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "Microsoft.CodeCoverage",
+    "Version": "17.14.1",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "Microsoft.Data.Sqlite",
+    "Version": "10.0.11",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "Microsoft.Data.Sqlite.Core",
+    "Version": "10.0.11",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "Microsoft.NET.Test.Sdk",
+    "Version": "17.14.1",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "Microsoft.Testing.Extensions.Telemetry",
+    "Version": "1.8.4",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "Microsoft.Testing.Extensions.TrxReport.Abstractions",
+    "Version": "1.8.4",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "Microsoft.Testing.Extensions.VSTestBridge",
+    "Version": "1.8.4",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "Microsoft.Testing.Platform",
+    "Version": "1.8.4",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "Microsoft.Testing.Platform.MSBuild",
+    "Version": "1.8.4",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "Microsoft.TestPlatform.AdapterUtilities",
+    "Version": "17.13.0",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "Microsoft.TestPlatform.ObjectModel",
+    "Version": "17.13.0",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "Microsoft.TestPlatform.ObjectModel",
+    "Version": "17.14.1",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "Microsoft.TestPlatform.TestHost",
+    "Version": "17.14.1",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "MSTest.Analyzers",
+    "Version": "3.10.4",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "MSTest.TestAdapter",
+    "Version": "3.10.4",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "MSTest.TestFramework",
+    "Version": "3.10.4",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "Newtonsoft.Json",
+    "Version": "13.0.3",
+    "License": "MIT",
+    "LicenseUrl": "https://licenses.nuget.org/MIT"
+  },
+  {
+    "Id": "SQLitePCLRaw.bundle_e_sqlite3",
+    "Version": "2.1.12",
+    "License": "Apache-2.0",
+    "LicenseUrl": "https://licenses.nuget.org/Apache-2.0"
+  },
+  {
+    "Id": "SQLitePCLRaw.core",
+    "Version": "2.1.12",
+    "License": "Apache-2.0",
+    "LicenseUrl": "https://licenses.nuget.org/Apache-2.0"
+  },
+  {
+    "Id": "SQLitePCLRaw.lib.e_sqlite3",
+    "Version": "2.1.12",
+    "License": "Apache-2.0",
+    "LicenseUrl": "https://licenses.nuget.org/Apache-2.0"
+  },
+  {
+    "Id": "SQLitePCLRaw.provider.e_sqlite3",
+    "Version": "2.1.12",
+    "License": "Apache-2.0",
+    "LicenseUrl": "https://licenses.nuget.org/Apache-2.0"
+  }
+]

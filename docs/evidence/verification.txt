@@ -1,0 +1,25 @@
+  Determinando los proyectos que se van a restaurar...
+  Se ha restaurado C:\Users\ramms\Documents\Codex\2026-09-05\hol\outputs\CasaMigaPOS\src\CasaMiga.Maintenance\CasaMiga.Maintenance.csproj (en 129 ms).
+  Se ha restaurado C:\Users\ramms\Documents\Codex\2026-09-05\hol\outputs\CasaMigaPOS\src\CasaMiga.Presentation\CasaMiga.Presentation.csproj (en 129 ms).
+  Se ha restaurado C:\Users\ramms\Documents\Codex\2026-09-05\hol\outputs\CasaMigaPOS\src\CasaMiga.Application\CasaMiga.Application.csproj (en 120 ms).
+  Se ha restaurado C:\Users\ramms\Documents\Codex\2026-09-05\hol\outputs\CasaMigaPOS\src\CasaMiga.Domain\CasaMiga.Domain.csproj (en 119 ms).
+  Se ha restaurado C:\Users\ramms\Documents\Codex\2026-09-05\hol\outputs\CasaMigaPOS\src\CasaMiga.Infrastructure\CasaMiga.Infrastructure.csproj (en 129 ms).
+  Se ha restaurado C:\Users\ramms\Documents\Codex\2026-09-05\hol\outputs\CasaMigaPOS\tests\CasaMiga.Tests\CasaMiga.Tests.csproj (en 148 ms).
+  CasaMiga.Domain -> C:\Users\ramms\Documents\Codex\2026-09-05\hol\outputs\CasaMigaPOS\src\CasaMiga.Domain\bin\Release\net10.0\CasaMiga.Domain.dll
+  CasaMiga.Application -> C:\Users\ramms\Documents\Codex\2026-09-05\hol\outputs\CasaMigaPOS\src\CasaMiga.Application\bin\Release\net10.0\CasaMiga.Application.dll
+  CasaMiga.Infrastructure -> C:\Users\ramms\Documents\Codex\2026-09-05\hol\outputs\CasaMigaPOS\src\CasaMiga.Infrastructure\bin\Release\net10.0\CasaMiga.Infrastructure.dll
+  CasaMiga.Presentation -> C:\Users\ramms\Documents\Codex\2026-09-05\hol\outputs\CasaMigaPOS\src\CasaMiga.Presentation\bin\Release\net10.0-windows\CasaMiga.Presentation.dll
+  CasaMiga.Tests -> C:\Users\ramms\Documents\Codex\2026-09-05\hol\outputs\CasaMigaPOS\tests\CasaMiga.Tests\bin\Release\net10.0\CasaMiga.Tests.dll
+  CasaMiga.Maintenance -> C:\Users\ramms\Documents\Codex\2026-09-05\hol\outputs\CasaMigaPOS\src\CasaMiga.Maintenance\bin\Release\net10.0\CasaMiga.Maintenance.dll
+
+Compilación correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:01.72
+Serie de pruebas para C:\Users\ramms\Documents\Codex\2026-09-05\hol\outputs\CasaMigaPOS\tests\CasaMiga.Tests\bin\Release\net10.0\CasaMiga.Tests.dll (.NETCoreApp,Version=v10.0)
+1 archivos de prueba en total coincidieron con el patrón especificado.
+ADVERTENCIA: Se sobrescribirá el archivo de resultados: C:\Users\ramms\Documents\Codex\2026-09-05\hol\outputs\CasaMigaPOS\TestResults\foundation.trx
+Archivo de resultados: C:\Users\ramms\Documents\Codex\2026-09-05\hol\outputs\CasaMigaPOS\TestResults\foundation.trx
+
+Correctas! - Con error:     0, Superado:    11, Omitido:     0, Total:    11, Duración: 517 ms - CasaMiga.Tests.dll (net10.0)

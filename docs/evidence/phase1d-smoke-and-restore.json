@@ -1,0 +1,69 @@
+{
+  "comparison": {
+    "category": {
+      "rows": 2,
+      "equal": true
+    },
+    "product": {
+      "rows": 2,
+      "equal": true
+    },
+    "cash_session": {
+      "rows": 5,
+      "equal": true
+    },
+    "cash_count": {
+      "rows": 4,
+      "equal": true
+    },
+    "audit_entry": {
+      "rows": 21,
+      "equal": true
+    },
+    "schema_migration": {
+      "rows": 5,
+      "equal": true
+    },
+    "terminal": {
+      "rows": 1,
+      "equal": true
+    }
+  },
+  "tables": [
+    "app_role",
+    "app_user",
+    "audit_entry",
+    "cash_count",
+    "cash_session",
+    "category",
+    "permission",
+    "product",
+    "role_permission",
+    "schema_migration",
+    "terminal"
+  ],
+  "noCommercialTables": true,
+  "cashStates": [
+    {
+      "state": "CLOSED",
+      "count": 4
+    },
+    {
+      "state": "OPEN",
+      "count": 1
+    }
+  ],
+  "catalog": [
+    {
+      "name": "Bolillo",
+      "price_cents": 500,
+      "active": 1
+    },
+    {
+      "name": "Concha vainilla",
+      "price_cents": 1900,
+      "active": 1
+    }
+  ],
+  "terminalFileEqual": true
+}

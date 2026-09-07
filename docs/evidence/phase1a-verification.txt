@@ -1,0 +1,25 @@
+  Determinando los proyectos que se van a restaurar...
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Domain\CasaMiga.Domain.csproj (en 169 ms).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Infrastructure\CasaMiga.Infrastructure.csproj (en 213 ms).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Maintenance\CasaMiga.Maintenance.csproj (en 216 ms).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Presentation\CasaMiga.Presentation.csproj (en 214 ms).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Application\CasaMiga.Application.csproj (en 165 ms).
+  Se ha restaurado C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\tests\CasaMiga.Tests\CasaMiga.Tests.csproj (en 237 ms).
+  CasaMiga.Domain -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Domain\bin\Release\net10.0\CasaMiga.Domain.dll
+  CasaMiga.Application -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Application\bin\Release\net10.0\CasaMiga.Application.dll
+  CasaMiga.Infrastructure -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Infrastructure\bin\Release\net10.0\CasaMiga.Infrastructure.dll
+  CasaMiga.Maintenance -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Maintenance\bin\Release\net10.0\CasaMiga.Maintenance.dll
+  CasaMiga.Tests -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\tests\CasaMiga.Tests\bin\Release\net10.0\CasaMiga.Tests.dll
+  CasaMiga.Presentation -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Presentation\bin\Release\net10.0-windows\CasaMiga.Presentation.dll
+
+Compilación correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:11.05
+Serie de pruebas para C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\tests\CasaMiga.Tests\bin\Release\net10.0\CasaMiga.Tests.dll (.NETCoreApp,Version=v10.0)
+1 archivos de prueba en total coincidieron con el patrón especificado.
+ADVERTENCIA: Se sobrescribirá el archivo de resultados: C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\TestResults\foundation.trx
+Archivo de resultados: C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\TestResults\foundation.trx
+
+Correctas! - Con error:     0, Superado:    30, Omitido:     0, Total:    30, Duración: 10 s - CasaMiga.Tests.dll (net10.0)

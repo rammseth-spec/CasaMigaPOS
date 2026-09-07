@@ -1,0 +1,201 @@
+{
+  "verifiedUtc": "2026-09-06T18:14:10.028Z",
+  "restorationIdentical": true,
+  "openSessions": 0,
+  "cases": [
+    "A exact 500.25",
+    "B surplus 1.00",
+    "C shortage 1.00",
+    "D open/restart/close/restart"
+  ],
+  "terminal": {
+    "Id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+    "Name": "CASA-MIGA-CAJA-01"
+  },
+  "sessions": [
+    {
+      "id": "5a6f6cdb-79f9-4b05-ae92-5caae89b2c4f",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "opened_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "opened_utc": "2026-09-06T04:20:54.3983689+00:00",
+      "opening_cents": 50025,
+      "state": "CLOSED",
+      "closed_utc": "2026-09-06T09:46:44.7329209+00:00",
+      "closed_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "expected_cents": 50025,
+      "counted_cents": 50025,
+      "difference_cents": 0
+    },
+    {
+      "id": "2384b0fa-8a95-4636-8a05-a905012d5e70",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "opened_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "opened_utc": "2026-09-06T09:47:04.3230577+00:00",
+      "opening_cents": 0,
+      "state": "CLOSED",
+      "closed_utc": "2026-09-06T09:47:38.6551493+00:00",
+      "closed_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "expected_cents": 0,
+      "counted_cents": 100,
+      "difference_cents": 100
+    },
+    {
+      "id": "85412fbd-909f-4550-b68d-d2dc10a182e0",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "opened_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "opened_utc": "2026-09-06T09:47:59.7129823+00:00",
+      "opening_cents": 1000,
+      "state": "CLOSED",
+      "closed_utc": "2026-09-06T09:48:22.7429118+00:00",
+      "closed_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "expected_cents": 1000,
+      "counted_cents": 900,
+      "difference_cents": -100
+    },
+    {
+      "id": "3f1146d1-33b5-4838-b152-ca1dc3ca0249",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "opened_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "opened_utc": "2026-09-06T09:48:44.5608041+00:00",
+      "opening_cents": 50025,
+      "state": "CLOSED",
+      "closed_utc": "2026-09-06T18:12:18.9796259+00:00",
+      "closed_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "expected_cents": 50025,
+      "counted_cents": 50025,
+      "difference_cents": 0
+    }
+  ],
+  "counts": [
+    {
+      "session_id": "5a6f6cdb-79f9-4b05-ae92-5caae89b2c4f",
+      "counted_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "counted_utc": "2026-09-06T09:46:25.0387494+00:00",
+      "counted_cents": 50025
+    },
+    {
+      "session_id": "2384b0fa-8a95-4636-8a05-a905012d5e70",
+      "counted_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "counted_utc": "2026-09-06T09:47:23.7881395+00:00",
+      "counted_cents": 100
+    },
+    {
+      "session_id": "85412fbd-909f-4550-b68d-d2dc10a182e0",
+      "counted_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "counted_utc": "2026-09-06T09:48:17.0889382+00:00",
+      "counted_cents": 900
+    },
+    {
+      "session_id": "3f1146d1-33b5-4838-b152-ca1dc3ca0249",
+      "counted_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "counted_utc": "2026-09-06T18:12:13.3771646+00:00",
+      "counted_cents": 50025
+    }
+  ],
+  "audit": [
+    {
+      "action": "identity.bootstrap",
+      "entity_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": null,
+      "occurred_utc": "2026-09-06T04:19:22.7735910+00:00",
+      "details_json": "{}"
+    },
+    {
+      "action": "cash.open",
+      "entity_id": "5a6f6cdb-79f9-4b05-ae92-5caae89b2c4f",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "occurred_utc": "2026-09-06T04:20:54.3983689+00:00",
+      "details_json": "{\"openingCents\":50025,\"state\":\"OPEN\"}"
+    },
+    {
+      "action": "cash.count",
+      "entity_id": "5a6f6cdb-79f9-4b05-ae92-5caae89b2c4f",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "occurred_utc": "2026-09-06T09:46:25.0387494+00:00",
+      "details_json": "{\"countedCents\":50025}"
+    },
+    {
+      "action": "cash.close",
+      "entity_id": "5a6f6cdb-79f9-4b05-ae92-5caae89b2c4f",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "occurred_utc": "2026-09-06T09:46:44.7329209+00:00",
+      "details_json": "{\"openedBy\":\"14b8f79c-7c87-4a6a-ac0b-fe4745dfe736\",\"closedBy\":\"14b8f79c-7c87-4a6a-ac0b-fe4745dfe736\",\"closedByOtherUser\":false,\"countedBy\":\"14b8f79c-7c87-4a6a-ac0b-fe4745dfe736\",\"countedAt\":\"2026-09-06T09:46:25.0387494+00:00\",\"openingCents\":50025,\"expectedCents\":50025,\"countedCents\":50025,\"differenceCents\":0}"
+    },
+    {
+      "action": "cash.open",
+      "entity_id": "2384b0fa-8a95-4636-8a05-a905012d5e70",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "occurred_utc": "2026-09-06T09:47:04.3230577+00:00",
+      "details_json": "{\"openingCents\":0,\"state\":\"OPEN\"}"
+    },
+    {
+      "action": "cash.count",
+      "entity_id": "2384b0fa-8a95-4636-8a05-a905012d5e70",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "occurred_utc": "2026-09-06T09:47:23.7881395+00:00",
+      "details_json": "{\"countedCents\":100}"
+    },
+    {
+      "action": "cash.close",
+      "entity_id": "2384b0fa-8a95-4636-8a05-a905012d5e70",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "occurred_utc": "2026-09-06T09:47:38.6551493+00:00",
+      "details_json": "{\"openedBy\":\"14b8f79c-7c87-4a6a-ac0b-fe4745dfe736\",\"closedBy\":\"14b8f79c-7c87-4a6a-ac0b-fe4745dfe736\",\"closedByOtherUser\":false,\"countedBy\":\"14b8f79c-7c87-4a6a-ac0b-fe4745dfe736\",\"countedAt\":\"2026-09-06T09:47:23.7881395+00:00\",\"openingCents\":0,\"expectedCents\":0,\"countedCents\":100,\"differenceCents\":100}"
+    },
+    {
+      "action": "cash.open",
+      "entity_id": "85412fbd-909f-4550-b68d-d2dc10a182e0",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "occurred_utc": "2026-09-06T09:47:59.7129823+00:00",
+      "details_json": "{\"openingCents\":1000,\"state\":\"OPEN\"}"
+    },
+    {
+      "action": "cash.count",
+      "entity_id": "85412fbd-909f-4550-b68d-d2dc10a182e0",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "occurred_utc": "2026-09-06T09:48:17.0889382+00:00",
+      "details_json": "{\"countedCents\":900}"
+    },
+    {
+      "action": "cash.close",
+      "entity_id": "85412fbd-909f-4550-b68d-d2dc10a182e0",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "occurred_utc": "2026-09-06T09:48:22.7429118+00:00",
+      "details_json": "{\"openedBy\":\"14b8f79c-7c87-4a6a-ac0b-fe4745dfe736\",\"closedBy\":\"14b8f79c-7c87-4a6a-ac0b-fe4745dfe736\",\"closedByOtherUser\":false,\"countedBy\":\"14b8f79c-7c87-4a6a-ac0b-fe4745dfe736\",\"countedAt\":\"2026-09-06T09:48:17.0889382+00:00\",\"openingCents\":1000,\"expectedCents\":1000,\"countedCents\":900,\"differenceCents\":-100}"
+    },
+    {
+      "action": "cash.open",
+      "entity_id": "3f1146d1-33b5-4838-b152-ca1dc3ca0249",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "occurred_utc": "2026-09-06T09:48:44.5608041+00:00",
+      "details_json": "{\"openingCents\":50025,\"state\":\"OPEN\"}"
+    },
+    {
+      "action": "cash.count",
+      "entity_id": "3f1146d1-33b5-4838-b152-ca1dc3ca0249",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "occurred_utc": "2026-09-06T18:12:13.3771646+00:00",
+      "details_json": "{\"countedCents\":50025}"
+    },
+    {
+      "action": "cash.close",
+      "entity_id": "3f1146d1-33b5-4838-b152-ca1dc3ca0249",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "occurred_utc": "2026-09-06T18:12:18.9796259+00:00",
+      "details_json": "{\"openedBy\":\"14b8f79c-7c87-4a6a-ac0b-fe4745dfe736\",\"closedBy\":\"14b8f79c-7c87-4a6a-ac0b-fe4745dfe736\",\"closedByOtherUser\":false,\"countedBy\":\"14b8f79c-7c87-4a6a-ac0b-fe4745dfe736\",\"countedAt\":\"2026-09-06T18:12:13.3771646+00:00\",\"openingCents\":50025,\"expectedCents\":50025,\"countedCents\":50025,\"differenceCents\":0}"
+    }
+  ]
+}

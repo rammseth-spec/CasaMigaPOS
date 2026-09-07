@@ -1,0 +1,69 @@
+{
+  "comparison": "Source snapshot captured before phase 1C; repository has no commits",
+  "changed": [
+    "AGENTS.md",
+    "docs/architecture.md",
+    "docs/CURRENT_STATE.md",
+    "docs/database.md",
+    "docs/domain.md",
+    "docs/NEXT_STEPS.md",
+    "docs/operations.md",
+    "docs/roadmap.md",
+    "README.md",
+    "src/CasaMiga.Application/LocalPorts.cs",
+    "src/CasaMiga.Infrastructure/Database.cs",
+    "src/CasaMiga.Infrastructure/SqliteLocalUnitOfWork.cs",
+    "src/CasaMiga.Presentation/MainViewModel.cs",
+    "src/CasaMiga.Presentation/MainWindow.xaml",
+    "src/CasaMiga.Presentation/MainWindow.xaml.cs",
+    "src/CasaMiga.Presentation/Resources/Theme.xaml",
+    "tests/CasaMiga.Tests/CashIdentityTests.cs",
+    "tests/CasaMiga.Tests/FoundationTests.cs",
+    "docs/FILES.md"
+  ],
+  "added": [
+    "docs/decisions/ADR-008-catalog-normalization-and-audit.md",
+    "docs/evidence/phase1c-baseline-clean.txt",
+    "docs/evidence/phase1c-baseline.txt",
+    "docs/evidence/phase1c-clean.txt",
+    "docs/evidence/phase1c-cli-backup.txt",
+    "docs/evidence/phase1c-cli-restore.txt",
+    "docs/evidence/phase1c-logs.json",
+    "docs/evidence/phase1c-publish.txt",
+    "docs/evidence/phase1c-restore.txt",
+    "docs/evidence/phase1c-smoke-and-restore.json",
+    "docs/evidence/phase1c-smoke.md",
+    "docs/evidence/phase1c-verification.txt",
+    "docs/USER_REQUIREMENTS_PHASE_1C.md",
+    "migrations/004_catalog.sql",
+    "src/CasaMiga.Application/CatalogService.cs",
+    "src/CasaMiga.Domain/Catalog.cs",
+    "src/CasaMiga.Infrastructure/SqliteCatalogStore.cs",
+    "src/CasaMiga.Presentation/CatalogView.xaml",
+    "src/CasaMiga.Presentation/CatalogView.xaml.cs",
+    "src/CasaMiga.Presentation/CatalogViewModel.cs",
+    "tests/CasaMiga.Tests/CatalogTests.cs",
+    "docs/PHASE_1C_REPORT.md",
+    "docs/evidence/phase1c-source-review.json"
+  ],
+  "deleted": [],
+  "migrations": [
+    {
+      "path": "migrations/001_foundation.sql",
+      "sha256": "67fe636bc15056db439d15a0cdd73ffd84da98f5f383faef21910f53e191cad7",
+      "unchanged": true
+    },
+    {
+      "path": "migrations/002_identity_cash.sql",
+      "sha256": "b8c29e34bfffdc6ee313756ef4869644a495070c4b096bcdedad6c8a8bf7c9e5",
+      "unchanged": true
+    },
+    {
+      "path": "migrations/003_cash_closing.sql",
+      "sha256": "4a5fd419d95c19cbe7669fcb0c0c825567fa4ddd97478bd9946ddb1e9e13e7e1",
+      "unchanged": true
+    }
+  ],
+  "dependenciesChanged": [],
+  "trailingWhitespaceFiles": []
+}

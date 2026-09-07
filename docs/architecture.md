@@ -1,0 +1,55 @@
+# Arquitectura
+
+Monolito modular Windows offline con SQLite local. Dependencias hacia dentro: Presentation → Application → Domain; Infrastructure implementa puertos de Application. Presentation referencia Infrastructure exclusivamente para composición. No hay servidor, ORM, framework CQRS ni repositorios genéricos.
+
+## FASE 1A implementada
+
+- Domain: Money en centavos Int64 checked y CashSession inmutable; fondo no negativo, estado y metadatos coherentes. Sin reloj del sistema ni dependencias de persistencia/UI.
+- Application: IdentityService, CashService, UserSession, IClock, IPasswords y puertos de unidad de trabajo/store. Autoriza usuario activo y permiso dentro de la operación. La UI no entrega un actor arbitrario para abrir caja.
+- Infrastructure: PasswordHasher oficial, SystemClock, adaptador SQLite, migraciones, backup, logs, configuración estable de terminal y DirectoryLease.
+- Presentation: MainViewModel con estados de bootstrap/login/caja/apertura; code-behind limitado a eventos, contraseñas y foco. Recursos visuales centralizados, sin biblioteca MVVM adicional.
+
+SqliteLocalUnitOfWork abre conexión y transacción inmediata por operación. Store no hace commits. Apertura comprueba permiso, terminal y sesión existente; crea aggregate y auditoría y confirma todo junto. Si algo falla, Dispose revierte. Índice UNIQUE parcial es la última barrera de concurrencia. Bootstrap también une usuario y auditoría. Login persiste fallos/bloqueo/rehash antes de establecer la sesión en memoria.
+
+DirectoryLease impide dos clientes oficiales sobre el mismo directorio. No reemplaza la restricción SQLite ni ofrece coordinación distribuida. El arranque respalda una base existente antes de migrar; exige versiones contiguas y hashes intactos, valida y genera otra copia después. Maintenance coopera con el mismo bloqueo para init/backup/list.
+
+Tiempo de negocio: IClock.UtcNow, inyectado en Application y pasado al dominio. UTC persistido; UI utiliza zona local del sistema y muestra offset explícito. Falta configuración de zona comercial para reportes. Logs técnicos usan su propio timestamp y campos permitidos, nunca mensajes arbitrarios ni credenciales. Fallos de log posteriores al commit no revierten la apertura; falta alertar/retener esos fallos.
+
+## Evolución pendiente
+
+Ventas persistidas, inventario y hardware siguen fuera del alcance actual; catálogo y POS transitorio se describen en 1C/1D más abajo. Una venta futura deberá persistir snapshots, pagos, movimientos, auditoría y trabajo de impresión en un commit, ejecutando hardware después. Dinero recibido/cambio se separará del importe aplicado. No hay servicios físicos activos en esta entrega.
+
+Identidad y permisos: ADR-006. No existe seguridad frente a un administrador Windows con acceso al archivo. Antes de producción: ACL, recuperación de cuentas, restauración administrativa, retención, espacio en disco y pruebas de equipo real. El backup completo de terminal.json queda cubierto en 1B.
+
+## FASE 1B implementada
+
+CashClosingService autoriza cuenta activa, cash.close y adicional cash.close.other si cambia el actor respecto al propietario. Resume sólo devuelve resultado si existe conteo persistido. SubmitCount confirma cash_count y cash.count audit en una transacción inmediata antes de revelar resultados. Close no acepta importes desde UI: carga conteo inmutable, calcula esperado y llama CashSession.Close. Actualiza sólo OPEN y crea cash.close audit en el mismo commit.
+
+Dos transacciones deliberadas: confirmar conteo y confirmar cierre. Entre ellas la sesión sigue OPEN, pero el conteo no se puede editar ni borrar. Volver/reinicio no reinician el conteo. Concurrencia de cierres termina con un solo cambio de estado y una sola auditoría. Finanzas de CLOSED protegidas también por triggers.
+
+Esperado = fondo + entradas − retiros + ventas efectivo − devoluciones efectivo. En 1B todos los componentes salvo fondo son cero. El cálculo se concentra en Application dentro de la unidad de trabajo; el aggregate recibe esperado/contado y calcula diferencia checked. Antes de añadir movimientos se deberá congelar actividad desde conteo o validar versión/snapshot; no hay movimientos implementados ahora.
+
+Presentation añade conteo/resultado/cierre y Escape/Enter. Por prioridad del conteo ciego no muestra fondo en dashboard abierto; no se expone esperado/diferencia hasta guardar conteo. Confirmación final separada; un Enter en el campo de conteo no ejecuta cierre.
+
+InstallationBackup empaqueta snapshot SQLite, terminal.json y manifiesto de hashes; creación bajo lease y publicación por rename. Restore valida en carpeta candidata y publica sólo un directorio nuevo. BackupService queda como primitiva de snapshot/compatibilidad con .db anteriores. TerminalConfiguration rechaza falta de configuración si ya existe identidad en la base. ADR-007 y operations.md detallan límites y recuperación.
+
+
+## FASE 1C implementada
+
+Domain añade Category/Product inmutables y CatalogText sin dependencias. Application incorpora CatalogService y contratos de lectura paginados; revalida permisos en casos de uso, no depende de botones deshabilitados. Infrastructure implementa los nuevos puertos en Store parcial, consultas parametrizadas, índices y triggers. Transacción inmediata contiene cambio y auditoría; si falla cualquier paso se revierte.
+
+Presentation añade CatalogViewModel/CatalogView y navegación Caja/Catálogo. Listas de productos paginadas y grids virtualizados, recursos centralizados, formularios separados de listas. Binding OneWay explícito sobre valores inmutables de categoría. La colección de filtros conserva instancia si no cambia; se limpia estado al entrar con usuario nuevo. No hay librería MVVM nueva.
+
+ActiveProducts y Categories(false) sirven para lectura futura del POS. SaleItem deberá guardar snapshots; imágenes/color/iconos podrán añadirse después sin blobs actuales. Precio histórico permanece en audit_entry, sin módulo comercial separado. ADR-008 define normalización persistente e implicaciones de mantenimiento. Catálogo deja de ser pendiente; venta, inventario y hardware siguen propuestos.
+
+## FASE 1D implementada
+
+Domain añade Cart/CartLine inmutables sin referencia a persistencia. Application incorpora PosService y mantiene el carrito en UserSession, con asociación usuario/terminal/caja. Cada operación revalida contexto y autorización dentro de la unidad de trabajo. El nuevo estado se publica sólo después de validación, cálculo checked y finalización de la unidad de trabajo.
+
+UserSession serializa cambios mediante un lock. PosService y CashClosingService toman primero ese lock y luego la unidad SQLite, evitando inversión del orden. SignOut/SignIn y conteo/cierre impiden saltarse la política de descarte. Descartar permite recuperar una sesión aun si ya perdió autorización; no escribe datos comerciales.
+
+La consulta POS reutiliza QueryProducts con IncludeInactive=false, y ListPosCategories devuelve activas con EXISTS de producto activo. No carga productos individualmente para dibujar botones. PosViewModel/PosView son independientes de administración; la UI consume sólo la página actual de 50 y deja fijo el bloque de totales al desplazar partidas.
+
+Cart is transient and not a sale. No hay serializador/repositorio de carrito, ni venta/pago nuevo. Migración 005 sólo instala pos.use. No hay librerías adicionales.
+
+Captura global instalada en el constructor de App antes de inicializar: DispatcherUnhandledException, AppDomain.UnhandledException y UnobservedTaskException. UnhandledFailureDiagnostics escribe un informe técnico acotado y best effort fuera del bloqueo de negocio. La política estricta termina el proceso en vez de ocultar el fallo; detalles, límites y documentación oficial en ADR-009.

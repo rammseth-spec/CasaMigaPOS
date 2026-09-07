@@ -1,0 +1,187 @@
+{
+  "synthetic": true,
+  "restoredEqualsSource": true,
+  "categories": [
+    {
+      "id": "86e45a07-4690-42b3-8293-dae296ecd044",
+      "name": "PAN DULCE",
+      "active": 1,
+      "description": "",
+      "sort_order": 0,
+      "created_utc": "2026-09-06T23:48:01.8717084+00:00",
+      "modified_utc": "2026-09-06T23:48:01.8717084+00:00"
+    },
+    {
+      "id": "92591da3-0c87-493b-82ec-4dc71b7434d1",
+      "name": "PAN SALADO",
+      "active": 1,
+      "description": "",
+      "sort_order": 0,
+      "created_utc": "2026-09-06T23:52:42.0561676+00:00",
+      "modified_utc": "2026-09-06T23:52:42.0561676+00:00"
+    }
+  ],
+  "products": [
+    {
+      "id": "9852cb86-cbda-46ba-99c0-ec3f10e59d75",
+      "sku": null,
+      "name": "Concha vainilla",
+      "category_id": "86e45a07-4690-42b3-8293-dae296ecd044",
+      "description": "",
+      "price_cents": 1900,
+      "track_inventory": 1,
+      "active": 1,
+      "created_utc": "2026-09-06T23:51:30.8263658+00:00",
+      "modified_utc": "2026-09-06T23:52:16.2503443+00:00"
+    },
+    {
+      "id": "cac1cfe6-262d-4bba-8389-9dc80f13afb4",
+      "sku": null,
+      "name": "Bolillo",
+      "category_id": "92591da3-0c87-493b-82ec-4dc71b7434d1",
+      "description": "",
+      "price_cents": 500,
+      "track_inventory": 1,
+      "active": 0,
+      "created_utc": "2026-09-06T23:53:45.8825559+00:00",
+      "modified_utc": "2026-09-06T23:54:43.5156028+00:00"
+    }
+  ],
+  "audit": [
+    {
+      "id": "718783b5-83d8-42da-b4a8-e1fb23e6844d",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "action": "category.create",
+      "entity_id": "86e45a07-4690-42b3-8293-dae296ecd044",
+      "occurred_utc": "2026-09-06T23:48:01.8717084+00:00",
+      "details_json": "{\"before\":null,\"after\":{\"Name\":\"PAN DULCE\",\"Description\":\"\",\"SortOrder\":0,\"IsActive\":true}}",
+      "username": "SMOKE-ADMIN"
+    },
+    {
+      "id": "f46641f2-af1e-4ddc-96dc-908d1d0f224b",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "action": "product.create",
+      "entity_id": "9852cb86-cbda-46ba-99c0-ec3f10e59d75",
+      "occurred_utc": "2026-09-06T23:51:30.8263658+00:00",
+      "details_json": "{\"before\":null,\"after\":{\"Name\":\"Concha vainilla\",\"Description\":\"\",\"CategoryId\":\"86e45a07-4690-42b3-8293-dae296ecd044\",\"Sku\":null,\"priceCents\":1800,\"IsActive\":true,\"TrackInventory\":true}}",
+      "username": "SMOKE-ADMIN"
+    },
+    {
+      "id": "9fe5a518-fe89-45bc-8ef2-35001bade264",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "action": "product.edit",
+      "entity_id": "9852cb86-cbda-46ba-99c0-ec3f10e59d75",
+      "occurred_utc": "2026-09-06T23:52:16.2503443+00:00",
+      "details_json": "{\"before\":{\"Name\":\"Concha vainilla\",\"Description\":\"\",\"CategoryId\":\"86e45a07-4690-42b3-8293-dae296ecd044\",\"Sku\":null,\"priceCents\":1800,\"IsActive\":true,\"TrackInventory\":true},\"after\":{\"Name\":\"Concha vainilla\",\"Description\":\"\",\"CategoryId\":\"86e45a07-4690-42b3-8293-dae296ecd044\",\"Sku\":null,\"priceCents\":1900,\"IsActive\":true,\"TrackInventory\":true}}",
+      "username": "SMOKE-ADMIN"
+    },
+    {
+      "id": "2271db6b-2f3b-4394-846c-c2a33eb784ef",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "action": "category.create",
+      "entity_id": "92591da3-0c87-493b-82ec-4dc71b7434d1",
+      "occurred_utc": "2026-09-06T23:52:42.0561676+00:00",
+      "details_json": "{\"before\":null,\"after\":{\"Name\":\"PAN SALADO\",\"Description\":\"\",\"SortOrder\":0,\"IsActive\":true}}",
+      "username": "SMOKE-ADMIN"
+    },
+    {
+      "id": "f53bf791-6570-408b-a119-dd89c36ee7f2",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "action": "product.create",
+      "entity_id": "cac1cfe6-262d-4bba-8389-9dc80f13afb4",
+      "occurred_utc": "2026-09-06T23:53:45.8825559+00:00",
+      "details_json": "{\"before\":null,\"after\":{\"Name\":\"Bolillo\",\"Description\":\"\",\"CategoryId\":\"92591da3-0c87-493b-82ec-4dc71b7434d1\",\"Sku\":null,\"priceCents\":500,\"IsActive\":true,\"TrackInventory\":true}}",
+      "username": "SMOKE-ADMIN"
+    },
+    {
+      "id": "c440769a-8ee5-454e-8336-19f815e320e1",
+      "actor_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "action": "product.deactivate",
+      "entity_id": "cac1cfe6-262d-4bba-8389-9dc80f13afb4",
+      "occurred_utc": "2026-09-06T23:54:43.5156028+00:00",
+      "details_json": "{\"before\":{\"Name\":\"Bolillo\",\"Description\":\"\",\"CategoryId\":\"92591da3-0c87-493b-82ec-4dc71b7434d1\",\"Sku\":null,\"priceCents\":500,\"IsActive\":true,\"TrackInventory\":true},\"after\":{\"Name\":\"Bolillo\",\"Description\":\"\",\"CategoryId\":\"92591da3-0c87-493b-82ec-4dc71b7434d1\",\"Sku\":null,\"priceCents\":500,\"IsActive\":false,\"TrackInventory\":true}}",
+      "username": "SMOKE-ADMIN"
+    }
+  ],
+  "cash": [
+    {
+      "id": "2384b0fa-8a95-4636-8a05-a905012d5e70",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "opened_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "opened_utc": "2026-09-06T09:47:04.3230577+00:00",
+      "opening_cents": 0,
+      "state": "CLOSED",
+      "closed_utc": "2026-09-06T09:47:38.6551493+00:00",
+      "closed_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "expected_cents": 0,
+      "counted_cents": 100,
+      "difference_cents": 100
+    },
+    {
+      "id": "3f1146d1-33b5-4838-b152-ca1dc3ca0249",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "opened_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "opened_utc": "2026-09-06T09:48:44.5608041+00:00",
+      "opening_cents": 50025,
+      "state": "CLOSED",
+      "closed_utc": "2026-09-06T18:12:18.9796259+00:00",
+      "closed_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "expected_cents": 50025,
+      "counted_cents": 50025,
+      "difference_cents": 0
+    },
+    {
+      "id": "5a6f6cdb-79f9-4b05-ae92-5caae89b2c4f",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "opened_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "opened_utc": "2026-09-06T04:20:54.3983689+00:00",
+      "opening_cents": 50025,
+      "state": "CLOSED",
+      "closed_utc": "2026-09-06T09:46:44.7329209+00:00",
+      "closed_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "expected_cents": 50025,
+      "counted_cents": 50025,
+      "difference_cents": 0
+    },
+    {
+      "id": "85412fbd-909f-4550-b68d-d2dc10a182e0",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "opened_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "opened_utc": "2026-09-06T09:47:59.7129823+00:00",
+      "opening_cents": 1000,
+      "state": "CLOSED",
+      "closed_utc": "2026-09-06T09:48:22.7429118+00:00",
+      "closed_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "expected_cents": 1000,
+      "counted_cents": 900,
+      "difference_cents": -100
+    }
+  ],
+  "terminal": [
+    {
+      "id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "name": "CASA-MIGA-CAJA-01",
+      "created_utc": "2026-09-06T04:15:43.1868927+00:00"
+    }
+  ],
+  "versions": [
+    {
+      "version": 1
+    },
+    {
+      "version": 2
+    },
+    {
+      "version": 3
+    },
+    {
+      "version": 4
+    }
+  ]
+}

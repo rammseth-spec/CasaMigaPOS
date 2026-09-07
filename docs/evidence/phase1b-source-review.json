@@ -1,0 +1,60 @@
+{
+  "comparison": "Snapshot of approved 1A vs current workspace, text line endings normalized",
+  "changed": [
+    ".gitignore",
+    "AGENTS.md",
+    "docs/architecture.md",
+    "docs/CURRENT_STATE.md",
+    "docs/database.md",
+    "docs/decisions/ADR-006-local-identity.md",
+    "docs/dependencies.md",
+    "docs/domain.md",
+    "docs/FILES.md",
+    "docs/NEXT_STEPS.md",
+    "docs/operations.md",
+    "docs/roadmap.md",
+    "README.md",
+    "src/CasaMiga.Application/LocalPorts.cs",
+    "src/CasaMiga.Domain/CashSession.cs",
+    "src/CasaMiga.Infrastructure/FoundationRuntime.cs",
+    "src/CasaMiga.Infrastructure/SqliteLocalUnitOfWork.cs",
+    "src/CasaMiga.Infrastructure/TerminalConfiguration.cs",
+    "src/CasaMiga.Maintenance/Program.cs",
+    "src/CasaMiga.Presentation/MainViewModel.cs",
+    "src/CasaMiga.Presentation/MainWindow.xaml",
+    "src/CasaMiga.Presentation/MainWindow.xaml.cs",
+    "tests/CasaMiga.Tests/CashIdentityTests.cs",
+    "tests/CasaMiga.Tests/FoundationTests.cs"
+  ],
+  "added": [
+    "docs/PHASE_1B_REPORT.md",
+    "docs/USER_REQUIREMENTS_PHASE_1B.md",
+    "docs/decisions/ADR-007-count-and-installation-backup.md",
+    "docs/evidence/phase1b-baseline-clean.txt",
+    "docs/evidence/phase1b-baseline.txt",
+    "docs/evidence/phase1b-clean.txt",
+    "docs/evidence/phase1b-cli.txt",
+    "docs/evidence/phase1b-logs.json",
+    "docs/evidence/phase1b-publish.txt",
+    "docs/evidence/phase1b-restore.txt",
+    "docs/evidence/phase1b-smoke-and-restore.json",
+    "docs/evidence/phase1b-source-review.json",
+    "docs/evidence/phase1b-verification.txt",
+    "migrations/003_cash_closing.sql",
+    "src/CasaMiga.Application/CashClosingService.cs",
+    "src/CasaMiga.Infrastructure/InstallationBackup.cs",
+    "tests/CasaMiga.Tests/CashClosingTests.cs"
+  ],
+  "missing": [],
+  "migrations": [
+    {
+      "file": "001_foundation.sql",
+      "unchanged": true
+    },
+    {
+      "file": "002_identity_cash.sql",
+      "unchanged": true
+    }
+  ],
+  "whitespace": []
+}

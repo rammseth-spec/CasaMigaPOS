@@ -1,0 +1,5 @@
+C:\Users\ramms\Documents\Codex\2026-09-05\hol\work\smoke-6c3ec9db758344db97ba4f0f8388c85b\backups\casamiga-20260906T035011428Z-7dfc5cdad74648499f5b17bad923fe72.db
+C:\Users\ramms\Documents\Codex\2026-09-05\hol\work\smoke-6c3ec9db758344db97ba4f0f8388c85b\backups\casamiga-20260906T035011531Z-d3ecf53c29df43018ad2390677b30f85.db
+C:\Users\ramms\Documents\Codex\2026-09-05\hol\work\smoke-6c3ec9db758344db97ba4f0f8388c85b\backups\casamiga-20260906T035011531Z-d3ecf53c29df43018ad2390677b30f85.db
+C:\Users\ramms\Documents\Codex\2026-09-05\hol\work\smoke-6c3ec9db758344db97ba4f0f8388c85b\backups\casamiga-20260906T035011428Z-7dfc5cdad74648499f5b17bad923fe72.db
+Restauración validada en archivo nuevo. No se activó sobre la base de trabajo.

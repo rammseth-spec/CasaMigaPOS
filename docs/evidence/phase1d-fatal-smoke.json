@@ -1,0 +1,20 @@
+{
+  "synthetic": true,
+  "dialogObserved": true,
+  "processTerminatedAfterAcknowledgement": true,
+  "secretMarkerAbsent": true,
+  "diagnostic": {
+    "IncidentId": "8f6bef070d4a415fb274195f77e625cd",
+    "Timestamp": "2026-09-07T04:57:42.3373276+00:00",
+    "Origin": 0,
+    "Terminate": true,
+    "ExceptionType": "System.InvalidOperationException",
+    "HResult": -2146233079,
+    "Frames": [
+      "CasaMiga.Presentation.App+<>c.<OnStartup>b__5_0",
+      "System.Windows.Threading.ExceptionWrapper.InternalRealCall",
+      "System.Windows.Threading.ExceptionWrapper.TryCatchWhen"
+    ],
+    "InnerTypes": []
+  }
+}

@@ -1,0 +1,55 @@
+<Window x:Class="CasaMiga.Presentation.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:CasaMiga.Presentation" Title="Casa Miga POS · Caja" Width="1040" Height="820" MinWidth="680" MinHeight="620" Background="{DynamicResource CanvasBrush}" FontFamily="Segoe UI" WindowStartupLocation="CenterScreen" PreviewKeyDown="WindowKeyDown" Closing="WindowClosing">
+ <Grid>
+ <ScrollViewer Visibility="{Binding IsNotPos,Converter={StaticResource VisibleWhen}}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+  <Grid Margin="40,28" MaxWidth="900">
+   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+   <StackPanel Margin="0,0,0,24"><TextBlock Text="CASA MIGA" FontSize="36" FontWeight="SemiBold" Foreground="{DynamicResource BrandBrush}"/><TextBlock Text="Panadería tradicional mexicana · Identidad temporal" Foreground="{DynamicResource MutedBrush}" FontSize="16" Margin="0,4,0,0"/></StackPanel>
+   <Border Grid.Row="1" Background="{DynamicResource CardBrush}" CornerRadius="12" Padding="28" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+    <StackPanel>
+     <WrapPanel Visibility="{Binding CanNavigate,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}" Margin="0,0,0,16"><Button Content="Caja" Click="CashNavigationClick" Margin="0,0,12,0"/><Button Content="Catálogo" Click="CatalogNavigationClick" Margin="0,0,12,0"/><Button Content="POS" Click="PosNavigationClick"/></WrapPanel>
+     <TextBlock Text="{Binding Heading}" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,12"/><TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,20"/>
+     <local:CatalogView DataContext="{Binding Catalog}" Visibility="{Binding DataContext.IsCatalog,RelativeSource={RelativeSource AncestorType=Window},Converter={StaticResource VisibleWhen}}"/>
+     <StackPanel Visibility="{Binding IsBootstrap,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
+      <TextBlock Text="Usuario administrador"/><TextBox x:Name="BootstrapUser" AutomationProperties.Name="Usuario administrador" MaxLength="80" Margin="0,6,0,12"/>
+      <TextBlock Text="Nombre para mostrar"/><TextBox x:Name="BootstrapName" AutomationProperties.Name="Nombre para mostrar" MaxLength="100" Margin="0,6,0,12"/>
+      <TextBlock Text="Contraseña · de 12 a 128 caracteres"/><PasswordBox x:Name="BootstrapPassword" AutomationProperties.Name="Contraseña inicial" MaxLength="128" Margin="0,6,0,12"/>
+      <TextBlock Text="Confirmar contraseña"/><PasswordBox x:Name="BootstrapConfirmation" AutomationProperties.Name="Confirmar contraseña" MaxLength="128" Margin="0,6,0,20"/>
+      <Button Content="Crear administrador" Click="BootstrapClick"/>
+     </StackPanel>
+     <StackPanel Visibility="{Binding IsLogin,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
+      <TextBlock Text="Usuario"/><TextBox x:Name="LoginUser" AutomationProperties.Name="Usuario" MaxLength="80" Margin="0,6,0,16"/>
+      <TextBlock Text="Contraseña"/><PasswordBox x:Name="LoginPassword" AutomationProperties.Name="Contraseña" MaxLength="128" Margin="0,6,0,24" KeyDown="LoginPasswordKeyDown"/>
+      <Button Content="Entrar" Click="LoginClick"/>
+     </StackPanel>
+     <StackPanel Visibility="{Binding IsDashboard,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
+      <TextBlock Text="{Binding UserLabel}" Margin="0,0,0,8"/><TextBlock Text="{Binding TerminalLabel}" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,24"/>
+      <TextBlock Text="{Binding CashLabel}" FontSize="32" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" Margin="0,0,0,20"/><TextBlock Text="{Binding CashDetails}" Margin="0,0,0,20"/>
+      <Button Content="Abrir caja" Click="ShowOpeningClick" IsEnabled="{Binding CanOpen}" Visibility="{Binding HasNoOpenCash,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,16"/>
+      <Button Content="Cerrar caja" Click="BeginClosingClick" Visibility="{Binding HasOpenCash,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,16"/>
+      <Button Content="Salir de mi usuario" Click="LogoutClick"/><TextBlock Text="Salir del usuario o cerrar la aplicación no cierra la caja." FontSize="15" Foreground="{DynamicResource MutedBrush}" Margin="0,16,0,0"/>
+     </StackPanel>
+     <StackPanel Visibility="{Binding IsOpening,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
+      <TextBlock Text="Fondo inicial en MXN"/><TextBox x:Name="OpeningAmount" AutomationProperties.Name="Fondo inicial en MXN" Text="{Binding Amount,UpdateSourceTrigger=PropertyChanged}" MaxLength="20" Margin="0,8,0,8"/>
+      <TextBlock Text="Ejemplo: 500.00 · Se permite iniciar con $0.00" Foreground="{DynamicResource MutedBrush}" FontSize="16" Margin="0,0,0,24"/>
+      <WrapPanel><Button Content="Cancelar" Click="CancelOpeningClick" Margin="0,0,16,12"/><Button Content="Confirmar apertura" Click="OpenClick" Margin="0,0,0,12"/></WrapPanel>
+     </StackPanel>
+     <StackPanel Visibility="{Binding IsCounting,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
+      <TextBlock Text="{Binding ClosingOwner}" Margin="0,0,0,16"/>
+      <TextBlock Text="Efectivo contado en MXN"/><TextBox x:Name="CountedInput" AutomationProperties.Name="Efectivo contado en MXN" Text="{Binding CountedAmount,UpdateSourceTrigger=PropertyChanged}" MaxLength="20" Margin="0,8,0,24"/>
+      <WrapPanel><Button Content="Cancelar" Click="BackClosingClick" Margin="0,0,16,12"/><Button Content="Continuar" Click="SubmitCountClick" Margin="0,0,0,12"/></WrapPanel>
+     </StackPanel>
+     <StackPanel Visibility="{Binding IsClosingResult,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
+      <TextBlock Text="{Binding ClosingOwner}" Margin="0,0,0,16"/>
+      <TextBlock Text="{Binding ClosingDetails}" FontSize="22" Margin="0,0,0,20"/>
+      <TextBlock Text="La sesión quedará cerrada y auditada. No podrá volver a abrirse. Volver conserva el conteo confirmado." Margin="0,0,0,24"/>
+      <WrapPanel><Button x:Name="BackResult" Content="Volver" Click="BackClosingClick" Margin="0,0,16,12"/><Button Content="Confirmar cierre" Click="ConfirmCloseClick" Margin="0,0,0,12"/></WrapPanel>
+     </StackPanel>
+     <TextBlock Text="{Binding Message}" Margin="0,20,0,0" AutomationProperties.LiveSetting="Polite"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock><TextBlock Text="Procesando…" Margin="0,12,0,0" Visibility="{Binding Busy,Converter={StaticResource VisibleWhen}}"/>
+    </StackPanel>
+   </Border>
+   <TextBlock Grid.Row="2" Text="FASE 1D · Carrito temporal · Sin venta ni cobro" FontSize="15" Foreground="{DynamicResource MutedBrush}" Margin="0,20,0,0"/>
+  </Grid>
+ </ScrollViewer>
+ <local:PosView DataContext="{Binding Pos}" Visibility="{Binding DataContext.IsPos,RelativeSource={RelativeSource AncestorType=Window},Converter={StaticResource VisibleWhen}}" CashRequested="PosCashRequested" CatalogRequested="PosCatalogRequested" LogoutRequested="PosLogoutRequested"/>
+ </Grid>
+</Window>

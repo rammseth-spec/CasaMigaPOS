@@ -1,0 +1,92 @@
+[
+  {
+    "timestamp": "2026-09-06T04:15:43.1550444+00:00",
+    "eventName": "foundation.ready",
+    "errorType": null
+  },
+  {
+    "timestamp": "2026-09-06T04:17:42.41486+00:00",
+    "eventName": "foundation.ready",
+    "errorType": null
+  },
+  {
+    "timestamp": "2026-09-06T04:20:54.4127872+00:00",
+    "eventName": "cash.opened",
+    "errorType": null
+  },
+  {
+    "timestamp": "2026-09-06T04:21:27.4903868+00:00",
+    "eventName": "foundation.ready",
+    "errorType": null
+  },
+  {
+    "timestamp": "2026-09-06T09:45:21.7691099+00:00",
+    "eventName": "foundation.ready",
+    "errorType": null
+  },
+  {
+    "timestamp": "2026-09-06T09:46:25.0523409+00:00",
+    "eventName": "cash.counted",
+    "errorType": null
+  },
+  {
+    "timestamp": "2026-09-06T09:46:44.746983+00:00",
+    "eventName": "cash.closed",
+    "errorType": null
+  },
+  {
+    "timestamp": "2026-09-06T09:47:04.3308745+00:00",
+    "eventName": "cash.opened",
+    "errorType": null
+  },
+  {
+    "timestamp": "2026-09-06T09:47:23.7986781+00:00",
+    "eventName": "cash.counted",
+    "errorType": null
+  },
+  {
+    "timestamp": "2026-09-06T09:47:38.662881+00:00",
+    "eventName": "cash.closed",
+    "errorType": null
+  },
+  {
+    "timestamp": "2026-09-06T09:47:59.7284312+00:00",
+    "eventName": "cash.opened",
+    "errorType": null
+  },
+  {
+    "timestamp": "2026-09-06T09:48:17.1045868+00:00",
+    "eventName": "cash.counted",
+    "errorType": null
+  },
+  {
+    "timestamp": "2026-09-06T09:48:22.7537371+00:00",
+    "eventName": "cash.closed",
+    "errorType": null
+  },
+  {
+    "timestamp": "2026-09-06T09:48:44.5747288+00:00",
+    "eventName": "cash.opened",
+    "errorType": null
+  },
+  {
+    "timestamp": "2026-09-06T09:51:08.3399918+00:00",
+    "eventName": "foundation.ready",
+    "errorType": null
+  },
+  {
+    "timestamp": "2026-09-06T18:12:13.3984392+00:00",
+    "eventName": "cash.counted",
+    "errorType": null
+  },
+  {
+    "timestamp": "2026-09-06T18:12:18.9950816+00:00",
+    "eventName": "cash.closed",
+    "errorType": null
+  },
+  {
+    "timestamp": "2026-09-06T18:12:37.2332048+00:00",
+    "eventName": "foundation.ready",
+    "errorType": null
+  }
+]

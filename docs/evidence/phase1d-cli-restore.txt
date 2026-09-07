@@ -1,0 +1,1 @@
+Instalación restaurada y validada en directorio nuevo, incluida la identidad de terminal.

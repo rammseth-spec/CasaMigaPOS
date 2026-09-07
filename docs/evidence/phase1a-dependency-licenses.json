@@ -1,0 +1,182 @@
+[
+  {
+    "id": "Microsoft.Data.Sqlite",
+    "version": "10.0.11",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Extensions.Identity.Core",
+    "version": "10.0.11",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.AspNetCore.Cryptography.Internal",
+    "version": "10.0.11",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.AspNetCore.Cryptography.KeyDerivation",
+    "version": "10.0.11",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Data.Sqlite.Core",
+    "version": "10.0.11",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Extensions.Configuration",
+    "version": "10.0.11",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Extensions.Configuration.Abstractions",
+    "version": "10.0.11",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Extensions.Configuration.Binder",
+    "version": "10.0.11",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Extensions.DependencyInjection",
+    "version": "10.0.11",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+    "version": "10.0.11",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Extensions.Diagnostics",
+    "version": "10.0.11",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Extensions.Diagnostics.Abstractions",
+    "version": "10.0.11",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Extensions.Logging",
+    "version": "10.0.11",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Extensions.Logging.Abstractions",
+    "version": "10.0.11",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Extensions.Options",
+    "version": "10.0.11",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Extensions.Options.ConfigurationExtensions",
+    "version": "10.0.11",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Extensions.Primitives",
+    "version": "10.0.11",
+    "license": "MIT"
+  },
+  {
+    "id": "SQLitePCLRaw.bundle_e_sqlite3",
+    "version": "2.1.12",
+    "license": "Apache-2.0"
+  },
+  {
+    "id": "SQLitePCLRaw.core",
+    "version": "2.1.12",
+    "license": "Apache-2.0"
+  },
+  {
+    "id": "SQLitePCLRaw.lib.e_sqlite3",
+    "version": "2.1.12",
+    "license": "Apache-2.0"
+  },
+  {
+    "id": "SQLitePCLRaw.provider.e_sqlite3",
+    "version": "2.1.12",
+    "license": "Apache-2.0"
+  },
+  {
+    "id": "Microsoft.NET.Test.Sdk",
+    "version": "17.14.1",
+    "license": "MIT"
+  },
+  {
+    "id": "MSTest.TestAdapter",
+    "version": "3.10.4",
+    "license": "MIT"
+  },
+  {
+    "id": "MSTest.TestFramework",
+    "version": "3.10.4",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.ApplicationInsights",
+    "version": "2.23.0",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.CodeCoverage",
+    "version": "17.14.1",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Testing.Extensions.Telemetry",
+    "version": "1.8.4",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Testing.Extensions.TrxReport.Abstractions",
+    "version": "1.8.4",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Testing.Extensions.VSTestBridge",
+    "version": "1.8.4",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Testing.Platform",
+    "version": "1.8.4",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.Testing.Platform.MSBuild",
+    "version": "1.8.4",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.TestPlatform.AdapterUtilities",
+    "version": "17.13.0",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.TestPlatform.ObjectModel",
+    "version": "17.14.1",
+    "license": "MIT"
+  },
+  {
+    "id": "Microsoft.TestPlatform.TestHost",
+    "version": "17.14.1",
+    "license": "MIT"
+  },
+  {
+    "id": "MSTest.Analyzers",
+    "version": "3.10.4",
+    "license": "MIT"
+  },
+  {
+    "id": "Newtonsoft.Json",
+    "version": "13.0.3",
+    "license": "MIT"
+  }
+]

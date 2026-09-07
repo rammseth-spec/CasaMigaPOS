@@ -1,0 +1,28 @@
+{
+  "verifiedUtc": "2026-09-06T09:21:28.579Z",
+  "unchanged": true,
+  "sessions": [
+    {
+      "id": "5a6f6cdb-79f9-4b05-ae92-5caae89b2c4f",
+      "terminal_id": "08faea93-170b-44fe-a6f7-634097c23c6c",
+      "opened_by": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "opened_utc": "2026-09-06T04:20:54.3983689+00:00",
+      "opening_cents": 50025,
+      "state": "OPEN"
+    }
+  ],
+  "audit": [
+    {
+      "action": "identity.bootstrap",
+      "entity_id": "14b8f79c-7c87-4a6a-ac0b-fe4745dfe736",
+      "occurred_utc": "2026-09-06T04:19:22.7735910+00:00",
+      "details_json": "{}"
+    },
+    {
+      "action": "cash.open",
+      "entity_id": "5a6f6cdb-79f9-4b05-ae92-5caae89b2c4f",
+      "occurred_utc": "2026-09-06T04:20:54.3983689+00:00",
+      "details_json": "{\"openingCents\":50025,\"state\":\"OPEN\"}"
+    }
+  ]
+}

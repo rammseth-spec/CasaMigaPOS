@@ -1,0 +1,174 @@
+{
+  "queriedUtc": "2026-09-06T09:26:51.314Z",
+  "indexUrl": "https://api.nuget.org/v3/vulnerabilities/index.json",
+  "packages": [
+    {
+      "id": "Microsoft.Data.Sqlite",
+      "version": "10.0.11"
+    },
+    {
+      "id": "Microsoft.Extensions.Identity.Core",
+      "version": "10.0.11"
+    },
+    {
+      "id": "Microsoft.AspNetCore.Cryptography.Internal",
+      "version": "10.0.11"
+    },
+    {
+      "id": "Microsoft.AspNetCore.Cryptography.KeyDerivation",
+      "version": "10.0.11"
+    },
+    {
+      "id": "Microsoft.Data.Sqlite.Core",
+      "version": "10.0.11"
+    },
+    {
+      "id": "Microsoft.Extensions.Configuration",
+      "version": "10.0.11"
+    },
+    {
+      "id": "Microsoft.Extensions.Configuration.Abstractions",
+      "version": "10.0.11"
+    },
+    {
+      "id": "Microsoft.Extensions.Configuration.Binder",
+      "version": "10.0.11"
+    },
+    {
+      "id": "Microsoft.Extensions.DependencyInjection",
+      "version": "10.0.11"
+    },
+    {
+      "id": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "version": "10.0.11"
+    },
+    {
+      "id": "Microsoft.Extensions.Diagnostics",
+      "version": "10.0.11"
+    },
+    {
+      "id": "Microsoft.Extensions.Diagnostics.Abstractions",
+      "version": "10.0.11"
+    },
+    {
+      "id": "Microsoft.Extensions.Logging",
+      "version": "10.0.11"
+    },
+    {
+      "id": "Microsoft.Extensions.Logging.Abstractions",
+      "version": "10.0.11"
+    },
+    {
+      "id": "Microsoft.Extensions.Options",
+      "version": "10.0.11"
+    },
+    {
+      "id": "Microsoft.Extensions.Options.ConfigurationExtensions",
+      "version": "10.0.11"
+    },
+    {
+      "id": "Microsoft.Extensions.Primitives",
+      "version": "10.0.11"
+    },
+    {
+      "id": "SQLitePCLRaw.bundle_e_sqlite3",
+      "version": "2.1.12"
+    },
+    {
+      "id": "SQLitePCLRaw.core",
+      "version": "2.1.12"
+    },
+    {
+      "id": "SQLitePCLRaw.lib.e_sqlite3",
+      "version": "2.1.12"
+    },
+    {
+      "id": "SQLitePCLRaw.provider.e_sqlite3",
+      "version": "2.1.12"
+    },
+    {
+      "id": "Microsoft.NET.Test.Sdk",
+      "version": "17.14.1"
+    },
+    {
+      "id": "MSTest.TestAdapter",
+      "version": "3.10.4"
+    },
+    {
+      "id": "MSTest.TestFramework",
+      "version": "3.10.4"
+    },
+    {
+      "id": "Microsoft.ApplicationInsights",
+      "version": "2.23.0"
+    },
+    {
+      "id": "Microsoft.CodeCoverage",
+      "version": "17.14.1"
+    },
+    {
+      "id": "Microsoft.Testing.Extensions.Telemetry",
+      "version": "1.8.4"
+    },
+    {
+      "id": "Microsoft.Testing.Extensions.TrxReport.Abstractions",
+      "version": "1.8.4"
+    },
+    {
+      "id": "Microsoft.Testing.Extensions.VSTestBridge",
+      "version": "1.8.4"
+    },
+    {
+      "id": "Microsoft.Testing.Platform",
+      "version": "1.8.4"
+    },
+    {
+      "id": "Microsoft.Testing.Platform.MSBuild",
+      "version": "1.8.4"
+    },
+    {
+      "id": "Microsoft.TestPlatform.AdapterUtilities",
+      "version": "17.13.0"
+    },
+    {
+      "id": "Microsoft.TestPlatform.ObjectModel",
+      "version": "17.14.1"
+    },
+    {
+      "id": "Microsoft.TestPlatform.TestHost",
+      "version": "17.14.1"
+    },
+    {
+      "id": "MSTest.Analyzers",
+      "version": "3.10.4"
+    },
+    {
+      "id": "Newtonsoft.Json",
+      "version": "13.0.3"
+    }
+  ],
+  "matches": [
+    {
+      "id": "Newtonsoft.Json",
+      "version": "13.0.3",
+      "advisories": [
+        {
+          "url": "https://github.com/advisories/GHSA-5crp-9r3c-p9vr",
+          "severity": 2,
+          "versions": "(, 13.0.1)"
+        }
+      ]
+    },
+    {
+      "id": "SQLitePCLRaw.lib.e_sqlite3",
+      "version": "2.1.12",
+      "advisories": [
+        {
+          "url": "https://github.com/advisories/GHSA-2m69-gcr7-jv3q",
+          "severity": 2,
+          "versions": "(, 2.1.11]"
+        }
+      ]
+    }
+  ]
+}
