@@ -12,6 +12,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool IsPos => screen == "pos";
     public bool IsNotPos => !IsPos;
     public bool HasCart => user?.Cart is { IsEmpty:false };
+    public bool HasPendingCheckout => user?.CheckoutPending==true;
     public void DiscardCart() => Pos?.Discard(true);
     public CatalogViewModel? Catalog { get; private set; }
     public bool IsCatalog => screen == "catalog";
@@ -50,7 +51,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string TerminalLabel => $"Terminal: {terminal?.Name}";
     public string CashLabel => opened is null ? "CAJA CERRADA" : "CAJA ABIERTA";
     public string CashDetails => opened is null ? "Captura el fondo inicial para comenzar." :
-        $"Abierta por: {opened.OpenedByName}\nHora de apertura: {opened.Session.OpenedAt.ToLocalTime():dd/MM/yyyy HH:mm:ss zzz}\n\nImportes ocultos hasta confirmar el conteo ciego. Las ventas aún no están disponibles.";
+        $"Abierta por: {opened.OpenedByName}\nHora de apertura: {opened.Session.OpenedAt.ToLocalTime():dd/MM/yyyy HH:mm:ss zzz}\n\nImportes ocultos hasta confirmar el conteo ciego. Las ventas confirmadas en efectivo se incluyen en el cierre.";
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Notify() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
 
@@ -66,8 +67,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 var clock = new SystemClock();
                 terminal = TerminalConfiguration.LoadOrCreate(options.DataDirectory);
                 database.Run(store => { store.EnsureTerminal(terminal, clock.UtcNow); return true; });
-                user = new UserSession(); login = new(database, new LocalPasswords(), clock, user); cash = new(database, user, clock); closing = new(database,user,clock);
-                Pos = new(new PosService(database,user,terminal.Id),()=>UserLabel + " · " + TerminalLabel,(eventName,errorType)=>runtime.TryLog(eventName,errorType)){IsDevelopment=options.IsDevelopment};
+                var journal = new CheckoutJournal(options.DataDirectory);
+                user = new UserSession(journal); login = new(database, new LocalPasswords(), clock, user); cash = new(database, user, clock); closing = new(database,user,clock);
+                var checkout = new CheckoutService(database,user,clock,terminal.Id,journal);
+                Pos = new(new PosService(database,user,terminal.Id),checkout,()=>UserLabel + " · " + TerminalLabel,(eventName,errorType)=>runtime.TryLog(eventName,errorType)){IsDevelopment=options.IsDevelopment};
                 Catalog = new(new CatalogService(database,user,clock,terminal.Id,options.IsDevelopment),options.IsDevelopment,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 screen = login.NeedsBootstrap() ? "bootstrap" : "login";
             });
@@ -138,6 +141,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         catch (CashAlreadyOpenException error) { Message = error.Message; }
         catch (PosException error) { Message = error.Message; }
         catch (CartDiscardRequiredException error) { Message = error.Message; }
+        catch (CheckoutException error) { Message = error.Message; }
         catch (Exception error) { runtime?.TryLog("operation.failed", error.GetType().Name); Message = "No se completó la operación. Revisa el espacio y permisos del equipo; si persiste, contacta al encargado."; }
         finally { Busy = false; Notify(); }
     }

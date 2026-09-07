@@ -13,13 +13,18 @@ public sealed record PosCartLine(CartLine Line)
     public string Total => PosViewModel.Format(Line.LineTotal);
     public bool CanDecrease => Quantity > 1;
 }
-public sealed class PosViewModel(PosService service, Func<string> operatorLabel, Action<string,string?> log) : INotifyPropertyChanged
+public sealed class PosViewModel(PosService service, CheckoutService checkout, Func<string> operatorLabel, Action<string,string?> log) : INotifyPropertyChanged
 {
     private Guid? category;
     private int page;
     private Cart? cart;
     public bool Busy { get; private set; }
     public bool Ready => !Busy;
+    public CheckoutService Checkout => checkout;
+    public Money TotalMoney => cart?.Subtotal ?? new Money(0);
+    public bool RecoveryRequired { get; private set; }
+    public bool CanOperate => Ready && !RecoveryRequired;
+    public bool CanCheckout => CanOperate && HasLines;
     public bool IsDevelopment { get; init; }
     public string OperatorLabel => operatorLabel();
     private string search = "";
@@ -50,6 +55,9 @@ public sealed class PosViewModel(PosService service, Func<string> operatorLabel,
     public async Task EnterAsync()
     {
         Search="";category=null;page=0;Products=[];Categories=[];cart=null;Message="";Notify();
+        try { RecoveryRequired=checkout.HasPending; }
+        catch { RecoveryRequired=true; }
+        if(RecoveryRequired){Message="Verifica el cobro pendiente antes de continuar.";Notify();return;}
         // Propagate refusal to the shell: a closed cash session must not enter POS.
         var result=await Task.Run(()=>service.Load()); Apply(result);Notify();
     }
@@ -69,6 +77,7 @@ public sealed class PosViewModel(PosService service, Func<string> operatorLabel,
     public Task RemoveAsync(Guid id)=>Run(async()=>cart=await Task.Run(()=>service.Remove(id)));
     public void Discard(bool confirmed){service.Discard(confirmed);cart=null;Message="";Notify();}
     public void ForgetView(){cart=null;Products=[];Categories=[];Search="";Message="";Notify();}
+    public Task AfterCheckoutAsync()=>Run(EnterAsync);
     private async Task Run(Func<Task> operation)
     {
         if(Busy)return;Busy=true;Message="";Notify();
@@ -77,6 +86,7 @@ public sealed class PosViewModel(PosService service, Func<string> operatorLabel,
         catch(ArgumentException e){Message=e.Message;}
         catch(PosException e){Message=e.Message;Products=[];}
         catch(CartDiscardRequiredException e){Message=e.Message;}
+        catch(CheckoutException e){Message=e.Message;}
         catch(AccessDeniedException){Message="No tienes permiso para usar el POS.";Products=[];}
         catch(Exception e){log("pos.operation.failed",e.GetType().Name);Message="No se completó la operación. Revisa el estado del equipo antes de continuar.";}
         finally{Busy=false;Notify();}

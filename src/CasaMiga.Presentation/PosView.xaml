@@ -5,7 +5,7 @@
    <WrapPanel DockPanel.Dock="Right"><Button Content="Caja" Click="CashClick" Margin="8,0,0,0"/><Button Content="Catálogo" Click="CatalogClick" Margin="8,0,0,0"/><Button Content="Salir de usuario" Click="LogoutClick" Margin="8,0,0,0"/></WrapPanel>
    <StackPanel><TextBlock Text="CASA MIGA · POS" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource BrandBrush}"/><TextBlock Text="Identidad visual temporal" FontSize="14"/></StackPanel>
   </DockPanel>
-  <DockPanel Grid.Row="1" Margin="0,0,0,8"><TextBlock DockPanel.Dock="Right" Text="DEMO · precios de prueba" Foreground="{DynamicResource BrandBrush}" FontSize="16" Visibility="{Binding IsDevelopment,Converter={StaticResource VisibleWhen}}"/><TextBlock Text="Carrito temporal · No es una venta · Sin cobro" FontSize="16"/></DockPanel>
+  <DockPanel Grid.Row="1" Margin="0,0,0,8"><TextBlock DockPanel.Dock="Right" Text="DEMO · precios de prueba" Foreground="{DynamicResource BrandBrush}" FontSize="16" Visibility="{Binding IsDevelopment,Converter={StaticResource VisibleWhen}}"/><TextBlock Text="Carrito temporal · Venta sólo al confirmar cobro" FontSize="16"/></DockPanel>
   <Grid Grid.Row="2" Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
    <Grid><TextBlock Text="Buscar nombre o SKU" Margin="12,0" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" IsHitTestVisible="False"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Search}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock><TextBox Background="Transparent" x:Name="SearchInput" Text="{Binding Search,UpdateSourceTrigger=PropertyChanged}" MaxLength="160" AutomationProperties.Name="Buscar producto por nombre o SKU" ToolTip="Buscar nombre o SKU"/></Grid>
    <Button Grid.Column="1" Content="Buscar / actualizar" Click="SearchClick" Margin="8,0,0,0"/>
@@ -17,7 +17,7 @@
    <Grid Margin="0,0,16,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <TextBlock Text="Productos · pulsa para agregar" FontWeight="SemiBold" Margin="0,0,0,8"/>
     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-     <ItemsControl ItemsSource="{Binding Products}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate>
+     <ItemsControl ItemsSource="{Binding Products}" IsEnabled="{Binding CanOperate}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate>
       <Button Style="{StaticResource ProductTile}" Tag="{Binding Product.Id}" Click="ProductClick" AutomationProperties.Name="{Binding Name}"><StackPanel><TextBlock Text="{Binding Name}" FontSize="19" Foreground="White" FontWeight="SemiBold" TextAlignment="Center"/><TextBlock Text="{Binding Price}" FontSize="23" Foreground="White" TextAlignment="Center" Margin="0,8,0,0"/></StackPanel></Button>
      </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
     </ScrollViewer>
@@ -27,7 +27,7 @@
     <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
      <TextBlock Text="Tu carrito" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,8"/>
      <Grid Grid.Row="1"><TextBlock Text="Carrito vacío. Agrega un producto para comenzar." Foreground="{DynamicResource MutedBrush}" Margin="8,16" Visibility="{Binding IsEmpty,Converter={StaticResource VisibleWhen}}"/>
-      <ScrollViewer VerticalScrollBarVisibility="Auto"><ItemsControl ItemsSource="{Binding Lines}"><ItemsControl.ItemTemplate><DataTemplate>
+      <ScrollViewer VerticalScrollBarVisibility="Auto"><ItemsControl ItemsSource="{Binding Lines}" IsEnabled="{Binding CanOperate}"><ItemsControl.ItemTemplate><DataTemplate>
        <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="0,2,0,6" Margin="0,0,0,4"><StackPanel>
         <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
         <DockPanel Margin="0,2,0,4"><TextBlock DockPanel.Dock="Right" Text="{Binding Total}" FontWeight="SemiBold"/><TextBlock Text="{Binding UnitPrice}" FontSize="15"/></DockPanel>
@@ -35,10 +35,10 @@
        </StackPanel></Border>
       </DataTemplate></ItemsControl.ItemTemplate></ItemsControl></ScrollViewer>
      </Grid>
-     <StackPanel Grid.Row="2" Margin="0,8,0,0"><DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Subtotal}"/><TextBlock Text="Subtotal"/></DockPanel><DockPanel Margin="0,6,0,10"><TextBlock DockPanel.Dock="Right" Text="{Binding Total}" FontSize="27" FontWeight="Bold"/><TextBlock Text="TOTAL preliminar" FontSize="18" FontWeight="SemiBold"/></DockPanel><Button Content="Limpiar carrito" Click="ClearClick" IsEnabled="{Binding HasLines}"/></StackPanel>
+     <StackPanel Grid.Row="2" Margin="0,8,0,0"><DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Subtotal}"/><TextBlock Text="Subtotal"/></DockPanel><DockPanel Margin="0,6,0,10"><TextBlock DockPanel.Dock="Right" Text="{Binding Total}" FontSize="27" FontWeight="Bold"/><TextBlock Text="TOTAL preliminar" FontSize="18" FontWeight="SemiBold"/></DockPanel><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions><Button Content="Limpiar" Click="ClearClick" IsEnabled="{Binding CanCheckout}"/><Button Grid.Column="2" Content="Cobrar" Click="CheckoutClick" IsEnabled="{Binding CanCheckout}"/></Grid></StackPanel>
     </Grid>
    </Border>
   </Grid>
-  <StackPanel Grid.Row="5" Margin="0,8,0,0"><TextBlock Text="{Binding Message}" Foreground="{DynamicResource ErrorBrush}" FontSize="16" AutomationProperties.LiveSetting="Polite"/><TextBlock Text="{Binding OperatorLabel}" FontSize="14" Foreground="{DynamicResource MutedBrush}"/></StackPanel>
+  <StackPanel Grid.Row="5" Margin="0,8,0,0"><Button Content="Verificar cobro pendiente" Click="CheckoutClick" Visibility="{Binding RecoveryRequired,Converter={StaticResource VisibleWhen}}"/><TextBlock Text="{Binding Message}" Foreground="{DynamicResource ErrorBrush}" FontSize="16" AutomationProperties.LiveSetting="Polite"/><TextBlock Text="{Binding OperatorLabel}" FontSize="14" Foreground="{DynamicResource MutedBrush}"/></StackPanel>
  </Grid>
 </UserControl>

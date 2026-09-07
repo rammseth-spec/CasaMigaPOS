@@ -17,18 +17,30 @@ public sealed record CashSessionView(CashSession Session, string OpenedByName);
 public sealed record AuditEntry(Guid Id, Guid Actor, Guid? Terminal, string Action, Guid Entity,
     DateTimeOffset At, string DetailsJson);
 
-public sealed class UserSession
+public sealed class UserSession(ICheckoutJournal? checkoutJournal = null)
 {
     private readonly object gate = new();
     public Cart? Cart { get; internal set; }
+    public bool CheckoutPending { get; internal set; }
+    internal CheckoutRequest? UnresolvedCheckout { get; set; }
+    internal void RequireCheckoutResolved()
+    {
+        if (CheckoutPending || checkoutJournal?.Read() is not null) throw new CheckoutException("Verifica el cobro pendiente antes de continuar.");
+    }
     internal T Synchronized<T>(Func<T> action) { lock(gate) return action(); }
     public UserIdentity? Current { get; private set; }
-    internal void SignIn(UserIdentity identity) => Synchronized(() => { RequireEmptyCart(); Cart=null; Current=identity; return true; });
+    private void RequireLocalCartResolved()
+    {
+        if(CheckoutPending)throw new CheckoutException("Verifica el cobro pendiente antes de continuar.");
+        if(Cart is { IsEmpty:false })throw new CartDiscardRequiredException();
+    }
+    internal void SignIn(UserIdentity identity) => Synchronized(() => { RequireLocalCartResolved(); Cart=null; Current=identity; return true; });
     public void RequireEmptyCart()
     {
+        RequireCheckoutResolved();
         if (Cart is { IsEmpty: false }) throw new CartDiscardRequiredException();
     }
-    public void SignOut() => Synchronized(() => { RequireEmptyCart(); Cart=null; Current=null; return true; });
+    public void SignOut() => Synchronized(() => { RequireLocalCartResolved(); Cart=null; Current=null; return true; });
 }
 public sealed class AccessDeniedException() : Exception("No tienes permiso para esta operación.");
 public sealed class CashAlreadyOpenException() : Exception("Esta terminal ya tiene una caja abierta.");
@@ -59,4 +71,8 @@ public interface ILocalStore
     ProductPage QueryProducts(CatalogQuery query);
     void SaveProduct(Product product,bool create);
     void AddAudit(AuditEntry entry);
+    long NextSaleSequence(Guid terminal);
+    void AddSale(Sale sale);
+    Sale? FindSaleByOperation(Guid operation);
+    Money CashSalesTotal(Guid session);
 }

@@ -47,6 +47,7 @@ public partial class MainWindow : Window
     }
     private bool DiscardBefore(string action)
     {
+        if(Model.HasPendingCheckout){MessageBox.Show(this,"Verifica el cobro pendiente en el POS antes de continuar.","Cobro pendiente");return false;}
         if(!Model.HasCart)return true;
         if(!DiscardDialog.Confirm(this,action))return false;
         Model.DiscardCart();return true;

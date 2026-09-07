@@ -91,7 +91,8 @@ public sealed class PosTests
         var audits=Sql("SELECT count(*) FROM audit_entry");var high=catalog.CreateProduct(sweet.Id,null,"Límite","",new Money(long.MaxValue));audits=Sql("SELECT count(*) FROM audit_entry");
         pos.Add(high.Id);Assert.ThrowsExactly<OverflowException>(()=>pos.Add(concha.Id));Assert.HasCount(1,user.Cart!.Lines);Assert.AreEqual(audits,Sql("SELECT count(*) FROM audit_entry"));
         pos.Discard(true);pos.Add(concha.Id);pos.Increment(concha.Id);pos.Decrement(concha.Id);pos.Remove(concha.Id);Assert.AreEqual(audits,Sql("SELECT count(*) FROM audit_entry"));
-        Assert.AreEqual(0L,Sql("SELECT count(*) FROM sqlite_master WHERE type='table' AND name IN ('cart','cart_line','sales','sale_items','payments')"));
+        Assert.AreEqual(0L,Sql("SELECT count(*) FROM sqlite_master WHERE type='table' AND name IN ('cart','cart_line')"));
+        Assert.AreEqual(0L,Sql("SELECT (SELECT count(*) FROM sale)+(SELECT count(*) FROM sale_item)+(SELECT count(*) FROM payment)"));
     }
     [TestMethod]public void RestartAndBackupPreserveCashAndCatalogButNeverCart()
     {

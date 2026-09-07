@@ -9,6 +9,7 @@ public sealed class PosService(ILocalUnitOfWork database, UserSession identity, 
 {
     private Cart Context(ILocalStore store)
     {
+        identity.RequireCheckoutResolved();
         if (identity.Current is not { } actor || store.FindUser(actor.Id) is not { Active: true }
             || !store.HasPermission(actor.Id, "catalog.view") || !store.HasPermission(actor.Id, "pos.use"))
             throw new AccessDeniedException();
@@ -52,6 +53,7 @@ public sealed class PosService(ILocalUnitOfWork database, UserSession identity, 
     // Discard is always possible, including after permission revocation or an external cash close.
     public void Discard(bool confirmed) => identity.Synchronized(() =>
     {
+        identity.RequireCheckoutResolved();
         if (identity.Cart is { IsEmpty: false } && !confirmed) throw new CartDiscardRequiredException();
         identity.Cart = null;
         return true;

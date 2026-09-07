@@ -7,8 +7,8 @@ public sealed class CashClosingException(string message) : Exception(message);
 
 public sealed class CashClosingService(ILocalUnitOfWork database, UserSession identity, IClock clock)
 {
-    // Future cash movements are summed here, in the same transaction. No sales/movements exist in 1B.
-    private static Money Expected(CashSession session) => session.OpeningFund;
+    // Applied cash is net of change. Never add received cash a second time.
+    private static Money Expected(ILocalStore store, CashSession session) => session.OpeningFund + store.CashSalesTotal(session.Id);
     private LocalUser Authorize(ILocalStore store, CashSession session)
     {
         identity.RequireEmptyCart();
@@ -24,16 +24,16 @@ public sealed class CashClosingService(ILocalUnitOfWork database, UserSession id
     {
         if (session.State != CashState.Open) throw new CashClosingException("Esta sesión ya está cerrada.");
     }
-    private static ClosingResult Result(CashSession session, CashCount count)
+    private static ClosingResult Result(ILocalStore store, CashSession session, CashCount count)
     {
-        var expected=Expected(session);
+        var expected=Expected(store,session);
         return new(session,count,expected,new Money(checked(count.Counted.Cents-expected.Cents)));
     }
     private T Run<T>(Func<ILocalStore,T> operation) => identity.Synchronized(() => database.Run(operation));
     public ClosingResult? Resume(Guid id) => Run<ClosingResult?>(store =>
     {
         var session=Get(store,id); Authorize(store,session); RequireOpen(session);
-        return store.FindCount(id) is { } count ? Result(session,count) : null;
+        return store.FindCount(id) is { } count ? Result(store,session,count) : null;
     });
     public ClosingResult SubmitCount(Guid id, Money counted) => Run(store =>
     {
@@ -44,13 +44,13 @@ public sealed class CashClosingService(ILocalUnitOfWork database, UserSession id
         store.AddCount(count);
         store.AddAudit(new(Guid.NewGuid(),actor.Id,session.TerminalId,"cash.count",id,count.CountedAt,
             System.Text.Json.JsonSerializer.Serialize(new {countedCents=counted.Cents})));
-        return Result(session,count);
+        return Result(store,session,count);
     });
     public CashSession Close(Guid id) => Run(store =>
     {
         var session=Get(store,id); var actor=Authorize(store,session); RequireOpen(session);
         var count=store.FindCount(id) ?? throw new CashClosingException("Confirma primero el conteo ciego.");
-        var closed=session.Close(actor.Id,clock.UtcNow,Expected(session),count.Counted);
+        var closed=session.Close(actor.Id,clock.UtcNow,Expected(store,session),count.Counted);
         store.CloseSession(closed);
         store.AddAudit(new(Guid.NewGuid(),actor.Id,session.TerminalId,"cash.close",id,closed.ClosedAt!.Value,
             System.Text.Json.JsonSerializer.Serialize(new {openedBy=session.OpenedBy,closedBy=actor.Id,

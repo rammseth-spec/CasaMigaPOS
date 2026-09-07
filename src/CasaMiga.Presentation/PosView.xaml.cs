@@ -20,6 +20,12 @@ public partial class PosView : UserControl
     private async void RemoveClick(object s,RoutedEventArgs e)=>await Model.RemoveAsync((Guid)((Button)s).Tag);
     private async void PreviousClick(object s,RoutedEventArgs e)=>await Model.PageAsync(-1);
     private async void NextClick(object s,RoutedEventArgs e)=>await Model.PageAsync(1);
+    private async void CheckoutClick(object s,RoutedEventArgs e)
+    {
+        if(!Model.Ready)return;
+        new CheckoutDialog(Window.GetWindow(this),Model.Checkout,Model.TotalMoney,Model.RecoveryRequired).ShowDialog();
+        await Model.AfterCheckoutAsync();
+    }
     private void ClearClick(object s,RoutedEventArgs e)
     {
         if(Model.HasLines && !DiscardDialog.Confirm(Window.GetWindow(this),"limpiar el carrito"))return;

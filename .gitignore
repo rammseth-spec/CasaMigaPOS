@@ -15,3 +15,4 @@ work/
 terminal.json
 casamiga.lock
 events-*.jsonl
+checkout.pending*
