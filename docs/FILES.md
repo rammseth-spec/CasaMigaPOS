@@ -85,6 +85,14 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - docs/evidence/phase1e-service-smoke.txt
 - docs/evidence/phase1e-ui-smoke.md
 - docs/evidence/phase1e-verification.txt
+- docs/evidence/phase1e-visual-clean.txt
+- docs/evidence/phase1e-visual-migrations.json
+- docs/evidence/phase1e-visual-pending-20260910.jpg
+- docs/evidence/phase1e-visual-publication.json
+- docs/evidence/phase1e-visual-publish.txt
+- docs/evidence/phase1e-visual-restore.txt
+- docs/evidence/phase1e-visual-state.json
+- docs/evidence/phase1e-visual-verification.txt
 - docs/evidence/verification.txt
 - docs/FILES.md
 - docs/NEXT_STEPS.md
@@ -95,8 +103,10 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - docs/PHASE_1B_REPORT.md
 - docs/PHASE_1C_REPORT.md
 - docs/PHASE_1D_REPORT.md
+- docs/PHASE_1E_MANUAL_SMOKE.md
 - docs/PHASE_1E_PROGRESS.md
 - docs/PHASE_1E_REPORT.md
+- docs/PHASE_1E_VISUAL_ACCEPTANCE.md
 - docs/roadmap.md
 - docs/USER_REQUIREMENTS_PHASE_1A.md
 - docs/USER_REQUIREMENTS_PHASE_1B.md

@@ -1,0 +1,18 @@
+{
+  "at": "2026-09-10T19:44:10.370Z",
+  "sales": 0,
+  "items": 0,
+  "payments": 0,
+  "saleAudits": 0,
+  "cash": [
+    {
+      "id": "4dcd2c23-f48f-4ceb-a8f4-ffd5e57f84c4",
+      "state": "OPEN",
+      "opening_cents": 0,
+      "expected_cents": null,
+      "counted_cents": null,
+      "difference_cents": null
+    }
+  ],
+  "pending": false
+}

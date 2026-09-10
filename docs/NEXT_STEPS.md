@@ -1,6 +1,6 @@
 # Próximos pasos
 
-Completar únicamente aceptación de FASE 1E; no iniciar otra fase.
+Completar únicamente aceptación de FASE 1E; no iniciar otra fase. Actualización 2026-09-10: seguir PHASE_1E_MANUAL_SMOKE.md en work/phase1e-visual-20260910. El diálogo quedó preparado con total $53.00; no hay venta ni checkout.pending. PHASE_1E_VISUAL_ACCEPTANCE.md registra los 24 pasos y sus límites. No repetir preparaciones ni asumir que ya se cobró.
 
 Pendiente: smoke manual de la aplicación publicada. En instalación sintética, crear carrito de $53.00 (2 conchas de $19.00 y 3 bolillos de $5.00); recibido $50.00 debe deshabilitar confirmación; $100.00 debe mostrar $47.00 de cambio. Confirmar una sola vez, comprobar folio/total/recibido/cambio; Volver al POS debe vaciar carrito. Reiniciar y verificar venta conservada. Con fondo cero, contar $53.00 debe producir esperado $53.00 y diferencia cero. Confirmar cierre. Registrar evidencia visual y comparar la base. El recorrido por servicios/SQLite ya pasó, pero no equivale a smoke completo de UI.
 
