@@ -1,10 +1,26 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using CasaMiga.Infrastructure;
 
 // Development/maintenance entry point; never activate restored files over live data.
 try
 {
     if (args.Length < 2)
-        throw new ArgumentException("Uso: init|backup|list <directorio absoluto>; restore-installation <cmbackup> <directorio nuevo>; restore <db legado> <archivo nuevo>.");
+        throw new ArgumentException("Uso: init|backup|list|print-test <directorio absoluto>; restore-installation <cmbackup> <directorio nuevo>; restore <db legado> <archivo nuevo>.");
+    if (args[0] == "print-test" && args.Length == 2 && Path.IsPathFullyQualified(args[1]) && !args[1].StartsWith(@"\\", StringComparison.Ordinal))
+    {
+        var test = new ControlledReceiptPrintTest(
+            new PrintingConfigurationProvider(args[1]),
+            new EscPosReceiptRenderer(),
+            new SerializedReceiptPrintTransport(new WindowsRawPrintTransport()),
+            new SystemClock(),
+            Path.Combine(args[1], "physical-print-test.jsonl"));
+        var result = test.Run();
+        var output = new JsonSerializerOptions { WriteIndented = true };
+        output.Converters.Add(new JsonStringEnumConverter());
+        Console.WriteLine(JsonSerializer.Serialize(result, output));
+        return result.State == CasaMiga.Application.ReceiptPrintState.Submitted ? 0 : 2;
+    }
     if (args[0] == "restore-installation" && args.Length == 3)
     {
         InstallationBackup.Restore(args[1],args[2]);

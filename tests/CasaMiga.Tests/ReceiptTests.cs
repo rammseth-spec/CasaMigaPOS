@@ -120,6 +120,37 @@ public sealed class ReceiptTests : SalesFixture
         Assert.AreEqual("CONFIG_INVALID",provider.Read().ErrorCode);
     }
 
+    [TestMethod] public void ControlledPhysicalTestIsAsciiSafeSingleSubmissionAndTraced()
+    {
+        var trace=Path.Combine(directory,"physical-print-test.jsonl");var transport=new ProbeTransport();
+        var settings=Settings() with{QueueName="POS-80",EncodingName="us-ascii",Business=new("PRUEBA CASA MIGA","PRUEBA DE IMPRESION",ClosingMessage:"GRACIAS POR SU COMPRA")};
+        var result=new ControlledReceiptPrintTest(new FixedSettings(new(settings,null)),new EscPosReceiptRenderer(),transport,clock,trace).Run();
+        Assert.AreEqual(ReceiptPrintState.Submitted,result.State);Assert.AreEqual(41,result.JobId);Assert.AreEqual(1,transport.Calls);
+        Assert.AreEqual("POS-80",result.QueueName);
+        Assert.IsTrue(result.ReceiptText.All(character=>character<=0x7f));Assert.IsFalse(result.ReceiptText.Contains('\u001b'));Assert.IsFalse(result.ReceiptText.Contains('\u001d'));
+        Assert.IsTrue(result.ReceiptText.Split("\r\n",StringSplitOptions.RemoveEmptyEntries).All(line=>line.Length<=48));
+        var events=File.ReadAllLines(trace);Assert.HasCount(2,events);Assert.Contains("\"state\":\"REQUESTED\"",events[0]);
+        Assert.Contains("\"state\":\"SUBMITTED\"",events[1]);Assert.Contains("\"jobId\":41",events[1]);
+    }
+
+    [TestMethod] public void ControlledPhysicalTestRequiresEnabledTestProfileBeforeTransport()
+    {
+        var transport=new ProbeTransport();var disabled=Settings() with{Enabled=false};
+        Assert.ThrowsExactly<InvalidOperationException>(()=>new ControlledReceiptPrintTest(
+            new FixedSettings(new(disabled,"PRINTING_DISABLED")),new EscPosReceiptRenderer(),transport,clock,Path.Combine(directory,"trace.jsonl")).Run());
+        Assert.AreEqual(0,transport.Calls);
+    }
+
+    [TestMethod] public void ControlledPhysicalTestRecordsKnownTransportFailureWithoutRetry()
+    {
+        var transport=new ProbeTransport{Failure=new("OPEN_PRINTER_1801",false)};
+        var settings=Settings() with{QueueName="POS-80",EncodingName="us-ascii",Business=new("PRUEBA CASA MIGA",ClosingMessage:"GRACIAS POR SU COMPRA")};
+        var trace=Path.Combine(directory,"failed-print.jsonl");
+        var result=new ControlledReceiptPrintTest(new FixedSettings(new(settings,null)),new EscPosReceiptRenderer(),transport,clock,trace).Run();
+        Assert.AreEqual(ReceiptPrintState.Failed,result.State);Assert.AreEqual(1,transport.Calls);Assert.IsNull(result.JobId);
+        Assert.Contains("\"state\":\"FAILED\"",File.ReadAllLines(trace)[1]);Assert.Contains("OPEN_PRINTER_1801",File.ReadAllText(trace));
+    }
+
     [TestMethod] public void UpgradeFromSevenPreservesSaleAndAddsReceiptSchema()
     {
         var path=Path.Combine(directory,"version-seven.db");var old=new Database(path);var assembly=typeof(Database).Assembly;
