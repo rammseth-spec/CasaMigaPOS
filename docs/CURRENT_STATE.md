@@ -1,6 +1,8 @@
-# Estado actual — FASE 1G BLOQUE C, VALIDACIÓN HUMANA PENDIENTE
+# Estado actual — FASE 1G BLOQUE D, VALIDACIÓN HUMANA PENDIENTE
 
-Fecha: 2026-09-11. FASE 1F permanece cerrada. El usuario confirmó que el ticket del Bloque B salió legible, alineado y sin recorte derecho; resultó pequeño y no hubo corte automático. Bloque C implementa tamaño selectivo y un corte parcial controlado en `65b78bf`. Git local conserva la identidad Rammseth / `rammstudioworkshop\@gmail.com`; no hay remoto ni push.
+Fecha: 2026-09-11. FASE 1F permanece cerrada. El usuario aprobó la jerarquía visual del Bloque C: encabezado, cuerpo, TOTAL, alineación, márgenes y distribución. Bloque D implementa selección estricta de codepage en `283cfa4`. Git local conserva la identidad Rammseth / `rammstudioworkshop\@gmail.com`; no hay remoto ni push.
+
+Bloque D envió exactamente un ticket sintético: .NET `ibm850`, ESC/POS tabla 2, selección `1B 74 02` una vez en offset cero. Request `957c1076-cd21-4ceb-b609-63b437a6c643`, JobId 5, SUBMITTED, 889 bytes y SHA-256 `83CC7BA9E0339E608891C2B3908021A847053B40B5A3F722C4F4AF44F101321D`. La interpretación física de los caracteres está pendiente de foto.
 
 Bloque C envió exactamente un ticket sintético a POS-80: request `6df7d54d-a095-48e3-9223-dfc09b5bdf51`, JobId 4, 770 bytes, estado SUBMITTED y SHA-256 `792FEFF59A9921E17AD77DFDD03D3B7D65447150B58ED195C159CF443DECB757`. Contiene encabezado 2×2, TOTAL doble alto, dos restauraciones, cuatro LF y un único corte parcial final. No contiene pulso de cajón. La salida física y el corte todavía requieren foto/confirmación humana.
 
@@ -12,7 +14,7 @@ Migración 008 agrega las tres tablas y `sales.receipt.reprint` sólo para Admin
 
 WindowsRawPrintTransport envía RAW a una cola lógica y devuelve JobId. SerializedReceiptPrintTransport limita a un trabajo dentro de la aplicación. El renderer de Bloque A contiene texto únicamente: no emite selección de codepage, inicialización, corte ni cajón. SUBMITTED significa aceptado por spooler, no papel físicamente confirmado.
 
-Verificación vigente: 187 pruebas aprobadas, 0 fallidas, 0 omitidas; build Release con 0 errores y 0 advertencias. El mecanismo controlado no abre la base comercial y no cambia venta, pago, caja ni ExpectedCash.
+Verificación vigente: 188 pruebas aprobadas, 0 fallidas, 0 omitidas; build Release con 0 errores y 0 advertencias. El mecanismo controlado no abre la base comercial y no cambia venta, pago, caja ni ExpectedCash.
 
 `sales.view` se concede por migración 007 solamente a Administrator y Manager. Cashier no lo recibe. Presentation oculta Ventas sin permiso y Application revalida en cada consulta que el usuario actual exista, esté activo y conserve el permiso. Consultar historial no exige caja abierta ni `sales.complete`.
 

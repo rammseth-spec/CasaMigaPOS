@@ -39,6 +39,15 @@
     "expectedCashChanged": false,
     "commercialDatabaseOpened": false
   },
-  "physicalOutputConfirmed": false,
-  "physicalValidation": "PENDING_USER_PHOTO_AND_ANSWERS"
+  "physicalOutputConfirmed": true,
+  "physicalValidation": {
+    "headerSizeExcellent": true,
+    "bodyLegible": true,
+    "totalEmphasisGood": true,
+    "productsAndPricesAligned": true,
+    "rightEdgeClipped": false,
+    "marginsCorrect": true,
+    "generalLayoutApproved": true,
+    "exactPartialCutBehavior": "PENDING_EXPLICIT_USER_CONFIRMATION"
+  }
 }

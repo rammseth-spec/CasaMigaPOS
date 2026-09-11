@@ -1,6 +1,6 @@
 # FASE 1G Bloque C — Legibilidad y primer corte controlado
 
-Fecha: 2026-09-11. Estado: **FASE 1G ABIERTA; envío técnico único terminado y validación física humana pendiente**.
+Fecha: 2026-09-11. Estado actualizado en Bloque D: **jerarquía visual aprobada por el usuario**. Encabezado, cuerpo, TOTAL, alineación, márgenes y distribución fueron satisfactorios. La confirmación explícita del comportamiento exacto del corte parcial continúa pendiente si no se proporcionó por separado.
 
 ## Git y alcance
 

@@ -1,0 +1,56 @@
+{
+  "phase": "1G Block D",
+  "recordedAtUtc": "2026-09-11T20:18:38.1092258+00:00",
+  "hypothesisPendingPhysicalValidation": true,
+  "officialReferences": {
+    "qian": "https://manuales.qian.mx/QOP-T80UL-RI-02.pdf",
+    "epsonEscT": "https://download4.epson.biz/sec_pubs/pos/reference_en/escpos/esc_lt.html",
+    "epsonPc850": "https://download4.epson.biz/sec_pubs/pos/reference_en/charcode/page_02.html",
+    "dotnetCodePages": "https://learn.microsoft.com/en-us/dotnet/api/system.text.codepagesencodingprovider?view=net-10.0"
+  },
+  "encoding": {
+    "dotnetName": "ibm850",
+    "dotnetCodePage": 850,
+    "escPosTable": 2,
+    "selectionHex": "1B 74 02",
+    "selectionCount": 1,
+    "selectionOffset": 0
+  },
+  "request": {
+    "printRequestId": "957c1076-cd21-4ceb-b609-63b437a6c643",
+    "requestedAtUtc": "2026-09-11T20:18:37.9936825+00:00",
+    "submittedAtUtc": "2026-09-11T20:18:38.1092258+00:00",
+    "states": ["REQUESTED", "SUBMITTED"],
+    "queueName": "POS-80",
+    "spoolerJobId": 5,
+    "byteCount": 889,
+    "payloadSha256": "83CC7BA9E0339E608891C2B3908021A847053B40B5A3F722C4F4AF44F101321D",
+    "exactPayloadHexFile": "phase1g-block-d-payload.hex",
+    "errorCode": null
+  },
+  "spanishBytes": {
+    "lowercaseAccents": "A0 20 82 20 A1 20 A2 20 A3",
+    "uppercaseAccents": "B5 20 90 20 D6 20 E0 20 E9",
+    "umlaut": "81 20 9A",
+    "enye": "A4 20 A5",
+    "openingQuestion": "A8",
+    "openingExclamation": "AD",
+    "currencySign": "24"
+  },
+  "preservedCommands": {
+    "doubleWidthHeightCount": 1,
+    "doubleHeightCount": 1,
+    "normalSizeCount": 2,
+    "partialCutCount": 1,
+    "cashDrawerPulseCount": 0
+  },
+  "commercialEffects": {
+    "saleCreated": false,
+    "paymentCreated": false,
+    "cashSessionOpened": false,
+    "expectedCashChanged": false,
+    "commercialDatabaseOpened": false
+  },
+  "physicalOutputConfirmed": false,
+  "physicalValidation": "PENDING_USER_PHOTO_AND_ANSWERS"
+}

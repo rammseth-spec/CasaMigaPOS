@@ -6,6 +6,8 @@ Resultado recibido: Qian QOP-T80UL-RI-02 por USB001; cola `POS-80`; driver `POS-
 
 Bloque C: PrintRequestId `6df7d54d-a095-48e3-9223-dfc09b5bdf51`, JobId 4, SUBMITTED, 770 bytes; encabezado 2×2, TOTAL doble alto, cuatro LF y un solo `GS V 01` al final. Ver `PHASE_1G_BLOCK_C_REPORT.md`.
 
+Bloque D: PrintRequestId `957c1076-cd21-4ceb-b609-63b437a6c643`, JobId 5, SUBMITTED, 889 bytes; `ESC t 2` al inicio y cuerpo PC850. La fotografía debe confirmar caracteres y comportamiento del corte. Ver `PHASE_1G_BLOCK_D_REPORT.md`.
+
 ## Preparación exacta
 
 1. Confirma en la etiqueta inferior que el modelo sea `QOP-T80UL-RI-02`. Anota cualquier revisión, serie o firmware visible.
