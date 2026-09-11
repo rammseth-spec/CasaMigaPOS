@@ -8,9 +8,11 @@ public partial class PosView : UserControl
     private PosViewModel Model=>(PosViewModel)DataContext;
     public event EventHandler? CashRequested;
     public event EventHandler? CatalogRequested;
+    public event EventHandler? SalesRequested;
     public event EventHandler? LogoutRequested;
     private void CashClick(object s,RoutedEventArgs e)=>CashRequested?.Invoke(this,EventArgs.Empty);
     private void CatalogClick(object s,RoutedEventArgs e)=>CatalogRequested?.Invoke(this,EventArgs.Empty);
+    private void SalesClick(object s,RoutedEventArgs e)=>SalesRequested?.Invoke(this,EventArgs.Empty);
     private void LogoutClick(object s,RoutedEventArgs e)=>LogoutRequested?.Invoke(this,EventArgs.Empty);
     private async void SearchClick(object s,RoutedEventArgs e)=>await Model.SearchAsync();
     private async void CategoryClick(object s,RoutedEventArgs e)=>await Model.CategoryAsync(((Button)s).Tag as Guid?);

@@ -46,6 +46,7 @@ public sealed class AccessDeniedException() : Exception("No tienes permiso para 
 public sealed class CashAlreadyOpenException() : Exception("Esta terminal ya tiene una caja abierta.");
 
 public interface ILocalUnitOfWork { T Run<T>(Func<ILocalStore, T> operation); }
+public interface ILocalReadUnitOfWork { T Read<T>(Func<ILocalStore, T> operation); }
 public interface ILocalStore
 {
     int UserCount();
@@ -75,4 +76,6 @@ public interface ILocalStore
     void AddSale(Sale sale);
     Sale? FindSaleByOperation(Guid operation);
     Money CashSalesTotal(Guid session);
+    SalesHistoryPage QuerySales(SalesHistoryFilter filter);
+    SalesHistoryDetail? FindSaleDetail(Guid saleId);
 }

@@ -162,7 +162,7 @@ public sealed class CashIdentityTests
         Assert.ThrowsExactly<InvalidOperationException>(()=>identity.Bootstrap("other","Other",password));
         Assert.AreEqual(1L,Scalar("SELECT count(*) FROM app_user"));
         Assert.AreEqual(3L,Scalar("SELECT count(*) FROM app_role"));
-        Assert.AreEqual(14L,Scalar("SELECT count(*) FROM permission"));
+        Assert.AreEqual(15L,Scalar("SELECT count(*) FROM permission"));
         Execute("UPDATE app_user SET role_name='Cashier'");
         Assert.IsTrue(cash.CanOpen());
         Assert.IsFalse(work.Run(s=>s.HasPermission(user.Current!.Id,"cash.close")));
@@ -195,7 +195,7 @@ public sealed class CashIdentityTests
         previous.Initialize(); previous.Validate();
         using var connection=previous.Open();using var query=connection.CreateCommand();
         query.CommandText="SELECT name FROM category WHERE id='c'";Assert.AreEqual("Pan dulce",query.ExecuteScalar());
-        query.CommandText="SELECT count(*) FROM schema_migration";Assert.AreEqual(6L,query.ExecuteScalar());
+        query.CommandText="SELECT count(*) FROM schema_migration";Assert.AreEqual(7L,query.ExecuteScalar());
         query.CommandText="SELECT count(*) FROM app_user";Assert.AreEqual(0L,query.ExecuteScalar());
     }
 }

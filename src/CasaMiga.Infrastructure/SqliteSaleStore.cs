@@ -1,3 +1,4 @@
+using CasaMiga.Application;
 using CasaMiga.Domain;
 namespace CasaMiga.Infrastructure;
 
@@ -52,6 +53,76 @@ public sealed partial class SqliteLocalUnitOfWork
         {
             using var query = Command("SELECT COALESCE(SUM(p.applied_cents),0) FROM payment p JOIN sale s ON s.id=p.sale_id WHERE s.cash_session_id=$cash AND p.method='CASH'", ("$cash", Id(session)));
             return new(Convert.ToInt64(query.ExecuteScalar()));
+        }
+
+        public SalesHistoryPage QuerySales(SalesHistoryFilter filter)
+        {
+            const int pageSize = 50;
+            string predicate;
+            (string Name, object? Value)[] parameters;
+            if (filter.TerminalId is { } terminal && filter.Sequence is { } sequence)
+            {
+                predicate = " WHERE s.terminal_id=$terminal AND s.sequence=$sequence";
+                parameters = [("$terminal", Id(terminal)), ("$sequence", sequence)];
+            }
+            else
+            {
+                var parts = new List<string>();
+                var values = new List<(string, object?)>();
+                if (filter.FromUtc is { } from) { parts.Add("s.confirmed_utc >= $from"); values.Add(("$from", At(from))); }
+                if (filter.UntilUtc is { } until) { parts.Add("s.confirmed_utc < $until"); values.Add(("$until", At(until))); }
+                predicate = parts.Count == 0 ? "" : " WHERE " + string.Join(" AND ", parts);
+                parameters = values.ToArray();
+            }
+
+            using var count = Command("SELECT count(*) FROM sale s" + predicate, parameters);
+            var total = Convert.ToInt32(count.ExecuteScalar());
+            using var page = Command("SELECT s.id,s.terminal_id,s.sequence,s.confirmed_utc,s.total_cents,p.method,s.user_id,u.display_name,t.name,s.cash_session_id"
+                + " FROM sale s JOIN payment p ON p.sale_id=s.id JOIN app_user u ON u.id=s.user_id JOIN terminal t ON t.id=s.terminal_id"
+                + predicate + " ORDER BY s.confirmed_utc DESC,s.id DESC LIMIT $limit OFFSET $offset", parameters);
+            page.Parameters.AddWithValue("$limit", pageSize);
+            page.Parameters.AddWithValue("$offset", checked(filter.Page * pageSize));
+            using var reader = page.ExecuteReader();
+            var items = new List<SalesHistoryRow>();
+            while (reader.Read())
+            {
+                var saleId = Guid.Parse(reader.GetString(0));
+                var terminalId = Guid.Parse(reader.GetString(1));
+                var rowSequence = reader.GetInt64(2);
+                items.Add(new(saleId, $"{terminalId:N}-{rowSequence:D8}", Date(reader, 3)!.Value,
+                    new(reader.GetInt64(4)), reader.GetString(5), Guid.Parse(reader.GetString(6)), reader.GetString(7),
+                    terminalId, reader.GetString(8), Guid.Parse(reader.GetString(9))));
+            }
+            return new(items, total, filter.Page, pageSize);
+        }
+
+        public SalesHistoryDetail? FindSaleDetail(Guid saleId)
+        {
+            using var query = Command("SELECT s.operation_id,s.user_id,u.display_name,s.terminal_id,t.name,s.cash_session_id,s.sequence,s.confirmed_utc,p.id,p.method,p.applied_cents,p.received_cents,p.change_cents,s.subtotal_cents,s.total_cents"
+                + " FROM sale s JOIN payment p ON p.sale_id=s.id JOIN app_user u ON u.id=s.user_id JOIN terminal t ON t.id=s.terminal_id WHERE s.id=$id", ("$id", Id(saleId)));
+            Guid operation, user, terminal, cash, payment; long sequence, received, applied, change, subtotal, total;
+            DateTimeOffset at; string cashierName, terminalName, method;
+            using (var reader = query.ExecuteReader())
+            {
+                if (!reader.Read()) return null;
+                operation=Guid.Parse(reader.GetString(0));user=Guid.Parse(reader.GetString(1));cashierName=reader.GetString(2);
+                terminal=Guid.Parse(reader.GetString(3));terminalName=reader.GetString(4);cash=Guid.Parse(reader.GetString(5));sequence=reader.GetInt64(6);
+                at=Date(reader,7)!.Value;payment=Guid.Parse(reader.GetString(8));method=reader.GetString(9);applied=reader.GetInt64(10);
+                received=reader.GetInt64(11);change=reader.GetInt64(12);subtotal=reader.GetInt64(13);total=reader.GetInt64(14);
+            }
+            using var rows = Command("SELECT product_id,product_name,unit_price_cents,quantity,line_total_cents FROM sale_item WHERE sale_id=$id ORDER BY position", ("$id", Id(saleId)));
+            using var itemReader = rows.ExecuteReader(); var items = new List<SaleItem>();
+            while (itemReader.Read())
+            {
+                var item = new SaleItem(Guid.Parse(itemReader.GetString(0)), itemReader.GetString(1), new(itemReader.GetInt64(2)), itemReader.GetInt32(3));
+                if (item.LineTotal.Cents != itemReader.GetInt64(4)) throw new InvalidDataException("La partida histórica no es coherente.");
+                items.Add(item);
+            }
+            var sale = new Sale(saleId, operation, user, terminal, cash, sequence, at, items, payment, new(received));
+            if (method != sale.Payment.Method || applied != sale.Payment.Applied.Cents || change != sale.Payment.Change.Cents
+                || subtotal != sale.Subtotal.Cents || total != sale.Total.Cents)
+                throw new InvalidDataException("La venta histórica no es coherente.");
+            return new(sale, cashierName, terminalName);
         }
     }
 }

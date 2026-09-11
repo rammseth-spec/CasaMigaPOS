@@ -16,6 +16,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public void DiscardCart() => Pos?.Discard(true);
     public CatalogViewModel? Catalog { get; private set; }
     public bool IsCatalog => screen == "catalog";
+    public SalesHistoryViewModel? SalesHistory { get; private set; }
+    public bool IsSalesHistory => screen == "salesHistory";
+    public bool CanViewSales { get; private set; }
     public bool CanNavigate => user?.Current is not null;
     private IdentityService? login;
     private CashService? cash;
@@ -45,8 +48,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string Amount { get; set; } = "0.00";
     public bool MessageIsSuccess { get; private set; }
     public string Message { get; private set; } = "";
-    public string Heading => screen switch { "catalog" => "Catálogo", "counting" => "Conteo de caja", "closingResult" => "Resultado de caja", "bootstrap" => "Bienvenido a Casa Miga", "login" => "Inicia sesión", "dashboard" => "Tu caja", "opening" => "Abrir caja", _ => "Preparando Casa Miga" };
-    public string Subtitle => screen switch { "catalog" => "Categorías y productos · Sin proceso de venta.", "counting" => "Cuenta el efectivo sin consultar el esperado. Continuar guarda tu conteo y no permite cambiarlo después.", "closingResult" => "Revisa el resultado y confirma el cierre definitivo.", "bootstrap" => "Configura el primer administrador. No hay contraseñas predeterminadas.", "login" => "Identifícate para consultar o abrir esta caja.", "opening" => "Registra el efectivo con el que comienza la sesión.", "dashboard" => "Sesión local · Tus datos permanecen en este equipo.", _ => "Validando base y respaldo…" };
+    public string Heading => screen switch { "catalog" => "Catálogo", "salesHistory"=>"Historial de ventas", "counting" => "Conteo de caja", "closingResult" => "Resultado de caja", "bootstrap" => "Bienvenido a Casa Miga", "login" => "Inicia sesión", "dashboard" => "Tu caja", "opening" => "Abrir caja", _ => "Preparando Casa Miga" };
+    public string Subtitle => screen switch { "catalog" => "Categorías y productos · Sin proceso de venta.", "salesHistory"=>"Ventas confirmadas · Consulta de solo lectura.", "counting" => "Cuenta el efectivo sin consultar el esperado. Continuar guarda tu conteo y no permite cambiarlo después.", "closingResult" => "Revisa el resultado y confirma el cierre definitivo.", "bootstrap" => "Configura el primer administrador. No hay contraseñas predeterminadas.", "login" => "Identifícate para consultar o abrir esta caja.", "opening" => "Registra el efectivo con el que comienza la sesión.", "dashboard" => "Sesión local · Tus datos permanecen en este equipo.", _ => "Validando base y respaldo…" };
     public string UserLabel => $"Usuario: {user?.Current?.DisplayName}";
     public string TerminalLabel => $"Terminal: {terminal?.Name}";
     public string CashLabel => opened is null ? "CAJA CERRADA" : "CAJA ABIERTA";
@@ -72,6 +75,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 var checkout = new CheckoutService(database,user,clock,terminal.Id,journal);
                 Pos = new(new PosService(database,user,terminal.Id),checkout,()=>UserLabel + " · " + TerminalLabel,(eventName,errorType)=>runtime.TryLog(eventName,errorType)){IsDevelopment=options.IsDevelopment};
                 Catalog = new(new CatalogService(database,user,clock,terminal.Id,options.IsDevelopment),options.IsDevelopment,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
+                SalesHistory = new(new SalesHistoryService(database,user,TimeZoneInfo.Local),(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 screen = login.NeedsBootstrap() ? "bootstrap" : "login";
             });
         });
@@ -87,7 +91,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (!await Task.Run(() => login!.Login(name, password))) { Message = "No se pudo iniciar sesión. Revisa tus datos o espera un minuto e inténtalo de nuevo."; return; }
         await RefreshAsync(); screen = "dashboard";
     });
-    public void Logout() { if (Busy) return; user?.SignOut(); Pos?.ForgetView(); opened = null; closingResult = null; CountedAmount = ""; screen = "login"; Message = ""; Notify(); }
+    public void Logout() { if (Busy) return; user?.SignOut(); Pos?.ForgetView(); SalesHistory?.Forget(); opened = null; closingResult = null; CountedAmount = ""; CanViewSales=false; screen = "login"; Message = ""; Notify(); }
     public void ShowOpening() { if (Busy || !CanOpen) return; Amount = "0.00"; screen = "opening"; Message = ""; Notify(); }
     public void CancelOpening() { if (Busy) return; screen = "dashboard"; Message = ""; Notify(); }
     public Task OpenAsync() => Execute(async () =>
@@ -101,6 +105,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     });
     public Task ShowPosAsync() => Execute(async () => {await Pos!.EnterAsync();screen="pos";});
     public Task ShowCatalogAsync() => Execute(async () => {await Catalog!.LoadAsync();screen="catalog";});
+    public Task ShowSalesHistoryAsync() => Execute(async () => {await SalesHistory!.LoadAsync();screen="salesHistory";});
     public Task ShowCashAsync() => Execute(async () => {await RefreshAsync();screen="dashboard";});
     public Task BeginClosingAsync() => Execute(async () =>
     {
@@ -127,6 +132,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         opened = await Task.Run(() => cash!.Current(terminal!.Id));
         CanOpen = opened is null && await Task.Run(() => cash!.CanOpen());
+        CanViewSales = await Task.Run(() => SalesHistory!.CanView());
     }
     private async Task Execute(Func<Task> action)
     {

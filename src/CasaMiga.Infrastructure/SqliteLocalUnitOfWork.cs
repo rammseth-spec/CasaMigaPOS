@@ -5,12 +5,21 @@ using Microsoft.Data.Sqlite;
 
 namespace CasaMiga.Infrastructure;
 
-public sealed partial class SqliteLocalUnitOfWork(Database database) : ILocalUnitOfWork
+public sealed partial class SqliteLocalUnitOfWork(Database database) : ILocalUnitOfWork, ILocalReadUnitOfWork
 {
     public T Run<T>(Func<ILocalStore, T> operation)
     {
         using var connection = database.Open();
         using var transaction = connection.BeginTransaction(deferred: false);
+        var result = operation(new Store(connection, transaction));
+        transaction.Commit();
+        return result;
+    }
+
+    public T Read<T>(Func<ILocalStore, T> operation)
+    {
+        using var connection = database.Open(readOnly: true);
+        using var transaction = connection.BeginTransaction(deferred: true);
         var result = operation(new Store(connection, transaction));
         transaction.Commit();
         return result;
