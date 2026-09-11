@@ -17,6 +17,7 @@ public sealed class PrintingConfigurationProvider(string dataDirectory) : IPrint
             var settings=JsonSerializer.Deserialize<PrintingSettings>(File.ReadAllText(path),Options);
             if(settings is null || settings.Business is null || settings.Version!=1 || settings.Columns is <32 or >64
                 || string.IsNullOrWhiteSpace(settings.EncodingName) || settings.EncodingName.Length>100
+                || !ValidEncodingSelection(settings.EncodingName,settings.CharacterTable)
                 || settings.CutMode is not ("Disabled" or "Partial") || settings.OpenCashDrawer
                 || (settings.Enabled && (string.IsNullOrWhiteSpace(settings.QueueName) || string.IsNullOrWhiteSpace(settings.Business.DisplayName)
                     || settings.QueueName.Length>260 || settings.Business.DisplayName.Length>120
@@ -30,4 +31,13 @@ public sealed class PrintingConfigurationProvider(string dataDirectory) : IPrint
             return new(null,"CONFIG_INVALID");
         }
     }
+
+    private static bool ValidEncodingSelection(string encodingName,int? characterTable)
+        =>(encodingName.ToLowerInvariant(),characterTable) switch
+        {
+            ("us-ascii",null)=>true,
+            ("ibm850",2)=>true,
+            ("windows-1252",16)=>true,
+            _=>false
+        };
 }

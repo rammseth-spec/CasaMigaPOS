@@ -30,6 +30,12 @@ Bloque C introduce únicamente estas secuencias:
 
 El encabezado 2×2 se compone con un ancho efectivo de `columns / 2`, por lo que en papel configurado a 48 columnas se centra y envuelve a 24 caracteres. TOTAL conserva 48 caracteres efectivos porque sólo duplica altura. `cutMode` acepta únicamente `Disabled` o `Partial`; el corte se agrega sólo con `Partial`. `openCashDrawer` continúa siendo obligatorio en false y no se introduce ninguna secuencia ESC/pulso. Tampoco se introduce selección de codepage ni inicialización.
 
+## Bloque D: hipótesis controlada de codepage
+
+La ficha Qian enumera PC850 entre los juegos extendidos, pero no publica en el documento disponible el número de tabla usado por el firmware. La referencia oficial Epson de [ESC t](https://download4.epson.biz/sec_pubs/pos/reference_en/escpos/esc_lt.html) define `1B 74 n` y asigna `n = 2` a PC850 Multilingual. Como Qian declara compatibilidad Epson ESC/POS, Bloque D autoriza una sola prueba de la combinación **.NET `ibm850` (code page 850) + ESC/POS tabla 2 (`1B 74 02`)**. Esta correspondencia sigue siendo una hipótesis hasta observar la impresión; si falla, no se prueba otra tabla automáticamente.
+
+[Microsoft documenta](https://learn.microsoft.com/en-us/dotnet/api/system.text.codepagesencodingprovider?view=net-10.0) que `CodePagesEncodingProvider.Instance` debe registrarse para obtener estas páginas en .NET. El renderer usa `EncoderFallback.ExceptionFallback`: cualquier carácter no representable detiene el envío en vez de sustituirse silenciosamente. `PrintingSettings` conserva juntos nombre de encoding y número ESC/POS, y sólo acepta las parejas documentadas `us-ascii`/sin tabla, `ibm850`/2 y `windows-1252`/16. El comando de selección, cuando existe, aparece exactamente una vez al inicio del payload y antes de cualquier texto.
+
 ## Consecuencias
 
 Windows controla el puerto USB y más adelante podrá controlar una cola LAN sin cambiar Application. La cola puede aceptar un trabajo con hardware desconectado; por ello el estado visible es «aceptado por la cola», no «impreso físicamente». El corte parcial debe validarse con exactamente un ticket sintético y observación humana. Codepage, español, logo, cajón y LAN permanecen bloqueados.

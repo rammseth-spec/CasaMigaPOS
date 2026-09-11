@@ -8,7 +8,8 @@ public sealed record PrintingSettings(
     string EncodingName,
     string CutMode,
     bool OpenCashDrawer,
-    BusinessReceiptProfile Business);
+    BusinessReceiptProfile Business,
+    int? CharacterTable = null);
 
 public sealed record PrintingSettingsResult(PrintingSettings? Settings, string? ErrorCode)
 {

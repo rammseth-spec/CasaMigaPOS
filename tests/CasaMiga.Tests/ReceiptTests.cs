@@ -18,7 +18,7 @@ public sealed class ReceiptTests : SalesFixture
         var sale=Persist();var detail=work.Run(s=>s.FindSaleDetail(sale.Id))!;
         return ReceiptDocument.FromSale(detail,Profile(),TimeZoneInfo.Utc);
     }
-    private static PrintingSettings Settings()=>new(1,true,"QIAN TEST",48,"windows-1252","Disabled",false,Profile());
+    private static PrintingSettings Settings()=>new(1,true,"QIAN TEST",48,"windows-1252","Disabled",false,Profile(),16);
 
     [TestMethod] public void ReceiptUsesSaleSnapshotsAndStableCanonicalHash()
     {
@@ -49,7 +49,8 @@ public sealed class ReceiptTests : SalesFixture
     {
         var payload=new EscPosReceiptRenderer().Render(Document(),ReceiptCopyKind.Original,Settings());
         var text=Encoding.GetEncoding(1252).GetString(payload);
-        Assert.Contains("CASA MIGA",text);Assert.Contains("Cajero",text);Assert.IsFalse(payload.Contains((byte)0x1B));
+        Assert.Contains("CASA MIGA",text);Assert.Contains("Cajero",text);Assert.AreEqual(1,Occurrences(payload,[0x1b,0x74,0x10]));
+        CollectionAssert.AreEqual(new byte[]{0x1b,0x74,0x10},payload[..3]);Assert.AreEqual(0,Occurrences(payload,[0x1b,0x70]));
         Assert.AreEqual(1,Occurrences(payload,[0x1d,0x21,0x11]));Assert.AreEqual(1,Occurrences(payload,[0x1d,0x21,0x01]));
         Assert.AreEqual(2,Occurrences(payload,[0x1d,0x21,0x00]));Assert.AreEqual(0,Occurrences(payload,[0x1d,0x56,0x01]));
     }
@@ -121,6 +122,8 @@ public sealed class ReceiptTests : SalesFixture
         Assert.IsTrue(provider.Read().Available);
         File.WriteAllText(Path.Combine(directory,PrintingConfigurationProvider.FileName),json.Replace("\"cutMode\":\"Disabled\"","\"cutMode\":\"Full\""));
         Assert.AreEqual("CONFIG_INVALID",provider.Read().ErrorCode);
+        File.WriteAllText(Path.Combine(directory,PrintingConfigurationProvider.FileName),json.Replace("\"characterTable\":16","\"characterTable\":2"));
+        Assert.AreEqual("CONFIG_INVALID",provider.Read().ErrorCode);
         File.WriteAllText(Path.Combine(directory,PrintingConfigurationProvider.FileName),json.Replace("\"openCashDrawer\":false","\"openCashDrawer\":true"));
         Assert.AreEqual("CONFIG_INVALID",provider.Read().ErrorCode);
     }
@@ -128,7 +131,7 @@ public sealed class ReceiptTests : SalesFixture
     [TestMethod] public void ControlledPhysicalTestIsAsciiSafeSingleSubmissionAndTraced()
     {
         var trace=Path.Combine(directory,"physical-print-test.jsonl");var transport=new ProbeTransport();
-        var settings=Settings() with{QueueName="POS-80",EncodingName="us-ascii",Business=new("PRUEBA CASA MIGA","PRUEBA DE IMPRESION",ClosingMessage:"GRACIAS POR SU COMPRA")};
+        var settings=Settings() with{QueueName="POS-80",EncodingName="us-ascii",CharacterTable=null,Business=new("PRUEBA CASA MIGA","PRUEBA DE IMPRESION",ClosingMessage:"GRACIAS POR SU COMPRA")};
         var result=new ControlledReceiptPrintTest(new FixedSettings(new(settings,null)),new EscPosReceiptRenderer(),transport,clock,trace).Run();
         Assert.AreEqual(ReceiptPrintState.Submitted,result.State);Assert.AreEqual(41,result.JobId);Assert.AreEqual(1,transport.Calls);
         Assert.AreEqual("POS-80",result.QueueName);
@@ -152,7 +155,7 @@ public sealed class ReceiptTests : SalesFixture
     [TestMethod] public void ControlledPhysicalTestRecordsKnownTransportFailureWithoutRetry()
     {
         var transport=new ProbeTransport{Failure=new("OPEN_PRINTER_1801",false)};
-        var settings=Settings() with{QueueName="POS-80",EncodingName="us-ascii",Business=new("PRUEBA CASA MIGA",ClosingMessage:"GRACIAS POR SU COMPRA")};
+        var settings=Settings() with{QueueName="POS-80",EncodingName="us-ascii",CharacterTable=null,Business=new("PRUEBA CASA MIGA",ClosingMessage:"GRACIAS POR SU COMPRA")};
         var trace=Path.Combine(directory,"failed-print.jsonl");
         var result=new ControlledReceiptPrintTest(new FixedSettings(new(settings,null)),new EscPosReceiptRenderer(),transport,clock,trace).Run();
         Assert.AreEqual(ReceiptPrintState.Failed,result.State);Assert.AreEqual(1,transport.Calls);Assert.IsNull(result.JobId);
@@ -162,7 +165,7 @@ public sealed class ReceiptTests : SalesFixture
     [TestMethod] public void ControlledPartialCutIsSingleLastCommandAndDoesNotChangeCommercialCash()
     {
         var transport=new ProbeTransport();var beforeSales=Sql("SELECT count(*) FROM sale");var beforeCash=work.Run(s=>s.CashSalesTotal(cash.Id));
-        var settings=Settings() with{QueueName="POS-80",EncodingName="us-ascii",CutMode="Partial",
+        var settings=Settings() with{QueueName="POS-80",EncodingName="us-ascii",CharacterTable=null,CutMode="Partial",
             Business=new("PRUEBA CASA MIGA","PRUEBA TAMANO Y CORTE",ClosingMessage:"GRACIAS POR SU COMPRA")};
         var result=new ControlledReceiptPrintTest(new FixedSettings(new(settings,null)),new EscPosReceiptRenderer(),transport,clock,
             Path.Combine(directory,"partial-print.jsonl")).Run();
@@ -188,6 +191,29 @@ public sealed class ReceiptTests : SalesFixture
         var start=IndexOf(payload,[0x1d,0x21,0x11])+3;var end=IndexOf(payload,[0x1d,0x21,0x00]);
         var lines=Encoding.GetEncoding(1252).GetString(payload[start..end]).Split("\r\n",StringSplitOptions.RemoveEmptyEntries);
         Assert.IsTrue(lines.All(line=>line.Length<=24));Assert.AreEqual(name,string.Join(' ',lines.Select(line=>line.Trim())));
+    }
+
+    [TestMethod] public void Pc850SelectionPrecedesSpanishAndPreservesSizeCutAndCommercialState()
+    {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);var encoding=Encoding.GetEncoding("ibm850",EncoderFallback.ExceptionFallback,DecoderFallback.ExceptionFallback);
+        Assert.AreEqual(850,encoding.CodePage);
+        const string lower="á é í ó ú";const string upper="Á É Í Ó Ú";
+        var business=new BusinessReceiptProfile("PRUEBA CASA MIGA","PRUEBA ESPANOL",lower,upper,"ü Ü | ñ Ñ | ¿Como esta? | ¡Gracias! | $19.00",
+            "PANADERIA CASA MIGA - Gracias por su compra");
+        var settings=Settings() with{QueueName="POS-80",EncodingName="ibm850",CharacterTable=2,CutMode="Partial",Business=business};
+        var beforeSales=Sql("SELECT count(*) FROM sale");var beforeCash=work.Run(s=>s.CashSalesTotal(cash.Id));var transport=new ProbeTransport();
+        var result=new ControlledReceiptPrintTest(new FixedSettings(new(settings,null)),new EscPosReceiptRenderer(),transport,clock,
+            Path.Combine(directory,"pc850-print.jsonl")).Run();
+        var payload=File.ReadAllBytes(result.PayloadPath);
+        CollectionAssert.AreEqual(new byte[]{0x1b,0x74,0x02},payload[..3]);Assert.AreEqual(1,Occurrences(payload,[0x1b,0x74,0x02]));
+        Assert.IsTrue(IndexOf(payload,encoding.GetBytes(lower))>=0);Assert.IsTrue(IndexOf(payload,encoding.GetBytes(upper))>=0);
+        Assert.Contains("ü Ü",result.ReceiptText);Assert.Contains("ñ Ñ",result.ReceiptText);Assert.Contains("¿Como esta?",result.ReceiptText);
+        Assert.Contains("¡Gracias!",result.ReceiptText);Assert.Contains("$19.00",result.ReceiptText);
+        Assert.AreEqual(1,Occurrences(payload,[0x1d,0x21,0x11]));Assert.AreEqual(1,Occurrences(payload,[0x1d,0x21,0x01]));
+        Assert.AreEqual(2,Occurrences(payload,[0x1d,0x21,0x00]));Assert.AreEqual(1,Occurrences(payload,[0x1d,0x56,0x01]));
+        Assert.AreEqual(0,Occurrences(payload,[0x1b,0x70]));Assert.AreEqual(1,transport.Calls);
+        Assert.AreEqual(beforeSales,Sql("SELECT count(*) FROM sale"));Assert.AreEqual(beforeCash,work.Run(s=>s.CashSalesTotal(cash.Id)));
+        CollectionAssert.AreEqual(payload,new EscPosReceiptRenderer().Render(TestDocument(business,result.RequestedAt),ReceiptCopyKind.Original,settings));
     }
 
     [TestMethod] public void UpgradeFromSevenPreservesSaleAndAddsReceiptSchema()
@@ -244,7 +270,7 @@ public sealed class ReceiptTests : SalesFixture
     private static ReceiptDocument TestDocument(BusinessReceiptProfile business,DateTimeOffset timestamp)
     {
         var total=new Money(1900);
-        return new(ReceiptDocument.CurrentVersion,"TEST-002",timestamp,Guid.Parse("11111111-1111-1111-1111-111111111111"),"PRUEBA",
+        return new(ReceiptDocument.CurrentVersion,"TEST-003",timestamp,Guid.Parse("11111111-1111-1111-1111-111111111111"),"PRUEBA",
             Guid.Parse("22222222-2222-2222-2222-222222222222"),"DESARROLLO",
             [new ReceiptLine(Guid.Parse("33333333-3333-3333-3333-333333333333"),"Producto prueba",total,1,total)],
             total,total,"CASH",total,new Money(2000),new Money(100),business);

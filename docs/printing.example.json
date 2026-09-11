@@ -4,6 +4,7 @@
   "queueName": "NOMBRE EXACTO DE LA COLA WINDOWS",
   "columns": 48,
   "encodingName": "windows-1252",
+  "characterTable": 16,
   "cutMode": "Disabled",
   "openCashDrawer": false,
   "business": {

@@ -15,6 +15,10 @@ public sealed class EscPosReceiptRenderer : IReceiptPayloadRenderer
         ArgumentNullException.ThrowIfNull(document);ArgumentNullException.ThrowIfNull(settings);
         if(settings.CutMode is not ("Disabled" or "Partial") || settings.OpenCashDrawer)
             throw new ArgumentException("Configuracion ESC/POS no permitida.");
+        var documentedEncoding=(settings.EncodingName.ToLowerInvariant(),settings.CharacterTable) switch
+        {("us-ascii",null)=>true,("ibm850",2)=>true,("windows-1252",16)=>true,_=>false};
+        if(!documentedEncoding)
+            throw new ArgumentException("La codificacion no coincide con la tabla ESC/POS documentada.");
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         var encoding=Encoding.GetEncoding(settings.EncodingName,EncoderFallback.ExceptionFallback,DecoderFallback.ExceptionFallback);
         var lines=new TextReceiptRenderer(settings.Columns).Render(document,copyKind)
@@ -22,6 +26,11 @@ public sealed class EscPosReceiptRenderer : IReceiptPayloadRenderer
         var originalHeader=Wrap(document.Business.DisplayName,settings.Columns).ToArray();
         var headerIndex=copyKind==ReceiptCopyKind.Original?0:1;
         using var output=new MemoryStream();
+        if(settings.CharacterTable is { } table)
+        {
+            if(table is <0 or >255)throw new ArgumentOutOfRangeException(nameof(settings));
+            output.Write([0x1b,0x74,(byte)table]);
+        }
         for(var index=0;index<lines.Length-1;index++)
         {
             if(index==headerIndex)
