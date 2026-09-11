@@ -1,6 +1,6 @@
 # Próximos pasos
 
-Actualización 2026-09-11: **FASE 1F CERRADA**. Punto de partida: baseline 1E `d4118144dd6f19bff885ced15a3f6098c24f7c29`, seguido por los commits de implementación y cierre 1F registrados en `docs/PHASE_1F_REPORT.md`.
+Actualización 2026-09-11: **FASE 1F CERRADA**. Punto de partida: baseline 1E `d4118144dd6f19bff885ced15a3f6098c24f7c29`, implementación 1F `b957190279fb984abbe00ac8e022f33acfa47909` y evidencia/cierre `912cf5232ae54971827b3e337bcb72cd1e05c4bb`.
 
 Estado verificable: migraciones 001–007; bytes 001–006 comprobados contra sus hashes históricos; 170 pruebas aprobadas, ninguna fallida u omitida; build Release sin errores ni advertencias; smoke WPF y backup/restore completos; aplicación cerrada. Publicación de desarrollo disponible en `artifacts/development`.
 

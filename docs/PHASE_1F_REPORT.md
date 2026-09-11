@@ -1,6 +1,6 @@
 # CASA MIGA POS — REPORTE FINAL FASE 1F
 
-Fecha de cierre: 2026-09-11. Estado definitivo: **FASE 1F CERRADA**. Baseline aprobado de FASE 1E: `d4118144dd6f19bff885ced15a3f6098c24f7c29`. Commit de implementación 1F: `b957190` (`feat: add read-only sales history`).
+Fecha de cierre: 2026-09-11. Estado definitivo: **FASE 1F CERRADA**. Baseline aprobado de FASE 1E: `d4118144dd6f19bff885ced15a3f6098c24f7c29`. Implementación: `b957190279fb984abbe00ac8e022f33acfa47909` (`feat: add read-only sales history`). Documentación/evidencia: `912cf5232ae54971827b3e337bcb72cd1e05c4bb` (`docs: close phase 1F with WPF and restore evidence`).
 
 ## Implementación y subfases
 
@@ -97,7 +97,7 @@ Modificados:
 - `tests/CasaMiga.Tests/CashIdentityTests.cs`
 - `tests/CasaMiga.Tests/FoundationTests.cs`
 
-La documentación y evidencia de 1F se registran en commits separados del código. `work`, `artifacts` y `TestResults` continúan ignorados.
+La documentación y evidencia de 1F se registraron en un commit separado del código. `work`, `artifacts` y `TestResults` continúan ignorados.
 
 ## Riesgos y límites
 

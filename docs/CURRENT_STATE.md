@@ -1,6 +1,6 @@
 # Estado actual — FASE 1F CERRADA
 
-Fecha: 2026-09-11. FASE 1E permanece cerrada en `d4118144dd6f19bff885ced15a3f6098c24f7c29`. FASE 1F añadió historial y detalle de ventas confirmadas, exclusivamente de lectura. Git local conserva la identidad Rammseth / `rammstudioworkshop\@gmail.com`; no hay remoto ni push.
+Fecha: 2026-09-11. FASE 1E permanece cerrada en `d4118144dd6f19bff885ced15a3f6098c24f7c29`. FASE 1F está registrada en implementación `b957190279fb984abbe00ac8e022f33acfa47909` y cierre documental/evidencia `912cf5232ae54971827b3e337bcb72cd1e05c4bb`. Añade historial y detalle de ventas confirmadas, exclusivamente de lectura. Git local conserva la identidad Rammseth / `rammstudioworkshop\@gmail.com`; no hay remoto ni push.
 
 `sales.view` se concede por migración 007 solamente a Administrator y Manager. Cashier no lo recibe. Presentation oculta Ventas sin permiso y Application revalida en cada consulta que el usuario actual exista, esté activo y conserve el permiso. Consultar historial no exige caja abierta ni `sales.complete`.
 
