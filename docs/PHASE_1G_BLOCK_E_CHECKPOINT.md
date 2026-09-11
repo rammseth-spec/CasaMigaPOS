@@ -1,3 +1,11 @@
+# Continuidad — FASE 1G Bloque E
+
+FASE 1G ABIERTA; Bloque E implementado y un único ticket Opción 07 enviado (JobId 6, SUBMITTED). Pendiente foto y validación humana. No imprimir de nuevo. Ver PHASE_1G_BLOCK_E_REPORT.md. 191 pruebas aprobadas; Release sin errores ni advertencias.
+
+Baseline Bloque D: CP850, ESC t 2, GS V 1. Fuente única: assets/brand/Opcion07. Paquetes anteriores deprecados. Sistema de desarrollo, no listo para producción. No se inició ninguna fase posterior.
+
+## Registro histórico anterior, sustituido por el estado superior
+
 # FASE 1G Bloque E — checkpoint previo a implementación
 
 Fecha: 2026-09-11. Estado: **DETENIDO ANTES DE IMPLEMENTAR; LOGOTIPO OFICIAL APROBADO REQUERIDO**.

@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <EmbeddedResource Include="../../assets/brand/Opcion07/assets/*Ticket_560px_1bit.png" LogicalName="CasaMiga.Opcion07.Ticket.png" />
     <ProjectReference Include="../CasaMiga.Application/CasaMiga.Application.csproj" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />
     <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="10.0.11" />

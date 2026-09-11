@@ -1,0 +1,24 @@
+CASA MIGA POS — REGLA DE MARCA PARA CODEX
+
+Usar exclusivamente los activos incluidos en este paquete.
+
+La referencia maestra única es:
+master_reference/Casa_Miga_Opcion07_Referencia_Maestra_Original.jpeg
+
+El diseño oficial es la Opción 07 aportada por el usuario.
+No usar, recuperar, mezclar ni comparar como oficiales variantes anteriores.
+
+Para FASE 1G / ticket térmico usar:
+assets/Casa_Miga_Logo_Oficial_Opcion07_Ticket_560px_1bit.png
+
+Antes de integrar:
+1. Leer CODEX_BRAND_REFERENCE.md.
+2. Verificar SHA256SUMS.txt.
+3. Confirmar que el logo coincide visualmente con Opción 07.
+4. Confirmar que no existen barras, líneas o artefactos en los bordes.
+5. Confirmar que los dos cortes blancos del pan siguen visibles.
+6. No redibujar ni regenerar el logo.
+
+Si cualquier comprobación falla:
+DETENERSE Y REPORTAR.
+NO CORREGIR CREATIVAMENTE.

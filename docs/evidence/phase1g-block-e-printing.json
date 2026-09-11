@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "enabled": true,
+  "queueName": "POS-80",
+  "columns": 48,
+  "encodingName": "ibm850",
+  "characterTable": 2,
+  "cutMode": "Partial",
+  "openCashDrawer": false,
+  "business": {
+    "displayName": "PRUEBA CASA MIGA",
+    "address": null,
+    "phone": null,
+    "taxId": null,
+    "contact": null,
+    "closingMessage": "Gracias por su compra",
+    "monochromeLogoPath": "Opcion07:06D4ADE3AE160967FCD21E958458C17113BEF3C4A8E03F15D63115530AE821C6"
+  }
+}

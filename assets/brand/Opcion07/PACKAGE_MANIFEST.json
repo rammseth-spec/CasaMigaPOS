@@ -1,0 +1,61 @@
+{
+  "package_name": "Casa_Miga_Logo_Master_Opcion07_Codex_v1",
+  "authority": "User-provided Option 07 image is the sole visual master",
+  "source": {
+    "file": "master_reference/Casa_Miga_Opcion07_Referencia_Maestra_Original.jpeg",
+    "sha256": "178F8B03EDD649B451FCE9ABFA06CE1C5D893FB96E22AC5A9B93B8C3BEC06D47",
+    "dimensions": [
+      314,
+      227
+    ]
+  },
+  "crop_box": [
+    37,
+    52,
+    276,
+    164
+  ],
+  "assets": [
+    {
+      "file": "assets/Casa_Miga_Logo_Oficial_Opcion07_Referencia_FondoCrema.png",
+      "sha256": "B461FE4F4BD8D3B85B363E00F5E5AFDD2FB95A9EEDAD825FA0D18AFC79881D92",
+      "dimensions": [
+        239,
+        112
+      ],
+      "role": "exact logo crop"
+    },
+    {
+      "file": "assets/Casa_Miga_Logo_Oficial_Opcion07_UI_Transparente.png",
+      "sha256": "BE1D3C9E4F1AD87EF70F9337E255C0803B9921F48C7EB0B3C3708434DF0A86A6",
+      "dimensions": [
+        239,
+        112
+      ],
+      "role": "transparent UI derivative"
+    },
+    {
+      "file": "assets/Casa_Miga_Logo_Oficial_Opcion07_Monocromatico_Negro_Transparente.png",
+      "sha256": "1529463951B3952B9CAC90DC4D03D63A76FC4E2A394DD5027B841CE6E4A53F27",
+      "dimensions": [
+        239,
+        112
+      ],
+      "role": "monochrome transparent derivative"
+    },
+    {
+      "file": "assets/Casa_Miga_Logo_Oficial_Opcion07_Ticket_560px_1bit.png",
+      "sha256": "06D4ADE3AE160967FCD21E958458C17113BEF3C4A8E03F15D63115530AE821C6",
+      "dimensions": [
+        560,
+        262
+      ],
+      "mode": "1-bit",
+      "role": "thermal ticket derivative"
+    }
+  ],
+  "deprecated_packages": [
+    "Casa_Miga_Logo_Oficial_para_Codex(1).zip",
+    "Casa_Miga_Logo_Oficial_para_Codex_CORREGIDO_v2.zip"
+  ]
+}

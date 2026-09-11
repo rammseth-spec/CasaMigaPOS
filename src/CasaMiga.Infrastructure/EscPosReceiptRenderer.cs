@@ -35,6 +35,16 @@ public sealed class EscPosReceiptRenderer : IReceiptPayloadRenderer
         {
             if(index==headerIndex)
             {
+                if(document.Business.MonochromeLogoPath == OfficialReceiptLogo.AssetId)
+                {
+                    if(settings.Columns!=48)throw new ArgumentException("Opcion07 requiere 48 columnas.");
+                    output.Write([0x1b,0x61,0]);
+                    output.Write(OfficialReceiptLogo.Command());
+                    output.Write(NormalSize);
+                    WriteLine(output,encoding,"");
+                    index+=originalHeader.Length-1;
+                    continue;
+                }
                 output.Write(DoubleWidthAndHeight);
                 foreach(var headerLine in Wrap(document.Business.DisplayName,settings.Columns/2))
                     WriteLine(output,encoding,Center(headerLine,settings.Columns/2));

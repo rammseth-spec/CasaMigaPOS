@@ -1,6 +1,6 @@
 # Casa Miga POS
 
-Aplicación Windows offline para una panadería mexicana. **FASE 1G abierta; Bloque D cerrado físicamente y Bloque E detenido antes de implementar**: transporte RAW, jerarquía visual, PC850/tabla ESC-POS 2 y corte parcial fueron validados en papel. El repositorio no contiene un logotipo oficial aprobado; se requiere ese asset para continuar. Cajón, LAN y reimpresión UI siguen pendientes. Continúa siendo una versión de desarrollo y todavía no está lista para producción.
+Aplicación Windows offline para una panadería mexicana. FASE 1G ABIERTA; Bloque E implementado y un único ticket Opción 07 enviado (JobId 6, SUBMITTED). Pendiente foto y validación humana. No imprimir de nuevo. Ver PHASE_1G_BLOCK_E_REPORT.md. 191 pruebas aprobadas; Release sin errores ni advertencias. Versión de desarrollo, no lista para producción.
 
 Stack: C# / .NET 10 LTS / WPF / Microsoft.Data.Sqlite / SQLite / MSTest.
 
@@ -16,7 +16,7 @@ El primer restore requiere Internet; la aplicación no. No hay servicios cloud n
 Al arrancar se respalda, migra y valida la instalación. El paquete .cmbackup incluye base, terminal.json y manifiesto; restauración validada a directorio nuevo. Reiniciar exige login y recupera la caja abierta sin alterar su fondo ni timestamp. Salir del usuario o cerrar la ventana no cierra caja. El cierre requiere confirmar conteo y luego confirmar cierre; volver conserva el conteo. Los importes se ocultan hasta confirmar el conteo ciego.
 
 - `src/`: Domain, Application, Infrastructure, Presentation y utilidad Maintenance.
-- `tests/`: dinero, persistencia, identidad, autorización, concurrencia, carrito, venta, historial, tickets, recuperación, diagnóstico y backup. Suite vigente: 188 pruebas.
+- `tests/`: dinero, persistencia, identidad, autorización, concurrencia, carrito, venta, historial, tickets, recuperación, diagnóstico y backup. Suite vigente: 191 pruebas.
 - `migrations/`: SQL inmutable versionado, recursos del ensamblado.
 - `docs/`: arquitectura, operación, decisiones y evidencia.
 - `research/`: investigación de FASE 0; `scripts/`: verificación/publicación de desarrollo.

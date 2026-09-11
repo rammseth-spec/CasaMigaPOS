@@ -98,6 +98,13 @@ public sealed class ControlledReceiptPrintTest(
         var cuts=0;var tableSelections=0;
         for(var index=0;index<payload.Length;index++)
         {
+            if(index==3 && settings.Business.MonochromeLogoPath==OfficialReceiptLogo.AssetId)
+            {
+                var graphic=OfficialReceiptLogo.Command();
+                if(settings.CharacterTable!=2 || !payload.AsSpan(index,3).SequenceEqual(new byte[]{0x1b,0x61,0})
+                    || payload.Length<index+3+graphic.Length || !payload.AsSpan(index+3,graphic.Length).SequenceEqual(graphic))throw Unsafe();
+                index+=3+graphic.Length-1;continue;
+            }
             if(payload[index]==0x1b)
             {
                 if(index+2>=payload.Length || payload[index+1]!=0x74 || settings.CharacterTable is not { } table
@@ -123,6 +130,9 @@ public sealed class ControlledReceiptPrintTest(
         using var text=new MemoryStream();
         for(var index=0;index<payload.Length;index++)
         {
+            if(index+10<payload.Length && payload.AsSpan(index,3).SequenceEqual(new byte[]{0x1b,0x61,0})
+                && payload.AsSpan(index+3,4).SequenceEqual(new byte[]{0x1d,0x76,0x30,0}))
+            {index+=3+OfficialReceiptLogo.Command().Length-1;continue;}
             if(payload[index] is 0x1b or 0x1d){index+=2;continue;}
             text.WriteByte(payload[index]);
         }

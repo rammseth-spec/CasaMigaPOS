@@ -1,3 +1,11 @@
+# Continuidad — FASE 1G Bloque E
+
+FASE 1G ABIERTA; Bloque E implementado y un único ticket Opción 07 enviado (JobId 6, SUBMITTED). Pendiente foto y validación humana. No imprimir de nuevo. Ver PHASE_1G_BLOCK_E_REPORT.md. 191 pruebas aprobadas; Release sin errores ni advertencias.
+
+Baseline Bloque D: CP850, ESC t 2, GS V 1. Fuente única: assets/brand/Opcion07. Paquetes anteriores deprecados. Sistema de desarrollo, no listo para producción. No se inició ninguna fase posterior.
+
+## Registro histórico anterior, sustituido por el estado superior
+
 # Estado actual — FASE 1G BLOQUE E, LOGO OFICIAL REQUERIDO
 
 Fecha: 2026-09-11. FASE 1F permanece cerrada. El usuario confirmó físicamente el Bloque D completo: caracteres españoles, legibilidad, tamaños, alineación, ausencia de basura y corte automático parcial correctos. Bloque D implementa selección estricta de codepage en `283cfa4`; el baseline queda fijado en .NET `ibm850`/CP850, `ESC t 2` y `GS V 1`. Git local conserva la identidad Rammseth / `rammstudioworkshop\@gmail.com`; no hay remoto ni push.
