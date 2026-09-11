@@ -1,7 +1,7 @@
 {
   "phase": "1G Block D",
   "recordedAtUtc": "2026-09-11T20:18:38.1092258+00:00",
-  "hypothesisPendingPhysicalValidation": true,
+  "hypothesisPendingPhysicalValidation": false,
   "officialReferences": {
     "qian": "https://manuales.qian.mx/QOP-T80UL-RI-02.pdf",
     "epsonEscT": "https://download4.epson.biz/sec_pubs/pos/reference_en/escpos/esc_lt.html",
@@ -20,7 +20,10 @@
     "printRequestId": "957c1076-cd21-4ceb-b609-63b437a6c643",
     "requestedAtUtc": "2026-09-11T20:18:37.9936825+00:00",
     "submittedAtUtc": "2026-09-11T20:18:38.1092258+00:00",
-    "states": ["REQUESTED", "SUBMITTED"],
+    "states": [
+      "REQUESTED",
+      "SUBMITTED"
+    ],
     "queueName": "POS-80",
     "spoolerJobId": 5,
     "byteCount": 889,
@@ -51,6 +54,22 @@
     "expectedCashChanged": false,
     "commercialDatabaseOpened": false
   },
-  "physicalOutputConfirmed": false,
-  "physicalValidation": "PENDING_USER_PHOTO_AND_ANSWERS"
+  "physicalOutputConfirmed": true,
+  "physicalValidation": {
+    "evidenceFile": "phase1g-block-d-physical.png",
+    "evidenceSha256": "FC956953C1BA7707954ED0CB3148C39993B45CC784B033C75CE9FC508CF09040",
+    "confirmedByUserOn": "2026-09-11",
+    "lowercaseAccentsCorrect": true,
+    "uppercaseAccentsCorrect": true,
+    "umlautsCorrect": true,
+    "enyeCorrect": true,
+    "openingPunctuationCorrect": true,
+    "currencySymbolCorrect": true,
+    "generalTextLegible": true,
+    "approvedSizesPreserved": true,
+    "alignmentPreserved": true,
+    "automaticCutCorrect": true,
+    "partialCutConfirmed": true,
+    "garbageCharactersAbsent": true
+  }
 }

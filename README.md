@@ -1,6 +1,6 @@
 # Casa Miga POS
 
-Aplicación Windows offline para una panadería mexicana. **FASE 1G abierta en Bloque D**: transporte RAW y jerarquía visual ya fueron validados físicamente; una sola prueba PC850/tabla ESC-POS 2 espera observación humana. Logo, cajón, LAN y reimpresión UI siguen pendientes. Continúa siendo una versión de desarrollo y todavía no está lista para producción.
+Aplicación Windows offline para una panadería mexicana. **FASE 1G abierta; Bloque D cerrado físicamente y Bloque E detenido antes de implementar**: transporte RAW, jerarquía visual, PC850/tabla ESC-POS 2 y corte parcial fueron validados en papel. El repositorio no contiene un logotipo oficial aprobado; se requiere ese asset para continuar. Cajón, LAN y reimpresión UI siguen pendientes. Continúa siendo una versión de desarrollo y todavía no está lista para producción.
 
 Stack: C# / .NET 10 LTS / WPF / Microsoft.Data.Sqlite / SQLite / MSTest.
 
@@ -21,7 +21,7 @@ Al arrancar se respalda, migra y valida la instalación. El paquete .cmbackup in
 - `docs/`: arquitectura, operación, decisiones y evidencia.
 - `research/`: investigación de FASE 0; `scripts/`: verificación/publicación de desarrollo.
 
-Venta y pago en efectivo se confirman juntos. El efecto de impresión siempre ocurre después del commit. No hay inventario; el hardware Qian sigue pendiente de validación física. La identidad visual es temporal y está identificada como tal. No se ha elegido licencia de distribución ni publicado un remoto.
+Venta y pago en efectivo se confirman juntos. El efecto de impresión siempre ocurre después del commit. No hay inventario. La Qian quedó validada para el baseline de impresión del Bloque D; otras capacidades físicas permanecen fuera de alcance o pendientes. La identidad visual es temporal y está identificada como tal. No se ha elegido licencia de distribución ni publicado un remoto.
 
 
 POS: usuario activo, catalog.view, pos.use y caja OPEN sin conteo confirmado. Cobrar exige además sales.complete. Categorías/productos activos, búsqueda nombre/SKU y páginas de 50. Cart sigue siendo transitorio y no es una venta. Conserva nombre/precio al agregar; sólo el commit comercial permite vaciarlo después de cobrar. Un resultado incierto exige verificación por UUID antes de volver a operar. Demo explícita sólo desarrollo.

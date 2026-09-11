@@ -1,6 +1,6 @@
 # FASE 1G Bloque D — Codepage y caracteres españoles
 
-Fecha: 2026-09-11. Estado: **FASE 1G ABIERTA; envío técnico único PC850 terminado y validación física humana pendiente**.
+Fecha: 2026-09-11. Estado: **BLOQUE D CERRADO Y VALIDADO FÍSICAMENTE; FASE 1G PERMANECE ABIERTA**.
 
 ## Git y alcance
 
@@ -21,7 +21,7 @@ La única hipótesis probada fue:
 - Número: `2`.
 - Selección: `ESC t 2`, bytes `1B 74 02`.
 
-La selección aparece exactamente una vez, en offset cero y antes de texto/tamaños. `EncoderFallback.ExceptionFallback` impide sustituciones silenciosas. Esta correspondencia no se declara físicamente confirmada hasta ver la impresión.
+La selección aparece exactamente una vez, en offset cero y antes de texto/tamaños. `EncoderFallback.ExceptionFallback` impide sustituciones silenciosas. La impresión física confirmó esta correspondencia; queda como baseline fijo para el equipo probado.
 
 ## Envío único
 
@@ -84,21 +84,23 @@ Cambio                                     $1.00
 
 Las pruebas cubren provider de páginas, encoding válido, representación de todos los caracteres, selección única antes del texto, parejas encoding/tabla estrictas, determinismo, tamaños preservados, un corte final, ausencia de cajón, bloqueo de reenvío y ninguna mutación comercial.
 
-## Validación humana requerida
+## Validación humana completada
 
-Se necesita fotografía completa y confirmar:
+La fotografía preservada en `docs/evidence/phase1g-block-d-physical.png` y la confirmación explícita del usuario registran:
 
-1. ¿`á é í ó ú` salen correctamente?
-2. ¿`ü` y `Ü` salen correctamente?
-3. ¿`ñ` y `Ñ` salen correctamente?
-4. ¿`¿` y `¡` salen correctamente?
-5. ¿`$` sale correctamente?
-6. ¿El texto general es legible?
-7. ¿Los tamaños son iguales al baseline aprobado?
-8. ¿La alineación se conserva?
-9. ¿El corte fue correcto y, si se puede distinguir, parcial?
-10. ¿No aparecen caracteres basura?
+1. `á é í ó ú`: correctos.
+2. `ü` y `Ü`: correctos.
+3. `ñ` y `Ñ`: correctos.
+4. `¿` y `¡`: correctos.
+5. `$`: correcto.
+6. Texto general: legible.
+7. Tamaños: iguales al baseline aprobado.
+8. Alineación: conservada.
+9. Corte: automático, correcto y parcial.
+10. Caracteres basura: ninguno.
 
-Permanecen pendientes logo, reimpresión UI, cajón y LAN. No probar otra tabla ni avanzar antes de recibir la foto.
+El baseline queda fijado en .NET `ibm850`/CP850, `ESC t 2` y `GS V 1`. No se autoriza probar otra tabla ni variar el corte sin una causa técnica nueva y explícita.
+
+Permanecen pendientes el logo oficial, reimpresión UI, cajón y LAN. El Bloque E se detuvo antes de implementar porque el repositorio no contiene un asset identificado como logotipo oficial aprobado.
 
 Se recomienda **SOL** para el siguiente bloque si los caracteres son correctos o requieren un ajuste acotado. Usar **ASTRA** sólo si existe incompatibilidad real entre tabla 2, bytes PC850, interpretación Qian, driver o Winspool.

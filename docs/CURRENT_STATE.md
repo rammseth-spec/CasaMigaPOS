@@ -1,10 +1,10 @@
-# Estado actual — FASE 1G BLOQUE D, VALIDACIÓN HUMANA PENDIENTE
+# Estado actual — FASE 1G BLOQUE E, LOGO OFICIAL REQUERIDO
 
-Fecha: 2026-09-11. FASE 1F permanece cerrada. El usuario aprobó la jerarquía visual del Bloque C: encabezado, cuerpo, TOTAL, alineación, márgenes y distribución. Bloque D implementa selección estricta de codepage en `283cfa4`. Git local conserva la identidad Rammseth / `rammstudioworkshop\@gmail.com`; no hay remoto ni push.
+Fecha: 2026-09-11. FASE 1F permanece cerrada. El usuario confirmó físicamente el Bloque D completo: caracteres españoles, legibilidad, tamaños, alineación, ausencia de basura y corte automático parcial correctos. Bloque D implementa selección estricta de codepage en `283cfa4`; el baseline queda fijado en .NET `ibm850`/CP850, `ESC t 2` y `GS V 1`. Git local conserva la identidad Rammseth / `rammstudioworkshop\@gmail.com`; no hay remoto ni push.
 
-Bloque D envió exactamente un ticket sintético: .NET `ibm850`, ESC/POS tabla 2, selección `1B 74 02` una vez en offset cero. Request `957c1076-cd21-4ceb-b609-63b437a6c643`, JobId 5, SUBMITTED, 889 bytes y SHA-256 `83CC7BA9E0339E608891C2B3908021A847053B40B5A3F722C4F4AF44F101321D`. La interpretación física de los caracteres está pendiente de foto.
+Bloque D envió exactamente un ticket sintético: .NET `ibm850`, ESC/POS tabla 2, selección `1B 74 02` una vez en offset cero. Request `957c1076-cd21-4ceb-b609-63b437a6c643`, JobId 5, SUBMITTED, 889 bytes y SHA-256 `83CC7BA9E0339E608891C2B3908021A847053B40B5A3F722C4F4AF44F101321D`. La fotografía `evidence/phase1g-block-d-physical.png` y la confirmación del usuario validan la salida física y el corte parcial.
 
-Bloque C envió exactamente un ticket sintético a POS-80: request `6df7d54d-a095-48e3-9223-dfc09b5bdf51`, JobId 4, 770 bytes, estado SUBMITTED y SHA-256 `792FEFF59A9921E17AD77DFDD03D3B7D65447150B58ED195C159CF443DECB757`. Contiene encabezado 2×2, TOTAL doble alto, dos restauraciones, cuatro LF y un único corte parcial final. No contiene pulso de cajón. La salida física y el corte todavía requieren foto/confirmación humana.
+Bloque C envió exactamente un ticket sintético a POS-80: request `6df7d54d-a095-48e3-9223-dfc09b5bdf51`, JobId 4, 770 bytes, estado SUBMITTED y SHA-256 `792FEFF59A9921E17AD77DFDD03D3B7D65447150B58ED195C159CF443DECB757`. Contiene encabezado 2×2, TOTAL doble alto, dos restauraciones, cuatro LF y un único corte parcial final. No contiene pulso de cajón. Su jerarquía visual fue aprobada y el corte parcial quedó confirmado con el Bloque D.
 
 Windows confirmó `POS-80`, USB001, driver POS-80 11.3.0.1 y estado Normal. El trabajo `7ba5b12f-2482-457d-abf4-725181b25d60` fue aceptado por Winspool con JobId 3 y estado técnico SUBMITTED; fueron 762 bytes ASCII sin ESC, GS, corte ni cajón. Esto no confirma salida física. No se abrió la base comercial ni se crearon venta, pago, caja o cambio en ExpectedCash.
 
@@ -26,4 +26,6 @@ Estado de aceptación: **FASE 1F CERRADA**. Smoke WPF sobre instalación sintét
 
 Verificación final: 170 aprobadas, 0 fallidas, 0 omitidas. Build Release: 0 errores, 0 advertencias. Publicación win-x64 autocontenida en `artifacts/development`. Backup `.cmbackup` y restauración CLI a carpeta nueva tienen el mismo hash lógico `C7E4A5392F31988D6BC7857B664594F5BCD3C9F4FF3D7CA71C299D1CC9423F4F` y el mismo `terminal.json`.
 
-Limitaciones heredadas de 1F: los nombres mostrados en Historial siguen siendo actuales y no existen snapshots retroactivos. Los tickets anteriores a 1G capturan esos nombres al crear su primer snapshot. La zona horaria depende del equipo y LIMIT/OFFSET deberá revisarse con volúmenes mayores. Sigue siendo una versión de desarrollo, sin preparación de producción ni validación física del hardware.
+Bloque E fue revisado sólo hasta su precondición. La búsqueda dirigida encontró `src/CasaMiga.Presentation/Assets/README.md`, que declara que no existe un logotipo oficial y prohíbe generarlo o redibujarlo. No se modificó código, pruebas, migraciones ni configuración y no se imprimió otro ticket. Para continuar se necesita el archivo oficial aprobado, preferiblemente PNG monocromático con transparencia, alta resolución y proporciones originales.
+
+Limitaciones heredadas de 1F: los nombres mostrados en Historial siguen siendo actuales y no existen snapshots retroactivos. Los tickets anteriores a 1G capturan esos nombres al crear su primer snapshot. La zona horaria depende del equipo y LIMIT/OFFSET deberá revisarse con volúmenes mayores. Sigue siendo una versión de desarrollo y no está lista para producción.
