@@ -1,7 +1,7 @@
 # Continuidad
 
 Lee README.md, docs/CURRENT_STATE.md y docs/NEXT_STEPS.md antes de trabajar. Luego sólo los ADRs y archivos pertinentes.
-FASE 1F cerrada: historial y detalle de ventas de solo lectura, permiso sales.view, migración 007, smoke WPF, concurrencia y backup/restore completos. Baseline 1E: d4118144dd6f19bff885ced15a3f6098c24f7c29. No hay fase posterior autorizada. Sin cancelaciones, devoluciones, inventario, descuentos, tarjetas, fiscalidad, hardware, rediseño ni fullscreen.
+FASE 1F cerrada; recuperación `db6422a1d09c36f1ae038c673d90ef9ec6f13ab4`. FASE 1G Bloque A 1G.1–1G.4 implementado y detenido antes del checkpoint físico Qian. No continuar 1G.5, codepage ESC/POS, corte, cajón, LAN o reimpresión UI sin nueva autorización. Sin cancelaciones, devoluciones, inventario, descuentos, tarjetas, fiscalidad, rediseño ni fullscreen.
 No copiar código copyleft ni elegir licencia del producto sin autorización expresa.
 Domain no referencia infraestructura ni UI. Operaciones críticas atómicas; efectos físicos posteriores al commit.
 No modificar migraciones aplicadas: agregar una nueva. Nunca editar manualmente producción.

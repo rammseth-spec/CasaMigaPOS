@@ -90,3 +90,11 @@ La publicación de desarrollo está en artifacts/development. El smoke WPF de 1E
 Ventas está disponible sólo para usuarios con `sales.view` (Administrator/Manager por defecto). Cashier no ve la opción. Las consultas no requieren abrir o cerrar caja y no deben usarse para editar SQLite. El rango usa días locales del equipo; conservar el offset mostrado al investigar una incidencia.
 
 La publicación de desarrollo vigente está en `artifacts/development`. El smoke con 55 ventas comprobó dos páginas, folio, rango, detalle y permiso de cajero. Backup/restore CLI conserva historial y terminal con el mismo hash lógico. Consultar `PHASE_1F_REPORT.md` y `PHASE_1F_SMOKE.md`. La aplicación quedó cerrada y sigue sin estar lista para producción.
+
+## Ticket e impresión — FASE 1G Bloque A
+
+El ticket se intenta sólo después del commit de venta. Un fallo, configuración ausente o estado UNKNOWN no cambia venta, pago, carrito ni ExpectedCash. SUBMITTED significa aceptado por la cola Windows; verificar siempre el papel.
+
+La configuración física se guarda como `printing.json` en el directorio de datos y no forma parte de `.cmbackup`. Consultar `docs/printing.example.json`, que está deshabilitado y contiene datos sintéticos. No copiarlo habilitado a una instalación real hasta contar con nombre exacto de cola y datos comerciales aprobados.
+
+Bloque A no envía comandos ESC/POS de selección de página, corte o cajón. Para el checkpoint USB seguir `docs/PHASE_1G_PHYSICAL_CHECKPOINT.md`. No abrir USB ni puerto 9100 directamente.

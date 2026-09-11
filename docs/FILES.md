@@ -1,4 +1,4 @@
-# Inventario de fuentes y documentación — FASE 1F
+# Inventario de fuentes y documentación — FASE 1G Bloque A
 
 Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 
@@ -22,11 +22,17 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - docs/decisions/ADR-009-unhandled-failure-policy.md
 - docs/decisions/ADR-010-cash-checkout.md
 - docs/decisions/ADR-011-sales-history-read-path.md
+- docs/decisions/ADR-012-receipt-snapshot-and-trace.md
+- docs/decisions/ADR-013-windows-raw-receipt-transport.md
 - docs/dependencies.md
+- docs/PHASE_1G_BLOCK_A_REPORT.md
+- docs/PHASE_1G_PHYSICAL_CHECKPOINT.md
+- docs/printing.example.json
 - docs/domain.md
 - docs/evidence/dependency-licenses.json
 - docs/evidence/maintenance-smoke.txt
 - docs/evidence/nuget-audit.json
+- docs/evidence/phase1g-block-a-verification.txt
 - docs/evidence/phase1a-baseline.txt
 - docs/evidence/phase1a-clean.txt
 - docs/evidence/phase1a-dependency-licenses.json
@@ -148,6 +154,7 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - migrations/005_pos_permission.sql
 - migrations/006_cash_sales.sql
 - migrations/007_sales_history.sql
+- migrations/008_receipt_printing.sql
 - NuGet.Config
 - README.md
 - research/hardware/qian-qop-t80ul-ri-02.md
@@ -165,6 +172,10 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - src/CasaMiga.Application/Ports.cs
 - src/CasaMiga.Application/PosService.cs
 - src/CasaMiga.Application/SalesHistoryService.cs
+- src/CasaMiga.Application/ReceiptModels.cs
+- src/CasaMiga.Application/ReceiptPorts.cs
+- src/CasaMiga.Application/ReceiptService.cs
+- src/CasaMiga.Application/TextReceiptRenderer.cs
 - src/CasaMiga.Domain/Cart.cs
 - src/CasaMiga.Domain/CasaMiga.Domain.csproj
 - src/CasaMiga.Domain/CashSession.cs
@@ -185,6 +196,10 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - src/CasaMiga.Infrastructure/SqliteSaleStore.cs
 - src/CasaMiga.Infrastructure/TerminalConfiguration.cs
 - src/CasaMiga.Infrastructure/UnhandledFailureDiagnostics.cs
+- src/CasaMiga.Infrastructure/EscPosReceiptRenderer.cs
+- src/CasaMiga.Infrastructure/PrintingConfiguration.cs
+- src/CasaMiga.Infrastructure/SqliteReceiptStore.cs
+- src/CasaMiga.Infrastructure/WindowsRawPrintTransport.cs
 - src/CasaMiga.Maintenance/CasaMiga.Maintenance.csproj
 - src/CasaMiga.Maintenance/packages.lock.json
 - src/CasaMiga.Maintenance/Program.cs
@@ -225,3 +240,4 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - tests/CasaMiga.Tests/SalesClosingTests.cs
 - tests/CasaMiga.Tests/SalesHistoryTests.cs
 - tests/CasaMiga.Tests/SaleTests.cs
+- tests/CasaMiga.Tests/ReceiptTests.cs

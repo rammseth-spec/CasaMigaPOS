@@ -1,9 +1,9 @@
-# Próximos pasos
+# Próximos pasos — checkpoint FASE 1G Bloque A
 
-Actualización 2026-09-11: **FASE 1F CERRADA**. Punto de partida: baseline 1E `d4118144dd6f19bff885ced15a3f6098c24f7c29`, implementación 1F `b957190279fb984abbe00ac8e022f33acfa47909` y evidencia/cierre `912cf5232ae54971827b3e337bcb72cd1e05c4bb`.
+Actualización 2026-09-11: **FASE 1G ABIERTA, BLOQUE A 1G.1–1G.4 EN CHECKPOINT FÍSICO**. Recuperación de 1F: `db6422a1d09c36f1ae038c673d90ef9ec6f13ab4`; implementación Bloque A: `4f6463e`.
 
-Estado verificable: migraciones 001–007; bytes 001–006 comprobados contra sus hashes históricos; 170 pruebas aprobadas, ninguna fallida u omitida; build Release sin errores ni advertencias; smoke WPF y backup/restore completos; aplicación cerrada. Publicación de desarrollo disponible en `artifacts/development`.
+Estado verificable: migraciones 001–008; 001–007 sin cambios; 182 pruebas aprobadas, ninguna fallida u omitida; build Release sin errores ni advertencias; upgrade, snapshots y backup/restore completos. La impresión física no está probada.
 
-No hay FASE 1G autorizada. No modificar migraciones aplicadas ni datos comerciales manualmente. Mantener las ventas/pagos/partidas inmutables y usar reversos trazables cuando una fase futura defina cancelaciones o devoluciones. Conservar `ILocalUnitOfWork.Run` inmediato para escrituras y la ruta read-only/deferred para historial.
+Siguiente acción autorizable: ejecutar únicamente el checkpoint de `PHASE_1G_PHYSICAL_CHECKPOINT.md` y devolver resultados. No habilitar printing.json ni imprimir desde Casa Miga POS todavía. No implementar selección de codepage, corte, cajón, LAN o reimpresión desde Historial sin nueva autorización.
 
-Próximo paso recomendado, sin implementarlo: definir y autorizar formalmente el siguiente incremento comercial. Antes de producción siguen pendientes administración/recuperación de usuarios, zona horaria comercial configurable, reglas de cancelación/devolución, retención/segunda copia/cifrado, activación operativa de restore, pruebas físicas, licencia y distribución. No iniciar inventario, impresión, cajón, rediseño o fullscreen sin alcance explícito.
+Antes de producción continúan pendientes datos reales, logo monocromático aprobado, administración/recuperación de usuarios, zona horaria comercial configurable, retención/segunda copia/cifrado, pruebas físicas, licencia y distribución. FASE 1G no está cerrada.
