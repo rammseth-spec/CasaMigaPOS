@@ -17,7 +17,7 @@ public sealed class PrintingConfigurationProvider(string dataDirectory) : IPrint
             var settings=JsonSerializer.Deserialize<PrintingSettings>(File.ReadAllText(path),Options);
             if(settings is null || settings.Business is null || settings.Version!=1 || settings.Columns is <32 or >64
                 || string.IsNullOrWhiteSpace(settings.EncodingName) || settings.EncodingName.Length>100
-                || settings.CutMode!="Disabled" || settings.OpenCashDrawer
+                || settings.CutMode is not ("Disabled" or "Partial") || settings.OpenCashDrawer
                 || (settings.Enabled && (string.IsNullOrWhiteSpace(settings.QueueName) || string.IsNullOrWhiteSpace(settings.Business.DisplayName)
                     || settings.QueueName.Length>260 || settings.Business.DisplayName.Length>120
                     || string.IsNullOrWhiteSpace(settings.Business.ClosingMessage) || settings.Business.ClosingMessage.Length>500

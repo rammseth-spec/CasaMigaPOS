@@ -3,15 +3,67 @@ using CasaMiga.Application;
 
 namespace CasaMiga.Infrastructure;
 
-// Block A deliberately emits text bytes only. Device initialization, code-page
-// selection, cut and drawer commands remain disabled until Qian documentation is verified.
 public sealed class EscPosReceiptRenderer : IReceiptPayloadRenderer
 {
+    private static readonly byte[] DoubleWidthAndHeight = [0x1d, 0x21, 0x11];
+    private static readonly byte[] DoubleHeight = [0x1d, 0x21, 0x01];
+    private static readonly byte[] NormalSize = [0x1d, 0x21, 0x00];
+    private static readonly byte[] PartialCut = [0x1d, 0x56, 0x01];
+
     public byte[] Render(ReceiptDocument document,ReceiptCopyKind copyKind,PrintingSettings settings)
     {
+        ArgumentNullException.ThrowIfNull(document);ArgumentNullException.ThrowIfNull(settings);
+        if(settings.CutMode is not ("Disabled" or "Partial") || settings.OpenCashDrawer)
+            throw new ArgumentException("Configuracion ESC/POS no permitida.");
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         var encoding=Encoding.GetEncoding(settings.EncodingName,EncoderFallback.ExceptionFallback,DecoderFallback.ExceptionFallback);
-        var text=new TextReceiptRenderer(settings.Columns).Render(document,copyKind).Replace("\n","\r\n",StringComparison.Ordinal);
-        return encoding.GetBytes(text);
+        var lines=new TextReceiptRenderer(settings.Columns).Render(document,copyKind)
+            .Replace("\n","\r\n",StringComparison.Ordinal).Split("\r\n",StringSplitOptions.None);
+        var originalHeader=Wrap(document.Business.DisplayName,settings.Columns).ToArray();
+        var headerIndex=copyKind==ReceiptCopyKind.Original?0:1;
+        using var output=new MemoryStream();
+        for(var index=0;index<lines.Length-1;index++)
+        {
+            if(index==headerIndex)
+            {
+                output.Write(DoubleWidthAndHeight);
+                foreach(var headerLine in Wrap(document.Business.DisplayName,settings.Columns/2))
+                    WriteLine(output,encoding,Center(headerLine,settings.Columns/2));
+                output.Write(NormalSize);
+                index+=originalHeader.Length-1;
+                continue;
+            }
+            if(lines[index].StartsWith("TOTAL",StringComparison.Ordinal))
+            {
+                output.Write(DoubleHeight);WriteLine(output,encoding,lines[index]);output.Write(NormalSize);
+                continue;
+            }
+            WriteLine(output,encoding,lines[index]);
+        }
+        if(settings.CutMode=="Partial")
+        {
+            output.Write([0x0a,0x0a,0x0a,0x0a]);
+            output.Write(PartialCut);
+        }
+        return output.ToArray();
+    }
+
+    private static void WriteLine(Stream output,Encoding encoding,string line)
+        =>output.Write(encoding.GetBytes(line+"\r\n"));
+
+    private static string Center(string value,int width)
+        =>value.Length>=width?value:new string(' ',(width-value.Length)/2)+value;
+
+    private static IEnumerable<string> Wrap(string value,int width)
+    {
+        var remaining=value.Replace("\r","").Replace('\n',' ').Trim();
+        if(remaining.Length==0){yield return "";yield break;}
+        while(remaining.Length>width)
+        {
+            var split=remaining.LastIndexOf(' ',width);
+            if(split<1)split=width;
+            yield return remaining[..split].TrimEnd();remaining=remaining[split..].TrimStart();
+        }
+        yield return remaining;
     }
 }
