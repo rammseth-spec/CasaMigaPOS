@@ -1,6 +1,8 @@
 # Continuidad — FASE 1G Bloque E
 
-FASE 1G ABIERTA; Bloque E implementado y un único ticket Opción 07 enviado (JobId 6, SUBMITTED). Pendiente foto y validación humana. No imprimir de nuevo. Ver PHASE_1G_BLOCK_E_REPORT.md. 191 pruebas aprobadas; Release sin errores ni advertencias.
+FASE 1G ABIERTA; Bloque E validado físicamente. Bloque E.1 fue sólo análisis: no hubo impresión ni cambio de producto. El raster empieza en offset 6 y no tiene feed previo; el PNG aporta 1.00 mm de blanco superior y el resto observado es principalmente mecánico. Ver PHASE_1G_BLOCK_E1_TOP_MARGIN_REPORT.md.
+
+Siguiente decisión: aceptar el margen mecánico o autorizar en un bloque separado un derivado técnico que quite únicamente ocho filas superiores totalmente blancas, con mejora máxima aproximada de 1 mm. No probar backfeed ni comandos no documentados para la Qian.
 
 Baseline Bloque D: CP850, ESC t 2, GS V 1. Fuente única: assets/brand/Opcion07. Paquetes anteriores deprecados. Sistema de desarrollo, no listo para producción. No se inició ninguna fase posterior.
 
