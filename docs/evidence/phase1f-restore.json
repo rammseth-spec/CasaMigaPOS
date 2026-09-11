@@ -1,0 +1,17 @@
+{
+  "date": "2026-09-11",
+  "source": "isolated synthetic phase1f visual installation",
+  "package": "casamiga-20260911T061023386Z-1073f00d9b8e413d80e0555ddb3a5a07.cmbackup",
+  "restoreMode": "restore-installation to a new directory",
+  "restored": true,
+  "sourceLogicalSha256": "C7E4A5392F31988D6BC7857B664594F5BCD3C9F4FF3D7CA71C299D1CC9423F4F",
+  "restoredLogicalSha256": "C7E4A5392F31988D6BC7857B664594F5BCD3C9F4FF3D7CA71C299D1CC9423F4F",
+  "sourceTerminalSha256": "CBA6D5AF7C249BDB054CD27DBA132FF3F79B1527B946F081D325BC55AA3DA2C7",
+  "restoredTerminalSha256": "CBA6D5AF7C249BDB054CD27DBA132FF3F79B1527B946F081D325BC55AA3DA2C7",
+  "sales": 55,
+  "items": 110,
+  "payments": 55,
+  "saleCompletedAudits": 55,
+  "schemaVersion": 7,
+  "historyQueryable": true
+}

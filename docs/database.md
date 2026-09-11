@@ -93,3 +93,9 @@ Las FK de partidas/pago al encabezado son diferidas. Se insertan hijos antes del
 Checkout crea secuencia, partidas, pago, venta y audit_entry sale.completed dentro de una sola transacción inmediata. Índice único de auditoría por entidad. El permiso sales.complete se concede a Administrator, Manager y Cashier; total 14 permisos, seis migraciones. Un índice por caja permite sumar efectivo aplicado. El estado comercial es implícitamente confirmado; no hay borradores persistidos.
 
 001–005 intactas byte por byte. .gitattributes marca migrations/*.sql -text porque los hashes aplicados dependen de sus bytes; no renormalizar scripts históricos. El backup conserva estas tablas sin cambiar .cmbackup. checkout.pending no pertenece al backup ni es un carrito serializado.
+
+## Migración 007 — historial de ventas
+
+Añade `sales.view`, lo concede a Administrator y Manager y crea `ix_sale_history` sobre `sale(confirmed_utc DESC,id DESC)`. No añade tablas ni columnas y no duplica el folio. Cashier queda sin acceso.
+
+Las consultas reconstruyen el folio con terminal/sequence, cargan una sola página de 50 mediante LIMIT/OFFSET y mantienen orden estable. La ruta abre la base read-only dentro de una transacción deferred. Upgrade v6→v7, hashes 001–006 y backup/restore con 55 ventas se verificaron en pruebas y CLI.

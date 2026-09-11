@@ -1,7 +1,7 @@
 # Continuidad
 
 Lee README.md, docs/CURRENT_STATE.md y docs/NEXT_STEPS.md antes de trabajar. Luego sólo los ADRs y archivos pertinentes.
-FASE 1E cerrada: venta confirmada y cobro efectivo transaccional, 1E.1–1E.5 y smoke WPF completos. No hay fase posterior autorizada. Sin stock, descuentos, devoluciones, tarjetas, fiscalidad, hardware, rediseño ni fullscreen. Baseline 1D: 92c5ef795b6da8e1cdf7f34ec9fb1b01cce4a5d2.
+FASE 1F cerrada: historial y detalle de ventas de solo lectura, permiso sales.view, migración 007, smoke WPF, concurrencia y backup/restore completos. Baseline 1E: d4118144dd6f19bff885ced15a3f6098c24f7c29. No hay fase posterior autorizada. Sin cancelaciones, devoluciones, inventario, descuentos, tarjetas, fiscalidad, hardware, rediseño ni fullscreen.
 No copiar código copyleft ni elegir licencia del producto sin autorización expresa.
 Domain no referencia infraestructura ni UI. Operaciones críticas atómicas; efectos físicos posteriores al commit.
 No modificar migraciones aplicadas: agregar una nueva. Nunca editar manualmente producción.

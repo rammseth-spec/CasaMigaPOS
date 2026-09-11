@@ -63,3 +63,11 @@ Orden de bloqueos: UserSession y después transacción SQLite inmediata. El UUID
 Sólo la confirmación conocida permite vaciar la misma instancia de carrito. No se borra un carrito nuevo al devolver una operación antigua. El marcador permanece hasta Acknowledge después de mostrar el resultado: un reinicio entre commit y pantalla puede recuperarlo. Un reintento conflictivo no borra un marcador anterior. PosService, descarte y conteo/cierre bloquean intentos pendientes también desde Application. Nueva sesión de usuario puede iniciar login para recuperar el UUID persistido; no recupera el carrito transitorio.
 
 CashClosingService suma efectivo aplicado de ventas dentro de su unidad de trabajo. La exclusión de ventas al confirmar conteo y la serialización SQLite mantienen consistente el resultado al competir cobro y conteo. CheckoutDialog/ViewModel agregan captura de recibido, cambio, confirmación explícita y recuperación. El resto del POS conserva comportamiento y recursos visuales aprobados.
+
+## FASE 1F implementada (vigente)
+
+Application añade `SalesHistoryService` y contratos de consulta. Autoriza `sales.view` en cada operación, convierte días de la zona local a límites UTC y mantiene separados los modos folio/rango. No exige caja abierta ni permiso de venta.
+
+Infrastructure implementa `ILocalReadUnitOfWork` mediante conexión read-only y transacción deferred. La ruta comercial inmediata no cambia. El listado usa COUNT más una página de joins; el detalle usa encabezado/pago/contexto más partidas ordenadas. ADR-011 documenta la decisión y la prueba concurrente contra Checkout.
+
+Presentation incorpora Ventas, paginación de 50, folio exacto, rango, detalle y control de visibilidad por permiso. Los nombres de usuario/terminal son actuales y los IDs permanecen históricos. Sale/SaleItem/Payment y ExpectedCash no se modificaron.

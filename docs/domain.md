@@ -64,3 +64,7 @@ SaleItem conserva ProductId, nombre vendido, precio unitario, cantidad Int32 y t
 Payment único por Sale: método CASH, aplicado=Total, recibido>=Total, cambio=recibido−Total. Sale/SaleItem/Payment no tienen setters y SQLite impide actualización, eliminación y anexar partidas a la venta confirmada. La fecha del pago es la ConfirmedAt del agregado, confirmado en la misma transacción.
 
 ExpectedCash vigente = fondo + suma de Payment.Applied de ventas de esa CashSession. Ejemplo: fondo $500 + venta $53, recibido $100 y cambio $47 → esperado $553. No se suma recibido ni se resta cambio de nuevo. No hay ventas después de cash_count confirmado.
+
+## Proyecciones de historial — FASE 1F
+
+FASE 1F no cambia el dominio comercial. `SalesHistoryQuery`, `SalesHistoryRow`, `SalesHistoryPage` y `SalesHistoryDetail` pertenecen a Application porque son proyecciones de consulta. El detalle reconstruye `Sale` para comprobar snapshots y aritmética Money; nunca persiste el agregado reconstruido. Los nombres actuales de usuario/terminal acompañan a UserId/TerminalId sin modificar las ventas históricas.

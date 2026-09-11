@@ -1,0 +1,10 @@
+{
+  "date": "2026-09-11",
+  "configuration": "Release",
+  "runtimeIdentifier": "win-x64",
+  "selfContained": true,
+  "output": "artifacts/development",
+  "executable": "CasaMiga.Presentation.exe",
+  "sha256": "606CBB86A9239E64189360E19B6E498E69369D18D1AD68DD06DFD023B542D867",
+  "productionReady": false
+}

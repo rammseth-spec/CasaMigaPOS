@@ -1,0 +1,10 @@
+FASE 1F final verification
+Date: 2026-09-11
+SDK: 10.0.400
+Runtime: 10.0.11
+Focused SalesHistoryTests: 17 passed, 0 failed, 0 skipped
+Full suite: 170 passed, 0 failed, 0 skipped
+TRX: TestResults/phase1f-final.trx (generated locally; ignored)
+Release build: 0 errors, 0 warnings
+git diff --check: passed before documentation commit
+NuGet: locked restore from local official package cache; no dependencies added

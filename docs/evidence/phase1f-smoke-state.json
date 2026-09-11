@@ -1,0 +1,15 @@
+{
+  "scope": "synthetic WPF smoke after history queries",
+  "sales": 55,
+  "items": 110,
+  "payments": 55,
+  "saleCompletedAudits": 55,
+  "migrationCount": 7,
+  "schemaVersion": 7,
+  "salesViewRoles": 2,
+  "cashStatus": "OPEN",
+  "firstFolio": "45f13704a99f46d3be6074cf82156181-00000001",
+  "lastFolio": "45f13704a99f46d3be6074cf82156181-00000055",
+  "commercialRowsCreatedBySmoke": 0,
+  "applicationClosed": true
+}

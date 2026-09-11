@@ -84,3 +84,9 @@ Esperado = fondo + efectivo aplicado por ventas de la caja. $53 vendidos con $10
 Backup incluye todas las ventas/pagos y sus snapshots en SQLite. No incluye carrito ni checkout.pending: antes de respaldo operativo aceptar/verificar resultados pendientes y cerrar normalmente. Tras restaurar un backup, revisar el último cobro conocido y conciliar efectivo antes de operar; no reproducir automáticamente un carrito ni asumir que un backup antiguo contiene cobros posteriores. Una restauración no sustituye resolución del intento de la instalación original. Conservar original y paquete; activar sólo un entorno.
 
 La publicación de desarrollo está en artifacts/development. El smoke WPF de 1E quedó completo mediante confirmación manual y evidencia técnica: cobro, resultado, carrito vacío, recuperación y cierre exacto. También se verificaron servicios, SQLite, backup y restore CLI. Consultar PHASE_1E_REPORT.md. Esto sigue siendo una publicación de desarrollo, no de producción.
+
+## Historial — FASE 1F
+
+Ventas está disponible sólo para usuarios con `sales.view` (Administrator/Manager por defecto). Cashier no ve la opción. Las consultas no requieren abrir o cerrar caja y no deben usarse para editar SQLite. El rango usa días locales del equipo; conservar el offset mostrado al investigar una incidencia.
+
+La publicación de desarrollo vigente está en `artifacts/development`. El smoke con 55 ventas comprobó dos páginas, folio, rango, detalle y permiso de cajero. Backup/restore CLI conserva historial y terminal con el mismo hash lógico. Consultar `PHASE_1F_REPORT.md` y `PHASE_1F_SMOKE.md`. La aplicación quedó cerrada y sigue sin estar lista para producción.

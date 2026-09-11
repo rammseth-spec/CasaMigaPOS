@@ -1,4 +1,4 @@
-# Inventario de fuentes y documentación — FASE 1E
+# Inventario de fuentes y documentación — FASE 1F
 
 Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 
@@ -21,6 +21,7 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - docs/decisions/ADR-008-catalog-normalization-and-audit.md
 - docs/decisions/ADR-009-unhandled-failure-policy.md
 - docs/decisions/ADR-010-cash-checkout.md
+- docs/decisions/ADR-011-sales-history-read-path.md
 - docs/dependencies.md
 - docs/domain.md
 - docs/evidence/dependency-licenses.json
@@ -104,6 +105,19 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - docs/evidence/phase1e-visual-restore.txt
 - docs/evidence/phase1e-visual-state.json
 - docs/evidence/phase1e-visual-verification.txt
+- docs/evidence/phase1f-cashier-no-sales.png
+- docs/evidence/phase1f-history-detail-payment.png
+- docs/evidence/phase1f-history-detail-top.png
+- docs/evidence/phase1f-history-exact-folio.png
+- docs/evidence/phase1f-history-invalid-folio.png
+- docs/evidence/phase1f-history-local-date.png
+- docs/evidence/phase1f-history-page1.png
+- docs/evidence/phase1f-history-page2.png
+- docs/evidence/phase1f-migrations.json
+- docs/evidence/phase1f-publication.json
+- docs/evidence/phase1f-restore.json
+- docs/evidence/phase1f-smoke-state.json
+- docs/evidence/phase1f-verification.txt
 - docs/evidence/verification.txt
 - docs/FILES.md
 - docs/NEXT_STEPS.md
@@ -118,6 +132,8 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - docs/PHASE_1E_PROGRESS.md
 - docs/PHASE_1E_REPORT.md
 - docs/PHASE_1E_VISUAL_ACCEPTANCE.md
+- docs/PHASE_1F_REPORT.md
+- docs/PHASE_1F_SMOKE.md
 - docs/roadmap.md
 - docs/USER_REQUIREMENTS_PHASE_1A.md
 - docs/USER_REQUIREMENTS_PHASE_1B.md
@@ -131,6 +147,7 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - migrations/004_catalog.sql
 - migrations/005_pos_permission.sql
 - migrations/006_cash_sales.sql
+- migrations/007_sales_history.sql
 - NuGet.Config
 - README.md
 - research/hardware/qian-qop-t80ul-ri-02.md
@@ -147,6 +164,7 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - src/CasaMiga.Application/packages.lock.json
 - src/CasaMiga.Application/Ports.cs
 - src/CasaMiga.Application/PosService.cs
+- src/CasaMiga.Application/SalesHistoryService.cs
 - src/CasaMiga.Domain/Cart.cs
 - src/CasaMiga.Domain/CasaMiga.Domain.csproj
 - src/CasaMiga.Domain/CashSession.cs
@@ -190,6 +208,9 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - src/CasaMiga.Presentation/PosView.xaml.cs
 - src/CasaMiga.Presentation/PosViewModel.cs
 - src/CasaMiga.Presentation/Resources/Theme.xaml
+- src/CasaMiga.Presentation/SalesHistoryView.xaml
+- src/CasaMiga.Presentation/SalesHistoryView.xaml.cs
+- src/CasaMiga.Presentation/SalesHistoryViewModel.cs
 - tests/CasaMiga.Tests/CartTests.cs
 - tests/CasaMiga.Tests/CasaMiga.Tests.csproj
 - tests/CasaMiga.Tests/CashClosingTests.cs
@@ -202,4 +223,5 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - tests/CasaMiga.Tests/PosTests.cs
 - tests/CasaMiga.Tests/SalePersistenceTests.cs
 - tests/CasaMiga.Tests/SalesClosingTests.cs
+- tests/CasaMiga.Tests/SalesHistoryTests.cs
 - tests/CasaMiga.Tests/SaleTests.cs
