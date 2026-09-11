@@ -27,7 +27,7 @@ Commit de implementación 1E: `18fd3a8e56c79ef7a5710443da09d364f965f6fa`. Incluy
 | 1E.2 | Migración 006, cuatro tablas STRICT, FK, unicidad, integridad de agregado y triggers de inmutabilidad. Persistencia inicial: 6 pruebas; upgrade v5 añadido después. |
 | 1E.3 | Checkout atómico, sales.complete, snapshots aprobados, UUID único, marcador durable, lectura de recuperación y aceptación del resultado. 14 pruebas focalizadas finales aprobadas. |
 | 1E.4 | ExpectedCash suma efectivo aplicado por caja; conteo confirmado bloquea venta. 5 pruebas focalizadas de cierre/restauración aprobadas. |
-| 1E.5 | Cobrar integrado al POS, captura de recibido/cambio, confirmación explícita, folio y recuperación. Smoke WPF parcial; pendiente recorrido completo visual. |
+| 1E.5 | Cobrar integrado al POS, captura de recibido/cambio, confirmación explícita, folio y recuperación. Cobro manual, reinicio y cierre WPF comprobados; pendiente confirmación de observaciones manuales. |
 
 No se implementó inventario/stock, descuentos, promociones, combos, devoluciones, cancelaciones, tarjetas, fiscalidad, clientes, impresora, cajón, nueva identidad, rediseño ni fullscreen. Se preservan las funcionalidades 1A–1D, con cambios necesarios en puertos, guardas del contexto y cálculo de caja. Sin paquetes nuevos ni cambios de lockfiles.
 
@@ -58,9 +58,9 @@ Evidencia persistente en docs/evidence/phase1e-*: baseline y baseline recuperado
 
 ## Smoke WPF y pendiente concreto
 
-Comprobado en instalación sintética separada: arranque/login, caja recuperada, POS sin cambios visuales profesionales, Cobrar deshabilitado con carrito vacío, carrito de dos líneas y total $53, apertura de diálogo con total correcto, confirmación deshabilitada sin recibido y Volver conservando carrito. Se cerró normalmente descartando sólo el carrito de prueba.
+Actualización 2026-09-10: el usuario completó una venta sintética de $53.00 con recibido $100.00 y cambio $47.00. Codex comprobó persistencia única, reinicio sin marcador y POS vacío; realizó conteo/cierre mediante WPF con esperado/contado $53.00 y diferencia $0.00. Suite posterior: 153 aprobadas, cero fallidas/omitidas, compilación sin errores/warnings y publicación win-x64 correcta.
 
-No se pudo completar la introducción de recibido en el modal mediante la herramienta de Windows: la activación del propietario quitaba foco y set_value devolvía elemento no disponible. No se registró una venta mediante UI. Falta verificar visualmente recibido insuficiente, cambio, confirmación, recibo, regreso a carrito vacío, reinicio y cierre con la venta. NEXT_STEPS.md contiene el recorrido exacto. No se declara smoke completo ni se solicita una nueva autorización de implementación.
+Falta confirmación del usuario sobre rechazo de $50.00, cambio visible, resultado con folio/importes y aceptación/retorno inmediato. No se atribuye éxito visual a lo comprobado únicamente en SQLite. Detalle de los 24 pasos y evidencia en PHASE_1E_VISUAL_ACCEPTANCE.md. No hubo cambios funcionales.
 
 ## Archivos principales
 

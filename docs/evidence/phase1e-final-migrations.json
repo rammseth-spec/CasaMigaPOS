@@ -1,0 +1,32 @@
+[
+  {
+    "file": "001_foundation.sql",
+    "hash": "67FE636BC15056DB439D15A0CDD73FFD84DA98F5F383FAEF21910F53E191CAD7",
+    "matchesApplied": true
+  },
+  {
+    "file": "002_identity_cash.sql",
+    "hash": "B8C29E34BFFFDC6EE313756EF4869644A495070C4B096BCDEDAD6C8A8BF7C9E5",
+    "matchesApplied": true
+  },
+  {
+    "file": "003_cash_closing.sql",
+    "hash": "4A5FD419D95C19CBE7669FCB0C0C825567FA4DDD97478BD9946DDB1E9E13E7E1",
+    "matchesApplied": true
+  },
+  {
+    "file": "004_catalog.sql",
+    "hash": "7E7F81303AB6FD9DB3E96A3F878AD4FE4B4B94B79FF4C893AF9F9527DAEA1968",
+    "matchesApplied": true
+  },
+  {
+    "file": "005_pos_permission.sql",
+    "hash": "A335A25AA1F2CC94CED3670FDD4C5E2FCC9AA344141EEA74B06287F357CA167B",
+    "matchesApplied": true
+  },
+  {
+    "file": "006_cash_sales.sql",
+    "hash": "7EA9A2981B02C7D2A93CC550E5E18D0FA60C63A79C9D1052458E0769DFAE2E0C",
+    "matchesApplied": true
+  }
+]

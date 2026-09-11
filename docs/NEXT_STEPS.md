@@ -1,13 +1,11 @@
 # Próximos pasos
 
-Completar únicamente aceptación de FASE 1E; no iniciar otra fase. Actualización 2026-09-10: seguir PHASE_1E_MANUAL_SMOKE.md en work/phase1e-visual-20260910. El diálogo quedó preparado con total $53.00; no hay venta ni checkout.pending. PHASE_1E_VISUAL_ACCEPTANCE.md registra los 24 pasos y sus límites. No repetir preparaciones ni asumir que ya se cobró.
+Actualización 2026-09-10: cobro, persistencia, reinicio y cierre WPF completados en work/phase1e-visual-20260910. Hay una venta de $53.00, recibido $100.00, cambio $47.00, caja CLOSED con esperado/contado $53.00 y diferencia cero. checkout.pending ausente. No repetir venta ni abrir otra caja en este recorrido. Aplicación cerrada.
 
-Pendiente: smoke manual de la aplicación publicada. En instalación sintética, crear carrito de $53.00 (2 conchas de $19.00 y 3 bolillos de $5.00); recibido $50.00 debe deshabilitar confirmación; $100.00 debe mostrar $47.00 de cambio. Confirmar una sola vez, comprobar folio/total/recibido/cambio; Volver al POS debe vaciar carrito. Reiniciar y verificar venta conservada. Con fondo cero, contar $53.00 debe producir esperado $53.00 y diferencia cero. Confirmar cierre. Registrar evidencia visual y comparar la base. El recorrido por servicios/SQLite ya pasó, pero no equivale a smoke completo de UI.
+FASE 1E permanece NO CERRADA sólo hasta confirmar los pasos visuales manuales: rechazo con $50.00, cambio visible de $47.00 con $100.00, resultado con folio/importes, aceptación y regreso inmediato al carrito vacío. Se preguntó al usuario; respuesta todavía no registrada. Si los verificó, registrar su confirmación y cerrar aceptación. Si no, comprobar sólo los casos pendientes con otro recorrido sintético identificado; no inferir éxito de pruebas de servicios.
 
-El bloqueo observado fue de la herramienta de Windows: activar el destino padre quitaba foco al diálogo y set_value devolvía elemento no disponible. No se alteró el diseño para eludir esa limitación. Reintentar con control funcional o realizar la comprobación manual; no asumir un defecto de binding sin evidencia.
+PHASE_1E_VISUAL_ACCEPTANCE.md distingue los 24 pasos y la evidencia. Verificación posterior al cierre ya ejecutada: 153 aprobadas, 0 fallidas/omitidas, cero errores/warnings, publicación autocontenida win-x64 correcta. No hay cambios funcionales. No repetir suite por mera confirmación documental sin cambios de código.
 
-Después, actualizar reporte/estado con resultado real y cerrar 1E. La autorización de 1E ya existe; no pedirla otra vez. Nuevas funcionalidades requieren alcance y autorización posteriores.
+No iniciar otra fase. No modificar migraciones 001–006 ni catalog_key_v1. Baseline 1D: 92c5ef795b6da8e1cdf7f34ec9fb1b01cce4a5d2; no ejecutar 1D sobre base v6. Recuperar fuentes en otra carpeta y datos desde backup compatible. No editar datos comerciales manualmente.
 
-Mantener inmutables migraciones 001–006 y catalog_key_v1. Baseline 1D: 92c5ef7. Nunca ejecutar 1D contra una base v6. Recuperar fuentes con git archive en otra carpeta y datos desde .cmbackup compatible.
-
-Antes de producción siguen pendientes administración/recuperación de usuarios, reglas comerciales definitivas, correcciones formales de conteo, retención/segunda copia/cifrado, activación de restauración, pruebas físicas y licencia/distribución. No editar producción para eludir reglas.
+Antes de producción siguen pendientes administración/recuperación de usuarios, reglas comerciales definitivas, correcciones formales de conteo, retención/segunda copia/cifrado, activación de restauración, pruebas físicas y licencia/distribución. Nuevas funcionalidades requieren alcance y autorización posteriores.

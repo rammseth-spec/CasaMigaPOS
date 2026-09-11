@@ -77,6 +77,13 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - docs/evidence/phase1e-cli-restore.txt
 - docs/evidence/phase1e-closing.txt
 - docs/evidence/phase1e-domain.txt
+- docs/evidence/phase1e-final-clean.txt
+- docs/evidence/phase1e-final-migrations.json
+- docs/evidence/phase1e-final-publication.json
+- docs/evidence/phase1e-final-publish.txt
+- docs/evidence/phase1e-final-restore.txt
+- docs/evidence/phase1e-final-state.json
+- docs/evidence/phase1e-final-verification.txt
 - docs/evidence/phase1e-persistence.txt
 - docs/evidence/phase1e-publication-hashes.json
 - docs/evidence/phase1e-publish.txt
@@ -86,10 +93,13 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - docs/evidence/phase1e-ui-smoke.md
 - docs/evidence/phase1e-verification.txt
 - docs/evidence/phase1e-visual-clean.txt
+- docs/evidence/phase1e-visual-closed.jpg
+- docs/evidence/phase1e-visual-count-exact.jpg
 - docs/evidence/phase1e-visual-migrations.json
 - docs/evidence/phase1e-visual-pending-20260910.jpg
 - docs/evidence/phase1e-visual-publication.json
 - docs/evidence/phase1e-visual-publish.txt
+- docs/evidence/phase1e-visual-restarted-empty.jpg
 - docs/evidence/phase1e-visual-restore.txt
 - docs/evidence/phase1e-visual-state.json
 - docs/evidence/phase1e-visual-verification.txt

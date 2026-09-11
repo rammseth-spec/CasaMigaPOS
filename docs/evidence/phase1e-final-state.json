@@ -1,0 +1,108 @@
+{
+  "verifiedUtc": "2026-09-11T00:45:18.037Z",
+  "sales": [
+    {
+      "id": "25548b79-f8db-4db1-a80f-a7d117203a68",
+      "operation_id": "e1521c18-008e-4c0d-b377-5b57e887c6e6",
+      "user_id": "fe03318b-eb68-46b3-bab8-70f8096edcc4",
+      "terminal_id": "5635c1f4-08f3-4bd7-974d-03423a5a8d40",
+      "cash_session_id": "4dcd2c23-f48f-4ceb-a8f4-ffd5e57f84c4",
+      "sequence": 1,
+      "confirmed_utc": "2026-09-10T19:54:19.8514937+00:00",
+      "subtotal_cents": 5300,
+      "total_cents": 5300
+    }
+  ],
+  "items": [
+    {
+      "sale_id": "25548b79-f8db-4db1-a80f-a7d117203a68",
+      "position": 1,
+      "product_id": "f34ec8a9-024b-4111-89fa-d3a508602a86",
+      "product_name": "Concha",
+      "unit_price_cents": 1900,
+      "quantity": 2,
+      "line_total_cents": 3800
+    },
+    {
+      "sale_id": "25548b79-f8db-4db1-a80f-a7d117203a68",
+      "position": 2,
+      "product_id": "38935b8f-bd43-4b60-b1a1-1d52e7a627a2",
+      "product_name": "Bolillo",
+      "unit_price_cents": 500,
+      "quantity": 3,
+      "line_total_cents": 1500
+    }
+  ],
+  "payments": [
+    {
+      "id": "d476b986-ae74-4dbd-9093-6a6c78aa65fc",
+      "sale_id": "25548b79-f8db-4db1-a80f-a7d117203a68",
+      "method": "CASH",
+      "applied_cents": 5300,
+      "received_cents": 10000,
+      "change_cents": 4700
+    }
+  ],
+  "cashSessions": [
+    {
+      "id": "4dcd2c23-f48f-4ceb-a8f4-ffd5e57f84c4",
+      "terminal_id": "5635c1f4-08f3-4bd7-974d-03423a5a8d40",
+      "opened_by": "fe03318b-eb68-46b3-bab8-70f8096edcc4",
+      "opened_utc": "2026-09-10T19:39:05.6561387+00:00",
+      "opening_cents": 0,
+      "state": "CLOSED",
+      "closed_utc": "2026-09-11T00:44:23.9412796+00:00",
+      "closed_by": "fe03318b-eb68-46b3-bab8-70f8096edcc4",
+      "expected_cents": 5300,
+      "counted_cents": 5300,
+      "difference_cents": 0
+    }
+  ],
+  "cashCounts": [
+    {
+      "session_id": "4dcd2c23-f48f-4ceb-a8f4-ffd5e57f84c4",
+      "counted_by": "fe03318b-eb68-46b3-bab8-70f8096edcc4",
+      "counted_utc": "2026-09-11T00:41:12.1901964+00:00",
+      "counted_cents": 5300
+    }
+  ],
+  "audit": [
+    {
+      "id": "db7864c0-efa8-474b-8ac5-6c274abb8d10",
+      "actor_id": "fe03318b-eb68-46b3-bab8-70f8096edcc4",
+      "terminal_id": "5635c1f4-08f3-4bd7-974d-03423a5a8d40",
+      "action": "cash.open",
+      "entity_id": "4dcd2c23-f48f-4ceb-a8f4-ffd5e57f84c4",
+      "occurred_utc": "2026-09-10T19:39:05.6561387+00:00",
+      "details_json": "{\"openingCents\":0,\"state\":\"OPEN\"}"
+    },
+    {
+      "id": "38fa2f29-320e-40c0-b872-1ad910180142",
+      "actor_id": "fe03318b-eb68-46b3-bab8-70f8096edcc4",
+      "terminal_id": "5635c1f4-08f3-4bd7-974d-03423a5a8d40",
+      "action": "sale.completed",
+      "entity_id": "25548b79-f8db-4db1-a80f-a7d117203a68",
+      "occurred_utc": "2026-09-10T19:54:19.8514937+00:00",
+      "details_json": "{\"operationId\":\"e1521c18-008e-4c0d-b377-5b57e887c6e6\",\"folio\":\"5635c1f408f34bd7974d03423a5a8d40-00000001\",\"cashSessionId\":\"4dcd2c23-f48f-4ceb-a8f4-ffd5e57f84c4\",\"paymentId\":\"d476b986-ae74-4dbd-9093-6a6c78aa65fc\",\"totalCents\":5300,\"receivedCents\":10000,\"changeCents\":4700}"
+    },
+    {
+      "id": "368a84d4-c4fa-4ab9-a8af-f6f5c9422438",
+      "actor_id": "fe03318b-eb68-46b3-bab8-70f8096edcc4",
+      "terminal_id": "5635c1f4-08f3-4bd7-974d-03423a5a8d40",
+      "action": "cash.count",
+      "entity_id": "4dcd2c23-f48f-4ceb-a8f4-ffd5e57f84c4",
+      "occurred_utc": "2026-09-11T00:41:12.1901964+00:00",
+      "details_json": "{\"countedCents\":5300}"
+    },
+    {
+      "id": "9891b8cc-3a64-4af2-a350-003251299fd6",
+      "actor_id": "fe03318b-eb68-46b3-bab8-70f8096edcc4",
+      "terminal_id": "5635c1f4-08f3-4bd7-974d-03423a5a8d40",
+      "action": "cash.close",
+      "entity_id": "4dcd2c23-f48f-4ceb-a8f4-ffd5e57f84c4",
+      "occurred_utc": "2026-09-11T00:44:23.9412796+00:00",
+      "details_json": "{\"openedBy\":\"fe03318b-eb68-46b3-bab8-70f8096edcc4\",\"closedBy\":\"fe03318b-eb68-46b3-bab8-70f8096edcc4\",\"closedByOtherUser\":false,\"countedBy\":\"fe03318b-eb68-46b3-bab8-70f8096edcc4\",\"countedAt\":\"2026-09-11T00:41:12.1901964+00:00\",\"openingCents\":0,\"expectedCents\":5300,\"countedCents\":5300,\"differenceCents\":0}"
+    }
+  ],
+  "pending": false
+}

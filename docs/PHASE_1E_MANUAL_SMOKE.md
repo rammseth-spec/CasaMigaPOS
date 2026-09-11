@@ -1,8 +1,12 @@
-# FASE 1E — comprobación manual pendiente
+# FASE 1E — guía del recorrido manual
 
 Entorno exclusivamente sintético preparado el 2026-09-10. No usar dinero ni datos reales. No modificar código, migraciones ni SQLite para completar el recorrido.
 
-## Instalación preparada
+## Estado posterior al recorrido
+
+El cobro ya existe y Codex completó reinicio, conteo y cierre. No repetir estos pasos en esta instalación: una venta de $53.00 y caja CLOSED. Falta únicamente que el usuario confirme qué validaciones visuales manuales observó. El recorrido de abajo se conserva como referencia histórica; no es una instrucción para repetir el cobro. Ver PHASE_1E_VISUAL_ACCEPTANCE.md.
+
+## Instalación preparada originalmente
 
 Ejecutable: `artifacts/development/CasaMiga.Presentation.exe`, desde la raíz del repositorio. Su development.settings.json apunta a `work/phase1e-visual-20260910`, carpeta nueva, con fondo cero, dos productos y ninguna venta inicial. La instalación previa permanece intacta.
 
