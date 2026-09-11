@@ -1,6 +1,8 @@
 # FASE 1G — Checkpoint físico Qian USB
 
-Estado: pendiente. No ejecutar impresión desde Casa Miga POS todavía. No crear ni habilitar `printing.json` hasta la siguiente autorización.
+Estado: preparación física completada y primer envío técnico ejecutado el 2026-09-11. La validación visual humana está pendiente; no repetir la impresión.
+
+Resultado recibido: Qian QOP-T80UL-RI-02 por USB001; cola `POS-80`; driver `POS-80 11.3.0.1`; autoprueba y página Windows con salida física. Casa Miga envió después un único ticket ASCII: PrintRequestId `7ba5b12f-2482-457d-abf4-725181b25d60`, JobId 3, estado técnico SUBMITTED, 762 bytes. Ver `PHASE_1G_BLOCK_B_REPORT.md`.
 
 ## Preparación exacta
 

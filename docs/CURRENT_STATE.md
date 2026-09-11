@@ -1,6 +1,8 @@
-# Estado actual — FASE 1G BLOQUE A EN CHECKPOINT FÍSICO
+# Estado actual — FASE 1G BLOQUE B, VALIDACIÓN HUMANA PENDIENTE
 
-Fecha: 2026-09-11. FASE 1F permanece cerrada y su recuperación es `db6422a1d09c36f1ae038c673d90ef9ec6f13ab4`. FASE 1G Bloque A está implementada en `4f6463e` y queda detenida antes del smoke físico. Git local conserva la identidad Rammseth / `rammstudioworkshop\@gmail.com`; no hay remoto ni push.
+Fecha: 2026-09-11. FASE 1F permanece cerrada y su recuperación es `db6422a1d09c36f1ae038c673d90ef9ec6f13ab4`. FASE 1G Bloque A está implementada en `4f6463e`. El Bloque B envió exactamente un ticket sintético ASCII mediante el mecanismo de desarrollo de `cd19686`; queda detenido para validación humana. Git local conserva la identidad Rammseth / `rammstudioworkshop\@gmail.com`; no hay remoto ni push.
+
+Windows confirmó `POS-80`, USB001, driver POS-80 11.3.0.1 y estado Normal. El trabajo `7ba5b12f-2482-457d-abf4-725181b25d60` fue aceptado por Winspool con JobId 3 y estado técnico SUBMITTED; fueron 762 bytes ASCII sin ESC, GS, corte ni cajón. Esto no confirma salida física. No se abrió la base comercial ni se crearon venta, pago, caja o cambio en ExpectedCash.
 
 ReceiptDocument y ReceiptLine son inmutables y viven en Application. El documento se deriva de Sale/SaleItem/Payment, captura nombres de usuario/terminal y perfil comercial, usa hora local con offset y conserva Money Int64. El JSON canónico, versión y SHA-256 se guardan en receipt_snapshot. Requests y eventos append-only distinguen ORIGINAL/RETRY/REPRINT y REQUESTED/SUBMITTED/COMPLETED/FAILED/UNKNOWN.
 
@@ -8,7 +10,7 @@ Migración 008 agrega las tres tablas y `sales.receipt.reprint` sólo para Admin
 
 WindowsRawPrintTransport envía RAW a una cola lógica y devuelve JobId. SerializedReceiptPrintTransport limita a un trabajo dentro de la aplicación. El renderer de Bloque A contiene texto únicamente: no emite selección de codepage, inicialización, corte ni cajón. SUBMITTED significa aceptado por spooler, no papel físicamente confirmado.
 
-Verificación vigente: 182 pruebas aprobadas, 0 fallidas, 0 omitidas; build Release con 0 errores y 0 advertencias. Upgrade 007→008, base nueva, snapshots, permisos, inmutabilidad, concurrencia y backup/restore están cubiertos. El smoke físico Qian no se inició.
+Verificación vigente: 185 pruebas aprobadas, 0 fallidas, 0 omitidas; build Release con 0 errores y 0 advertencias. Upgrade 007→008, base nueva, snapshots, permisos, inmutabilidad, concurrencia, backup/restore y el disparo controlado están cubiertos. El resultado visual Qian sigue pendiente.
 
 `sales.view` se concede por migración 007 solamente a Administrator y Manager. Cashier no lo recibe. Presentation oculta Ventas sin permiso y Application revalida en cada consulta que el usuario actual exista, esté activo y conserve el permiso. Consultar historial no exige caja abierta ni `sales.complete`.
 

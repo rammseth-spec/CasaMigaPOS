@@ -1,0 +1,45 @@
+{
+  "phase": "1G Block B",
+  "recordedAtUtc": "2026-09-11T18:58:21.9696303+00:00",
+  "printer": {
+    "model": "Qian QOP-T80UL-RI-02",
+    "queueName": "POS-80",
+    "portName": "USB001",
+    "driverName": "POS-80 11.3.0.1",
+    "printerStatusBeforeSubmission": "Normal"
+  },
+  "configuration": {
+    "enabled": true,
+    "columns": 48,
+    "encodingName": "us-ascii",
+    "cutMode": "Disabled",
+    "openCashDrawer": false,
+    "businessDisplayName": "PRUEBA CASA MIGA"
+  },
+  "request": {
+    "printRequestId": "7ba5b12f-2482-457d-abf4-725181b25d60",
+    "requestedAtUtc": "2026-09-11T18:58:21.8519943+00:00",
+    "requestedState": "REQUESTED",
+    "finalTechnicalState": "SUBMITTED",
+    "submittedAtUtc": "2026-09-11T18:58:21.9696303+00:00",
+    "spoolerJobId": 3,
+    "byteCount": 762,
+    "errorCode": null
+  },
+  "payloadSafety": {
+    "asciiOnly": true,
+    "containsEsc1B": false,
+    "containsGs1D": false,
+    "cutCommandSent": false,
+    "cashDrawerCommandSent": false
+  },
+  "commercialEffects": {
+    "saleCreated": false,
+    "paymentCreated": false,
+    "cashSessionOpened": false,
+    "expectedCashChanged": false,
+    "commercialDatabaseOpened": false
+  },
+  "physicalOutputConfirmed": false,
+  "physicalValidation": "PENDING_USER_PHOTO_AND_ANSWERS"
+}
