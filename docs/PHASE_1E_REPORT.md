@@ -1,6 +1,6 @@
 # CASA MIGA POS — Reporte FASE 1E
 
-Fecha de implementación: 2026-09-07. Estado: implementación terminada, aceptación visual final pendiente. Actualización de aceptación 2026-09-10 en PHASE_1E_VISUAL_ACCEPTANCE.md: NO CERRADA. No se declara cierre total de 1E ni preparación para producción.
+Fecha de implementación: 2026-09-07. Cierre formal: 2026-09-10. Estado: **FASE 1E CERRADA**. La confirmación manual final y la evidencia técnica completan los 24 pasos del smoke WPF. El sistema continúa como versión de desarrollo y no está listo para producción.
 
 ## Identidad Git y recuperación de 1D
 
@@ -27,7 +27,7 @@ Commit de implementación 1E: `18fd3a8e56c79ef7a5710443da09d364f965f6fa`. Incluy
 | 1E.2 | Migración 006, cuatro tablas STRICT, FK, unicidad, integridad de agregado y triggers de inmutabilidad. Persistencia inicial: 6 pruebas; upgrade v5 añadido después. |
 | 1E.3 | Checkout atómico, sales.complete, snapshots aprobados, UUID único, marcador durable, lectura de recuperación y aceptación del resultado. 14 pruebas focalizadas finales aprobadas. |
 | 1E.4 | ExpectedCash suma efectivo aplicado por caja; conteo confirmado bloquea venta. 5 pruebas focalizadas de cierre/restauración aprobadas. |
-| 1E.5 | Cobrar integrado al POS, captura de recibido/cambio, confirmación explícita, folio y recuperación. Cobro manual, reinicio y cierre WPF comprobados; pendiente confirmación de observaciones manuales. |
+| 1E.5 | Cobrar integrado al POS, captura de recibido/cambio, confirmación explícita, folio y recuperación. Smoke WPF completo: observación manual, persistencia, reinicio y cierre comprobados. |
 
 No se implementó inventario/stock, descuentos, promociones, combos, devoluciones, cancelaciones, tarjetas, fiscalidad, clientes, impresora, cajón, nueva identidad, rediseño ni fullscreen. Se preservan las funcionalidades 1A–1D, con cambios necesarios en puertos, guardas del contexto y cálculo de caja. Sin paquetes nuevos ni cambios de lockfiles.
 
@@ -56,11 +56,11 @@ ExpectedCash = fondo inicial + suma de Payment.Applied de las ventas de esa sesi
 
 Evidencia persistente en docs/evidence/phase1e-*: baseline y baseline recuperado, dominio/persistencia/checkout/cierre, verificación, clean, publicación, restore, hashes, smoke de servicios, backup/restore CLI y comparación. El detalle visual está en phase1e-ui-smoke.md. ADR-010 documenta las decisiones.
 
-## Smoke WPF y pendiente concreto
+## Smoke WPF y cierre
 
-Actualización 2026-09-10: el usuario completó una venta sintética de $53.00 con recibido $100.00 y cambio $47.00. Codex comprobó persistencia única, reinicio sin marcador y POS vacío; realizó conteo/cierre mediante WPF con esperado/contado $53.00 y diferencia $0.00. Suite posterior: 153 aprobadas, cero fallidas/omitidas, compilación sin errores/warnings y publicación win-x64 correcta.
+Actualización 2026-09-10: el usuario confirmó que $50.00 no permitió cobrar; $100.00 mostró $47.00 de cambio; el resultado se mostró y aceptó normalmente; al volver al POS, el carrito quedó vacío y el total volvió a $0.00. Codex comprobó persistencia única, reinicio sin marcador y POS vacío; realizó conteo/cierre mediante WPF con esperado/contado $53.00 y diferencia $0.00. Suite posterior: 153 aprobadas, cero fallidas/omitidas, compilación sin errores/warnings y publicación win-x64 correcta.
 
-Falta confirmación del usuario sobre rechazo de $50.00, cambio visible, resultado con folio/importes y aceptación/retorno inmediato. No se atribuye éxito visual a lo comprobado únicamente en SQLite. Detalle de los 24 pasos y evidencia en PHASE_1E_VISUAL_ACCEPTANCE.md. No hubo cambios funcionales.
+Los 24 pasos quedan aceptados. PHASE_1E_VISUAL_ACCEPTANCE.md identifica cuáles fueron manuales, técnicos y mixtos. No hubo defectos ni cambios funcionales durante la aceptación.
 
 ## Archivos principales
 
@@ -70,8 +70,8 @@ Integración: LocalPorts, PosService y CashClosingService; MainViewModel/MainWin
 
 ## Límites y continuidad
 
-La aceptación visual pendiente impide declarar 1E completamente cerrada. No iniciar funcionalidades posteriores. Persisten límites de desarrollo: sin pruebas táctiles físicas, corte eléctrico real, retención/cifrado/segunda copia ni recuperación administrativa de usuarios.
+FASE 1E está cerrada. El producto continúa en desarrollo y no está listo para producción. Persisten límites: sin pruebas táctiles físicas, corte eléctrico real, retención/cifrado/segunda copia ni recuperación administrativa de usuarios. No se inició ninguna funcionalidad posterior.
 
 checkout.pending almacena sólo UUID y no viaja en .cmbackup; el backup sí conserva venta/pago. Resolver/aceptar el último intento antes de respaldo operativo. Tras restaurar una copia antigua, conciliar cobros posteriores y no repetir automáticamente una operación. Restauración y resolución de intento son procedimientos diferentes. Un usuario original desactivado/sin permiso requiere un proceso administrativo futuro; no saltar autorización editando SQLite.
 
-El siguiente paso es completar y documentar el smoke WPF pendiente, actualizar aceptación y registrar esa evidencia. El alcance 1E ya está autorizado.
+Próximo paso recomendado, sin ejecutarlo: definir y autorizar el alcance de la fase siguiente antes de modificar código.

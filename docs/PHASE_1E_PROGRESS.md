@@ -15,7 +15,7 @@ Para inspeccionar sin alterar trabajo actual: `git show 92c5ef7:docs/PHASE_1D_RE
 
 Venta sólo al confirmar; Sale/SaleItem/Payment inmutables; efectivo únicamente; Money Int64 checked. Nombre/precio del carrito se conservan, con producto/categoría activos al cobrar. Venta/partidas/pago/auditoría en una transacción; rollback conserva carrito y commit confirmado permite vaciarlo. Sin stock, descuentos, promociones, combos, devoluciones, cancelaciones, tarjetas, fiscalidad, clientes, hardware, rediseño o fullscreen.
 
-Estado vigente: 1E.1–1E.4 verificadas, 1E.5 implementada con smoke WPF parcial. Suite final de 153 aprobadas; publicación y backup/restore verificados. Falta completar aceptación visual de cobro; no declarar 1E completamente cerrada. Ver PHASE_1E_REPORT.md.
+Estado vigente: **FASE 1E CERRADA**. 1E.1–1E.5 verificadas y smoke WPF completo con confirmación manual final. Suite final disponible de 153 aprobadas; publicación y backup/restore verificados. El sistema continúa como versión de desarrollo y no está listo para producción. Ver PHASE_1E_REPORT.md.
 
 Actualización de recuperación: el commit raíz acb3604 y el ajuste .gitattributes 5b98863 preceden al baseline definitivo 92c5ef7, que conserva los finales mixtos originales de migraciones 003/004 sin normalización. Se exportó el commit definitivo y se ejecutó verify.ps1 desde la copia: 120 aprobadas, 0 errores/warnings de compilación. Las cinco migraciones exportadas coinciden por SHA-256 con las aplicadas. El baseline sigue sin funcionalidad de 1E.
 

@@ -4,7 +4,7 @@ Entorno exclusivamente sintético preparado el 2026-09-10. No usar dinero ni dat
 
 ## Estado posterior al recorrido
 
-El cobro ya existe y Codex completó reinicio, conteo y cierre. No repetir estos pasos en esta instalación: una venta de $53.00 y caja CLOSED. Falta únicamente que el usuario confirme qué validaciones visuales manuales observó. El recorrido de abajo se conserva como referencia histórica; no es una instrucción para repetir el cobro. Ver PHASE_1E_VISUAL_ACCEPTANCE.md.
+El recorrido está completo y FASE 1E está cerrada. El usuario confirmó rechazo con $50.00, cambio de $47.00 con $100.00, resultado correcto, aceptación normal y regreso con carrito vacío/total $0.00. Codex completó reinicio, conteo y cierre. No repetir estos pasos en esta instalación: una venta de $53.00 y caja CLOSED. El recorrido de abajo se conserva como referencia histórica; no es una instrucción para repetir el cobro. Ver PHASE_1E_VISUAL_ACCEPTANCE.md.
 
 ## Instalación preparada originalmente
 

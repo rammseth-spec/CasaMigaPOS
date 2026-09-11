@@ -84,6 +84,7 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - docs/evidence/phase1e-final-restore.txt
 - docs/evidence/phase1e-final-state.json
 - docs/evidence/phase1e-final-verification.txt
+- docs/evidence/phase1e-manual-confirmation.md
 - docs/evidence/phase1e-persistence.txt
 - docs/evidence/phase1e-publication-hashes.json
 - docs/evidence/phase1e-publish.txt

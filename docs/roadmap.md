@@ -24,7 +24,7 @@ Definition of Done por tarea: compila sin nuevas advertencias relevantes; prueba
 | 1B: cierre básico | Implementado: conteo ciego, cierre/auditoría atómicos, historial persistido y backup completo restaurado; 49 tests. Sin ventas ni hardware. |
 | 1C: catálogo base | Implementado y verificado: categorías/productos, permisos, auditoría, 82 tests y smoke A–F. |
 | 1D: POS y carrito transitorio | Implementado: 120 pruebas, smoke A–H, captura fatal, UI y backup. Sin venta persistida ni cobro. |
-| 1E: venta persistida y cobro efectivo | Autorizada e implementada: 153 pruebas, recuperación y backup/restore; smoke visual final pendiente. |
+| 1E: venta persistida y cobro efectivo | **CERRADA**: 153 pruebas, recuperación, backup/restore y smoke WPF de 24 pasos completados. |
 | Posteriores a 1E | Sin iniciar; requieren alcance y autorización nuevos. |
 
 ## Actualización FASE 1B

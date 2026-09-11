@@ -1,6 +1,6 @@
 # Casa Miga POS
 
-Aplicación Windows offline para una panadería mexicana. FASE 1D aprobada y registrada en Git; FASE 1E implementa venta persistida y cobro en efectivo, con cobro/reinicio/cierre WPF comprobados y confirmación de algunos pasos visuales manuales pendiente. Todavía no está lista para producción.
+Aplicación Windows offline para una panadería mexicana. FASE 1D aprobada y registrada en Git; **FASE 1E cerrada** con venta persistida, cobro en efectivo y smoke WPF completo. Continúa siendo una versión de desarrollo y todavía no está lista para producción.
 
 Stack: C# / .NET 10 LTS / WPF / Microsoft.Data.Sqlite / SQLite / MSTest.
 
