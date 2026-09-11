@@ -78,4 +78,11 @@ public interface ILocalStore
     Money CashSalesTotal(Guid session);
     SalesHistoryPage QuerySales(SalesHistoryFilter filter);
     SalesHistoryDetail? FindSaleDetail(Guid saleId);
+    ReceiptSnapshot? FindReceiptSnapshot(Guid saleId);
+    void AddReceiptSnapshot(ReceiptSnapshot snapshot);
+    ReceiptPrintRequest? FindOriginalReceiptPrintRequest(Guid saleId);
+    ReceiptPrintRequest? FindReceiptPrintRequest(Guid requestId);
+    ReceiptPrintEvent? FindLatestReceiptPrintEvent(Guid requestId);
+    void AddReceiptPrintRequest(ReceiptPrintRequest request);
+    void AddReceiptPrintEvent(ReceiptPrintEvent entry);
 }

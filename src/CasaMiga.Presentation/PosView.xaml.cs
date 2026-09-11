@@ -25,7 +25,7 @@ public partial class PosView : UserControl
     private async void CheckoutClick(object s,RoutedEventArgs e)
     {
         if(!Model.Ready)return;
-        new CheckoutDialog(Window.GetWindow(this),Model.Checkout,Model.TotalMoney,Model.RecoveryRequired).ShowDialog();
+        new CheckoutDialog(Window.GetWindow(this),Model.Checkout,Model.Receipts,Model.TotalMoney,Model.RecoveryRequired).ShowDialog();
         await Model.AfterCheckoutAsync();
     }
     private void ClearClick(object s,RoutedEventArgs e)

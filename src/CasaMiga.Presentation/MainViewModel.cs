@@ -73,7 +73,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 var journal = new CheckoutJournal(options.DataDirectory);
                 user = new UserSession(journal); login = new(database, new LocalPasswords(), clock, user); cash = new(database, user, clock); closing = new(database,user,clock);
                 var checkout = new CheckoutService(database,user,clock,terminal.Id,journal);
-                Pos = new(new PosService(database,user,terminal.Id),checkout,()=>UserLabel + " · " + TerminalLabel,(eventName,errorType)=>runtime.TryLog(eventName,errorType)){IsDevelopment=options.IsDevelopment};
+                var receipts = new ReceiptService(database,user,clock,terminal.Id,TimeZoneInfo.Local,
+                    new PrintingConfigurationProvider(options.DataDirectory),new EscPosReceiptRenderer(),
+                    new SerializedReceiptPrintTransport(new WindowsRawPrintTransport()));
+                Pos = new(new PosService(database,user,terminal.Id),checkout,receipts,()=>UserLabel + " · " + TerminalLabel,(eventName,errorType)=>runtime.TryLog(eventName,errorType)){IsDevelopment=options.IsDevelopment};
                 Catalog = new(new CatalogService(database,user,clock,terminal.Id,options.IsDevelopment),options.IsDevelopment,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 SalesHistory = new(new SalesHistoryService(database,user,TimeZoneInfo.Local),(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 screen = login.NeedsBootstrap() ? "bootstrap" : "login";

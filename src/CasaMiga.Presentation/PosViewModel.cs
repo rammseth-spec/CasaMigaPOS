@@ -13,7 +13,7 @@ public sealed record PosCartLine(CartLine Line)
     public string Total => PosViewModel.Format(Line.LineTotal);
     public bool CanDecrease => Quantity > 1;
 }
-public sealed class PosViewModel(PosService service, CheckoutService checkout, Func<string> operatorLabel, Action<string,string?> log) : INotifyPropertyChanged
+public sealed class PosViewModel(PosService service, CheckoutService checkout, ReceiptService receipts, Func<string> operatorLabel, Action<string,string?> log) : INotifyPropertyChanged
 {
     private Guid? category;
     private int page;
@@ -21,6 +21,7 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, F
     public bool Busy { get; private set; }
     public bool Ready => !Busy;
     public CheckoutService Checkout => checkout;
+    public ReceiptService Receipts => receipts;
     public Money TotalMoney => cart?.Subtotal ?? new Money(0);
     public bool RecoveryRequired { get; private set; }
     public bool CanOperate => Ready && !RecoveryRequired;
