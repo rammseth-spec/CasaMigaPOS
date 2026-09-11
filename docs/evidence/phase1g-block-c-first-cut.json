@@ -1,0 +1,44 @@
+{
+  "phase": "1G Block C",
+  "recordedAtUtc": "2026-09-11T19:58:51.3412379+00:00",
+  "officialReferences": {
+    "qian": "https://manuales.qian.mx/QOP-T80UL-RI-02.pdf",
+    "epsonCharacterSize": "https://download4.epson.biz/sec_pubs/pos/reference_en/escpos/gs_exclamation.html",
+    "epsonCut": "https://download4.epson.biz/sec_pubs/pos/reference_en/escpos/gs_cv.html",
+    "epsonLineFeed": "https://download4.epson.biz/sec_pubs/pos/reference_en/escpos/lf.html"
+  },
+  "printer": {
+    "queueName": "POS-80",
+    "portName": "USB001",
+    "driverName": "POS-80 11.3.0.1",
+    "printerStatusBeforeSubmission": "Normal"
+  },
+  "request": {
+    "printRequestId": "6df7d54d-a095-48e3-9223-dfc09b5bdf51",
+    "requestedAtUtc": "2026-09-11T19:58:51.2157194+00:00",
+    "submittedAtUtc": "2026-09-11T19:58:51.3412379+00:00",
+    "states": ["REQUESTED", "SUBMITTED"],
+    "spoolerJobId": 4,
+    "byteCount": 770,
+    "payloadSha256": "792FEFF59A9921E17AD77DFDD03D3B7D65447150B58ED195C159CF443DECB757",
+    "exactPayloadHexFile": "phase1g-block-c-payload.hex",
+    "errorCode": null
+  },
+  "commands": {
+    "gsSizeDoubleWidthHeight": {"hex": "1D 21 11", "count": 1},
+    "gsSizeDoubleHeight": {"hex": "1D 21 01", "count": 1},
+    "gsSizeNormal": {"hex": "1D 21 00", "count": 2},
+    "lineFeedBeforeCut": {"hex": "0A", "count": 4},
+    "gsPartialCut": {"hex": "1D 56 01", "count": 1, "isLastCommand": true},
+    "cashDrawerPulseCount": 0
+  },
+  "commercialEffects": {
+    "saleCreated": false,
+    "paymentCreated": false,
+    "cashSessionOpened": false,
+    "expectedCashChanged": false,
+    "commercialDatabaseOpened": false
+  },
+  "physicalOutputConfirmed": false,
+  "physicalValidation": "PENDING_USER_PHOTO_AND_ANSWERS"
+}

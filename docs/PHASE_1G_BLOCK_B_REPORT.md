@@ -1,6 +1,8 @@
 # FASE 1G Bloque B — Primer envío físico controlado
 
-Fecha: 2026-09-11. Estado: **FASE 1G ABIERTA; envío técnico terminado y validación física humana pendiente**.
+Fecha: 2026-09-11. Estado actualizado en Bloque C: **salida física confirmada por el usuario**.
+
+El papel salió, el contenido fue legible, no hubo corte a la derecha y los importes/separadores quedaron alineados. La letra resultó más pequeña de lo deseado, no hubo corte automático y retirar el ticket manualmente fue difícil. Esta evidencia autorizó el Bloque C de legibilidad y corte parcial.
 
 ## Punto de partida y Git
 

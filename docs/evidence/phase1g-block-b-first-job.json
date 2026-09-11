@@ -40,6 +40,17 @@
     "expectedCashChanged": false,
     "commercialDatabaseOpened": false
   },
-  "physicalOutputConfirmed": false,
-  "physicalValidation": "PENDING_USER_PHOTO_AND_ANSWERS"
+  "physicalOutputConfirmed": true,
+  "physicalValidation": {
+    "paperOutput": true,
+    "legible": true,
+    "rightEdgeClipped": false,
+    "amountsRightAligned": true,
+    "separatorsUseWidth": true,
+    "textTooSmall": true,
+    "automaticCut": false,
+    "manualRemovalDifficult": true,
+    "manualEdgeIrregular": true,
+    "reportedByUserForBlockC": true
+  }
 }

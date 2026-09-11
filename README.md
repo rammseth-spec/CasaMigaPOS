@@ -1,6 +1,6 @@
 # Casa Miga POS
 
-Aplicación Windows offline para una panadería mexicana. **FASE 1G abierta en checkpoint físico**: 1G.1–1G.4 añaden modelo y snapshot de ticket, renderer de texto, migración 008, trazabilidad y transporte RAW por spooler Windows. La impresión Qian física, codepage ESC/POS, corte y cajón aún no están validados. Continúa siendo una versión de desarrollo y todavía no está lista para producción.
+Aplicación Windows offline para una panadería mexicana. **FASE 1G abierta en Bloque C**: el transporte RAW a la Qian ya fue validado físicamente; tamaño selectivo y un corte parcial fueron enviados una vez y esperan observación humana. Codepage, español, logo, cajón, LAN y reimpresión UI siguen pendientes. Continúa siendo una versión de desarrollo y todavía no está lista para producción.
 
 Stack: C# / .NET 10 LTS / WPF / Microsoft.Data.Sqlite / SQLite / MSTest.
 
@@ -16,7 +16,7 @@ El primer restore requiere Internet; la aplicación no. No hay servicios cloud n
 Al arrancar se respalda, migra y valida la instalación. El paquete .cmbackup incluye base, terminal.json y manifiesto; restauración validada a directorio nuevo. Reiniciar exige login y recupera la caja abierta sin alterar su fondo ni timestamp. Salir del usuario o cerrar la ventana no cierra caja. El cierre requiere confirmar conteo y luego confirmar cierre; volver conserva el conteo. Los importes se ocultan hasta confirmar el conteo ciego.
 
 - `src/`: Domain, Application, Infrastructure, Presentation y utilidad Maintenance.
-- `tests/`: dinero, persistencia, identidad, autorización, concurrencia, carrito, venta, historial, tickets, recuperación, diagnóstico y backup. Suite vigente: 182 pruebas.
+- `tests/`: dinero, persistencia, identidad, autorización, concurrencia, carrito, venta, historial, tickets, recuperación, diagnóstico y backup. Suite vigente: 187 pruebas.
 - `migrations/`: SQL inmutable versionado, recursos del ensamblado.
 - `docs/`: arquitectura, operación, decisiones y evidencia.
 - `research/`: investigación de FASE 0; `scripts/`: verificación/publicación de desarrollo.

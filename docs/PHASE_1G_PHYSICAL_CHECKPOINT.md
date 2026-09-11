@@ -1,8 +1,10 @@
 # FASE 1G — Checkpoint físico Qian USB
 
-Estado: preparación física completada y primer envío técnico ejecutado el 2026-09-11. La validación visual humana está pendiente; no repetir la impresión.
+Estado: preparación física y Bloque B confirmados por el usuario. Bloque C envió una sola prueba de tamaño y corte parcial el 2026-09-11; su validación visual está pendiente y no debe repetirse.
 
 Resultado recibido: Qian QOP-T80UL-RI-02 por USB001; cola `POS-80`; driver `POS-80 11.3.0.1`; autoprueba y página Windows con salida física. Casa Miga envió después un único ticket ASCII: PrintRequestId `7ba5b12f-2482-457d-abf4-725181b25d60`, JobId 3, estado técnico SUBMITTED, 762 bytes. Ver `PHASE_1G_BLOCK_B_REPORT.md`.
+
+Bloque C: PrintRequestId `6df7d54d-a095-48e3-9223-dfc09b5bdf51`, JobId 4, SUBMITTED, 770 bytes; encabezado 2×2, TOTAL doble alto, cuatro LF y un solo `GS V 01` al final. Ver `PHASE_1G_BLOCK_C_REPORT.md`.
 
 ## Preparación exacta
 
