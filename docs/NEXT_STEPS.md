@@ -1,3 +1,13 @@
+# Próximo paso — autorizar FASE 1H.2
+
+FASE 1H está iniciada y 1H.1 está completada. No iniciar automáticamente 1H.2.
+
+La siguiente subfase debe diseñar y autorizar la migración 009, el ledger inmutable y la proyección reconstruible `InventoryBalance`. Antes de escribir persistencia se debe escoger una sola autoridad transaccional para actualizar el saldo: Application/store o un mecanismo controlado de SQLite. No pueden coexistir dos mecanismos independientes.
+
+Mantener fuera de 1H.2: Checkout, descuento por venta, recetas, producción, compras, proveedores, costos, lotes, caducidad, transferencias, UI y hardware. Preservar migraciones 001–008.
+
+## Registro histórico anterior
+
 # Próximo paso después de FASE 1G
 
 FASE 1G está cerrada dentro del alcance autorizado. No iniciar automáticamente otra fase.

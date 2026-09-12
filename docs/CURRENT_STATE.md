@@ -1,3 +1,13 @@
+# Continuidad — FASE 1H iniciada, subfase 1H.1 completada
+
+FASE 1H comenzó únicamente con 1H.1. El commit `3ed510c` agrega el modelo puro de Domain para cantidades físicas, dimensiones, unidades estándar, artículos inventariables, presentaciones enteras específicas, ubicación principal, razones estructuradas y asociación explícita Product–InventoryItem. `InventoryQuantity` usa Int64 en mg, µL o pieza; rechaza negativos, pérdida de precisión, dimensiones incompatibles y overflow. Cero es válido como saldo, mientras presentaciones y asociaciones exigen cantidades positivas.
+
+No existe aún migración 009, ledger persistido, `InventoryBalance`, servicios Application, permisos SQLite ni UI de inventario. `Product.TrackInventory` no crea artículos, asociaciones o movimientos. Checkout, ventas, caja, ExpectedCash y tickets no cambiaron. Las migraciones 001–008 permanecen intactas.
+
+Verificación de 1H.1: 18 pruebas focalizadas aprobadas. Suite completa: 213 aprobadas, 0 fallidas, 0 omitidas. Build Release: 0 errores y 0 advertencias. FASE 1G permanece cerrada y el producto continúa siendo una versión de desarrollo no lista para producción.
+
+## Registro histórico anterior
+
 # Continuidad — FASE 1G cerrada
 
 FASE 1G CERRADA dentro del alcance autorizado. Bloque F cerró la reimpresión desde Historial para Administrator y Manager mediante `sales.receipt.reprint`; Cashier no recibe el permiso. Application revalida usuario activo y permiso, reutiliza el `receipt_snapshot` inmutable o crea el primero una sola vez para ventas anteriores a 1G. Cada acción válida crea un request `REPRINT`, conserva trazabilidad append-only y usa los estados REQUESTED/SUBMITTED/COMPLETED/FAILED/UNKNOWN.

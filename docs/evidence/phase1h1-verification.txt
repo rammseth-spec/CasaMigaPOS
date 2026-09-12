@@ -1,0 +1,17 @@
+FASE 1H.1 verification — 2026-09-11
+Baseline: 6a2ee4994b4617cd4bc8276c56b2d888f64fa284
+Implementation commit: 3ed510c
+
+Focused command:
+dotnet test tests/CasaMiga.Tests/CasaMiga.Tests.csproj --no-restore --filter FullyQualifiedName~InventoryDomainTests
+Result: 18 passed, 0 failed, 0 skipped.
+
+Complete command:
+scripts/verify.ps1 using bundled .NET SDK 10.0.400 and the local NuGet feed.
+Result: restore successful; Release build 0 errors, 0 warnings; 213 passed, 0 failed, 0 skipped.
+
+Scope checks:
+- No migration changed; 001–008 remain intact.
+- CheckoutService, Sale, SaleItem, Payment, Money and ExpectedCash unchanged.
+- No float, double or Money reference exists in Inventory.cs.
+- No Application, Infrastructure or Presentation implementation was added.

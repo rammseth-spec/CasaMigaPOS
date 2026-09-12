@@ -1,3 +1,17 @@
+# Inventario de fuentes y documentación — FASE 1H.1
+
+Nuevos en 1H.1:
+
+- src/CasaMiga.Domain/Inventory.cs
+- tests/CasaMiga.Tests/InventoryDomainTests.cs
+- docs/decisions/ADR-014-inventory-domain.md
+- docs/PHASE_1H1_REPORT.md
+- docs/evidence/phase1h1-verification.txt
+
+Actualizados en 1H.1: README.md, docs/CURRENT_STATE.md, docs/NEXT_STEPS.md, docs/domain.md y este inventario. No se modificaron migraciones, Application, Infrastructure ni Presentation.
+
+## Registro histórico
+
 # Inventario de fuentes y documentación — FASE 1G Bloque A
 
 Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.

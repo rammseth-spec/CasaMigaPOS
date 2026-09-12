@@ -1,5 +1,15 @@
 # Dominio y reglas
 
+## Fundación de inventario — FASE 1H.1
+
+`InventoryQuantity` es una magnitud física exacta y no negativa formada por dimensión y unidades atómicas Int64. Masa usa mg, volumen µL y conteo pieza. Las unidades estándar admitidas son mg/g/kg, µL/ml/L y pieza. La entrada decimal sólo es un intermediario exacto: se rechazan pérdida de precisión, dimensión incompatible, resultado negativo y overflow. Cero representa una existencia vacía; factores de presentación y cantidades por unidad comercial deben ser positivos.
+
+`InventoryItem` distingue RAW_MATERIAL, FINISHED_GOOD, PACKAGING y SUPPLY. Su dimensión queda fija desde la creación. No puede desactivarse con saldo distinto de cero; Application deberá aportar ese hecho desde persistencia. `InventoryItemUnit` modela presentaciones específicas del artículo y sólo convierte cantidades enteras positivas. `InventoryLocation.Main` define MAIN / Almacén principal sin impedir ubicaciones futuras.
+
+`ProductInventoryLink` asocia explícitamente un Product con un InventoryItem y una cantidad exacta positiva por unidad comercial. `Product.TrackInventory` sigue siendo sólo intención: no crea la relación ni produce efectos físicos. Los tipos OPENING_BALANCE, RECEIPT, ADJUSTMENT_GAIN, ADJUSTMENT_LOSS y WASTE quedan identificados para 1H; producción, venta, devolución y transferencia permanecen deshabilitados. Motivos OTHER de merma y ajuste requieren observación.
+
+1H.1 no contiene ledger, saldo, persistencia, permisos, UI ni integración con Checkout.
+
 Hecho de negocio: panadería mexicana, una caja inicial y operación offline. No se asumen precios, impuestos, credenciales, unidades fraccionarias de venta ni datos definitivos de productos.
 
 | Área | Entidades y reglas propuestas |
