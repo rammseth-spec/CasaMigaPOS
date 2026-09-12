@@ -10,6 +10,14 @@
 
 1H.1 no contiene ledger, saldo, persistencia, permisos, UI ni integración con Checkout.
 
+## Ledger persistente — FASE 1H.2
+
+`InventoryDelta` mantiene el signo separado de `InventoryQuantity`, prohíbe cero y `long.MinValue`, compara sólo dentro de su dimensión y aplica resultados con `checked` sin permitir negativos. OPENING_BALANCE usa una línea especial que puede representar cantidad cero; los movimientos ordinarios conservan deltas distintos de cero.
+
+`InventoryOperationRequest` valida tipo, signo, partidas únicas, razón estructurada y límites. Las partidas se ordenan por ubicación y artículo para hash, bloqueo lógico y persistencia. El hash canónico incluye actor, terminal, tipo, motivo, referencia, delta y snapshot de captura.
+
+El agregado persistido pasa PENDING→CONFIRMED dentro de una transacción inmediata. La operación confirmada y sus movimientos quedan inmutables. Correcciones futuras deberán usar operaciones compensatorias. El saldo materializado no es parte autoritativa del dominio y puede compararse contra la suma checked del ledger.
+
 Hecho de negocio: panadería mexicana, una caja inicial y operación offline. No se asumen precios, impuestos, credenciales, unidades fraccionarias de venta ni datos definitivos de productos.
 
 | Área | Entidades y reglas propuestas |

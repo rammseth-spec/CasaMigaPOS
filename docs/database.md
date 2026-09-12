@@ -1,5 +1,17 @@
 # Modelo de datos
 
+## Migración 009 — fundación persistente de inventario
+
+Agrega measurement_unit, inventory_item, inventory_item_unit, inventory_location, inventory_operation, inventory_movement, inventory_balance y product_inventory_link. Siembra mg/g/kg, uL/ml/L/piece y una sola ubicación MAIN / Almacén principal.
+
+inventory_operation usa UUID, hash SHA-256 canónico, tipo, PENDING/CONFIRMED, actor, terminal, motivo, referencia, conteo esperado y UTC. PENDING se inserta y confirma dentro de la misma transacción inmediata; un rollback o crash previo al commit no lo publica normalmente. SQLite no dispone de constraint al final del commit para prohibir por sí solo un PENDING creado mediante edición externa, por lo que la aplicación no distribuye herramientas de escritura directa y la recuperación lo reporta como inconsistencia.
+
+inventory_movement conserva delta Int64, saldo anterior/posterior y snapshot de unidad, cantidad normalizada y factor. Una línea opening puede tener delta cero; todas las demás exigen signo y delta no cero. Un índice parcial garantiza una apertura por artículo+ubicación.
+
+SqliteInventoryStore actualiza inventory_balance de forma exclusiva. Las filas existentes usan UPDATE condicionado por cantidad anterior y versión. El ledger confirmado es autoritativo; Reconcile suma movimientos con checked y reporta diferencias sin reparar.
+
+Los triggers impiden modificar/borrar operaciones o movimientos confirmados, anexar líneas fuera de PENDING, iniciar dos veces una posición, operar antes de opening y mutar unidades estándar. El trigger de confirmación valida conteo, signo, proyección y auditoría. Ningún trigger actualiza inventory_balance.
+
 ## Implementado — migración 001
 
 | Tabla | Clave y restricciones |

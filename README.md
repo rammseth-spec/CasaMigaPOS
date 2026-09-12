@@ -1,6 +1,6 @@
 # Casa Miga POS
 
-Aplicación Windows offline para una panadería mexicana. **FASE 1H iniciada; subfase 1H.1 completada**: Domain ya define cantidades físicas exactas, unidades, artículos, presentaciones, ubicación principal y asociación explícita Product–InventoryItem. Aún no existe ledger, persistencia ni operación de inventario. FASE 1G permanece cerrada. 213 pruebas aprobadas; Release sin errores ni advertencias. Versión de desarrollo, no lista para producción.
+Aplicación Windows offline para una panadería mexicana. **FASE 1H iniciada; subfases 1H.1 y 1H.2 completadas**: existen cantidades físicas exactas, migración 009, catálogo persistente, ledger inmutable, saldo reconstruible e idempotencia. Todavía no hay UI ni flujos operativos de inventario. FASE 1G permanece cerrada. 236 pruebas aprobadas; Release sin errores ni advertencias. Versión de desarrollo, no lista para producción.
 
 Stack: C# / .NET 10 LTS / WPF / Microsoft.Data.Sqlite / SQLite / MSTest.
 
@@ -16,12 +16,12 @@ El primer restore requiere Internet; la aplicación no. No hay servicios cloud n
 Al arrancar se respalda, migra y valida la instalación. El paquete .cmbackup incluye base, terminal.json y manifiesto; restauración validada a directorio nuevo. Reiniciar exige login y recupera la caja abierta sin alterar su fondo ni timestamp. Salir del usuario o cerrar la ventana no cierra caja. El cierre requiere confirmar conteo y luego confirmar cierre; volver conserva el conteo. Los importes se ocultan hasta confirmar el conteo ciego.
 
 - `src/`: Domain, Application, Infrastructure, Presentation y utilidad Maintenance.
-- `tests/`: dinero, cantidades físicas, persistencia, identidad, autorización, concurrencia, carrito, venta, historial, tickets, recuperación, diagnóstico y backup. Suite vigente: 213 pruebas.
+- `tests/`: dinero, cantidades físicas, ledger, persistencia, identidad, autorización, concurrencia, carrito, venta, historial, tickets, recuperación, diagnóstico y backup. Suite vigente: 236 pruebas.
 - `migrations/`: SQL inmutable versionado, recursos del ensamblado.
 - `docs/`: arquitectura, operación, decisiones y evidencia.
 - `research/`: investigación de FASE 0; `scripts/`: verificación/publicación de desarrollo.
 
-Venta y pago en efectivo se confirman juntos. El efecto de impresión siempre ocurre después del commit. La fundación de inventario existente es sólo Domain: no hay stock operativo, movimientos persistidos ni descuento por venta. La Qian quedó validada para el baseline de impresión del Bloque D; otras capacidades físicas permanecen fuera de alcance o pendientes. La identidad visual es temporal y está identificada como tal. No se ha elegido licencia de distribución ni publicado un remoto.
+Venta y pago en efectivo se confirman juntos. El efecto de impresión siempre ocurre después del commit. El inventario ya tiene fundación persistente, pero no está expuesto al usuario ni se descuenta al vender. La Qian quedó validada para el baseline de impresión del Bloque D; otras capacidades físicas permanecen fuera de alcance o pendientes. La identidad visual es temporal y está identificada como tal. No se ha elegido licencia de distribución ni publicado un remoto.
 
 
 POS: usuario activo, catalog.view, pos.use y caja OPEN sin conteo confirmado. Cobrar exige además sales.complete. Categorías/productos activos, búsqueda nombre/SKU y páginas de 50. Cart sigue siendo transitorio y no es una venta. Conserva nombre/precio al agregar; sólo el commit comercial permite vaciarlo después de cobrar. Un resultado incierto exige verificación por UUID antes de volver a operar. Demo explícita sólo desarrollo.

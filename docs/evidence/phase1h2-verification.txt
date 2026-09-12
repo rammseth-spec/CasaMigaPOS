@@ -1,0 +1,21 @@
+FASE 1H.2 verification — 2026-09-11
+Baseline: d944c74c21b49739d1de06d5eaa874939aa88d50
+Implementation commit: a8fcfb2
+
+Focused:
+InventoryDomainTests + InventoryPersistenceTests
+41 passed, 0 failed, 0 skipped.
+
+Complete:
+scripts/verify.ps1 with bundled .NET SDK 10.0.400 and local NuGet feed.
+Restore successful.
+Release build: 0 errors, 0 warnings.
+Tests: 236 passed, 0 failed, 0 skipped.
+
+Structural checks:
+- git diff --check correct.
+- migrations 001–008 byte-for-byte unchanged from baseline.
+- migration 009 applied on new database and upgrade from version 8.
+- failed migration did not register version 9.
+- no trigger contains UPDATE inventory_balance.
+- Checkout, sales, cash closing, receipt snapshots, renderer and printing unchanged.

@@ -1,5 +1,13 @@
 # Arquitectura
 
+## Inventario 1H.2
+
+Infrastructure contiene `SqliteInventoryStore`, dueño de la transacción completa y única autoridad de `InventoryBalance`. Domain aporta solicitudes normalizadas y cantidades exactas; todavía no existe un caso de uso Application ni UI.
+
+La ruta de escritura es: hash canónico, BEGIN IMMEDIATE, idempotencia, PENDING, partidas ordenadas, lectura de saldo, cálculo checked, validación no negativa, movimientos, actualización condicionada del saldo, auditoría, CONFIRMED y commit. Ante excepción se abre otra conexión y se consulta OperationId; un CONFIRMED con el mismo hash se devuelve sin repetir.
+
+La reconciliación es una lectura delimitada que suma el ledger y compara la proyección. No corrige automáticamente. SQLite sigue siendo local y no debe compartirse por red.
+
 Monolito modular Windows offline con SQLite local. Dependencias hacia dentro: Presentation → Application → Domain; Infrastructure implementa puertos de Application. Presentation referencia Infrastructure exclusivamente para composición. No hay servidor, ORM, framework CQRS ni repositorios genéricos.
 
 ## FASE 1A implementada

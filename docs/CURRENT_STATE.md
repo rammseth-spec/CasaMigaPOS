@@ -1,3 +1,17 @@
+# Continuidad — FASE 1H iniciada, subfase 1H.2 completada
+
+1H.1 y 1H.2 están completadas. El commit `a8fcfb2` agrega migración 009, persistencia del catálogo de inventario, ledger inmutable, saldo materializado reconstruible, operaciones multipartida, idempotencia por UUID+SHA-256, recuperación de commit incierto, reconciliación y pruebas concurrentes.
+
+`SqliteInventoryStore` es la única autoridad que escribe `inventory_balance` dentro de una transacción inmediata. Usa actualización condicionada por saldo y versión. Los triggers sólo protegen estructuras y estados; ninguno calcula ni actualiza balances. `inventory_movement` es la fuente histórica.
+
+OPENING_BALANCE admite cero mediante una línea explícita `is_opening=1, delta_atomic=0`, por lo que distingue una posición inicializada en cero de una aún no inicializada. Los demás movimientos prohíben delta cero. Stock negativo y overflow revierten la operación completa.
+
+La migración 009 crea ocho tablas, siete unidades estándar, MAIN / Almacén principal y cinco permisos. Administrator recibe cinco; Manager recibe view/receive/waste; Cashier ninguno. PENDING sólo vive dentro de la transacción normal del store y se transforma a CONFIRMED antes del commit.
+
+Verificación: 41 pruebas focalizadas y 236 pruebas completas aprobadas, 0 fallidas y 0 omitidas. Build Release: 0 errores y 0 advertencias. Migraciones 001–008 intactas. Checkout, ventas, caja, ExpectedCash, tickets e impresión no cambiaron. No existe UI ni servicio Application operativo de inventario; 1H.3 no se inició.
+
+## Registro histórico anterior
+
 # Continuidad — FASE 1H iniciada, subfase 1H.1 completada
 
 FASE 1H comenzó únicamente con 1H.1. El commit `3ed510c` agrega el modelo puro de Domain para cantidades físicas, dimensiones, unidades estándar, artículos inventariables, presentaciones enteras específicas, ubicación principal, razones estructuradas y asociación explícita Product–InventoryItem. `InventoryQuantity` usa Int64 en mg, µL o pieza; rechaza negativos, pérdida de precisión, dimensiones incompatibles y overflow. Cero es válido como saldo, mientras presentaciones y asociaciones exigen cantidades positivas.

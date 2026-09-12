@@ -1,3 +1,13 @@
+# Próximo paso — proponer y autorizar FASE 1H.3
+
+FASE 1H está abierta y 1H.2 está completada. No iniciar automáticamente 1H.3.
+
+La siguiente propuesta debe definir los casos de uso Application para configurar artículos y registrar OPENING_BALANCE, RECEIPT, ADJUSTMENT_GAIN, ADJUSTMENT_LOSS y WASTE. Debe envolver el puerto persistente ya probado, revalidar permisos, conservar motivos estructurados y decidir el flujo de preparación/confirmación y resultado incierto antes de diseñar UI.
+
+No modificar Checkout ni activar SALE_CONSUMPTION. Mantener fuera recetas, producción, compras, proveedores, costos, lotes, caducidad, transferencias, UI profesional y hardware.
+
+## Registro histórico anterior
+
 # Próximo paso — autorizar FASE 1H.2
 
 FASE 1H está iniciada y 1H.1 está completada. No iniciar automáticamente 1H.2.

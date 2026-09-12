@@ -1,3 +1,19 @@
+# Inventario de fuentes y documentación — FASE 1H.2
+
+Nuevos en 1H.2:
+
+- migrations/009_inventory_foundation.sql
+- src/CasaMiga.Infrastructure/SqliteInventoryStore.cs
+- tests/CasaMiga.Tests/InventoryPersistenceTests.cs
+- docs/decisions/ADR-015-inventory-ledger-persistence.md
+- docs/PHASE_1H2_REPORT.md
+- docs/evidence/phase1h2-verification.txt
+- docs/evidence/phase1h2-migration-hashes.txt
+
+Actualizados: Inventory.cs, Database.cs, pruebas de migración/identidad, README y documentación persistente. Application, Presentation, Checkout, ventas, caja, tickets e impresión no cambiaron.
+
+## Registro histórico
+
 # Inventario de fuentes y documentación — FASE 1H.1
 
 Nuevos en 1H.1:
