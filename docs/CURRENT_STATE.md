@@ -1,3 +1,17 @@
+# Continuidad — FASE 1H.3 completada
+
+1H.3 está completada técnicamente en el commit `9e96edc2a4652487adce9a4ad2693ff70a3d218d`. FASE 1H permanece abierta y 1H.4 no inició. Existen contratos y servicios Application para saldo inicial, recepción, merma, ajuste a conteo físico, configuración de artículos/presentaciones/asociaciones y consultas paginadas. Presentation no cambió y aún no hay UI de inventario.
+
+Domain ahora coincide con el esquema 010: RECEIPT admite observación opcional normalizada, rechaza whitespace y más de 500 caracteres, y nunca admite reason_code. OPENING_BALANCE conserva razón y observación NULL.
+
+Los comandos de movimiento reciben un OperationId estable y una intención positiva/absoluta; no exponen deltas arbitrarios. El conteo calcula gain/loss en Application. Infrastructure verifica saldo y versión esperados dentro de su transacción inmediata; una intercalación devuelve ConcurrencyConflict sin insertar el ajuste. Un retry del mismo conteo recupera la operación confirmada y contenido distinto produce IdempotencyConflict. NoChange no escribe operación, movimiento ni auditoría.
+
+Administrator posee los cinco permisos; Manager sólo view/receive/waste; Cashier ninguno. Configuración y auditoría se confirman juntas. Las consultas abren SQLite read-only con transacción deferred, LIMIT/OFFSET acotados, orden estable y joins agregados sin N+1.
+
+Verificación final: 52 pruebas focalizadas y 265 completas aprobadas, 0 fallidas y 0 omitidas; Release con 0 errores y 0 advertencias. Migraciones 001–010 intactas. Checkout, Sale, Payment, ExpectedCash, tickets e impresión permanecen intactos. Ver [reporte](PHASE_1H3_REPORT.md), [ADR](decisions/ADR-016-inventory-application.md) y evidencia.
+
+## Registro histórico anterior
+
 # Continuidad — corrección 1H.2A completada / esquema 010
 
 La migración 010 corrige exclusivamente el CHECK de RECEIPT: reason_code NULL y note opcional (NULL o texto de 1–500 caracteres tras trim). 001–009 permanecen intactas. Commit técnico: `76e654ce9b56132ff64248953931c95190858311`; baseline anterior: `6afd1419423b8640f2a9357957894c0e164a80bb`.

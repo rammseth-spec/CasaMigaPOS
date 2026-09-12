@@ -119,3 +119,9 @@ Corrección exclusiva del CHECK de inventory_operation. OPENING_BALANCE conserva
 Database.Initialize ejecuta todo en su transacción existente con foreign_keys ON. 010 guarda los movimientos en una tabla de staging sin FK, copia las operaciones a la nueva estructura, elimina primero la tabla hija, reemplaza el padre y reconstruye la hija. Restaura los movimientos, elimina staging y recrea cuatro índices explícitos y diez triggers. Los índices automáticos se recrean mediante las mismas PK/UNIQUE. No utiliza writable_schema ni edita sqlite_master. Balance, asociaciones y demás tablas permanecen intactas.
 
 Las pruebas comparan todas las filas salvo schema_migration, columnas, FKs y definiciones de todos los índices/triggers antes y después. Un fallo inyectado al registrar versión 10 demuestra rollback de datos y objetos a versión 9. Consultar PHASE_1H2A_REPORT.md. Domain sigue sin admitir note en RECEIPT hasta su alineación en 1H.3.
+
+## Application de inventario — FASE 1H.3
+
+No agrega ni modifica esquema. IInventoryStore es el puerto Application; SqliteInventoryStore lo implementa y conserva la transacción inmediata para movimientos. RegisterOpeningBalance, ReceiveInventory y RecordWaste traducen intención positiva a InventoryOperationRequest. AdjustToPhysicalCount recibe cantidad absoluta, calcula gain/loss y acompaña el request con cantidad/versión esperadas. El store valida la precondición dentro de la misma transacción antes de escribir. NoChange no persiste.
+
+La configuración revalida inventory.configure dentro de la transacción que crea o actualiza el artículo, presentación o asociación y agrega su audit_entry. Los read models usan conexión read-only, transacción deferred y consultas acotadas. La lista, detalle, historial y reconciliación no exponen SQL ni tipos Microsoft.Data.Sqlite. Migraciones 001–010 permanecen inmutables.

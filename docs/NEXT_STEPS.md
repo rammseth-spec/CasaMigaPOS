@@ -1,3 +1,13 @@
+# Próximo paso — proponer y autorizar FASE 1H.4
+
+1H.3 está completada. FASE 1H permanece abierta. No iniciar automáticamente 1H.4.
+
+La siguiente propuesta puede definir una UI WPF mínima para inventario sobre los servicios existentes, sin acceder a SQLite ni enviar deltas arbitrarios. Debe decidir el ciclo de vida del OperationId en formularios/reintentos, preparación y confirmación de movimientos, visualización de unidades atómicas/presentaciones, tratamiento de ConcurrencyConflict y resultado incierto, y aviso de reconciliación inconsistente sin reparación automática.
+
+Mantener fuera consumo por ventas, SALE_CONSUMPTION, recetas, producción, compras, proveedores, costos, lotes, caducidad, transferencias, impresión, cajón, LAN, rediseño, fullscreen e instalador. Modelo recomendado para proponer 1H.4: SOL; usar Astra sólo ante un defecto técnico complejo.
+
+## Registro histórico anterior
+
 # Próximo paso — retomar 1H.3 después de revisar el cierre 1H.2A
 
 1H.2A está completada. Usar como baseline el commit documental de cierre cuyo padre es `76e654ce9b56132ff64248953931c95190858311`. No iniciar 1H.3 en este bloque.

@@ -1,3 +1,18 @@
+# Incorporaciones 1H.3
+
+- src/CasaMiga.Application/InventoryModels.cs
+- src/CasaMiga.Application/InventoryService.cs
+- src/CasaMiga.Infrastructure/SqliteInventoryStore.Application.cs
+- tests/CasaMiga.Tests/InventoryApplicationTests.cs
+- docs/decisions/ADR-016-inventory-application.md
+- docs/PHASE_1H3_REPORT.md
+- docs/evidence/phase1h3-verification.txt
+- docs/evidence/phase1h3-migration-hashes.txt
+
+Actualizados: Inventory Domain, puerto local de autorización, SqliteInventoryStore, SqliteLocalUnitOfWork, pruebas Domain, README, CURRENT_STATE, NEXT_STEPS, database.md y este inventario. Presentation, Checkout, venta, pago, caja, tickets, impresión y migraciones 001–010 no cambiaron.
+
+## Registro anterior
+
 # Incorporaciones 1H.2A
 
 - migrations/010_inventory_receipt_note_fix.sql
