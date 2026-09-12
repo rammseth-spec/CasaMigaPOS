@@ -55,6 +55,7 @@ public interface ILocalStore
     void AddAdministrator(Guid id, string username, string displayName, string hash, DateTimeOffset at);
     void UpdateLogin(Guid id, int failures, DateTimeOffset? lockedUntil, string? replacementHash);
     bool HasPermission(Guid user, string permission);
+    bool HasRole(Guid user, string role);
     TerminalIdentity? FindTerminal(Guid id);
     void EnsureTerminal(TerminalIdentity terminal, DateTimeOffset at);
     CashSessionView? FindOpenSession(Guid terminal);

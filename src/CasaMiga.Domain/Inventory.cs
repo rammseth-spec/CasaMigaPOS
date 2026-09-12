@@ -446,6 +446,8 @@ public sealed record InventoryOperationRequest
         ValidateLines(kind, copy);
         var normalizedReason = NormalizeOptionalCode(reasonCode);
         var normalizedNote = NormalizeOptionalText(note, 500);
+        if (kind == InventoryMovementKind.Receipt && note is not null && normalizedNote is null)
+            throw new ArgumentException("La observación de recepción no puede estar vacía.", nameof(note));
         var normalizedReference = NormalizeOptionalText(externalReference, 200);
         ValidateReason(kind, normalizedReason, normalizedNote);
         OperationId = operationId;
@@ -475,6 +477,16 @@ public sealed record InventoryOperationRequest
 
     private static void ValidateReason(InventoryMovementKind kind, string? reason, string? note)
     {
+        if (kind == InventoryMovementKind.Receipt)
+        {
+            if (reason is not null) throw new ArgumentException("La recepción no admite código de motivo.", nameof(reason));
+            return;
+        }
+        if (kind == InventoryMovementKind.OpeningBalance)
+        {
+            if (reason is not null || note is not null) throw new ArgumentException("El saldo inicial no admite motivo ni observación.");
+            return;
+        }
         string[] allowed = kind switch
         {
             InventoryMovementKind.Waste => ["DAMAGED", "EXPIRED", "PRODUCTION_ERROR", "SPILL", "OTHER"],

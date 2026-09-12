@@ -208,4 +208,25 @@ public sealed class InventoryDomainTests
         Assert.ThrowsExactly<ArgumentException>(() => new AdjustmentReasonSelection(AdjustmentReason.Other, " "));
         Assert.AreEqual("Detalle", new WasteReasonSelection(WasteReason.Other, " Detalle ").Note);
     }
+
+    [TestMethod]
+    public void ReceiptNoteMatchesSchemaTenWithoutRelaxingOpeningOrReason()
+    {
+        var capture = InventoryCapture.Standard(1m, InventoryUnits.Gram);
+        var line = InventoryOperationLine.Change(Guid.NewGuid(), Guid.NewGuid(),
+            InventoryDelta.Increase(capture.Quantity), capture);
+        InventoryOperationRequest Receipt(string? reason = null, string? note = null) =>
+            new(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), InventoryMovementKind.Receipt,
+                [line], reason, note);
+        Assert.IsNull(Receipt().Note);
+        Assert.AreEqual("Recibido completo", Receipt(note: " Recibido completo ").Note);
+        Assert.ThrowsExactly<ArgumentException>(() => Receipt("DAMAGED"));
+        Assert.ThrowsExactly<ArgumentException>(() => Receipt(note: "   "));
+        Assert.ThrowsExactly<ArgumentException>(() => Receipt(note: new string('x', 501)));
+
+        var opening = InventoryOperationLine.Opening(Guid.NewGuid(), Guid.NewGuid(),
+            InventoryCapture.Standard(0m, InventoryUnits.Gram));
+        Assert.ThrowsExactly<ArgumentException>(() => new InventoryOperationRequest(Guid.NewGuid(),
+            Guid.NewGuid(), Guid.NewGuid(), InventoryMovementKind.OpeningBalance, [opening], note: "No"));
+    }
 }

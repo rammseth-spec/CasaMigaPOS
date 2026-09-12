@@ -8,27 +8,16 @@ using Microsoft.Data.Sqlite;
 
 namespace CasaMiga.Infrastructure;
 
-public class InventoryPersistenceException(string message, Exception? inner = null) : Exception(message, inner);
-public sealed class InventoryIdempotencyConflictException() : InventoryPersistenceException("El OperationId ya corresponde a otro contenido.");
-public sealed class InventoryStockException(string message, Exception? inner = null) : InventoryPersistenceException(message, inner);
-public sealed class InventoryConsistencyException(string message) : InventoryPersistenceException(message);
+public class InventoryPersistenceException(string message, Exception? inner = null,
+    InventoryError error = InventoryError.Conflict) : InventoryStoreException(error, message, inner);
+public sealed class InventoryIdempotencyConflictException() : InventoryPersistenceException(
+    "El OperationId ya corresponde a otro contenido.", error: InventoryError.IdempotencyConflict);
+public sealed class InventoryStockException(string message, Exception? inner = null,
+    InventoryError error = InventoryError.InvalidQuantity) : InventoryPersistenceException(message, inner, error);
+public sealed class InventoryConsistencyException(string message,
+    InventoryError error = InventoryError.InconsistentBalance) : InventoryPersistenceException(message, error: error);
 
-public sealed record PersistedInventoryMovement(Guid Id, int Sequence, Guid InventoryItemId,
-    Guid InventoryLocationId, InventoryDimension Dimension, bool IsOpening, long DeltaAtomic,
-    long BalanceBeforeAtomic, long BalanceAfterAtomic, string CaptureUnitCode,
-    string CapturedQuantity, long CaptureAtomicFactor);
-
-public sealed record PersistedInventoryOperation(Guid OperationId, string RequestSha256,
-    InventoryMovementKind Kind, Guid ActorId, Guid TerminalId, string? ReasonCode, string? Note,
-    string? ExternalReference, DateTimeOffset ConfirmedAt, IReadOnlyList<PersistedInventoryMovement> Movements);
-
-public sealed record InventoryBalanceRecord(Guid InventoryItemId, Guid InventoryLocationId,
-    InventoryDimension Dimension, long QuantityAtomic, long Version, DateTimeOffset UpdatedAt);
-
-public sealed record InventoryReconciliationDifference(Guid InventoryItemId, Guid InventoryLocationId,
-    long LedgerQuantityAtomic, long? BalanceQuantityAtomic);
-
-public sealed class SqliteInventoryStore(Database database, IClock clock, Action? afterCommit = null)
+public sealed partial class SqliteInventoryStore(Database database, IClock clock, Action? afterCommit = null) : IInventoryStore
 {
     public static readonly Guid MainLocationId = Guid.Parse("10000000-0000-0000-0000-000000000001");
 
@@ -74,7 +63,8 @@ public sealed class SqliteInventoryStore(Database database, IClock clock, Action
         transaction.Commit();
     }
 
-    public PersistedInventoryOperation Apply(InventoryOperationRequest request)
+    public PersistedInventoryOperation Apply(InventoryOperationRequest request,
+        InventoryBalanceExpectation? expectation = null)
     {
         ArgumentNullException.ThrowIfNull(request);
         var hash = RequestHash(request);
@@ -82,6 +72,7 @@ public sealed class SqliteInventoryStore(Database database, IClock clock, Action
         {
             using var connection = database.Open();
             using var transaction = connection.BeginTransaction(deferred: false);
+            EnsureContext(connection, transaction, request.ActorId, request.TerminalId, request.Kind);
             var existing = ReadOperation(connection, transaction, request.OperationId);
             if (existing is not null)
             {
@@ -94,8 +85,20 @@ public sealed class SqliteInventoryStore(Database database, IClock clock, Action
                 return existing;
             }
 
+            if (expectation is not null)
+            {
+                if (request.Kind is not (InventoryMovementKind.AdjustmentGain or InventoryMovementKind.AdjustmentLoss) ||
+                    request.Lines.Count != 1 || request.Lines[0].InventoryItemId != expectation.InventoryItemId ||
+                    request.Lines[0].InventoryLocationId != expectation.InventoryLocationId)
+                    throw new InventoryConsistencyException("La precondición no corresponde al ajuste físico.");
+                var actual = ReadBalance(connection, transaction, expectation.InventoryItemId,
+                    expectation.InventoryLocationId);
+                if (actual is null || actual.QuantityAtomic != expectation.QuantityAtomic ||
+                    actual.Version != expectation.Version)
+                    throw new InventoryConsistencyException("El saldo cambió durante el conteo físico.", InventoryError.ConcurrencyConflict);
+            }
+
             var at = clock.UtcNow.ToUniversalTime();
-            EnsureContext(connection, transaction, request.ActorId, request.TerminalId, request.Kind);
             using (var pending = Command(connection, transaction,
                 "INSERT INTO inventory_operation(id,request_sha256,kind,state,actor_id,terminal_id,reason_code,note,external_reference,expected_line_count,created_utc) VALUES($id,$hash,$kind,'PENDING',$actor,$terminal,$reason,$note,$reference,$count,$at)",
                 ("$id", Id(request.OperationId)), ("$hash", hash), ("$kind", MovementKind(request.Kind)),
@@ -114,20 +117,20 @@ public sealed class SqliteInventoryStore(Database database, IClock clock, Action
                 long version;
                 if (line.IsOpening)
                 {
-                    if (current is not null) throw new InventoryStockException("La posición de inventario ya fue inicializada.");
+                    if (current is not null) throw new InventoryStockException("La posición de inventario ya fue inicializada.", error: InventoryError.AlreadyInitialized);
                     before = 0;
                     after = line.DeltaAtomic;
                     version = 1;
                 }
                 else
                 {
-                    if (current is null) throw new InventoryStockException("La posición de inventario no tiene saldo inicial.");
+                    if (current is null) throw new InventoryStockException("La posición de inventario no tiene saldo inicial.", error: InventoryError.NotInitialized);
                     if (current.Dimension != line.Dimension)
                         throw new InventoryConsistencyException("La dimensión del saldo no coincide con la partida.");
                     before = current.QuantityAtomic;
                     try { after = checked(before + line.DeltaAtomic); }
                     catch (OverflowException error) { throw new InventoryStockException("La operación excede el rango de cantidad permitido.", error); }
-                    if (after < 0) throw new InventoryStockException("La operación dejaría existencia negativa.");
+                    if (after < 0) throw new InventoryStockException("La operación dejaría existencia negativa.", error: InventoryError.InsufficientStock);
                     version = checked(current.Version + 1);
                 }
 
@@ -177,6 +180,12 @@ public sealed class SqliteInventoryStore(Database database, IClock clock, Action
         if (operation.Movements.Count == 0)
             throw new InventoryConsistencyException("Se encontró una operación PENDING fuera de su transacción.");
         return operation;
+    }
+
+    public PersistedInventoryOperation? FindOperation(Guid operationId)
+    {
+        using var connection = database.Open(readOnly: true);
+        return ReadOperation(connection, null, operationId);
     }
 
     public InventoryBalanceRecord? FindBalance(Guid itemId, Guid locationId)
@@ -301,7 +310,7 @@ public sealed class SqliteInventoryStore(Database database, IClock clock, Action
             ("$version", version), ("$at", At(at)));
         try { command.ExecuteNonQuery(); }
         catch (SqliteException error) when (error.SqliteExtendedErrorCode == 1555 || error.SqliteExtendedErrorCode == 2067)
-        { throw new InventoryStockException("La posición de inventario ya fue inicializada."); }
+        { throw new InventoryStockException("La posición de inventario ya fue inicializada.", error: InventoryError.AlreadyInitialized); }
     }
 
     private static void UpdateBalance(SqliteConnection connection, SqliteTransaction transaction,
@@ -313,7 +322,7 @@ public sealed class SqliteInventoryStore(Database database, IClock clock, Action
             ("$item", Id(movement.InventoryItemId)), ("$location", Id(movement.InventoryLocationId)),
             ("$before", movement.BalanceBeforeAtomic), ("$expected", expectedVersion));
         if (command.ExecuteNonQuery() != 1)
-            throw new InventoryConsistencyException("El saldo cambió durante la operación.");
+            throw new InventoryConsistencyException("El saldo cambió durante la operación.", InventoryError.ConcurrencyConflict);
     }
 
     private static InventoryBalanceRecord? ReadBalance(SqliteConnection connection, SqliteTransaction? transaction,

@@ -63,6 +63,12 @@ public sealed partial class SqliteLocalUnitOfWork(Database database) : ILocalUni
                 ("$id", Id(user)), ("$permission", permission));
             return Convert.ToInt64(cmd.ExecuteScalar()) == 1;
         }
+        public bool HasRole(Guid user, string role)
+        {
+            using var cmd = Command("SELECT EXISTS(SELECT 1 FROM app_user WHERE id=$id AND active=1 AND role_name=$role)",
+                ("$id", Id(user)), ("$role", role));
+            return Convert.ToInt64(cmd.ExecuteScalar()) == 1;
+        }
         public TerminalIdentity? FindTerminal(Guid id)
         {
             using var cmd = Command("SELECT name FROM terminal WHERE id=$id", ("$id", Id(id)));
