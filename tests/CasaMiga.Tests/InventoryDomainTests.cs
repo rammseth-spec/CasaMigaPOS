@@ -59,6 +59,27 @@ public sealed class InventoryDomainTests
     }
 
     [TestMethod]
+    public void SignedDeltaIsExactSeparateAndChecked()
+    {
+        var quantity = new InventoryQuantity(InventoryDimension.Mass, 10);
+        var increase = InventoryDelta.Increase(quantity);
+        var decrease = InventoryDelta.Decrease(quantity);
+        Assert.AreEqual(10L, increase.AtomicUnits);
+        Assert.AreEqual(-10L, decrease.AtomicUnits);
+        Assert.IsTrue(decrease.CompareTo(increase) < 0);
+        Assert.AreEqual(20L, increase.ApplyTo(quantity).AtomicUnits);
+        Assert.AreEqual(0L, decrease.ApplyTo(quantity).AtomicUnits);
+        Assert.ThrowsExactly<InvalidOperationException>(() => decrease.ApplyTo(new(InventoryDimension.Mass, 9)));
+        Assert.ThrowsExactly<OverflowException>(() =>
+            InventoryDelta.Increase(new(InventoryDimension.Mass, long.MaxValue))
+                .ApplyTo(new(InventoryDimension.Mass, 1)));
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() =>
+            InventoryDelta.Increase(new(InventoryDimension.Mass, 0)));
+        Assert.ThrowsExactly<ArgumentException>(() =>
+            decrease.CompareTo(InventoryDelta.Decrease(new(InventoryDimension.Volume, 10))));
+    }
+
+    [TestMethod]
     public void UnitConversionRejectsAnotherDimension()
     {
         var mass = InventoryQuantity.From(1m, InventoryUnits.Kilogram);

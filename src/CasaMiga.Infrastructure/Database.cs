@@ -86,6 +86,13 @@ public sealed class Database(string path)
                 command.CommandText="SELECT count(*) FROM sqlite_master WHERE name IN ('ux_category_name','ux_product_sku_normalized','category_active_children','product_active_category_insert','product_active_category_update','category_keep_history','product_keep_history','ix_category_order','ix_product_active_name')";
                 if(Convert.ToInt64(command.ExecuteScalar())!=9)throw new InvalidOperationException("La migración de catálogo no creó todas sus restricciones.");
             }
+            if(i+1==9)
+            {
+                command.CommandText="SELECT count(*) FROM sqlite_master WHERE name IN ('measurement_unit','inventory_item','inventory_item_unit','inventory_location','inventory_operation','inventory_movement','inventory_balance','product_inventory_link','ux_inventory_opening','ux_product_inventory_active','inventory_operation_confirm_guard','inventory_movement_pending_only','inventory_movement_confirmed_no_update','inventory_movement_confirmed_no_delete')";
+                if(Convert.ToInt64(command.ExecuteScalar())!=14)throw new InvalidOperationException("La migración de inventario no creó todas sus estructuras críticas.");
+                command.CommandText="SELECT (SELECT count(*) FROM measurement_unit)=7 AND (SELECT count(*) FROM inventory_location WHERE code='MAIN' AND name='Almacén principal')=1 AND (SELECT count(*) FROM permission WHERE name LIKE 'inventory.%')=5 AND (SELECT count(*) FROM role_permission WHERE permission_name LIKE 'inventory.%')=8";
+                if(Convert.ToInt64(command.ExecuteScalar())!=1)throw new InvalidOperationException("La migración de inventario no creó sus seeds completos.");
+            }
             command.CommandText = "INSERT INTO schema_migration VALUES($v,$hash,$at)";
             command.Parameters.AddWithValue("$hash", hash);
             command.Parameters.AddWithValue("$at", DateTimeOffset.UtcNow.ToString("O"));
