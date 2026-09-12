@@ -38,7 +38,7 @@ public sealed class FoundationTests
         database.Initialize();
         using var c = database.Open(); using var cmd = c.CreateCommand();
         cmd.CommandText = "SELECT count(*) FROM schema_migration";
-        Assert.AreEqual(9L, cmd.ExecuteScalar());
+        Assert.AreEqual(10L, cmd.ExecuteScalar());
         cmd.CommandText = "UPDATE schema_migration SET sha256='modified'"; cmd.ExecuteNonQuery();
         Assert.ThrowsExactly<InvalidOperationException>(database.Initialize);
     }
