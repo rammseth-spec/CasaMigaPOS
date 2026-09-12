@@ -7,6 +7,15 @@ namespace CasaMiga.Infrastructure;
 
 public sealed partial class SqliteLocalUnitOfWork(Database database) : ILocalUnitOfWork, ILocalReadUnitOfWork
 {
+    internal T RunTechnical<T>(Func<ILocalStore, SqliteConnection, SqliteTransaction, T> operation)
+    {
+        using var connection = database.Open();
+        using var transaction = connection.BeginTransaction(deferred: false);
+        var result = operation(new Store(connection, transaction), connection, transaction);
+        transaction.Commit();
+        return result;
+    }
+
     public T Run<T>(Func<ILocalStore, T> operation)
     {
         using var connection = database.Open();

@@ -1,3 +1,21 @@
+# Incorporaciones FASE 1I.2
+
+Nuevos:
+- migrations/011_sale_inventory_consumption.sql
+- src/CasaMiga.Domain/SaleConsumptionIdentity.cs
+- src/CasaMiga.Infrastructure/AssemblyInfo.cs
+- src/CasaMiga.Infrastructure/SqliteSaleInventoryStore.cs
+- tests/CasaMiga.Tests/SaleConsumptionIdentityTests.cs
+- tests/CasaMiga.Tests/SaleInventoryMigrationTests.cs
+- tests/CasaMiga.Tests/SaleInventoryPersistenceTests.cs
+- docs/decisions/ADR-018-sale-inventory-persistence.md
+- docs/PHASE_1I2_REPORT.md
+- docs/evidence/phase1i2-migration-hashes.txt
+- docs/evidence/phase1i2-verification.txt
+
+Modificados: SqliteInventoryStore.cs (escritor transaccional compartido), SqliteLocalUnitOfWork.cs (adaptador interno de prueba), seis archivos de pruebas previas para esquema/permiso actual y aislamiento de migración 010; README, CURRENT_STATE, NEXT_STEPS, database, architecture, domain, roadmap y este inventario. No se modifica CheckoutService, Sale, Payment, UI, tickets, impresora ni migraciones históricas.
+
+## Registro anterior
 # Incorporaciones FASE 1I.1
 
 - src/CasaMiga.Domain/SaleInventoryConsumption.cs

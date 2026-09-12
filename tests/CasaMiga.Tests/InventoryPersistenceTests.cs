@@ -80,11 +80,11 @@ public sealed class InventoryPersistenceTests
     [TestMethod]
     public void SchemaNineSeedsUnitsLocationAndApprovedPermissions()
     {
-        Assert.AreEqual(10L, Scalar("SELECT count(*) FROM schema_migration"));
+        Assert.AreEqual(11L, Scalar("SELECT count(*) FROM schema_migration"));
         Assert.AreEqual(7L, Scalar("SELECT count(*) FROM measurement_unit"));
         Assert.AreEqual("Almacén principal", Scalar("SELECT name FROM inventory_location WHERE code='MAIN'"));
-        Assert.AreEqual(5L, Scalar("SELECT count(*) FROM permission WHERE name LIKE 'inventory.%'"));
-        Assert.AreEqual(5L, Scalar("SELECT count(*) FROM role_permission WHERE role_name='Administrator' AND permission_name LIKE 'inventory.%'"));
+        Assert.AreEqual(6L, Scalar("SELECT count(*) FROM permission WHERE name LIKE 'inventory.%'"));
+        Assert.AreEqual(6L, Scalar("SELECT count(*) FROM role_permission WHERE role_name='Administrator' AND permission_name LIKE 'inventory.%'"));
         Assert.AreEqual(3L, Scalar("SELECT count(*) FROM role_permission WHERE role_name='Manager' AND permission_name LIKE 'inventory.%'"));
         Assert.AreEqual(0L, Scalar("SELECT count(*) FROM role_permission WHERE role_name='Cashier' AND permission_name LIKE 'inventory.%'"));
         Assert.AreEqual(8L, Scalar("SELECT count(*) FROM sqlite_master WHERE type='table' AND name IN('measurement_unit','inventory_item','inventory_item_unit','inventory_location','inventory_operation','inventory_movement','inventory_balance','product_inventory_link')"));
@@ -466,7 +466,7 @@ public sealed class InventoryPersistenceTests
         using (var command = connection.CreateCommand())
         {
             command.CommandText = "SELECT count(*) FROM schema_migration";
-            Assert.AreEqual(10L, command.ExecuteScalar());
+            Assert.AreEqual(11L, command.ExecuteScalar());
             command.CommandText = "SELECT name FROM category WHERE id='existing'";
             Assert.AreEqual("Existente", command.ExecuteScalar());
         }

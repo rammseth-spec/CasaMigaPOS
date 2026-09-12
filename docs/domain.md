@@ -98,3 +98,7 @@ ExpectedCash vigente = fondo + suma de Payment.Applied de ventas de esa CashSess
 ## Proyecciones de historial — FASE 1F
 
 FASE 1F no cambia el dominio comercial. `SalesHistoryQuery`, `SalesHistoryRow`, `SalesHistoryPage` y `SalesHistoryDetail` pertenecen a Application porque son proyecciones de consulta. El detalle reconstruye `Sale` para comprobar snapshots y aritmética Money; nunca persiste el agregado reconstruido. Los nombres actuales de usuario/terminal acompañan a UserId/TerminalId sin modificar las ventas históricas.
+
+## Identidad del consumo — 1I.2
+
+SaleConsumptionIdentity.OperationIdV1 deriva un UUIDv5 del CheckoutOperationId canónico con namespace 82b7820c-b1d4-4cb2-a5a6-19419f756cb9 y byte order de red. PolicyVersion=1 e IdentityVersion=1 son explícitos. Se modelan estados de evaluación Disabled/NoConsumption/Consumed y configuración Disabled/Enabled/Paused. No hay autorización ni caso de uso de activación en Domain. El permiso futuro del consumo automático sigue siendo sales.complete; no se requiere permiso administrativo de inventario para Cashier. Ver ADR-018.

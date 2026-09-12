@@ -85,3 +85,7 @@ Application añade `SalesHistoryService` y contratos de consulta. Autoriza `sale
 Infrastructure implementa `ILocalReadUnitOfWork` mediante conexión read-only y transacción deferred. La ruta comercial inmediata no cambia. El listado usa COUNT más una página de joins; el detalle usa encabezado/pago/contexto más partidas ordenadas. ADR-011 documenta la decisión y la prueba concurrente contra Checkout.
 
 Presentation incorpora Ventas, paginación de 50, folio exacto, rango, detalle y control de visibilidad por permiso. Los nombres de usuario/terminal son actuales y los IDs permanecen históricos. Sale/SaleItem/Payment y ExpectedCash no se modificaron.
+
+## Frontera preparada en 1I.2
+
+SqliteInventoryStore.WriteOperation reutiliza el escritor de ledger/balance sobre una transacción del llamador. SqliteSaleInventoryStore es interno y sella evaluación y snapshots sin abrir conexión ni hacer commit; un savepoint elimina escrituras técnicas parciales ante fallo. RunTechnical permite probar venta/pago y consumo en una misma transacción sin cambiar ILocalUnitOfWork ni CheckoutService. No hay llamadas desde la aplicación, activación ni preflight. El esquema 11 queda DISABLED. ADR-018 fija FKs diferidas, UUIDv5 V1 e idempotencia para 1I.3.

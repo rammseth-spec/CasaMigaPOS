@@ -67,6 +67,8 @@ public sealed partial class SqliteInventoryStore(Database database, IClock clock
         InventoryBalanceExpectation? expectation = null)
     {
         ArgumentNullException.ThrowIfNull(request);
+        if (request.Kind == InventoryMovementKind.SaleConsumption)
+            throw new InventoryConsistencyException("Use el camino interno de evaluación de venta.");
         var hash = RequestHash(request);
         try
         {
@@ -85,80 +87,10 @@ public sealed partial class SqliteInventoryStore(Database database, IClock clock
                 return existing;
             }
 
-            if (expectation is not null)
-            {
-                if (request.Kind is not (InventoryMovementKind.AdjustmentGain or InventoryMovementKind.AdjustmentLoss) ||
-                    request.Lines.Count != 1 || request.Lines[0].InventoryItemId != expectation.InventoryItemId ||
-                    request.Lines[0].InventoryLocationId != expectation.InventoryLocationId)
-                    throw new InventoryConsistencyException("La precondición no corresponde al ajuste físico.");
-                var actual = ReadBalance(connection, transaction, expectation.InventoryItemId,
-                    expectation.InventoryLocationId);
-                if (actual is null || actual.QuantityAtomic != expectation.QuantityAtomic ||
-                    actual.Version != expectation.Version)
-                    throw new InventoryConsistencyException("El saldo cambió durante el conteo físico.", InventoryError.ConcurrencyConflict);
-            }
-
-            var at = clock.UtcNow.ToUniversalTime();
-            using (var pending = Command(connection, transaction,
-                "INSERT INTO inventory_operation(id,request_sha256,kind,state,actor_id,terminal_id,reason_code,note,external_reference,expected_line_count,created_utc) VALUES($id,$hash,$kind,'PENDING',$actor,$terminal,$reason,$note,$reference,$count,$at)",
-                ("$id", Id(request.OperationId)), ("$hash", hash), ("$kind", MovementKind(request.Kind)),
-                ("$actor", Id(request.ActorId)), ("$terminal", Id(request.TerminalId)), ("$reason", request.ReasonCode),
-                ("$note", request.Note), ("$reference", request.ExternalReference), ("$count", request.Lines.Count), ("$at", At(at))))
-                pending.ExecuteNonQuery();
-
-            var movements = new List<PersistedInventoryMovement>();
-            int sequence = 0;
-            foreach (var line in request.Lines.OrderBy(x => x.InventoryLocationId).ThenBy(x => x.InventoryItemId))
-            {
-                ValidateLineReferences(connection, transaction, line);
-                var current = ReadBalance(connection, transaction, line.InventoryItemId, line.InventoryLocationId);
-                long before;
-                long after;
-                long version;
-                if (line.IsOpening)
-                {
-                    if (current is not null) throw new InventoryStockException("La posición de inventario ya fue inicializada.", error: InventoryError.AlreadyInitialized);
-                    before = 0;
-                    after = line.DeltaAtomic;
-                    version = 1;
-                }
-                else
-                {
-                    if (current is null) throw new InventoryStockException("La posición de inventario no tiene saldo inicial.", error: InventoryError.NotInitialized);
-                    if (current.Dimension != line.Dimension)
-                        throw new InventoryConsistencyException("La dimensión del saldo no coincide con la partida.");
-                    before = current.QuantityAtomic;
-                    try { after = checked(before + line.DeltaAtomic); }
-                    catch (OverflowException error) { throw new InventoryStockException("La operación excede el rango de cantidad permitido.", error); }
-                    if (after < 0) throw new InventoryStockException("La operación dejaría existencia negativa.", error: InventoryError.InsufficientStock);
-                    version = checked(current.Version + 1);
-                }
-
-                var movement = new PersistedInventoryMovement(Guid.NewGuid(), ++sequence, line.InventoryItemId,
-                    line.InventoryLocationId, line.Dimension, line.IsOpening, line.DeltaAtomic, before, after,
-                    line.Capture.UnitCode, line.Capture.NormalizedQuantity, line.Capture.AtomicUnitsPerUnit);
-                InsertMovement(connection, transaction, request.OperationId, movement);
-                if (line.IsOpening)
-                    InsertBalance(connection, transaction, movement, version, at);
-                else
-                    UpdateBalance(connection, transaction, movement, current!.Version, version, at);
-                movements.Add(movement);
-            }
-
-            using (var audit = Command(connection, transaction,
-                "INSERT INTO audit_entry VALUES($id,$actor,$terminal,'inventory.operation.confirmed',$operation,$at,$details)",
-                ("$id", Id(Guid.NewGuid())), ("$actor", Id(request.ActorId)), ("$terminal", Id(request.TerminalId)),
-                ("$operation", Id(request.OperationId)), ("$at", At(at)),
-                ("$details", JsonSerializer.Serialize(new { requestSha256 = hash, kind = MovementKind(request.Kind), lineCount = movements.Count }))))
-                audit.ExecuteNonQuery();
-            using (var confirm = Command(connection, transaction,
-                "UPDATE inventory_operation SET state='CONFIRMED',confirmed_utc=$at WHERE id=$id AND state='PENDING'",
-                ("$at", At(at)), ("$id", Id(request.OperationId))))
-                if (confirm.ExecuteNonQuery() != 1) throw new InventoryConsistencyException("No se pudo confirmar la operación.");
+            var result = WriteOperation(connection, transaction, request, expectation, clock.UtcNow.ToUniversalTime());
             transaction.Commit();
             afterCommit?.Invoke();
-            return new(request.OperationId, hash, request.Kind, request.ActorId, request.TerminalId,
-                request.ReasonCode, request.Note, request.ExternalReference, at, movements.AsReadOnly());
+            return result;
         }
         catch
         {
@@ -168,6 +100,91 @@ public sealed partial class SqliteInventoryStore(Database database, IClock clock
         }
     }
 
+    // Caller owns commit/rollback; this is the only ledger and balance writer.
+    internal static PersistedInventoryOperation WriteOperation(SqliteConnection connection,
+        SqliteTransaction transaction, InventoryOperationRequest request,
+        InventoryBalanceExpectation? expectation, DateTimeOffset at, Guid? evaluationId = null)
+    {
+        if ((request.Kind == InventoryMovementKind.SaleConsumption) != evaluationId.HasValue)
+            throw new InventoryConsistencyException("Origen de consumo inválido.");
+        var hash = RequestHash(request);
+        if (expectation is not null)
+        {
+            if (request.Kind is not (InventoryMovementKind.AdjustmentGain or InventoryMovementKind.AdjustmentLoss) ||
+                request.Lines.Count != 1 || request.Lines[0].InventoryItemId != expectation.InventoryItemId ||
+                request.Lines[0].InventoryLocationId != expectation.InventoryLocationId)
+                throw new InventoryConsistencyException("La precondición no corresponde al ajuste físico.");
+            var actual = ReadBalance(connection, transaction, expectation.InventoryItemId,
+                expectation.InventoryLocationId);
+            if (actual is null || actual.QuantityAtomic != expectation.QuantityAtomic ||
+                actual.Version != expectation.Version)
+                throw new InventoryConsistencyException("El saldo cambió durante el conteo físico.", InventoryError.ConcurrencyConflict);
+        }
+
+
+        using (var pending = Command(connection, transaction,
+            "INSERT INTO inventory_operation(id,request_sha256,kind,state,actor_id,terminal_id,reason_code,note,external_reference,expected_line_count,created_utc"
+            + (evaluationId.HasValue ? ",sale_evaluation_id" : "")
+            + ") VALUES($id,$hash,$kind,'PENDING',$actor,$terminal,$reason,$note,$reference,$count,$at"
+            + (evaluationId.HasValue ? ",$evaluation)" : ")"),
+            ("$evaluation", evaluationId?.ToString("D")), ("$id", Id(request.OperationId)), ("$hash", hash), ("$kind", MovementKind(request.Kind)),
+            ("$actor", Id(request.ActorId)), ("$terminal", Id(request.TerminalId)), ("$reason", request.ReasonCode),
+            ("$note", request.Note), ("$reference", request.ExternalReference), ("$count", request.Lines.Count), ("$at", At(at))))
+            pending.ExecuteNonQuery();
+
+        var movements = new List<PersistedInventoryMovement>();
+        int sequence = 0;
+        foreach (var line in request.Lines.OrderBy(x => x.InventoryLocationId).ThenBy(x => x.InventoryItemId))
+        {
+            ValidateLineReferences(connection, transaction, line);
+            var current = ReadBalance(connection, transaction, line.InventoryItemId, line.InventoryLocationId);
+            long before;
+            long after;
+            long version;
+            if (line.IsOpening)
+            {
+                if (current is not null) throw new InventoryStockException("La posición de inventario ya fue inicializada.", error: InventoryError.AlreadyInitialized);
+                before = 0;
+                after = line.DeltaAtomic;
+                version = 1;
+            }
+            else
+            {
+                if (current is null) throw new InventoryStockException("La posición de inventario no tiene saldo inicial.", error: InventoryError.NotInitialized);
+                if (current.Dimension != line.Dimension)
+                    throw new InventoryConsistencyException("La dimensión del saldo no coincide con la partida.");
+                before = current.QuantityAtomic;
+                try { after = checked(before + line.DeltaAtomic); }
+                catch (OverflowException error) { throw new InventoryStockException("La operación excede el rango de cantidad permitido.", error); }
+                if (after < 0) throw new InventoryStockException("La operación dejaría existencia negativa.", error: InventoryError.InsufficientStock);
+                version = checked(current.Version + 1);
+            }
+
+            var movement = new PersistedInventoryMovement(Guid.NewGuid(), ++sequence, line.InventoryItemId,
+                line.InventoryLocationId, line.Dimension, line.IsOpening, line.DeltaAtomic, before, after,
+                line.Capture.UnitCode, line.Capture.NormalizedQuantity, line.Capture.AtomicUnitsPerUnit);
+            InsertMovement(connection, transaction, request.OperationId, movement);
+            if (line.IsOpening)
+                InsertBalance(connection, transaction, movement, version, at);
+            else
+                UpdateBalance(connection, transaction, movement, current!.Version, version, at);
+            movements.Add(movement);
+        }
+
+        using (var audit = Command(connection, transaction,
+            "INSERT INTO audit_entry VALUES($id,$actor,$terminal,'inventory.operation.confirmed',$operation,$at,$details)",
+            ("$id", Id(Guid.NewGuid())), ("$actor", Id(request.ActorId)), ("$terminal", Id(request.TerminalId)),
+            ("$operation", Id(request.OperationId)), ("$at", At(at)),
+            ("$details", JsonSerializer.Serialize(new { requestSha256 = hash, kind = MovementKind(request.Kind), lineCount = movements.Count }))))
+            audit.ExecuteNonQuery();
+        using (var confirm = Command(connection, transaction,
+            "UPDATE inventory_operation SET state='CONFIRMED',confirmed_utc=$at WHERE id=$id AND state='PENDING'",
+            ("$at", At(at)), ("$id", Id(request.OperationId))))
+            if (confirm.ExecuteNonQuery() != 1) throw new InventoryConsistencyException("No se pudo confirmar la operación.");
+
+        return new(request.OperationId, hash, request.Kind, request.ActorId, request.TerminalId,
+            request.ReasonCode, request.Note, request.ExternalReference, at, movements.AsReadOnly());
+    }
     public PersistedInventoryOperation? Recover(InventoryOperationRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -398,12 +415,12 @@ public sealed partial class SqliteInventoryStore(Database database, IClock clock
     {
         InventoryMovementKind.OpeningBalance => "OPENING_BALANCE", InventoryMovementKind.Receipt => "RECEIPT",
         InventoryMovementKind.AdjustmentGain => "ADJUSTMENT_GAIN", InventoryMovementKind.AdjustmentLoss => "ADJUSTMENT_LOSS",
-        InventoryMovementKind.Waste => "WASTE", _ => throw new ArgumentOutOfRangeException(nameof(kind))
+        InventoryMovementKind.Waste => "WASTE", InventoryMovementKind.SaleConsumption => "SALE_CONSUMPTION", _ => throw new ArgumentOutOfRangeException(nameof(kind))
     };
     private static InventoryMovementKind ParseMovementKind(string value) => value switch
     {
         "OPENING_BALANCE" => InventoryMovementKind.OpeningBalance, "RECEIPT" => InventoryMovementKind.Receipt,
         "ADJUSTMENT_GAIN" => InventoryMovementKind.AdjustmentGain, "ADJUSTMENT_LOSS" => InventoryMovementKind.AdjustmentLoss,
-        "WASTE" => InventoryMovementKind.Waste, _ => throw new InvalidDataException("Tipo de movimiento inválido.")
+        "WASTE" => InventoryMovementKind.Waste, "SALE_CONSUMPTION" => InventoryMovementKind.SaleConsumption, _ => throw new InvalidDataException("Tipo de movimiento inválido.")
     };
 }

@@ -93,6 +93,17 @@ public sealed class InventoryNoteMigrationTests
         // A pending probe is never committed.
     }
 
+    private void ApplyTenOnly()
+    {
+        using var c=db.Open(); using var tx=c.BeginTransaction();
+        var assembly=typeof(Database).Assembly;
+        using var reader=new StreamReader(assembly.GetManifestResourceStream(assembly.GetManifestResourceNames().Single(n=>n.Contains(".010_",StringComparison.Ordinal)))!);
+        var sql=reader.ReadToEnd(); Execute(c,tx,sql);
+        using var cmd=new SqliteCommand("INSERT INTO schema_migration VALUES(10,$hash,$at)",c,tx);
+        cmd.Parameters.AddWithValue("$hash",Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(sql))));
+        cmd.Parameters.AddWithValue("$at",clock.UtcNow.ToString("O")); cmd.ExecuteNonQuery();tx.Commit();
+    }
+
     private InventoryOperationRequest Seed()
     {
         var store=new SqliteInventoryStore(db,clock);
@@ -115,7 +126,7 @@ public sealed class InventoryNoteMigrationTests
     [TestMethod] public void UpgradePreservesAllDataSchemaObjectsAndRecovery()
     {
         var request=Seed();var before=Data();var objects=Objects();var fks=Fks();var columns=Columns();
-        db.Initialize();db.Validate();
+        ApplyTenOnly();db.Validate();
         CollectionAssert.AreEquivalent(before.Keys.ToArray(),Data().Keys.ToArray());
         foreach(var pair in before)Assert.AreEqual(pair.Value,Data()[pair.Key],pair.Key);
         Assert.AreEqual(objects,Objects());Assert.AreEqual(fks,Fks());Assert.AreEqual(columns,Columns());
@@ -127,7 +138,7 @@ public sealed class InventoryNoteMigrationTests
         var target=Path.Combine(directory,"restored");InstallationBackup.Restore(backup,target);
         var restored=new Database(Path.Combine(target,"casamiga.db"));restored.Validate();
         Assert.IsEmpty(new SqliteInventoryStore(restored,clock).Reconcile());
-        using var rc=restored.Open();using var q=new SqliteCommand("SELECT max(version) FROM schema_migration",rc);Assert.AreEqual(10L,q.ExecuteScalar());
+        using var rc=restored.Open();using var q=new SqliteCommand("SELECT max(version) FROM schema_migration",rc);Assert.AreEqual(11L,q.ExecuteScalar());
     }
 
     [TestMethod] public void FailureAfterRebuildRollsBackDataObjectsAndVersion()
@@ -140,6 +151,6 @@ public sealed class InventoryNoteMigrationTests
         foreach(var pair in data)Assert.AreEqual(pair.Value,Data()[pair.Key]);
         Assert.AreEqual(objects,Objects());Assert.AreEqual(fks,Fks());db.Validate();
         using(var c=db.Open())Execute(c,null,"DROP TRIGGER test_reject_v10");
-        db.Initialize();db.Validate();Assert.IsEmpty(new SqliteInventoryStore(db,clock).Reconcile());
+        ApplyTenOnly();db.Validate();Assert.IsEmpty(new SqliteInventoryStore(db,clock).Reconcile());
     }
 }

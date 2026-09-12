@@ -1,0 +1,23 @@
+FASE 1I.2 — verificación final — 2026-09-12
+Baseline: 42d7490cd20fd926f8e3d61830140ba7e8ce2a2d
+Comando: scripts/verify.ps1 -Dotnet work/dotnet/dotnet.exe -PackageSource work/nuget-feed
+Restore locked-mode: correcto (se autorizó acceso a caché NuGet)
+Release: 0 errores / 0 advertencias de compilación
+Suite final: 325 aprobadas / 0 fallidas / 0 omitidas; duración 2 m 27 s
+TRX local: TestResults/foundation.trx
+Pruebas focalizadas previas: 31/31 política/identidad/persistencia/migración; 52/52 regresión inventario/migraciones
+Primera suite intermedia: 323 aprobadas, 1 fallida por expectativa obsoleta de 21 permisos; corregida a 22 por nuevo permiso aprobado.
+UUIDv5: vector RFC y dos vectores fijos del namespace V1, culturas y formatos diferentes.
+Upgrade 010 -> 011: preserva opening zero, receipts, waste, ajustes, links, ventas históricas, valores, columnas e índices/triggers históricos salvo guard de consumo ampliado.
+Rollback durante y después de reconstrucción: datos y objetos restaurados, versión permanece 10.
+Atomicidad: rollback completo al fallar evaluation/snapshot/operation/movement/balance/audit.
+Savepoint: fallo capturado no deja efectos parciales de inventario.
+Backup/restauración schema 11: correcto; recuperación idempotente, snapshots y consumo conservados.
+integrity_check: ok (Database.Validate)
+foreign_key_check: cero filas (Database.Validate)
+Reconciliación: cero diferencias en original y restaurada.
+Config inicial: DISABLED/version 1; sin API de activación ni preflight.
+Cashier: puede ser actor técnico de consumo sin inventory.adjust/receive; autorización comercial real pendiente 1I.3.
+No triggers UPDATE inventory_balance: verificado por consulta sqlite_master.
+Checkout/Application/Presentation/Sale y migraciones 001–010: diff contra baseline vacío.
+Impresora: no utilizada. 1I.3: no iniciada. Sin push/remoto/licencia.

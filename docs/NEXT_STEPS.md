@@ -1,3 +1,12 @@
+# Próximo paso — revisar y autorizar FASE 1I.3
+
+1I.2 completada. No iniciar automáticamente 1I.3. Revisar PHASE_1I2_REPORT.md y ADR-018; proponer/confirmar integración funcional del flag y plan dentro de la transacción de Checkout, autorización sales.complete, recuperación/idempotencia y bloqueo sin efectos parciales. La infraestructura técnica existe, pero Checkout no la llama y el flag está DISABLED.
+
+No tocar migraciones 001–011 una vez aplicadas; cualquier cambio estructural posterior requiere nueva migración. Preservar Sale/Payment/ExpectedCash/folios/tickets y efectos físicos post-commit. Preflight/activación/pausa/reanudación y auditoría de configuración corresponden a 1I.4, no están implementados. Sin recetas, producción, proveedores, devoluciones, overrides, rediseño, fullscreen, LAN, instalador ni cajón.
+
+Modelo recomendado 1I.3: Astra por la frontera transaccional y recuperación. Esperar autorización expresa antes de implementarla.
+
+## Registro anterior
 # Próximo paso — proponer y autorizar FASE 1I.2
 
 1I.1 está completada. No iniciar automáticamente 1I.2. La siguiente propuesta debe fijar la migración 011, tablas de evaluación/snapshot, estado disabled/enabled/paused, permiso de activación, algoritmo versionado de InventoryOperationId, persistencia sobre la misma transacción de Checkout, triggers, upgrade/rollback y pruebas.

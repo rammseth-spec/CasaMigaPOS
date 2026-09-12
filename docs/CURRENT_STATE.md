@@ -1,3 +1,12 @@
+# Continuidad — FASE 1I.2 completada
+
+FASE 1I permanece ABIERTA; 1I.1 aprobada y 1I.2 completada. Baseline de entrada: 42d7490cd20fd926f8e3d61830140ba7e8ce2a2d. El commit que incorpora PHASE_1I2_REPORT.md fija este checkpoint.
+
+Schema 11 prepara SALE_CONSUMPTION interno, evaluación por venta, snapshots inmutables, UUIDv5 V1 y feature flag inicial DISABLED. SqliteInventoryStore conserva la única escritura de balance y ahora reutiliza su writer en una transacción del llamador. FKs diferidas impiden consumo huérfano. No backfill ni llamadas desde Checkout. No preflight ni activación UI.
+
+Verificación: scripts/verify.ps1, 325 aprobadas / 0 fallidas / 0 omitidas; Release 0 errores / 0 advertencias. Upgrade con historia, rollback durante/después de reconstrucción, atomicidad, idempotencia y backup/restore schema 11 aprobados; integrity_check ok, foreign_key_check vacío, reconciliación sin diferencias. Migraciones 001–010 y Checkout/Application/Presentation/Sale intactos. No impresora. 1I.3 NO inició. Versión de desarrollo, no lista para producción. Ver [reporte](PHASE_1I2_REPORT.md), [ADR-018](decisions/ADR-018-sale-inventory-persistence.md) y evidencia phase1i2-*.
+
+## Registro anterior
 # Continuidad — FASE 1I.1 completada
 
 FASE 1I está abierta únicamente con 1I.1 completada. Desde el baseline `71a4f60159ca167cbc316956c848b2082cdf84a5`, Domain incorpora política pura, errores estructurados, snapshots por SaleItem, agregación determinista y factory controlada para preparar `SALE_CONSUMPTION`. El constructor general continúa rechazando ese tipo y el esquema 10 no puede persistirlo.

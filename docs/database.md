@@ -131,3 +131,9 @@ Las pruebas comparan todas las filas salvo schema_migration, columnas, FKs y def
 No agrega ni modifica esquema. IInventoryStore es el puerto Application; SqliteInventoryStore lo implementa y conserva la transacción inmediata para movimientos. RegisterOpeningBalance, ReceiveInventory y RecordWaste traducen intención positiva a InventoryOperationRequest. AdjustToPhysicalCount recibe cantidad absoluta, calcula gain/loss y acompaña el request con cantidad/versión esperadas. El store valida la precondición dentro de la misma transacción antes de escribir. NoChange no persiste.
 
 La configuración revalida inventory.configure dentro de la transacción que crea o actualiza el artículo, presentación o asociación y agrega su audit_entry. Los read models usan conexión read-only, transacción deferred y consultas acotadas. La lista, detalle, historial y reconciliación no exponen SQL ni tipos Microsoft.Data.Sqlite. Migraciones 001–010 permanecen inmutables.
+
+## FASE 1I.2 — Schema 11
+
+La migración 011 reconstruye inventory_operation/movement para permitir SALE_CONSUMPTION sin modificar 001–010. Añade inventory_operation.sale_evaluation_id y tres tablas: sale_inventory_evaluation, sale_inventory_line_snapshot, inventory_sale_consumption_config. Evaluación única por venta/CheckoutOperationId y operación única por evaluación; snapshots por (evaluation_id,position), con FK a SaleItem. El header final sella las líneas; FKs diferidas impiden consumos huérfanos y triggers rechazan alteración de historia.
+
+Estados de evaluación: DISABLED sin líneas, NO_CONSUMPTION con todas las líneas no inventariables, CONSUMED con todas las líneas y operación confirmada. No backfill. Configuración singleton inicial DISABLED, versión 1. inventory.sale_consumption.configure sólo Administrator. Ledger autoritativo y balance reconstruible siguen iguales; ningún trigger actualiza balance. Ver ADR-018 y evidencia phase1i2-migration-hashes.txt.
