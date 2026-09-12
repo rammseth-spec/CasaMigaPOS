@@ -244,3 +244,6 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 
 - docs/PHASE_1G_BLOCK_F_REPORT.md
 - docs/USER_REQUIREMENTS_PHASE_1G_BLOCK_F.md
+- docs/evidence/phase1g-block-f-human-confirmation.md
+- docs/evidence/phase1g-block-f-post-smoke.json
+- docs/evidence/phase1g-block-f-render-contract.json

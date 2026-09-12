@@ -1,0 +1,17 @@
+{
+  "scope": "Deterministic render of the persisted Block F receipt snapshot; no transport call",
+  "payloadBytes": 19787,
+  "payloadSha256": "C17C6CA805932AE98032A500B69F035FCE7AA3D6B8317D7537D81E40A95BEB35",
+  "queue": "POS-80",
+  "codePage": "ibm850",
+  "characterTable": 2,
+  "codePageSelectionAtOffsetZero": true,
+  "officialLogoId": "Opcion07:06D4ADE3AE160967FCD21E958458C17113BEF3C4A8E03F15D63115530AE821C6",
+  "officialLogoExactOccurrence": true,
+  "reprintMark": true,
+  "copyNoDrawerMark": true,
+  "partialCutOccurrences": 1,
+  "partialCutIsFinal": true,
+  "drawerPulseOccurrences": 0,
+  "openCashDrawer": false
+}

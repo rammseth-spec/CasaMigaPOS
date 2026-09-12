@@ -1,8 +1,8 @@
-# Próximo paso — FASE 1G Bloque F
+# Próximo paso después de FASE 1G
 
-La implementación y verificación técnica están completas. Ejecutar exactamente un smoke físico desde la UI: iniciar sesión en la instalación sintética `work/phase1f-visual-20260910`, abrir Ventas, elegir una venta existente, Ver detalle y pulsar una sola vez `REIMPRIMIR TICKET`. No crear venta ni abrir caja.
+FASE 1G está cerrada dentro del alcance autorizado. No iniciar automáticamente otra fase.
 
-Después del envío registrar el request `REPRINT`, su evento final y JobId; comprobar por SQLite que siguen existiendo 55 ventas, 110 partidas y 55 pagos y que ExpectedCash no cambió. Solicitar al usuario una foto completa para confirmar logo Opción 07, marca REIMPRESIÓN, español, layout, corte parcial y ausencia de apertura de cajón. Detenerse; no iniciar FASE 1H.
+Siguiente acción recomendada: proponer y autorizar un bloque de preparación para producción. Si primero se adquiere el cajón, elaborar un bloque independiente con modelo, voltaje, cableado/conector y comando Qian documentado antes de habilitar cualquier pulso. LAN puede validarse en otro bloque opcional. Mantener `openCashDrawer=false` hasta entonces.
 
 ## Registro histórico anterior
 

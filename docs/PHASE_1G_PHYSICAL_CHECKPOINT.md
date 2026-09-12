@@ -1,6 +1,6 @@
 # FASE 1G — Checkpoint físico Qian USB
 
-Estado: preparación física y Bloques B–D confirmados por el usuario. Bloque D cerró la validación de caracteres, jerarquía visual y corte parcial el 2026-09-11; la prueba no debe repetirse.
+Estado final: Bloques B–F confirmados. FASE 1G cerrada dentro del alcance autorizado. El smoke final de reimpresión produjo PrintRequestId `3ca46975-71af-4643-b80b-ff8290a5d356`, JobId 7 y estado SUBMITTED; la fotografía validó REIMPRESIÓN, logo Opción 07, español, contenido histórico, cero cajón y corte parcial. No repetir.
 
 Resultado recibido: Qian QOP-T80UL-RI-02 por USB001; cola `POS-80`; driver `POS-80 11.3.0.1`; autoprueba y página Windows con salida física. Casa Miga envió después un único ticket ASCII: PrintRequestId `7ba5b12f-2482-457d-abf4-725181b25d60`, JobId 3, estado técnico SUBMITTED, 762 bytes. Ver `PHASE_1G_BLOCK_B_REPORT.md`.
 

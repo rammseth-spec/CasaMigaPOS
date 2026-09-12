@@ -1,12 +1,12 @@
-# Continuidad — FASE 1G Bloque F
+# Continuidad — FASE 1G cerrada
 
-FASE 1G ABIERTA. Bloque F implementa reimpresión desde el detalle de Historial para Administrator y Manager mediante `sales.receipt.reprint`; Cashier no recibe el permiso. Application revalida usuario activo y permiso, reutiliza el `receipt_snapshot` inmutable o crea el primero una sola vez para ventas anteriores a 1G. Cada acción válida crea un request `REPRINT`, conserva trazabilidad append-only y usa los estados REQUESTED/SUBMITTED/COMPLETED/FAILED/UNKNOWN.
+FASE 1G CERRADA dentro del alcance autorizado. Bloque F cerró la reimpresión desde Historial para Administrator y Manager mediante `sales.receipt.reprint`; Cashier no recibe el permiso. Application revalida usuario activo y permiso, reutiliza el `receipt_snapshot` inmutable o crea el primero una sola vez para ventas anteriores a 1G. Cada acción válida crea un request `REPRINT`, conserva trazabilidad append-only y usa los estados REQUESTED/SUBMITTED/COMPLETED/FAILED/UNKNOWN.
 
 El ticket muestra `REIMPRESIÓN`, conserva logo Opción 07, CP850/ESC t 2, 48 columnas, TOTAL, GS V 1 y `openCashDrawer=false`. El botón se deshabilita durante la solicitud; FAILED/UNKNOWN permiten un reintento explícito relacionado y nunca automático. Un guard por SaleId bloquea dos ejecuciones simultáneas dentro del proceso. Sale, SaleItem, Payment, folio, caja y ExpectedCash permanecen inmutables.
 
-Verificación vigente: 195 pruebas aprobadas, 0 fallidas, 0 omitidas; Release con 0 errores y 0 advertencias. Publicación win-x64 preparada. Pendiente: ejecutar exactamente una reimpresión física desde Historial usando una venta sintética existente, registrar PrintRequestId/JobId y solicitar la foto. No crear otra venta.
+Smoke físico final: exactamente una reimpresión de una venta sintética existente. PrintRequestId `3ca46975-71af-4643-b80b-ff8290a5d356`, SaleId `904ce0fa-510e-4308-a0ed-b093749dfcda`, JobId 7, REQUESTED→SUBMITTED. La fotografía confirmó REIMPRESIÓN, logo, español, valores históricos, corte parcial y ausencia de apertura de cajón. SQLite conservó 55 ventas, 110 partidas, 55 pagos y ExpectedCash $1,852.00; existe un solo request.
 
-Bloque E.1 cerrado por decisión del usuario: margen superior aceptado, causa predominantemente mecánica, logo sin recorte y backfeed prohibido sin documentación específica Qian. FASE 1G sigue abierta y el sistema no está listo para producción.
+Verificación vigente: 195 pruebas aprobadas, 0 fallidas, 0 omitidas; Release con 0 errores y 0 advertencias. Bloque E.1 cerrado: margen superior aceptado, causa predominantemente mecánica, logo sin recorte y backfeed prohibido sin documentación específica Qian. Cajón deshabilitado pendiente de hardware; LAN opcional. El sistema no está listo para producción y no se inició otra fase.
 
 ## Registro histórico anterior
 

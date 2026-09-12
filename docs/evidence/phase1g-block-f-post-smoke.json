@@ -1,0 +1,210 @@
+{
+  "scope": "Phase 1G Block F post-smoke verification; isolated synthetic installation",
+  "before": {
+    "sales": 55,
+    "saleItems": 110,
+    "payments": 55,
+    "expectedCashCents": 185200,
+    "receiptPrintRequests": 0
+  },
+  "after": {
+    "sales": 55,
+    "saleItems": 110,
+    "payments": 55,
+    "expectedCashCents": 185200,
+    "receiptSnapshots": 1,
+    "receiptPrintRequests": 1,
+    "receiptPrintEvents": 2
+  },
+  "schemaVersion": 8,
+  "cashSession": {
+    "id": "a3ed5724-f0c4-4639-ab8c-90b59d915d8f",
+    "terminal_id": "45f13704-a99f-46d3-be60-74cf82156181",
+    "opened_by": "5f316364-9c24-483f-afd3-c0a11d80d11e",
+    "opened_utc": "2026-09-10T23:39:44.8419379+00:00",
+    "opening_cents": 0,
+    "state": "OPEN",
+    "closed_utc": null,
+    "closed_by": null,
+    "expected_cents": null,
+    "counted_cents": null,
+    "difference_cents": null
+  },
+  "sale": {
+    "id": "904ce0fa-510e-4308-a0ed-b093749dfcda",
+    "operation_id": "7f6186be-7c60-4143-b81d-2d2fb3081ef8",
+    "user_id": "5f316364-9c24-483f-afd3-c0a11d80d11e",
+    "terminal_id": "45f13704-a99f-46d3-be60-74cf82156181",
+    "cash_session_id": "a3ed5724-f0c4-4639-ab8c-90b59d915d8f",
+    "sequence": 55,
+    "confirmed_utc": "2026-09-11T00:34:44.8419379+00:00",
+    "subtotal_cents": 4300,
+    "total_cents": 4300
+  },
+  "items": [
+    {
+      "sale_id": "904ce0fa-510e-4308-a0ed-b093749dfcda",
+      "position": 1,
+      "product_id": "4f3979d4-7685-4987-bb32-d1f29e997459",
+      "product_name": "Concha histórica",
+      "unit_price_cents": 1900,
+      "quantity": 2,
+      "line_total_cents": 3800
+    },
+    {
+      "sale_id": "904ce0fa-510e-4308-a0ed-b093749dfcda",
+      "position": 2,
+      "product_id": "736bec1d-6a7b-445a-8527-cf6b4accf886",
+      "product_name": "Bolillo histórico",
+      "unit_price_cents": 500,
+      "quantity": 1,
+      "line_total_cents": 500
+    }
+  ],
+  "payment": {
+    "id": "254089a4-120d-4a0f-8976-8ce0d67088cc",
+    "sale_id": "904ce0fa-510e-4308-a0ed-b093749dfcda",
+    "method": "CASH",
+    "applied_cents": 4300,
+    "received_cents": 9300,
+    "change_cents": 5000
+  },
+  "request": {
+    "id": "3ca46975-71af-4643-b80b-ff8290a5d356",
+    "sale_id": "904ce0fa-510e-4308-a0ed-b093749dfcda",
+    "kind": "REPRINT",
+    "parent_request_id": null,
+    "requested_by": "5f316364-9c24-483f-afd3-c0a11d80d11e",
+    "requested_utc": "2026-09-12T00:43:56.3755773+00:00",
+    "queue_name": "POS-80",
+    "snapshot_sha256": "F9F178D61DE6BA21D65692EBD51080435D328F3C45043A07C107999B78F91975"
+  },
+  "events": [
+    {
+      "id": "1c1e939d-f561-4451-8325-1f7777298050",
+      "request_id": "3ca46975-71af-4643-b80b-ff8290a5d356",
+      "sequence": 1,
+      "state": "REQUESTED",
+      "occurred_utc": "2026-09-12T00:43:56.3766053+00:00",
+      "spooler_job_id": null,
+      "error_code": null
+    },
+    {
+      "id": "ce9fd63c-3839-449b-add7-daf95f54650f",
+      "request_id": "3ca46975-71af-4643-b80b-ff8290a5d356",
+      "sequence": 2,
+      "state": "SUBMITTED",
+      "occurred_utc": "2026-09-12T00:43:56.4996240+00:00",
+      "spooler_job_id": 7,
+      "error_code": null
+    }
+  ],
+  "receiptAudits": [
+    {
+      "actor_id": "5f316364-9c24-483f-afd3-c0a11d80d11e",
+      "terminal_id": "45f13704-a99f-46d3-be60-74cf82156181",
+      "action": "receipt.print.requested",
+      "entity_id": "3ca46975-71af-4643-b80b-ff8290a5d356",
+      "occurred_utc": "2026-09-12T00:43:56.3773300+00:00",
+      "details_json": "{\"saleId\":\"904ce0fa-510e-4308-a0ed-b093749dfcda\",\"kind\":\"Reprint\",\"parentRequestId\":null,\"queue\":\"POS-80\",\"snapshotSha256\":\"F9F178D61DE6BA21D65692EBD51080435D328F3C45043A07C107999B78F91975\"}"
+    },
+    {
+      "actor_id": "5f316364-9c24-483f-afd3-c0a11d80d11e",
+      "terminal_id": "45f13704-a99f-46d3-be60-74cf82156181",
+      "action": "receipt.print.submitted",
+      "entity_id": "3ca46975-71af-4643-b80b-ff8290a5d356",
+      "occurred_utc": "2026-09-12T00:43:56.4998534+00:00",
+      "details_json": "{\"saleId\":\"904ce0fa-510e-4308-a0ed-b093749dfcda\",\"kind\":\"Reprint\",\"spoolerJobId\":7,\"errorCode\":null}"
+    }
+  ],
+  "snapshot": {
+    "saleId": "904ce0fa-510e-4308-a0ed-b093749dfcda",
+    "schemaVersion": 1,
+    "createdUtc": "2026-09-12T00:43:56.3740040+00:00",
+    "storedSha256": "F9F178D61DE6BA21D65692EBD51080435D328F3C45043A07C107999B78F91975",
+    "computedSha256": "F9F178D61DE6BA21D65692EBD51080435D328F3C45043A07C107999B78F91975",
+    "matchesRequest": true,
+    "document": {
+      "version": 1,
+      "folio": "45f13704a99f46d3be6074cf82156181-00000055",
+      "confirmedAt": "2026-09-10T18:34:44.8419379-06:00",
+      "userId": "5f316364-9c24-483f-afd3-c0a11d80d11e",
+      "cashierName": "Administrador sintético",
+      "terminalId": "45f13704-a99f-46d3-be60-74cf82156181",
+      "terminalName": "CASA-MIGA-CAJA-01",
+      "items": [
+        {
+          "productId": "4f3979d4-7685-4987-bb32-d1f29e997459",
+          "productName": "Concha histórica",
+          "unitPrice": {
+            "cents": 1900
+          },
+          "quantity": 2,
+          "lineTotal": {
+            "cents": 3800
+          }
+        },
+        {
+          "productId": "736bec1d-6a7b-445a-8527-cf6b4accf886",
+          "productName": "Bolillo histórico",
+          "unitPrice": {
+            "cents": 500
+          },
+          "quantity": 1,
+          "lineTotal": {
+            "cents": 500
+          }
+        }
+      ],
+      "subtotal": {
+        "cents": 4300
+      },
+      "total": {
+        "cents": 4300
+      },
+      "paymentMethod": "CASH",
+      "applied": {
+        "cents": 4300
+      },
+      "received": {
+        "cents": 9300
+      },
+      "change": {
+        "cents": 5000
+      },
+      "business": {
+        "displayName": "PRUEBA CASA MIGA",
+        "address": null,
+        "phone": null,
+        "taxId": null,
+        "contact": null,
+        "closingMessage": "Gracias por su compra",
+        "monochromeLogoPath": "Opcion07:06D4ADE3AE160967FCD21E958458C17113BEF3C4A8E03F15D63115530AE821C6"
+      }
+    }
+  },
+  "permissionRoles": [
+    "Administrator",
+    "Manager"
+  ],
+  "noDrawerDomainEventOrAudit": true,
+  "singleRequest": true,
+  "uiMessageReportedByUser": "Ticket aceptado por la cola de impresión. Trabajo 7.",
+  "humanPhotoValidation": {
+    "reprintMark": true,
+    "officialOpcion07Logo": true,
+    "historicalItems": [
+      "Concha histórica",
+      "Bolillo histórico"
+    ],
+    "subtotalCents": 4300,
+    "totalCents": 4300,
+    "paymentMethod": "CASH",
+    "receivedCents": 9300,
+    "appliedCents": 4300,
+    "changeCents": 5000,
+    "copyDoesNotOpenDrawerMark": true,
+    "partialCut": true,
+    "legibleAndProfessional": true
+  }
+}
