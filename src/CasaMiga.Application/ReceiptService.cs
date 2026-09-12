@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text;
+using System.Collections.Concurrent;
 using CasaMiga.Domain;
 
 namespace CasaMiga.Application;
@@ -14,7 +15,17 @@ public sealed class ReceiptService(
     IReceiptPayloadRenderer payloadRenderer,
     IReceiptPrintTransport transport)
 {
+    private readonly ConcurrentDictionary<Guid, byte> activeReprints = new();
     private sealed record Prepared(ReceiptPrintRequest Request, ReceiptDocument? Document, ReceiptPrintEvent? ExistingEvent);
+
+    public bool CanReprint()=>Read(store=>
+        identity.Current is { } actor
+        && store.FindUser(actor.Id) is {Active:true}
+        && store.HasPermission(actor.Id,"sales.receipt.reprint"));
+
+    private T Read<T>(Func<ILocalStore,T> operation)=>database is ILocalReadUnitOfWork read
+        ? read.Read(operation)
+        : database.Run(operation);
 
     public ReceiptPrintResult PrintOriginal(Sale sale)
     {
@@ -26,12 +37,22 @@ public sealed class ReceiptService(
         if (requestId == Guid.Empty) throw new ArgumentException("Intento de impresión inválido.");
         var parent=database.Run(s=>s.FindReceiptPrintRequest(requestId))
             ?? throw new InvalidOperationException("El intento de impresión ya no está disponible.");
-        return Execute(parent.SaleId,parent.Kind==ReceiptCopyKind.Reprint?ReceiptCopyKind.Reprint:ReceiptCopyKind.Retry,parent.Id);
+        return parent.Kind==ReceiptCopyKind.Reprint
+            ? ExecuteReprint(parent.SaleId,parent.Id)
+            : Execute(parent.SaleId,ReceiptCopyKind.Retry,parent.Id);
     }
     public ReceiptPrintResult Reprint(Guid saleId)
     {
         if (saleId == Guid.Empty) throw new ArgumentException("Venta inválida.");
-        return Execute(saleId,ReceiptCopyKind.Reprint,null);
+        return ExecuteReprint(saleId,null);
+    }
+
+    private ReceiptPrintResult ExecuteReprint(Guid saleId,Guid? parent)
+    {
+        if(!activeReprints.TryAdd(saleId,0))
+            throw new InvalidOperationException("Ya hay una reimpresión en curso para esta venta.");
+        try{return Execute(saleId,ReceiptCopyKind.Reprint,parent);}
+        finally{activeReprints.TryRemove(saleId,out _);}
     }
 
     private ReceiptPrintResult Execute(Guid saleId,ReceiptCopyKind kind,Guid? parent)

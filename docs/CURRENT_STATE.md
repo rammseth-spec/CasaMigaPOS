@@ -1,3 +1,15 @@
+# Continuidad — FASE 1G Bloque F
+
+FASE 1G ABIERTA. Bloque F implementa reimpresión desde el detalle de Historial para Administrator y Manager mediante `sales.receipt.reprint`; Cashier no recibe el permiso. Application revalida usuario activo y permiso, reutiliza el `receipt_snapshot` inmutable o crea el primero una sola vez para ventas anteriores a 1G. Cada acción válida crea un request `REPRINT`, conserva trazabilidad append-only y usa los estados REQUESTED/SUBMITTED/COMPLETED/FAILED/UNKNOWN.
+
+El ticket muestra `REIMPRESIÓN`, conserva logo Opción 07, CP850/ESC t 2, 48 columnas, TOTAL, GS V 1 y `openCashDrawer=false`. El botón se deshabilita durante la solicitud; FAILED/UNKNOWN permiten un reintento explícito relacionado y nunca automático. Un guard por SaleId bloquea dos ejecuciones simultáneas dentro del proceso. Sale, SaleItem, Payment, folio, caja y ExpectedCash permanecen inmutables.
+
+Verificación vigente: 195 pruebas aprobadas, 0 fallidas, 0 omitidas; Release con 0 errores y 0 advertencias. Publicación win-x64 preparada. Pendiente: ejecutar exactamente una reimpresión física desde Historial usando una venta sintética existente, registrar PrintRequestId/JobId y solicitar la foto. No crear otra venta.
+
+Bloque E.1 cerrado por decisión del usuario: margen superior aceptado, causa predominantemente mecánica, logo sin recorte y backfeed prohibido sin documentación específica Qian. FASE 1G sigue abierta y el sistema no está listo para producción.
+
+## Registro histórico anterior
+
 # Continuidad — FASE 1G Bloque E
 
 FASE 1G ABIERTA; Bloque E validado físicamente. Logo Opción 07, texto, importes, TOTAL y corte parcial fueron aprobados. La única observación es exceso de blanco antes del logo. Bloque E.1 determinó que el PNG aporta 8 filas/1.00 mm y Casa Miga no emite feed previo; la causa dominante es mecánica. No imprimir de nuevo. Ver PHASE_1G_BLOCK_E1_TOP_MARGIN_REPORT.md. 191 pruebas aprobadas; Release sin errores ni advertencias.

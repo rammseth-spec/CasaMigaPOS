@@ -241,3 +241,6 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - tests/CasaMiga.Tests/SalesHistoryTests.cs
 - tests/CasaMiga.Tests/SaleTests.cs
 - tests/CasaMiga.Tests/ReceiptTests.cs
+
+- docs/PHASE_1G_BLOCK_F_REPORT.md
+- docs/USER_REQUIREMENTS_PHASE_1G_BLOCK_F.md

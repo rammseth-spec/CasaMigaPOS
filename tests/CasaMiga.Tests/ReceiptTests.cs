@@ -96,6 +96,71 @@ public sealed class ReceiptTests : SalesFixture
         Assert.ThrowsExactly<AccessDeniedException>(()=>Service(new ProbeTransport()).Reprint(sale.Id));
     }
 
+    [TestMethod] public void ReprintPermissionIsRevalidatedForCurrentRoleAndActiveState()
+    {
+        var sale=Persist();var service=Service(new ProbeTransport());
+        Assert.IsTrue(service.CanReprint());Assert.AreEqual(ReceiptPrintState.Submitted,service.Reprint(sale.Id).State);
+        Sql("UPDATE app_user SET role_name='Manager'");
+        Assert.IsTrue(service.CanReprint());Assert.AreEqual(ReceiptPrintState.Submitted,service.Reprint(sale.Id).State);
+        Sql("UPDATE app_user SET role_name='Cashier'");
+        Assert.IsFalse(service.CanReprint());Assert.ThrowsExactly<AccessDeniedException>(()=>service.Reprint(sale.Id));
+        Sql("UPDATE app_user SET role_name='Administrator',active=0");
+        Assert.IsFalse(service.CanReprint());Assert.ThrowsExactly<AccessDeniedException>(()=>service.Reprint(sale.Id));
+        Sql("UPDATE app_user SET active=1");
+        Sql("DELETE FROM role_permission WHERE role_name='Administrator' AND permission_name='sales.receipt.reprint'");
+        Assert.IsFalse(service.CanReprint());Assert.ThrowsExactly<AccessDeniedException>(()=>service.Reprint(sale.Id));
+        Assert.AreEqual(2L,Sql("SELECT count(*) FROM receipt_print_request WHERE kind='REPRINT'"));
+    }
+
+    [TestMethod] public void ReprintReusesSnapshotAndPreservesApprovedEscPosContract()
+    {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        var sale=Persist();var business=Profile() with{MonochromeLogoPath=OfficialReceiptLogo.AssetId};
+        var settings=Settings() with{QueueName="POS-80",EncodingName="ibm850",CharacterTable=2,CutMode="Partial",Business=business};
+        var provider=new FixedSettings(new(settings,null));var originalTransport=new ProbeTransport();var service=Service(originalTransport,provider);
+        Assert.AreEqual(ReceiptPrintState.Submitted,service.PrintOriginal(sale).State);
+        var snapshotHash=(string)Sql("SELECT content_sha256 FROM receipt_snapshot")!;
+        catalog.EditProduct(product.Id,product.CategoryId,"P1","Producto cambiado","",new Money(9900),true);
+        provider.Value=new(settings with{Business=business with{DisplayName="NEGOCIO CAMBIADO",MonochromeLogoPath=null}},null);
+        var reprintTransport=new ProbeTransport();service=Service(reprintTransport,provider);
+        var result=service.Reprint(sale.Id);var payload=reprintTransport.LastSubmission!.Payload;
+        Assert.AreEqual(ReceiptPrintState.Submitted,result.State);Assert.AreEqual(snapshotHash,Sql("SELECT content_sha256 FROM receipt_snapshot"));
+        Assert.AreEqual(1L,Sql("SELECT count(*) FROM receipt_snapshot"));Assert.AreEqual(1L,Sql("SELECT count(*) FROM receipt_print_request WHERE kind='REPRINT'"));
+        CollectionAssert.AreEqual(new byte[]{0x1b,0x74,0x02},payload[..3]);Assert.AreEqual(1,Occurrences(payload,OfficialReceiptLogo.Command()));
+        Assert.AreEqual(1,Occurrences(payload,[0x1d,0x56,0x01]));Assert.AreEqual(0,OccurrencesOutsideLogo(payload,[0x1b,0x70]));
+        var text=Encoding.GetEncoding("ibm850").GetString(payload);
+        Assert.Contains("REIMPRESIÓN",text);Assert.Contains("Concha",text);Assert.DoesNotContain("Producto cambiado",text);Assert.Contains("$38.00",text);
+        Assert.AreEqual(1L,Sql("SELECT count(*) FROM sale"));Assert.AreEqual(1L,Sql("SELECT count(*) FROM payment"));
+        Assert.AreEqual(3800L,work.Run(s=>s.CashSalesTotal(cash.Id)).Cents);
+    }
+
+    [TestMethod] public async Task ConcurrentReprintOfSameSaleIsRejectedBeforeSecondRequest()
+    {
+        var sale=Persist();var transport=new BlockingTransport();var service=Service(transport);
+        var first=Task.Run(()=>service.Reprint(sale.Id));
+        Assert.IsTrue(transport.Entered.Wait(TimeSpan.FromSeconds(5)));
+        try
+        {
+            Assert.ThrowsExactly<InvalidOperationException>(()=>service.Reprint(sale.Id));
+            Assert.AreEqual(1L,Sql("SELECT count(*) FROM receipt_print_request WHERE kind='REPRINT'"));
+        }
+        finally{transport.Release.Set();}
+        Assert.AreEqual(ReceiptPrintState.Submitted,(await first).State);Assert.AreEqual(1,transport.Calls);
+    }
+
+    [TestMethod] public void FailedUnknownAndRetryReprintsNeverMutateCommercialState()
+    {
+        var sale=Persist();var transport=new ProbeTransport{Failure=new("OPEN_PRINTER_1801",false)};var service=Service(transport);
+        var failed=service.Reprint(sale.Id);Assert.AreEqual(ReceiptPrintState.Failed,failed.State);
+        transport.Failure=new("WRITE_PRINTER_5",true);var unknown=service.Retry(failed.RequestId);Assert.AreEqual(ReceiptPrintState.Unknown,unknown.State);
+        transport.Failure=null;var submitted=service.Retry(unknown.RequestId);Assert.AreEqual(ReceiptPrintState.Submitted,submitted.State);
+        Assert.AreEqual(3L,Sql("SELECT count(*) FROM receipt_print_request WHERE kind='REPRINT'"));
+        Assert.AreEqual(2L,Sql("SELECT count(*) FROM receipt_print_request WHERE parent_request_id IS NOT NULL"));
+        Assert.AreEqual(1L,Sql("SELECT count(*) FROM sale"));Assert.AreEqual(1L,Sql("SELECT count(*) FROM sale_item"));
+        Assert.AreEqual(1L,Sql("SELECT count(*) FROM payment"));Assert.AreEqual(sale.Folio,Sql("SELECT replace(terminal_id,'-','') || '-' || printf('%08d',sequence) FROM sale"));
+        Assert.AreEqual(3800L,work.Run(s=>s.CashSalesTotal(cash.Id)).Cents);
+    }
+
     [TestMethod] public async Task SerializedTransportNeverRunsJobsConcurrently()
     {
         var inner=new ConcurrentProbeTransport();var serialized=new SerializedReceiptPrintTransport(inner);
@@ -248,9 +313,9 @@ public sealed class ReceiptTests : SalesFixture
         Assert.AreEqual(3L,query.ExecuteScalar());
     }
 
-    [TestMethod] public void InstallationBackupRestoresReceiptSnapshotsAndTrace()
+    [TestMethod] public void InstallationBackupRestoresReprintSnapshotAndTrace()
     {
-        var sale=Persist();Assert.AreEqual(ReceiptPrintState.Submitted,Service(new ProbeTransport()).PrintOriginal(sale).State);
+        var sale=Persist();Assert.AreEqual(ReceiptPrintState.Submitted,Service(new ProbeTransport()).Reprint(sale.Id).State);
         var package=new InstallationBackup(directory).Create();
         var restored=Path.Combine(Path.GetDirectoryName(directory)!,"ReceiptRestore-"+Guid.NewGuid().ToString("N"));
         try
@@ -259,6 +324,7 @@ public sealed class ReceiptTests : SalesFixture
             using var connection=new Database(Path.Combine(restored,"casamiga.db")).Open(readOnly:true);using var command=connection.CreateCommand();
             command.CommandText="SELECT (SELECT count(*) FROM receipt_snapshot),(SELECT count(*) FROM receipt_print_request),(SELECT count(*) FROM receipt_print_event)";
             using var row=command.ExecuteReader();Assert.IsTrue(row.Read());Assert.AreEqual(1L,row.GetInt64(0));Assert.AreEqual(1L,row.GetInt64(1));Assert.AreEqual(2L,row.GetInt64(2));
+            row.Close();command.CommandText="SELECT kind FROM receipt_print_request";Assert.AreEqual("REPRINT",command.ExecuteScalar());
             Assert.IsFalse(File.Exists(Path.Combine(restored,PrintingConfigurationProvider.FileName)));
         }
         finally{if(Directory.Exists(restored))Directory.Delete(restored,true);}
@@ -288,17 +354,34 @@ public sealed class ReceiptTests : SalesFixture
             if(source.AsSpan(index,sequence.Length).SequenceEqual(sequence))return index;
         return -1;
     }
+    private static int OccurrencesOutsideLogo(byte[] source,byte[] sequence)
+    {
+        var logo=OfficialReceiptLogo.Command();var start=IndexOf(source,logo);var count=0;
+        for(var index=0;index<=source.Length-sequence.Length;index++)
+            if((start<0||index<start||index>=start+logo.Length)&&source.AsSpan(index,sequence.Length).SequenceEqual(sequence))count++;
+        return count;
+    }
 
     private sealed class FixedSettings(PrintingSettingsResult value):IPrintingSettingsProvider
     {public PrintingSettingsResult Value{get;set;}=value;public PrintingSettingsResult Read()=>Value;}
     private sealed class ProbeTransport(SqliteLocalUnitOfWork? database=null,Guid? operation=null):IReceiptPrintTransport
     {
-        public int Calls;public bool DatabaseWasAvailable;public PrintTransportException? Failure;
+        public int Calls;public bool DatabaseWasAvailable;public PrintTransportException? Failure;public PrintSubmission? LastSubmission;
         public PrintSubmissionResult Submit(PrintSubmission submission)
         {
-            Interlocked.Increment(ref Calls);
+            Interlocked.Increment(ref Calls);LastSubmission=submission;
             if(database is not null){DatabaseWasAvailable=database.Run(s=>s.FindSaleByOperation(operation!.Value)) is not null;}
             if(Failure is not null)throw Failure;return new(41);
+        }
+    }
+    private sealed class BlockingTransport:IReceiptPrintTransport
+    {
+        public readonly ManualResetEventSlim Entered=new(false);public readonly ManualResetEventSlim Release=new(false);public int Calls;
+        public PrintSubmissionResult Submit(PrintSubmission submission)
+        {
+            Interlocked.Increment(ref Calls);Entered.Set();
+            if(!Release.Wait(TimeSpan.FromSeconds(10)))throw new TimeoutException();
+            return new(42);
         }
     }
     private sealed class ConcurrentProbeTransport:IReceiptPrintTransport

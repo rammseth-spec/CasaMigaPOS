@@ -1,6 +1,6 @@
 # Casa Miga POS
 
-Aplicación Windows offline para una panadería mexicana. FASE 1G ABIERTA; Bloque E validado físicamente. Bloque E.1 analizó el exceso de margen superior: Casa Miga no genera feed previo, el PNG aporta aproximadamente 1 mm y domina la separación mecánica entre cabezal y cortador. No se implementó ningún ajuste. 191 pruebas aprobadas; Release sin errores ni advertencias. Versión de desarrollo, no lista para producción.
+Aplicación Windows offline para una panadería mexicana. FASE 1G ABIERTA; Bloque F implementado y verificado técnicamente, pendiente del único smoke físico de reimpresión desde Historial. Bloque E.1 quedó cerrado: se acepta el margen superior, el logo Opción 07 permanece intacto y no se permite backfeed sin documentación Qian. 195 pruebas aprobadas; Release sin errores ni advertencias. Versión de desarrollo, no lista para producción.
 
 Stack: C# / .NET 10 LTS / WPF / Microsoft.Data.Sqlite / SQLite / MSTest.
 

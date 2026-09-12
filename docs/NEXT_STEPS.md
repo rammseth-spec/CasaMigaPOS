@@ -1,3 +1,11 @@
+# Próximo paso — FASE 1G Bloque F
+
+La implementación y verificación técnica están completas. Ejecutar exactamente un smoke físico desde la UI: iniciar sesión en la instalación sintética `work/phase1f-visual-20260910`, abrir Ventas, elegir una venta existente, Ver detalle y pulsar una sola vez `REIMPRIMIR TICKET`. No crear venta ni abrir caja.
+
+Después del envío registrar el request `REPRINT`, su evento final y JobId; comprobar por SQLite que siguen existiendo 55 ventas, 110 partidas y 55 pagos y que ExpectedCash no cambió. Solicitar al usuario una foto completa para confirmar logo Opción 07, marca REIMPRESIÓN, español, layout, corte parcial y ausencia de apertura de cajón. Detenerse; no iniciar FASE 1H.
+
+## Registro histórico anterior
+
 # Continuidad — FASE 1G Bloque E
 
 FASE 1G ABIERTA; Bloque E validado físicamente. Bloque E.1 fue sólo análisis: no hubo impresión ni cambio de producto. El raster empieza en offset 6 y no tiene feed previo; el PNG aporta 1.00 mm de blanco superior y el resto observado es principalmente mecánico. Ver PHASE_1G_BLOCK_E1_TOP_MARGIN_REPORT.md.

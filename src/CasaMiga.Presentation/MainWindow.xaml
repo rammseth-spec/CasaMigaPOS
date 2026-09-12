@@ -48,7 +48,7 @@
      <TextBlock Text="{Binding Message}" Margin="0,20,0,0" AutomationProperties.LiveSetting="Polite"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock><TextBlock Text="Procesando…" Margin="0,12,0,0" Visibility="{Binding Busy,Converter={StaticResource VisibleWhen}}"/>
     </StackPanel>
    </Border>
-   <TextBlock Grid.Row="2" Text="FASE 1F · Historial de ventas" FontSize="15" Foreground="{DynamicResource MutedBrush}" Margin="0,20,0,0"/>
+   <TextBlock Grid.Row="2" Text="FASE 1G · Tickets" FontSize="15" Foreground="{DynamicResource MutedBrush}" Margin="0,20,0,0"/>
   </Grid>
  </ScrollViewer>
  <local:PosView DataContext="{Binding Pos}" Visibility="{Binding DataContext.IsPos,RelativeSource={RelativeSource AncestorType=Window},Converter={StaticResource VisibleWhen}}" CashRequested="PosCashRequested" CatalogRequested="PosCatalogRequested" SalesRequested="PosSalesRequested" LogoutRequested="PosLogoutRequested"/>

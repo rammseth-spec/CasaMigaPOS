@@ -98,3 +98,11 @@ El ticket se intenta sólo después del commit de venta. Un fallo, configuració
 La configuración física se guarda como `printing.json` en el directorio de datos y no forma parte de `.cmbackup`. Consultar `docs/printing.example.json`, que está deshabilitado y contiene datos sintéticos. No copiarlo habilitado a una instalación real hasta contar con nombre exacto de cola y datos comerciales aprobados.
 
 Bloque A no envía comandos ESC/POS de selección de página, corte o cajón. Para el checkpoint USB seguir `docs/PHASE_1G_PHYSICAL_CHECKPOINT.md`. No abrir USB ni puerto 9100 directamente.
+
+## Reimpresión desde Historial — FASE 1G Bloque F
+
+Administrator y Manager pueden abrir el detalle de una venta y usar `REIMPRIMIR TICKET`; Cashier no tiene `sales.receipt.reprint`. La aplicación revalida usuario activo y permiso en el momento de la solicitud. El botón permanece deshabilitado mientras el trabajo está activo.
+
+La reimpresión reutiliza el snapshot persistido, se identifica como REIMPRESIÓN y no relee catálogo, precios ni perfil comercial actual. Para una venta anterior a 1G sin snapshot, crea y fija el primero una sola vez. Cada clic aceptado crea un request REPRINT; FAILED o UNKNOWN sólo se reintentan por una acción explícita del operador y conservan la relación con el intento anterior.
+
+SUBMITTED sólo confirma aceptación por Winspool. Ante UNKNOWN revisar primero el papel. Reimprimir nunca crea o modifica venta/pago, no cambia ExpectedCash y nunca emite cajón. La configuración física aprobada sigue siendo POS-80, CP850/ESC t 2, logo Opción 07 intacto, 48 columnas, corte parcial GS V 1 y `openCashDrawer=false`.

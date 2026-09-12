@@ -78,7 +78,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                     new SerializedReceiptPrintTransport(new WindowsRawPrintTransport()));
                 Pos = new(new PosService(database,user,terminal.Id),checkout,receipts,()=>UserLabel + " · " + TerminalLabel,(eventName,errorType)=>runtime.TryLog(eventName,errorType)){IsDevelopment=options.IsDevelopment};
                 Catalog = new(new CatalogService(database,user,clock,terminal.Id,options.IsDevelopment),options.IsDevelopment,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
-                SalesHistory = new(new SalesHistoryService(database,user,TimeZoneInfo.Local),(eventName,errorType)=>runtime.TryLog(eventName,errorType));
+                SalesHistory = new(new SalesHistoryService(database,user,TimeZoneInfo.Local),receipts,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 screen = login.NeedsBootstrap() ? "bootstrap" : "login";
             });
         });

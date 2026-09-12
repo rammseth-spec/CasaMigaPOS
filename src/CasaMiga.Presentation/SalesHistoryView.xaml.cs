@@ -14,6 +14,7 @@ public partial class SalesHistoryView : UserControl
     private async void PreviousClick(object sender,RoutedEventArgs e)=>await Model.PageAsync(-1);
     private async void NextClick(object sender,RoutedEventArgs e)=>await Model.PageAsync(1);
     private async void DetailClick(object sender,RoutedEventArgs e)=>await Model.OpenDetailAsync();
+    private async void ReprintClick(object sender,RoutedEventArgs e)=>await Model.ReprintAsync();
     private void BackClick(object sender,RoutedEventArgs e)=>Model.Back();
     private async void HistoryKeyDown(object sender,KeyEventArgs e)
     {

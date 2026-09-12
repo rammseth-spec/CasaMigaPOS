@@ -40,7 +40,11 @@
     </DataGrid.Columns>
    </DataGrid>
    <TextBlock Text="{Binding DetailPayment}" FontSize="18" Margin="0,14,0,14"/>
-   <Button Content="Volver" Click="BackClick" HorizontalAlignment="Left"/>
+   <WrapPanel>
+    <Button Content="Volver" Click="BackClick" Margin="0,0,12,0"/>
+    <Button Content="{Binding ReprintButtonText}" Click="ReprintClick" IsEnabled="{Binding CanReprintTicket}" Visibility="{Binding ShowReprintTicket,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Reimprimir ticket"/>
+   </WrapPanel>
+   <TextBlock Text="{Binding ReprintMessage}" AutomationProperties.LiveSetting="Polite" Margin="0,12,0,0" TextWrapping="Wrap"/>
   </StackPanel>
   <TextBlock Text="{Binding Message}" Foreground="{DynamicResource ErrorBrush}" AutomationProperties.LiveSetting="Polite" Margin="0,12,0,0"/>
  </StackPanel>
