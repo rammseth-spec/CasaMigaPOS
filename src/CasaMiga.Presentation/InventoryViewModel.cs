@@ -12,6 +12,18 @@ public sealed record InventoryItemKindChoice(InventoryItemKind Value, string Lab
 public sealed record InventoryDimensionChoice(InventoryDimension Value, string Label);
 public sealed record WasteReasonChoice(WasteReason Value, string Label);
 public sealed record AdjustmentReasonChoice(AdjustmentReason Value, string Label);
+public sealed record InventoryUnitView(InventoryItemUnit Unit)
+{
+    public string Code => Unit.Code;
+    public string Name => Unit.Name;
+    public string Quantity => InventoryDisplay.Format(Unit.AtomicUnitsPerWholeUnit, Unit.Dimension);
+    public bool IsActive => Unit.IsActive;
+}
+public sealed record InventoryLinkView(InventoryProductLinkView Link)
+{
+    public Guid ProductId => Link.ProductId;
+    public string Quantity => InventoryDisplay.Format(Link.QuantityAtomic, Link.Dimension);
+}
 
 public sealed record InventoryRowView(InventoryListRow Row)
 {
@@ -19,8 +31,8 @@ public sealed record InventoryRowView(InventoryListRow Row)
     public string Code => Row.Code;
     public string Name => Row.Name;
     public string Kind => InventoryViewModel.KindLabel(Row.Kind);
-    public string Balance => Row.MainBalanceAtomic is { } value ? value.ToString(CultureInfo.InvariantCulture) : "Sin inicializar";
-    public string Unit => Row.AtomicUnit;
+    public string Balance => Row.MainBalanceAtomic is { } value ? InventoryDisplay.Number(value, Row.Dimension) : "Sin inicializar";
+    public string Unit => InventoryDisplay.Unit(Row.MainBalanceAtomic ?? 0, Row.Dimension);
     public string Status => Row.Active ? "Activo" : "Inactivo";
     public string Product => Row.HasProductLink ? "Sí" : "No";
 }
@@ -29,9 +41,10 @@ public sealed record InventoryHistoryRowView(InventoryMovementRow Row)
 {
     public string Date => Row.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss zzz", CultureInfo.InvariantCulture);
     public string Kind => InventoryViewModel.MovementLabel(Row.Kind);
-    public string Delta => Row.DeltaAtomic.ToString(CultureInfo.InvariantCulture);
-    public string Before => Row.BalanceBeforeAtomic.ToString(CultureInfo.InvariantCulture);
-    public string After => Row.BalanceAfterAtomic.ToString(CultureInfo.InvariantCulture);
+    public InventoryDimension Dimension { get; init; }
+    public string Delta => InventoryDisplay.Format(Row.DeltaAtomic, Dimension);
+    public string Before => InventoryDisplay.Format(Row.BalanceBeforeAtomic, Dimension);
+    public string After => InventoryDisplay.Format(Row.BalanceAfterAtomic, Dimension);
     public string User => Row.ActorName;
     public string Reason => Row.ReasonCode ?? "—";
     public string Reference => Row.ExternalReference ?? "—";
@@ -101,15 +114,17 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
     public string DetailMetadata => Detail is null ? "" :
         $"Tipo: {KindLabel(Detail.Item.Kind)}\nDimensión: {DimensionLabel(Detail.Item.Dimension)}\nEstado: {(Detail.Item.IsActive ? "Activo" : "Inactivo")}\nUbicación: {Detail.MainLocation.Name}";
     public string DetailBalance => Detail?.Balance is { } balance
-        ? $"Existencia actual: {balance.QuantityAtomic.ToString(CultureInfo.InvariantCulture)} {Detail.AtomicUnit}"
+        ? $"Existencia actual: {InventoryDisplay.Format(balance.QuantityAtomic, Detail.Item.Dimension)}"
         : "Existencia actual: sin saldo inicial";
     public string ToggleActiveLabel => Detail?.Item.IsActive == true ? "Desactivar" : "Activar";
     public string ReconciliationMessage { get; private set; } = "";
     public bool ReconciliationWarning { get; private set; }
-    public IReadOnlyList<InventoryItemUnit> Units => Detail?.Units ?? [];
-    public IReadOnlyList<InventoryProductLinkView> ProductLinks =>
-        Detail?.ProductLinks.Where(x => x.Active).ToArray() ?? [];
-    public InventoryProductLinkView? SelectedLink { get; set; }
+    public IReadOnlyList<InventoryUnitView> Units => Detail?.Units.Select(x => new InventoryUnitView(x)).ToArray() ?? [];
+    public IReadOnlyList<InventoryLinkView> ProductLinks =>
+        Detail?.ProductLinks.Where(x => x.Active).Select(x => new InventoryLinkView(x)).ToArray() ?? [];
+    public InventoryLinkView? SelectedLink { get; set; }
+    public string UnitFactorLabel => $"Cantidad por presentación completa ({InventoryDisplay.CaptureUnit(Detail?.Item.Dimension ?? InventoryDimension.Count)})";
+    public string LinkQuantityLabel => $"Cantidad por unidad vendida ({InventoryDisplay.CaptureUnit(Detail?.Item.Dimension ?? InventoryDimension.Count)})";
     public IReadOnlyList<InventoryHistoryRowView> History { get; private set; } = [];
     public string HistoryPageLabel { get; private set; } = "";
     public bool HasHistoryPrevious => historyPage > 0;
@@ -272,8 +287,8 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
 
     public Task SaveUnitAsync() => Run(async () =>
     {
-        if (detailId is null || !long.TryParse(UnitFactor, NumberStyles.None, CultureInfo.InvariantCulture, out var factor))
-            throw new ArgumentException("La conversión debe ser un entero positivo en unidades atómicas.");
+        if (detailId is null || Detail is null) return;
+        var factor = InventoryDisplay.ParseCapture(UnitFactor, Detail.Item.Dimension);
         await Task.Run(() => service.AddInventoryItemUnit(detailId.Value, UnitCode, UnitName, factor));
         screen = "detail"; MessageIsSuccess = true; Message = "Presentación agregada.";
         await RefreshDetail(preserveMessage: true);
@@ -291,9 +306,9 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
 
     public Task SaveLinkAsync() => Run(async () =>
     {
-        if (detailId is null || SelectedProduct is null ||
-            !long.TryParse(LinkQuantityAtomic, NumberStyles.None, CultureInfo.InvariantCulture, out var quantity))
-            throw new ArgumentException("Selecciona un producto y escribe una cantidad atómica entera positiva.");
+        if (detailId is null || Detail is null || SelectedProduct is null)
+            throw new ArgumentException("Selecciona un producto.");
+        var quantity = InventoryDisplay.ParseCapture(LinkQuantityAtomic, Detail.Item.Dimension);
         await Task.Run(() => service.LinkProductToInventoryItem(SelectedProduct.Product.Id, detailId.Value, quantity));
         screen = "detail"; MessageIsSuccess = true; Message = "Producto asociado. Las ventas todavía no descuentan inventario.";
         await RefreshList(preserveMessage: true); await RefreshDetail(preserveMessage: true);
@@ -348,7 +363,7 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
     {
         if (detailId is null) return;
         var result = await Task.Run(() => service.MovementHistory(new(detailId, historyPage, 25)));
-        History = result.Items.Select(x => new InventoryHistoryRowView(x)).ToArray();
+        History = result.Items.Select(x => new InventoryHistoryRowView(x) { Dimension = Detail!.Item.Dimension }).ToArray();
         HistoryPageLabel = $"Página {historyPage + 1} · {result.Total} movimientos · hasta {result.PageSize} por página";
         HasHistoryNext = (historyPage + 1) * result.PageSize < result.Total;
     }
@@ -384,14 +399,14 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
     }
 
     private static IReadOnlyList<InventoryUnitChoice> BuildUnits(InventoryItemDetail detail) =>
-        InventoryUnits.All.Where(x => x.Dimension == detail.Item.Dimension)
+        InventoryUnits.All.Where(x => x.Dimension == detail.Item.Dimension && x.Code is not "mg" and not "uL")
             .Select(x => new InventoryUnitChoice(x.Code, $"{x.Symbol} · unidad estándar"))
             .Concat(detail.Units.Where(x => x.IsActive).Select(x => new InventoryUnitChoice(x.Code,
-                $"{x.Name} · {x.AtomicUnitsPerWholeUnit} {detail.AtomicUnit}"))).ToArray();
+                $"{x.Name} · {InventoryDisplay.Format(x.AtomicUnitsPerWholeUnit, detail.Item.Dimension)}"))).ToArray();
 
     private static decimal ParseDecimal(string value)
     {
-        const NumberStyles style = NumberStyles.AllowDecimalPoint | NumberStyles.AllowThousands | NumberStyles.AllowLeadingSign;
+        const NumberStyles style = NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign;
         if (decimal.TryParse(value, style, CultureInfo.CurrentCulture, out var parsed) ||
             decimal.TryParse(value, style, CultureInfo.InvariantCulture, out parsed)) return parsed;
         throw new ArgumentException("La cantidad ingresada no es válida.");

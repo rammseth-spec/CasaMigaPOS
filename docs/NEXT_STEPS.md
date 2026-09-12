@@ -1,3 +1,9 @@
+# Próximo paso — repetir únicamente smoke pendiente de 1H.4
+
+Con SMOKEMANAGER: Inventario → SMOKE-H14 → Ver detalle → Entrada y Merma. Comprobar g/kg y saldo humano exacto; ml/L y pieza en sus artículos correspondientes. Configuración, saldo inicial y conteo siguen restringidos. No aprobar automáticamente; no iniciar 1H.5 ni impresión. Ver [reporte](PHASE_1H4_SMOKE_CORRECTION.md).
+
+## Registro anterior
+
 # Próximo paso — proponer y autorizar FASE 1H.4
 
 1H.3 está completada. FASE 1H permanece abierta. No iniciar automáticamente 1H.4.

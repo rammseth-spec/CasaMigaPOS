@@ -1,3 +1,9 @@
+# Continuidad — 1H.4 en aceptación manual
+
+UI implementada en 845b8a8; binding WPF corregido en dd7d5b5. Manager fue confirmado funcional por el usuario; permisos originales preservados. Corrección visual exacta g/kg, ml/L y pieza preparada. Smoke NO aprobado todavía; no iniciar 1H.5. Ver [reporte](PHASE_1H4_SMOKE_CORRECTION.md).
+
+## Registro anterior
+
 # Continuidad — FASE 1H.3 completada
 
 1H.3 está completada técnicamente en el commit `9e96edc2a4652487adce9a4ad2693ff70a3d218d`. FASE 1H permanece abierta y 1H.4 no inició. Existen contratos y servicios Application para saldo inicial, recepción, merma, ajuste a conteo físico, configuración de artículos/presentaciones/asociaciones y consultas paginadas. Presentation no cambió y aún no hay UI de inventario.

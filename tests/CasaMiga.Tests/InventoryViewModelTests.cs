@@ -133,13 +133,13 @@ public sealed class InventoryViewModelTests
         await vm.SaveItemAsync(); Assert.IsTrue(vm.IsDetail); Assert.AreEqual("Mantequilla", vm.Detail!.Item.Name);
         vm.EditItem(); vm.ItemName = "Mantequilla sin sal"; await vm.SaveItemAsync();
         Assert.AreEqual("Mantequilla sin sal", vm.Detail!.Item.Name);
-        vm.NewUnit(); vm.UnitCode = "SACK25"; vm.UnitName = "Saco 25 kg"; vm.UnitFactor = "25000000";
+        vm.NewUnit(); vm.UnitCode = "SACK25"; vm.UnitName = "Saco 25 kg"; vm.UnitFactor = "25000";
         await vm.SaveUnitAsync(); Assert.AreEqual("Saco 25 kg", vm.Units.Single().Name);
 
         var category = catalog.CreateCategory("PAN");
         var product = catalog.CreateProduct(category.Id, "P-1", "Concha sintética", "", new Money(1000));
         await vm.ShowLinkEditorAsync(); vm.SelectedProduct = vm.Products.Single(x => x.Product.Id == product.Id);
-        vm.LinkQuantityAtomic = "1000"; await vm.SaveLinkAsync(); Assert.AreEqual(product.Id, vm.ProductLinks.Single().ProductId);
+        vm.LinkQuantityAtomic = "1"; await vm.SaveLinkAsync(); Assert.AreEqual(product.Id, vm.ProductLinks.Single().ProductId);
         Assert.IsTrue(product.TrackInventory);
         vm.SelectedLink = vm.ProductLinks.Single(); await vm.UnlinkAsync(); Assert.AreEqual(0, vm.ProductLinks.Count);
         await vm.ToggleActiveAsync(); Assert.IsFalse(vm.Detail!.Item.IsActive);
@@ -247,5 +247,57 @@ public sealed class InventoryViewModelTests
         var path = Path.Combine(AppContext.BaseDirectory, "Presentation", "InventoryView.xaml");
         var xaml = File.ReadAllText(path);
         StringAssert.Contains(xaml, "Text=\"{Binding PendingOperationId,Mode=OneWay}\"");
+    }
+
+    [TestMethod]
+    public async Task ManagerWritesReceiptAndWasteButCannotConfigureOpenOrAdjust()
+    {
+        var item = Item(); Open(item, 1500m); Role("Manager");
+        var vm = ViewModel(); await vm.LoadAsync(); Select(vm, item); await vm.OpenDetailAsync();
+        vm.BeginOperation("receipt"); Assert.IsTrue(vm.CanSubmitOperation);
+        vm.Quantity = "100"; vm.SelectedUnit = vm.UnitChoices.Single(x => x.Code == "g");
+        await vm.SubmitOperationAsync(); Assert.IsTrue(vm.MessageIsSuccess, vm.Message);
+        Assert.AreEqual(1_600_000L, vm.Detail!.Balance!.QuantityAtomic);
+        vm.BeginOperation("waste"); vm.Quantity = "100";
+        await vm.SubmitOperationAsync(); Assert.IsTrue(vm.MessageIsSuccess, vm.Message);
+        Assert.AreEqual(1_500_000L, vm.Detail!.Balance!.QuantityAtomic);
+        vm.NewItem(); Assert.IsFalse(vm.IsItemEditor);
+        vm.BeginOperation("opening"); Assert.IsFalse(vm.IsOperationEditor);
+        vm.BeginOperation("count"); Assert.IsFalse(vm.IsOperationEditor);
+        Assert.AreEqual(InventoryError.Unauthorized, Assert.ThrowsExactly<InventoryApplicationException>(() => Item("DENIED")).Error);
+        Assert.AreEqual(InventoryError.Unauthorized, Assert.ThrowsExactly<InventoryApplicationException>(() =>
+            service.AdjustToPhysicalCount(new(Guid.NewGuid(), item.Id, InventoryLocationIds.Main, 1m, "g", AdjustmentReason.PhysicalCountVariance))).Error);
+        Sql("DELETE FROM role_permission WHERE role_name='Manager' AND permission_name='inventory.receive'");
+        vm.BeginOperation("receipt"); vm.Quantity = "1"; await vm.SubmitOperationAsync();
+        Assert.AreEqual(InventoryViewModel.ErrorMessage(InventoryError.Unauthorized), vm.Message);
+        Assert.AreEqual(1_500_000L, store.FindBalance(item.Id, InventoryLocationIds.Main)!.QuantityAtomic);
+    }
+
+    [TestMethod]
+    public async Task OperationalUnitsExcludeTechnicalAtomicUnits()
+    {
+        foreach (var dimension in Enum.GetValues<InventoryDimension>())
+        {
+            var item = service.CreateInventoryItem(dimension.ToString(), dimension.ToString(), InventoryItemKind.Supply, dimension);
+            var vm = ViewModel(); await vm.LoadAsync(); Select(vm, item); await vm.OpenDetailAsync(); vm.BeginOperation("opening");
+            var expected = dimension switch { InventoryDimension.Mass => new[] { "g", "kg" }, InventoryDimension.Volume => new[] { "ml", "L" }, _ => new[] { "piece" } };
+            CollectionAssert.AreEqual(expected, vm.UnitChoices.Select(x => x.Code).ToArray());
+        }
+    }
+
+    [TestMethod]
+    public void HumanFormattingPreservesExactAtomicQuantities()
+    {
+        Assert.AreEqual("1.5 kg", InventoryDisplay.Format(1_500_000, InventoryDimension.Mass));
+        Assert.AreEqual("500 g", InventoryDisplay.Format(500_000, InventoryDimension.Mass));
+        Assert.AreEqual("1 g", InventoryDisplay.Format(1000, InventoryDimension.Mass));
+        Assert.AreEqual("0.001 g", InventoryDisplay.Format(1, InventoryDimension.Mass));
+        Assert.AreEqual("0.001 ml", InventoryDisplay.Format(1, InventoryDimension.Volume));
+        Assert.AreEqual("1 L", InventoryDisplay.Format(1_000_000, InventoryDimension.Volume));
+        Assert.AreEqual("3 pieza", InventoryDisplay.Format(3, InventoryDimension.Count));
+        Assert.AreEqual(25_000_000L, InventoryDisplay.ParseCapture("25000", InventoryDimension.Mass));
+        Assert.AreEqual(1L, InventoryDisplay.ParseCapture("0.001", InventoryDimension.Mass));
+        Assert.ThrowsExactly<ArgumentException>(() => InventoryDisplay.ParseCapture("0.0001", InventoryDimension.Mass));
+        Assert.ThrowsExactly<ArgumentException>(() => InventoryDisplay.ParseCapture("0.5", InventoryDimension.Count));
     }
 }

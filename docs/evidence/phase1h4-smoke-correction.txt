@@ -1,0 +1,12 @@
+FASE 1H.4 - corrección de smoke UI
+Baseline: dd7d5b5c67638c75eca81e08a6fbb9184d9ff89c
+35 pruebas focalizadas UI/Application aprobadas; 0 fallidas; 0 omitidas.
+scripts/verify.ps1: restore locked-mode feed local; Release 0 errores y 0 advertencias.
+Suite completa: 290 aprobadas; 0 fallidas; 0 omitidas.
+TRX: TestResults/foundation.trx
+Domain, Application, Infrastructure y migraciones: sin cambios respecto al baseline.
+git diff --check: correcto.
+SMOKEMANAGER: permisos originales comprobados; usuario confirmó SI FUNCIONA.
+Smoke pendiente: Manager y unidades visibles; no aceptación automática.
+No se ejecutaron movimientos en la instalación sintética durante la corrección.
+Ensamblado de smoke: 658FBA28C4379980E9459FE7E08A27886BF39AEC555506CF4659EA936E86343F

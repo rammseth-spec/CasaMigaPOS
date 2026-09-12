@@ -1,3 +1,9 @@
+# Incorporaciones 1H.4
+
+Presentation: InventoryView.xaml/.cs, InventoryViewModel.cs, InventoryDisplay.cs; navegación en MainViewModel, MainWindow y PosView. Tests: InventoryViewModelTests.cs. Reporte: PHASE_1H4_SMOKE_CORRECTION.md. Smoke pendiente.
+
+## Registro anterior
+
 # Incorporaciones 1H.3
 
 - src/CasaMiga.Application/InventoryModels.cs
