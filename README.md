@@ -1,12 +1,12 @@
 # Casa Miga POS
 
-Aplicación Windows offline para una panadería mexicana. **FASE 1H abierta; subfases 1H.1–1H.4 completadas y 1H.4 aprobada mediante smoke WPF**: existen cantidades físicas exactas, migraciones 009–010, catálogo persistente, ledger inmutable, saldo reconstruible, servicios Application, consultas paginadas y UI funcional con unidades humanas exactas. Todavía no hay consumo por ventas. FASE 1G permanece cerrada. Verificación vigente: 290 pruebas aprobadas, ninguna fallida u omitida; Release sin errores ni advertencias. Versión de desarrollo, no lista para producción.
+Aplicación Windows offline para una panadería mexicana. **FASE 1H CERRADA**: cantidades físicas exactas, migraciones 009–010, catálogo persistente, ledger inmutable, saldo reconstruible, servicios Application, consultas paginadas, UI funcional y backup/restore verificado. El smoke WPF 1H.4 fue aprobado y 1H.5 cerró hardening sin cambios de producto. Todavía no hay consumo por ventas. FASE 1G permanece cerrada. Verificación vigente: 290 pruebas aprobadas, ninguna fallida u omitida; Release sin errores ni advertencias. Versión de desarrollo, no lista para producción.
 
 Stack: C# / .NET 10 LTS / WPF / Microsoft.Data.Sqlite / SQLite / MSTest.
 
 ## Continuar
 
-1. Leer [estado](docs/CURRENT_STATE.md), [próximos pasos](docs/NEXT_STEPS.md) y [reporte del Bloque A de 1G](docs/PHASE_1G_BLOCK_A_REPORT.md).
+1. Leer [estado](docs/CURRENT_STATE.md), [próximos pasos](docs/NEXT_STEPS.md) y [reporte de cierre 1H](docs/PHASE_1H5_REPORT.md).
 2. Instalar SDK .NET 10.0.400 x64 o parche compatible y ejecutar `./scripts/verify.ps1`.
 3. Ejecutar `dotnet run --project src/CasaMiga.Presentation`.
 4. En una carpeta nueva, crear el primer administrador desde la pantalla inicial; después iniciar sesión y abrir caja con fondo cero o positivo.

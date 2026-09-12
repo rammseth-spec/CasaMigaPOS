@@ -1,0 +1,24 @@
+FASE 1H.5 — revisión de alcance y regresión — 2026-09-12
+
+Cobertura automatizada vigente:
+- rollback multipartida por stock insuficiente, overflow y fallo de auditoría antes del commit;
+- recuperación posterior a commit incierto;
+- mismo OperationId/mismo contenido aplica una vez;
+- mismo OperationId/contenido distinto devuelve IdempotencyConflict;
+- recibos concurrentes, pérdidas concurrentes y conteo con versión obsoleta;
+- opening positivo, cero y segunda inicialización rechazada;
+- reconciliación detecta divergencia, no la oculta y no la repara;
+- consultas paginadas, filtros, orden estable, historial y lectura concurrente sin writer lock;
+- Administrator completo, Manager view/receive/waste y Cashier sin acceso, también en Application;
+- Busy, OperationId estable, retry, NoChange, ConcurrencyConflict, refresh y unidades operativas en ViewModel;
+- link/unlink explícito, cantidad positiva y cero mutación de venta/inventario al asociar;
+- backup/restore de inventario, historial de venta, ExpectedCash y receipt snapshots;
+- ticket original y reimpresión independientes de inventario.
+
+Revisión dirigida:
+- no existe SALE_CONSUMPTION en código de producto;
+- CheckoutService y SqliteSaleStore no usan ProductInventoryLink;
+- no se modificó src, tests ni migrations respecto a 397258d durante 1H.5;
+- no se creó venta para probar inventario;
+- no se usó impresora;
+- no se repitió smoke WPF porque no hubo cambio funcional después de la aprobación 1H.4.

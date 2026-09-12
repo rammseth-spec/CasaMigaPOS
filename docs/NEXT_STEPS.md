@@ -1,3 +1,13 @@
+# Próximo paso — planificar la fase posterior a 1H
+
+FASE 1H está cerrada. No iniciar automáticamente otra fase. La próxima conversación debe proponer alcance, invariantes, riesgos, pruebas y exclusiones, y esperar autorización expresa antes de implementar.
+
+Propuesta recomendada: definir primero la relación entre inventario y venta (`SALE_CONSUMPTION`) como un plan separado, incluyendo política de existencias insuficientes, reversos, recetas/versiones, productos elaborados, atomicidad con Checkout y migración aditiva. El cierre 1H no autoriza ninguna de esas decisiones.
+
+Mantener fuera hasta nueva autorización: consumo automático por ventas, recetas, producción, compras, proveedores, costos, lotes, caducidad, transferencias, cajón, LAN, rediseño profesional, fullscreen e instalador. Modelo recomendado para planificar: Sol; reservar Astra para un defecto técnico complejo demostrado.
+
+## Registro anterior
+
 # Próximo paso — proponer FASE 1H.5
 
 1H.4 está completada y aprobada. No iniciar automáticamente 1H.5. La siguiente conversación debe proponer su alcance, invariantes, pruebas y exclusiones para autorización expresa.

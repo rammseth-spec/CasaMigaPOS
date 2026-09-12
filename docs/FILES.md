@@ -1,3 +1,9 @@
+# Cierre 1H.5 — hardening y documentación
+
+No se modificaron `src`, tests ni migraciones. Se agregaron `PHASE_1H5_REPORT.md` y evidencia de backup/restore, verificación, hashes y revisión de alcance. Se actualizaron README, CURRENT_STATE, NEXT_STEPS, domain, database, architecture, operations, roadmap y este inventario. Los artefactos sintéticos viven bajo `work/` ignorado por Git. FASE 1H queda cerrada; ninguna fase posterior inició.
+
+## Registro anterior
+
 # Incorporaciones 1H.4 — completada y aprobada
 
 Presentation: InventoryView.xaml/.cs, InventoryViewModel.cs, InventoryDisplay.cs; navegación en MainViewModel, MainWindow y PosView. Tests: InventoryViewModelTests.cs. Reporte y aceptación: PHASE_1H4_SMOKE_CORRECTION.md y evidence/phase1h4-smoke-correction.txt. Smoke aprobado; 1H.5 no iniciado.

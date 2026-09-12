@@ -1,3 +1,13 @@
+# Continuidad — FASE 1H cerrada
+
+FASE 1H está **CERRADA**. 1H.5 validó sin cambios de producto el reinicio, backup/restore, integridad, foreign keys, reconciliación, permisos, idempotencia, concurrencia, rollback y ausencia de efectos financieros. El baseline de entrada fue `397258d9b4711fa8f081323f111c6afe181a9ef5`; el commit documental que contiene este estado establece el nuevo baseline oficial.
+
+La instalación sintética separada conservó esquema 10, siete unidades, MAIN, un artículo, una presentación, un vínculo, cuatro operaciones y movimientos, saldo 1,500,000 mg, cinco permisos, siete auditorías y sus UUID/hash. El SHA-256 lógico fue `527BB37DB0B63410BF645DE624DDBFA32C866A17E7B7E41DBE8E6E75D20775DB` tanto antes como después del restore; `integrity_check=ok`, cero violaciones FK y cero diferencias de reconciliación. Sale, SaleItem, Payment, CashSession, ExpectedCash y folios permanecieron en cero en esa prueba.
+
+Verificación final: 290 aprobadas, 0 fallidas, 0 omitidas; Release con 0 errores y 0 advertencias. Migraciones 001–010 permanecen intactas y no existe 011. No se repitió el smoke WPF porque no cambió `src`; se conserva la aceptación manual de 1H.4. No se utilizó impresora. `SALE_CONSUMPTION`, recetas, producción y fases posteriores no se iniciaron. El sistema continúa como versión de desarrollo no lista para producción. Ver [reporte](PHASE_1H5_REPORT.md) y [evidencia](evidence/phase1h5-backup-restore.json).
+
+## Registro anterior
+
 # Continuidad — FASE 1H.4 completada y aprobada
 
 FASE 1H permanece abierta. 1H.4 está completada y su smoke WPF fue aprobado manualmente por el usuario. UI implementada en `845b8a8`, binding WPF corregido en `dd7d5b5` y unidades operativas exactas/validación de Manager en `9b7b6d6`.

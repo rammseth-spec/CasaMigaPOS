@@ -1,5 +1,11 @@
 # Modelo de datos
 
+## Cierre de FASE 1H — esquema 10
+
+El esquema final de 1H es la secuencia inmutable 001–010; no existe migración 011. Un backup/restore controlado preservó todas las tablas de inventario, permisos, auditoría, UUID y hashes de idempotencia. La copia restaurada obtuvo `integrity_check=ok`, cero filas en `foreign_key_check`, cero diferencias ledger/balance y el mismo SHA-256 lógico que el origen.
+
+La verificación de inventario no insertó Sale, SaleItem, Payment, CashSession ni sale_sequence. La diferencia de hash físico entre archivos SQLite no se usa como equivalencia lógica porque checkpoint/paginación interna pueden cambiar; la comparación determinista se hizo por contenido de tablas. Ver `PHASE_1H5_REPORT.md` y `evidence/phase1h5-migration-hashes.txt`.
+
 ## Migración 009 — fundación persistente de inventario
 
 Agrega measurement_unit, inventory_item, inventory_item_unit, inventory_location, inventory_operation, inventory_movement, inventory_balance y product_inventory_link. Siembra mg/g/kg, uL/ml/L/piece y una sola ubicación MAIN / Almacén principal.

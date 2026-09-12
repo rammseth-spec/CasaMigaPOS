@@ -1,5 +1,13 @@
 # Operación de caja, venta y respaldo — FASE 1E
 
+## Inventario — cierre FASE 1H
+
+Antes de operar, iniciar sesión y abrir Inventario con un rol autorizado. Administrator puede configurar, registrar saldo inicial, entrada, merma y conteo; Manager puede consultar, recibir y registrar merma; Cashier no accede. Las unidades operativas son g/kg, ml/L y pieza. Un reintento debe conservar el mismo OperationId y contenido; contenido distinto con el mismo UUID es conflicto.
+
+Para diagnóstico, usar historial y reconciliación. Una diferencia se reporta y bloquea ajustes dependientes; nunca se repara automáticamente ni se edita SQLite. El backup de instalación se crea con la aplicación cerrada y un lease exclusivo. Restaurar siempre a un directorio nuevo, ejecutar validación, `integrity_check`, `foreign_key_check` y reconciliación, y conservar el origen hasta aceptar la copia. No activar origen y restauración simultáneamente.
+
+El smoke WPF aprobado `SMOKE-H14` sigue siendo la evidencia humana vigente: opening 1 kg, entrada 500 g, merma 100 g, conteo 1.5 kg, cuatro movimientos y saldo reconciliado 1.5 kg. 1H.5 no cambió producto, por lo que no se repitió. La validación sintética automatizada de cierre ejercitó restart y restore sin ventas ni impresora; consultar `PHASE_1H5_REPORT.md`.
+
 Sólo desarrollo; venta y cobro efectivo implementados en 1E, sin hardware ni uso de producción. Los apartados previos por fase conservan su contexto histórico; el apartado 1E contiene las reglas vigentes.
 
 ## Inicio y conteo

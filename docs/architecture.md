@@ -1,6 +1,12 @@
 # Arquitectura
 
-## Inventario 1H.2
+## Inventario cerrado — FASE 1H
+
+La ruta final es Presentation → InventoryService → IInventoryStore/ILocalReadUnitOfWork → SQLite. Application revalida usuario activo y permiso; UI sólo expresa disponibilidad y mantiene Busy/OperationId estable. Escrituras usan transacción inmediata e idempotencia UUID+SHA-256; lecturas usan conexión read-only y transacción deferred. El ledger confirmado es autoritativo y `InventoryBalance` es una proyección con reconciliación sin reparación automática.
+
+Restart y `.cmbackup` preservan artículo, presentación, vínculo, operaciones, movimientos, saldos, permisos, auditoría y terminal. Restore sólo publica en un directorio nuevo después de validar manifiesto, base y terminal. 1H.5 no cambió código ni arquitectura y no agregó esquema. Checkout y el subsistema de tickets siguen independientes de `ProductInventoryLink`; el efecto `SALE_CONSUMPTION` no existe.
+
+## Inventario 1H.2 (registro histórico)
 
 Infrastructure contiene `SqliteInventoryStore`, dueño de la transacción completa y única autoridad de `InventoryBalance`. Domain aporta solicitudes normalizadas y cantidades exactas; todavía no existe un caso de uso Application ni UI.
 

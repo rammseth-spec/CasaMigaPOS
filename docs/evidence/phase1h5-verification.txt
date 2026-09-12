@@ -1,0 +1,13 @@
+FASE 1H.5 — verificación final — 2026-09-12
+Baseline: 397258d9b4711fa8f081323f111c6afe181a9ef5
+Comando: scripts/verify.ps1 con SDK local 10.0.400 y feed NuGet local bloqueado
+Restore: correcto
+Build Release: correcto
+Advertencias: 0
+Errores: 0
+Suite: 290 total, 290 aprobadas, 0 fallidas, 0 omitidas
+Duración de suite informada: 2 m 10 s
+Resultado TRX: TestResults/foundation.trx
+Producto modificado en 1H.5: no
+Smoke WPF repetido: no; permanece vigente la aceptación manual de 1H.4
+Impresora utilizada: no

@@ -1,5 +1,11 @@
 # Dominio y reglas
 
+## Cierre de inventario — FASE 1H
+
+El contrato de 1H queda estable: cantidades exactas Int64 en mg, µL o pieza; operaciones confirmadas y movimientos inmutables; balance como proyección reconciliable; correcciones mediante movimientos trazables; UUID más hash canónico para idempotencia. OPENING_BALANCE admite cero una sola vez; RECEIVE, WASTE y ajustes preservan signo, razón y captura exacta según sus invariantes.
+
+La UI presenta g/kg, ml/L y pieza, aunque Domain mantiene las unidades atómicas. `ProductInventoryLink` es sólo una asociación explícita y positiva. No genera movimiento, no altera una venta y Checkout no lo consume. `SALE_CONSUMPTION`, recetas y producción no pertenecen al modelo cerrado de 1H.
+
 ## Fundación de inventario — FASE 1H.1
 
 `InventoryQuantity` es una magnitud física exacta y no negativa formada por dimensión y unidades atómicas Int64. Masa usa mg, volumen µL y conteo pieza. Las unidades estándar admitidas son mg/g/kg, µL/ml/L y pieza. La entrada decimal sólo es un intermediario exacto: se rechazan pérdida de precisión, dimensión incompatible, resultado negativo y overflow. Cero representa una existencia vacía; factores de presentación y cantidades por unidad comercial deben ser positivos.
