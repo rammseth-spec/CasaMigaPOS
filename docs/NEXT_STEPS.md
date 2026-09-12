@@ -1,3 +1,9 @@
+# Próximo paso — resolver frontera histórica de recovery
+
+1I.3 está BLOQUEADA. Revisar PHASE_1I3_REPORT.md y autorizar un diseño separado de marca persistente e inmutable de obligatoriedad de evaluación. Si requiere migración 012, autorizarla expresamente. No implementar heurísticas temporales, no asumir que toda ausencia de evaluación es histórica y no continuar 1I.3 hasta resolver esta condición. Mantener 001–011 intactas. 1I.4 no autorizada ni iniciada.
+
+## Registro anterior
+
 # Próximo paso — revisar y autorizar FASE 1I.3
 
 1I.2 completada. No iniciar automáticamente 1I.3. Revisar PHASE_1I2_REPORT.md y ADR-018; proponer/confirmar integración funcional del flag y plan dentro de la transacción de Checkout, autorización sales.complete, recuperación/idempotencia y bloqueo sin efectos parciales. La infraestructura técnica existe, pero Checkout no la llama y el flag está DISABLED.

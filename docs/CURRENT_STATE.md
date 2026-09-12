@@ -1,3 +1,10 @@
+
+# Continuidad — 1I.3 BLOQUEADA antes de implementar
+
+FASE 1I abierta. La revisión autorizada de 1I.3 encontró que schema 11 no distingue de forma determinista una venta legítima 1I.2 sin evaluación de una venta futura obligada a tenerla cuya evaluación falte. Se aplicó la condición expresa de detenerse: no se modificó producto ni migraciones, no se creó 012. Baseline de producto: 6aa9ad73b4453e94070d1609febd035cbf425feb; 325 pruebas aprobadas y Release 0/0 son evidencia previa de 1I.2, no repetida aquí. Ver [reporte de bloqueo](PHASE_1I3_REPORT.md). 1I.3 NO completada; 1I.4 NO iniciada.
+
+## Registro anterior
+
 # Continuidad — FASE 1I.2 completada
 
 FASE 1I permanece ABIERTA; 1I.1 aprobada y 1I.2 completada. Baseline de entrada: 42d7490cd20fd926f8e3d61830140ba7e8ce2a2d. El commit que incorpora PHASE_1I2_REPORT.md fija este checkpoint.

@@ -1,3 +1,9 @@
+# Checkpoint documental — bloqueo 1I.3
+
+Nuevo: docs/PHASE_1I3_REPORT.md. Modificados: docs/CURRENT_STATE.md, docs/NEXT_STEPS.md y este inventario. Sin cambios en src/tests/migrations. No migración 012.
+
+## Registro anterior
+
 # Incorporaciones FASE 1I.2
 
 Nuevos:
