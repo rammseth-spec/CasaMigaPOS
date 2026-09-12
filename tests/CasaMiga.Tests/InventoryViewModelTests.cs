@@ -240,4 +240,12 @@ public sealed class InventoryViewModelTests
     [DataRow(InventoryError.InconsistentBalance, "Se detectó una inconsistencia de inventario. La operación no fue reparada automáticamente.")]
     public void StableApplicationErrorsHaveSpanishPresentationMessages(InventoryError error, string expected) =>
         Assert.AreEqual(expected, InventoryViewModel.ErrorMessage(error));
+
+    [TestMethod]
+    public void ReadOnlyOperationIdBindingIsExplicitlyOneWay()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Presentation", "InventoryView.xaml");
+        var xaml = File.ReadAllText(path);
+        StringAssert.Contains(xaml, "Text=\"{Binding PendingOperationId,Mode=OneWay}\"");
+    }
 }

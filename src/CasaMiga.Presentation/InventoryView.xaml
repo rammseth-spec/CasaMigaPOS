@@ -75,7 +75,7 @@
 
   <StackPanel Visibility="{Binding IsOperationEditor,Converter={StaticResource VisibleWhen}}">
    <TextBlock Text="{Binding OperationTitle}" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="{Binding CurrentBalanceLabel}" Margin="0,6,0,6"/>
-   <TextBlock Text="OperationId estable para este intento" FontSize="15"/><TextBox Text="{Binding PendingOperationId}" IsReadOnly="True" FontSize="15" Margin="0,4,0,12"/>
+   <TextBlock Text="OperationId estable para este intento" FontSize="15"/><TextBox Text="{Binding PendingOperationId,Mode=OneWay}" IsReadOnly="True" FontSize="15" Margin="0,4,0,12"/>
    <TextBlock Text="Cantidad absoluta"/><TextBox Text="{Binding Quantity,UpdateSourceTrigger=PropertyChanged}" MaxLength="40" Margin="0,4,0,12"/>
    <TextBlock Text="Unidad o presentación"/><ComboBox ItemsSource="{Binding UnitChoices}" SelectedItem="{Binding SelectedUnit}" DisplayMemberPath="Label" Margin="0,4,0,12"/>
    <StackPanel Visibility="{Binding ShowsReference,Converter={StaticResource VisibleWhen}}"><TextBlock Text="Referencia externa opcional"/><TextBox Text="{Binding Reference,UpdateSourceTrigger=PropertyChanged}" MaxLength="160" Margin="0,4,0,12"/></StackPanel>

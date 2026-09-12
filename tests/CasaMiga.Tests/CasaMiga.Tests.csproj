@@ -6,5 +6,6 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <ProjectReference Include="../../src/CasaMiga.Infrastructure/CasaMiga.Infrastructure.csproj" />
     <Compile Include="../../src/CasaMiga.Presentation/InventoryViewModel.cs" Link="Presentation/InventoryViewModel.cs" />
+    <Content Include="../../src/CasaMiga.Presentation/InventoryView.xaml" Link="Presentation/InventoryView.xaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
