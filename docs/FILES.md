@@ -1,6 +1,6 @@
-# Incorporaciones 1H.4
+# Incorporaciones 1H.4 — completada y aprobada
 
-Presentation: InventoryView.xaml/.cs, InventoryViewModel.cs, InventoryDisplay.cs; navegación en MainViewModel, MainWindow y PosView. Tests: InventoryViewModelTests.cs. Reporte: PHASE_1H4_SMOKE_CORRECTION.md. Smoke pendiente.
+Presentation: InventoryView.xaml/.cs, InventoryViewModel.cs, InventoryDisplay.cs; navegación en MainViewModel, MainWindow y PosView. Tests: InventoryViewModelTests.cs. Reporte y aceptación: PHASE_1H4_SMOKE_CORRECTION.md y evidence/phase1h4-smoke-correction.txt. Smoke aprobado; 1H.5 no iniciado.
 
 ## Registro anterior
 

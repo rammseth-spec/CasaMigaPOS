@@ -1,6 +1,10 @@
-# Continuidad — 1H.4 en aceptación manual
+# Continuidad — FASE 1H.4 completada y aprobada
 
-UI implementada en 845b8a8; binding WPF corregido en dd7d5b5. Manager fue confirmado funcional por el usuario; permisos originales preservados. Corrección visual exacta g/kg, ml/L y pieza preparada. Smoke NO aprobado todavía; no iniciar 1H.5. Ver [reporte](PHASE_1H4_SMOKE_CORRECTION.md).
+FASE 1H permanece abierta. 1H.4 está completada y su smoke WPF fue aprobado manualmente por el usuario. UI implementada en `845b8a8`, binding WPF corregido en `dd7d5b5` y unidades operativas exactas/validación de Manager en `9b7b6d6`.
+
+Administrator conserva acceso completo; Manager tiene view/receive/waste y carece de configure/adjust; Cashier no accede. La UI ofrece g/kg, ml/L y pieza; mg/µL permanecen internos. `SMOKE-H14` quedó en 1.5 kg, con cuatro movimientos y reconciliación exacta. Ver [reporte de aceptación](PHASE_1H4_SMOKE_CORRECTION.md) y [evidencia](evidence/phase1h4-smoke-correction.txt).
+
+Verificación vigente: 290 pruebas aprobadas, 0 fallidas, 0 omitidas; Release con 0 errores y 0 advertencias. Migraciones 001–010, Domain, ledger, InventoryBalance, Checkout, Sale, Payment, ExpectedCash, tickets e impresión permanecen intactos. El sistema sigue siendo una versión de desarrollo no lista para producción. 1H.5 no inició.
 
 ## Registro anterior
 

@@ -7,6 +7,12 @@ TRX: TestResults/foundation.trx
 Domain, Application, Infrastructure y migraciones: sin cambios respecto al baseline.
 git diff --check: correcto.
 SMOKEMANAGER: permisos originales comprobados; usuario confirmó SI FUNCIONA.
-Smoke pendiente: Manager y unidades visibles; no aceptación automática.
-No se ejecutaron movimientos en la instalación sintética durante la corrección.
+Smoke WPF: APROBADO manualmente por el usuario.
+Manager: acceso, RECEIVE y WASTE aprobados; configure/opening/count restringidos.
+Unidades UI: g/kg, ml/L y pieza aprobadas; mg/uL permanecen internos.
+SMOKE-H14: saldo interno 1500000 mg = visual 1.5 kg; versión 4.
+Movimientos: OPENING_BALANCE +1000000, RECEIPT +500000, WASTE -100000, ADJUSTMENT_GAIN +100000.
+Reconciliación: balance 1500000 = ledger 1500000.
+No se generó una operación adicional para el cierre documental; no se usó impresora.
+FASE 1H.4 completada; FASE 1H abierta; 1H.5 no iniciada.
 Ensamblado de smoke: 658FBA28C4379980E9459FE7E08A27886BF39AEC555506CF4659EA936E86343F

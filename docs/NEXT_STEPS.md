@@ -1,6 +1,8 @@
-# Próximo paso — repetir únicamente smoke pendiente de 1H.4
+# Próximo paso — proponer FASE 1H.5
 
-Con SMOKEMANAGER: Inventario → SMOKE-H14 → Ver detalle → Entrada y Merma. Comprobar g/kg y saldo humano exacto; ml/L y pieza en sus artículos correspondientes. Configuración, saldo inicial y conteo siguen restringidos. No aprobar automáticamente; no iniciar 1H.5 ni impresión. Ver [reporte](PHASE_1H4_SMOKE_CORRECTION.md).
+1H.4 está completada y aprobada. No iniciar automáticamente 1H.5. La siguiente conversación debe proponer su alcance, invariantes, pruebas y exclusiones para autorización expresa.
+
+Mantener fuera hasta autorización: consumo de inventario por ventas, `SALE_CONSUMPTION`, recetas, producción, compras, proveedores, costos, lotes, caducidad, transferencias, impresión de inventario, cajón, LAN, rediseño profesional, fullscreen e instalador. Modelo recomendado para 1H.5: Sol por continuidad y costo; reservar Astra para un defecto complejo de concurrencia, recuperación o arquitectura.
 
 ## Registro anterior
 
