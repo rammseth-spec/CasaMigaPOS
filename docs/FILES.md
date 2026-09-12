@@ -1,3 +1,16 @@
+# Incorporaciones FASE 1I.1
+
+- src/CasaMiga.Domain/SaleInventoryConsumption.cs
+- tests/CasaMiga.Tests/SaleInventoryConsumptionDomainTests.cs
+- docs/decisions/ADR-017-sale-inventory-consumption-policy.md
+- docs/PHASE_1I1_REPORT.md
+- docs/evidence/phase1i1-verification.txt
+- docs/evidence/phase1i1-migration-hashes.txt
+
+Modificados: Inventory.cs, README, CURRENT_STATE, NEXT_STEPS, domain.md, roadmap.md y este inventario. CheckoutService, Infrastructure, Presentation y migraciones 001–010 no cambiaron. 1I.2 no inició.
+
+## Registro anterior
+
 # Cierre 1H.5 — hardening y documentación
 
 No se modificaron `src`, tests ni migraciones. Se agregaron `PHASE_1H5_REPORT.md` y evidencia de backup/restore, verificación, hashes y revisión de alcance. Se actualizaron README, CURRENT_STATE, NEXT_STEPS, domain, database, architecture, operations, roadmap y este inventario. Los artefactos sintéticos viven bajo `work/` ignorado por Git. FASE 1H queda cerrada; ninguna fase posterior inició.

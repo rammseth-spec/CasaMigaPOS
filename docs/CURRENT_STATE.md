@@ -1,3 +1,13 @@
+# Continuidad — FASE 1I.1 completada
+
+FASE 1I está abierta únicamente con 1I.1 completada. Desde el baseline `71a4f60159ca167cbc316956c848b2082cdf84a5`, Domain incorpora política pura, errores estructurados, snapshots por SaleItem, agregación determinista y factory controlada para preparar `SALE_CONSUMPTION`. El constructor general continúa rechazando ese tipo y el esquema 10 no puede persistirlo.
+
+Las reglas aprobadas bloquean tracking/link incoherente, artículo inactivo, MAIN no inicializada, insuficiencia y overflow. Un producto con TrackInventory=false y sin link produce NoConsumption. La multiplicación y agregación usan Int64 checked; el plan copia valores históricos y no contiene SaleId definitivo.
+
+Verificación: 10 pruebas nuevas, checkpoint ampliado 62/62 y suite completa 300/300; 0 fallidas u omitidas. Release: 0 errores y 0 advertencias. Migraciones 001–010, CheckoutService, Sale, Payment, ExpectedCash, tickets e impresión permanecen intactos; 011 no existe y 1I.2 no inició. Ver [reporte](PHASE_1I1_REPORT.md) y [ADR-017](decisions/ADR-017-sale-inventory-consumption-policy.md).
+
+## Registro anterior
+
 # Continuidad — FASE 1H cerrada
 
 FASE 1H está **CERRADA**. 1H.5 validó sin cambios de producto el reinicio, backup/restore, integridad, foreign keys, reconciliación, permisos, idempotencia, concurrencia, rollback y ausencia de efectos financieros. El baseline de entrada fue `397258d9b4711fa8f081323f111c6afe181a9ef5`; el commit documental que contiene este estado establece el nuevo baseline oficial.

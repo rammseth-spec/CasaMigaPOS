@@ -1,3 +1,13 @@
+# Próximo paso — proponer y autorizar FASE 1I.2
+
+1I.1 está completada. No iniciar automáticamente 1I.2. La siguiente propuesta debe fijar la migración 011, tablas de evaluación/snapshot, estado disabled/enabled/paused, permiso de activación, algoritmo versionado de InventoryOperationId, persistencia sobre la misma transacción de Checkout, triggers, upgrade/rollback y pruebas.
+
+Mantener sin cambios hasta autorización: CheckoutService, ILocalUnitOfWork, SqliteInventoryStore, migraciones 001–010, ventas, pagos, ExpectedCash, tickets e impresión. No habilitar consumo, no crear flag, no consumir ventas históricas y no implementar recetas, producción, devoluciones u override.
+
+Modelo recomendado para 1I.2: Astra por la reconstrucción estructural y la frontera transaccional; detenerse si el diseño no puede garantizar commit único y recuperación idempotente.
+
+## Registro anterior
+
 # Próximo paso — planificar la fase posterior a 1H
 
 FASE 1H está cerrada. No iniciar automáticamente otra fase. La próxima conversación debe proponer alcance, invariantes, riesgos, pruebas y exclusiones, y esperar autorización expresa antes de implementar.

@@ -1,0 +1,14 @@
+FASE 1I.1 — verificación — 2026-09-12
+Baseline: 71a4f60159ca167cbc316956c848b2082cdf84a5
+Pruebas nuevas focalizadas: 10 aprobadas, 0 fallidas, 0 omitidas
+Checkpoint Domain/Application/Inventory: 62 aprobadas, 0 fallidas, 0 omitidas
+Suite completa: 300 aprobadas, 0 fallidas, 0 omitidas
+Duración de suite: 1 m 57 s
+Build Release: correcto
+Errores: 0
+Advertencias: 0
+Migraciones: 001–010 intactas; 011 ausente
+CheckoutService: sin cambios
+Sale/Payment/ExpectedCash: sin cambios
+Receipt/printing/reprint: sin cambios
+Impresora utilizada: no

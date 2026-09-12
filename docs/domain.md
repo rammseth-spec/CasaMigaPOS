@@ -1,5 +1,11 @@
 # Dominio y reglas
 
+## Plan de consumo por venta — FASE 1I.1
+
+`SaleInventoryConsumptionPolicy` evalúa partidas con contexto ya resuelto y no consulta persistencia. Produce líneas históricas ordenadas por posición y agregados por InventoryLocation+InventoryItem. El resultado distingue NoConsumption y ConsumptionRequired; configuración inválida, item inactivo, posición no inicializada, insuficiencia y overflow son errores estructurados con cantidades atómicas cuando corresponden.
+
+El cálculo usa `checked((long)SoldQuantity * QuantityPerProductUnitAtomic)` y suma checked. `SaleConsumptionOperationFactory` sólo acepta un plan con consumo y crea líneas negativas en unidad atómica. El constructor general de InventoryOperationRequest y `IsEnabledInPhase1H` siguen rechazando SaleConsumption; no existe persistencia ni llamada desde Checkout. Ver ADR-017.
+
 ## Cierre de inventario — FASE 1H
 
 El contrato de 1H queda estable: cantidades exactas Int64 en mg, µL o pieza; operaciones confirmadas y movimientos inmutables; balance como proyección reconciliable; correcciones mediante movimientos trazables; UUID más hash canónico para idempotencia. OPENING_BALANCE admite cero una sola vez; RECEIVE, WASTE y ajustes preservan signo, razón y captura exacta según sus invariantes.

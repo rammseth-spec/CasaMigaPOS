@@ -434,10 +434,18 @@ public sealed record InventoryOperationRequest
     public InventoryOperationRequest(Guid operationId, Guid actorId, Guid terminalId,
         InventoryMovementKind kind, IEnumerable<InventoryOperationLine> lines,
         string? reasonCode = null, string? note = null, string? externalReference = null)
+        : this(operationId, actorId, terminalId, kind, lines, reasonCode, note, externalReference, false)
+    {
+    }
+
+    private InventoryOperationRequest(Guid operationId, Guid actorId, Guid terminalId,
+        InventoryMovementKind kind, IEnumerable<InventoryOperationLine> lines,
+        string? reasonCode, string? note, string? externalReference, bool checkoutGenerated)
     {
         if (operationId == Guid.Empty || actorId == Guid.Empty || terminalId == Guid.Empty)
             throw new ArgumentException("Contexto de operación de inventario inválido.");
-        if (!InventoryMovementKinds.IsEnabledInPhase1H(kind))
+        if (!InventoryMovementKinds.IsEnabledInPhase1H(kind) &&
+            !(checkoutGenerated && kind == InventoryMovementKind.SaleConsumption))
             throw new ArgumentOutOfRangeException(nameof(kind), "El tipo de movimiento todavía no está habilitado.");
         var copy = lines?.ToArray() ?? throw new ArgumentNullException(nameof(lines));
         if (copy.Length == 0 || copy.Length > 1_000) throw new ArgumentException("La operación requiere entre 1 y 1000 partidas.", nameof(lines));
@@ -460,6 +468,11 @@ public sealed record InventoryOperationRequest
         Lines = Array.AsReadOnly(copy);
     }
 
+    internal static InventoryOperationRequest CreateSaleConsumption(Guid operationId, Guid actorId,
+        Guid terminalId, IEnumerable<InventoryOperationLine> lines) =>
+        new(operationId, actorId, terminalId, InventoryMovementKind.SaleConsumption,
+            lines, null, null, null, true);
+
     private static void ValidateLines(InventoryMovementKind kind, IEnumerable<InventoryOperationLine> lines)
     {
         foreach (var line in lines)
@@ -468,7 +481,8 @@ public sealed record InventoryOperationRequest
             {
                 InventoryMovementKind.OpeningBalance => line.IsOpening && line.DeltaAtomic >= 0,
                 InventoryMovementKind.Receipt or InventoryMovementKind.AdjustmentGain => !line.IsOpening && line.DeltaAtomic > 0,
-                InventoryMovementKind.AdjustmentLoss or InventoryMovementKind.Waste => !line.IsOpening && line.DeltaAtomic < 0,
+                InventoryMovementKind.AdjustmentLoss or InventoryMovementKind.Waste or
+                    InventoryMovementKind.SaleConsumption => !line.IsOpening && line.DeltaAtomic < 0,
                 _ => false
             };
             if (!valid) throw new ArgumentException("El signo o la semántica de una partida no corresponde al tipo de operación.");
