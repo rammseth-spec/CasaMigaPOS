@@ -1,3 +1,14 @@
+# Continuidad — corrección 1H.2A completada / esquema 010
+
+La migración 010 corrige exclusivamente el CHECK de RECEIPT: reason_code NULL y note opcional (NULL o texto de 1–500 caracteres tras trim). 001–009 permanecen intactas. Commit técnico: `76e654ce9b56132ff64248953931c95190858311`; baseline anterior: `6afd1419423b8640f2a9357957894c0e164a80bb`.
+
+Reconstrucción transaccional de inventory_operation e inventory_movement con foreign_keys ON, sin escrituras al balance. Se preservan datos, columnas, índices, triggers y FKs. Pruebas cubren upgrade con operaciones, opening cero, idempotencia, reconciliación, backup/restauración y rollback posterior a la reconstrucción sin registrar versión 10.
+
+Verificación final: 254 pruebas aprobadas, 0 fallidas y 0 omitidas; Release con 0 errores y 0 advertencias. Ver [reporte](PHASE_1H2A_REPORT.md) y evidencia asociada.
+
+FASE 1H permanece ABIERTA. 1H.3 NO inició. El contrato Domain existente todavía rechaza observación en RECEIPT; su alineación corresponde a 1H.3 antes de exponer el caso de uso. Checkout, tickets, impresión y todo src permanecieron intactos. Versión de desarrollo, no lista para producción.
+
+## Registro histórico anterior
 # Continuidad — FASE 1H iniciada, subfase 1H.2 completada
 
 1H.1 y 1H.2 están completadas. El commit `a8fcfb2` agrega migración 009, persistencia del catálogo de inventario, ledger inmutable, saldo materializado reconstruible, operaciones multipartida, idempotencia por UUID+SHA-256, recuperación de commit incierto, reconciliación y pruebas concurrentes.

@@ -1,3 +1,12 @@
+# Próximo paso — retomar 1H.3 después de revisar el cierre 1H.2A
+
+1H.2A está completada. Usar como baseline el commit documental de cierre cuyo padre es `76e654ce9b56132ff64248953931c95190858311`. No iniciar 1H.3 en este bloque.
+
+Antes de exponer RECEIPT en Application, alinear su contrato Domain con el CHECK 010: reason_code NULL y observación opcional válida. Preservar el resto de razones e invariantes. Retomar únicamente el alcance autorizado de 1H.3 tras la revisión del reporte; modelo recomendado: SOL, reservando Astra para defectos complejos.
+
+No activar descuento por venta, recetas, producción, compras, proveedores, UI, hardware ni funcionalidades posteriores.
+
+## Registro histórico anterior
 # Próximo paso — proponer y autorizar FASE 1H.3
 
 FASE 1H está abierta y 1H.2 está completada. No iniciar automáticamente 1H.3.

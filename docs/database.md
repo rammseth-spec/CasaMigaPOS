@@ -111,3 +111,11 @@ Checkout crea secuencia, partidas, pago, venta y audit_entry sale.completed dent
 Añade `sales.view`, lo concede a Administrator y Manager y crea `ix_sale_history` sobre `sale(confirmed_utc DESC,id DESC)`. No añade tablas ni columnas y no duplica el folio. Cashier queda sin acceso.
 
 Las consultas reconstruyen el folio con terminal/sequence, cargan una sola página de 50 mediante LIMIT/OFFSET y mantienen orden estable. La ruta abre la base read-only dentro de una transacción deferred. Upgrade v6→v7, hashes 001–006 y backup/restore con 55 ventas se verificaron en pruebas y CLI.
+
+## Migración 010 — observación opcional en RECEIPT
+
+Corrección exclusiva del CHECK de inventory_operation. OPENING_BALANCE conserva reason_code y note NULL. RECEIPT exige reason_code NULL y admite note NULL o length(trim(note)) entre 1 y 500. WASTE admite DAMAGED, EXPIRED, PRODUCTION_ERROR, SPILL u OTHER; ajustes admiten PHYSICAL_COUNT_VARIANCE, DATA_CORRECTION u OTHER. Ambos exigen razón; OTHER exige observación válida.
+
+Database.Initialize ejecuta todo en su transacción existente con foreign_keys ON. 010 guarda los movimientos en una tabla de staging sin FK, copia las operaciones a la nueva estructura, elimina primero la tabla hija, reemplaza el padre y reconstruye la hija. Restaura los movimientos, elimina staging y recrea cuatro índices explícitos y diez triggers. Los índices automáticos se recrean mediante las mismas PK/UNIQUE. No utiliza writable_schema ni edita sqlite_master. Balance, asociaciones y demás tablas permanecen intactas.
+
+Las pruebas comparan todas las filas salvo schema_migration, columnas, FKs y definiciones de todos los índices/triggers antes y después. Un fallo inyectado al registrar versión 10 demuestra rollback de datos y objetos a versión 9. Consultar PHASE_1H2A_REPORT.md. Domain sigue sin admitir note en RECEIPT hasta su alineación en 1H.3.

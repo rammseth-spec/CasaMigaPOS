@@ -1,3 +1,14 @@
+# Incorporaciones 1H.2A
+
+- migrations/010_inventory_receipt_note_fix.sql
+- tests/CasaMiga.Tests/InventoryNoteMigrationTests.cs
+- docs/PHASE_1H2A_REPORT.md
+- docs/evidence/phase1h2a-verification.txt
+- docs/evidence/phase1h2a-migration-hashes.txt
+
+Actualizados: cinco tests existentes para esperar esquema 10; README.md, CURRENT_STATE.md, NEXT_STEPS.md, database.md y este inventario. Ningún archivo src modificado.
+
+## Registro anterior
 # Inventario de fuentes y documentación — FASE 1H.2
 
 Nuevos en 1H.2:
