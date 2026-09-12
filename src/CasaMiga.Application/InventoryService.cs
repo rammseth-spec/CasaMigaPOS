@@ -6,6 +6,10 @@ namespace CasaMiga.Application;
 public sealed class InventoryService(IInventoryStore inventory, ILocalReadUnitOfWork security,
     UserSession session, IClock clock, Guid terminalId)
 {
+    public bool Can(string permission) => security.Read(store => session.Current is { } current &&
+        store.FindUser(current.Id) is { Active: true } && store.HasPermission(current.Id, permission) &&
+        store.FindTerminal(terminalId) is not null);
+
     public PersistedInventoryOperation RegisterOpeningBalance(RegisterOpeningBalanceCommand command)
     {
         var actor = Authorize("inventory.adjust", administratorOnly: true);
