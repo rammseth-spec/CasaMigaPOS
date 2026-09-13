@@ -1,0 +1,12 @@
+FASE 1I.3 — verificación ejecutada
+Baseline bbaf48df8f517a89ebe6f3250822bb7ba88470b7
+Focalizadas: CheckoutInventory*, SaleInventoryMigration*, SaleContractMigration*: 42/42, 0 fallidas, 0 omitidas.
+TRX local: TestResults/phase1i3-focused.trx
+Comando: scripts/verify.ps1 -Dotnet work/dotnet/dotnet.exe -PackageSource work/nuget-feed
+Restore locked-mode: correcto. Release: 0 errores, 0 advertencias.
+Suite completa: 364/364, 0 fallidas, 0 omitidas; duración 2 m 46 s.
+TRX local: TestResults/foundation.trx; log: work/phase1i3-verify.log
+Backup/restore consumido validado por CheckoutInventoryTests.ConsumedBackupRestorePreservesContractAndRecovery.
+Database.Validate: integrity_check=ok, foreign_key_check sin filas; SqliteInventoryStore.Reconcile sin diferencias.
+Migraciones 001–011 sin diff frente al baseline; hashes byte a byte en phase1i3-migration-hashes.txt.
+012 nueva; 013 no existe. Sin base productiva, impresora física, activación ni 1I.4.

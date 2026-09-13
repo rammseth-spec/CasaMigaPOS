@@ -8,12 +8,18 @@ public interface ICheckoutJournal
     void Save(Guid operation);
     void Clear(Guid operation);
 }
-public sealed class CheckoutException(string message) : Exception(message);
+public class CheckoutException(string message) : Exception(message);
 public sealed record CheckoutRequest(Guid OperationId, Cart Cart, Money Received);
 
 public sealed class CheckoutService(ILocalUnitOfWork database, UserSession identity, IClock clock,
-    Guid terminal, ICheckoutJournal journal)
+    Guid terminal, ICheckoutJournal journal, ICheckoutReceiptSnapshot? receiptSnapshot = null)
 {
+    private T Run<T>(Func<ILocalStore,T> action)
+    {
+        try { return database is ILocalCheckoutUnitOfWork checkout ? checkout.RunCheckout(action) : database.Run(action); }
+        catch (Exception error) when (error is not (CheckoutException or AccessDeniedException or ArgumentException or OverflowException))
+        { throw new CheckoutException("No se pudo completar el cobro. Verifica el resultado antes de reintentar."); }
+    }
     private CheckoutRequest? unresolved { get => identity.UnresolvedCheckout; set => identity.UnresolvedCheckout=value; }
     public bool HasPending => journal.Read() is not null;
     private Guid Authorize(ILocalStore store)
@@ -28,7 +34,7 @@ public sealed class CheckoutService(ILocalUnitOfWork database, UserSession ident
         if (HasPending) throw new CheckoutException("Hay un cobro pendiente de verificación.");
         var cart=identity.Cart ?? throw new CheckoutException("El carrito está vacío.");
         ValidateCart(cart, received);
-        database.Run(s=>{Authorize(s);ValidateContext(s,cart);return true;});
+        Run(s=>{Authorize(s);ValidateContext(s,cart);return true;});
         return new CheckoutRequest(Guid.NewGuid(),cart,received);
     });
     private static void ValidateCart(Cart cart, Money received)
@@ -59,7 +65,7 @@ public sealed class CheckoutService(ILocalUnitOfWork database, UserSession ident
     {
         if(request.OperationId==Guid.Empty) throw new CheckoutException("Operación inválida.");
         if(request.Cart.UserId!=identity.Current?.Id || request.Cart.TerminalId!=terminal) throw new AccessDeniedException();
-        database.Run(s=>Authorize(s));
+        Run(s=>Authorize(s));
         ValidateCart(request.Cart,request.Received);
         var pending=journal.Read();
         if(pending is not null && pending!=request.OperationId) throw new CheckoutException("Verifica el cobro anterior.");
@@ -69,14 +75,14 @@ public sealed class CheckoutService(ILocalUnitOfWork database, UserSession ident
         Sale result;
         try
         {
-            result=database.Run(store=>
+            result=Run(store=>
             {
                 var actor=Authorize(store);
                 if(store.FindSaleByOperation(request.OperationId) is { } existing)
                 {
                     if(existing.UserId!=actor || existing.TerminalId!=terminal || !Matches(existing,request))
                         throw new CheckoutException("El identificador de operación ya corresponde a otro contenido.");
-                    return existing;
+                    store.ValidateSaleInventoryRecovery(existing); return existing;
                 }
                 if(!ReferenceEquals(identity.Cart,request.Cart)) throw new CheckoutException("El carrito cambió. Vuelve a preparar el cobro.");
                 var cash=ValidateContext(store,request.Cart);
@@ -93,6 +99,7 @@ public sealed class CheckoutService(ILocalUnitOfWork database, UserSession ident
                 store.AddAudit(new(Guid.NewGuid(),actor,terminal,"sale.completed",sale.Id,sale.ConfirmedAt,
                     JsonSerializer.Serialize(new{operationId=sale.OperationId,folio=sale.Folio,cashSessionId=cash.Id,paymentId=sale.Payment.Id,
                         totalCents=sale.Total.Cents,receivedCents=sale.Payment.Received.Cents,changeCents=sale.Payment.Change.Cents})));
+                receiptSnapshot?.Capture(store,sale);
                 return sale;
             });
         }
@@ -100,7 +107,7 @@ public sealed class CheckoutService(ILocalUnitOfWork database, UserSession ident
         {
             // Run has disposed its transaction. An independent read resolves an uncertain commit.
             Sale? stored;
-            try { stored=database.Run(s=>s.FindSaleByOperation(request.OperationId)); }
+            try { stored=Run(s=>s.FindSaleByOperation(request.OperationId)); }
             catch { throw new CheckoutException("No se pudo confirmar el resultado. Verifica el cobro pendiente; no vuelvas a recibir dinero."); }
             if(stored is not null)
             {
@@ -111,6 +118,7 @@ public sealed class CheckoutService(ILocalUnitOfWork database, UserSession ident
                     else {identity.CheckoutPending=true;unresolved=previousRequest;}
                     throw new CheckoutException("El identificador de operación ya corresponde a otro contenido.");
                 }
+                Run(s=>{s.ValidateSaleInventoryRecovery(stored);return true;});
                 Finish(stored,request);return stored;
             }
             journal.Clear(request.OperationId);identity.CheckoutPending=false;unresolved=null;
@@ -121,12 +129,12 @@ public sealed class CheckoutService(ILocalUnitOfWork database, UserSession ident
     public Sale? Resolve() => identity.Synchronized(() =>
     {
         if(journal.Read() is not { } operation){identity.CheckoutPending=false;return null;}
-        var sale=database.Run(store=>
+        var sale=Run(store=>
         {
             var actor=Authorize(store);var found=store.FindSaleByOperation(operation);
             if(found is not null && (found.UserId!=actor || found.TerminalId!=terminal))
                 throw new CheckoutException("Inicia sesión con el usuario que realizó el cobro pendiente.");
-            return found;
+            if(found is not null)store.ValidateSaleInventoryRecovery(found); return found;
         });
         if(sale is not null) Finish(sale,unresolved is { } request && Matches(sale,request)?request:null);
         else {journal.Clear(operation);identity.CheckoutPending=false;unresolved=null;}
@@ -134,11 +142,11 @@ public sealed class CheckoutService(ILocalUnitOfWork database, UserSession ident
     });
     public void Acknowledge(Guid operation) => identity.Synchronized(() =>
     {
-        database.Run(store=>
+        Run(store=>
         {
             var actor=Authorize(store);var sale=store.FindSaleByOperation(operation);
             if(sale is null || sale.UserId!=actor || sale.TerminalId!=terminal)throw new AccessDeniedException();
-            return true;
+            store.ValidateSaleInventoryRecovery(sale); return true;
         });
         journal.Clear(operation);identity.CheckoutPending=false;unresolved=null;return true;
     });

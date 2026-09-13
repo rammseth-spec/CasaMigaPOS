@@ -1,3 +1,11 @@
+# Próximo paso — revisar 1I.3 y autorizar 1I.4
+
+1I.3 completada. Revisar PHASE_1I3_REPORT.md, ADR-019 y evidencia phase1i3-* antes de autorizar 1I.4 (preflight, activación/pausa/reanudación y auditoría de configuración). No iniciar automáticamente. Modelo recomendado: Astra por validación de precondiciones y límites transaccionales.
+
+Mantener flag DISABLED en instalaciones, migraciones 001–012 inmutables, efectos físicos post-commit y sales.complete como permiso comercial. No habilitar consumo mediante edición manual de la base. No 013, recetas, producción, proveedores, devoluciones, overrides, rediseño, fullscreen, LAN, instalador ni cajón. Sistema de desarrollo, no listo para producción.
+
+## Registro anterior — bloqueo ya resuelto por autorización de 012
+
 # Próximo paso — resolver frontera histórica de recovery
 
 1I.3 está BLOQUEADA. Revisar PHASE_1I3_REPORT.md y autorizar un diseño separado de marca persistente e inmutable de obligatoriedad de evaluación. Si requiere migración 012, autorizarla expresamente. No implementar heurísticas temporales, no asumir que toda ausencia de evaluación es histórica y no continuar 1I.3 hasta resolver esta condición. Mantener 001–011 intactas. 1I.4 no autorizada ni iniciada.

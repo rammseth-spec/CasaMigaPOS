@@ -28,7 +28,7 @@ public sealed class CheckoutTests : SalesFixture
     {
         var service=Service();var request=Request(service);
         Sql("CREATE TRIGGER fail_sale_audit BEFORE INSERT ON audit_entry WHEN NEW.action='sale.completed' BEGIN SELECT RAISE(ABORT,'test failure'); END");
-        Assert.ThrowsExactly<Microsoft.Data.Sqlite.SqliteException>(()=>service.Confirm(request));
+        Assert.ThrowsExactly<CheckoutException>(()=>service.Confirm(request));
         Assert.AreSame(request.Cart,user.Cart);Assert.IsFalse(service.HasPending);
         Assert.AreEqual(0L,Sql("SELECT (SELECT count(*) FROM sale)+(SELECT count(*) FROM sale_item)+(SELECT count(*) FROM payment)+(SELECT count(*) FROM sale_sequence)"));
         Sql("DROP TRIGGER fail_sale_audit");Assert.AreEqual(1L,service.Confirm(request).Sequence);

@@ -1,3 +1,13 @@
+# Continuidad — FASE 1I.3 completada
+
+FASE 1I ABIERTA; 1I.1–1I.3 completadas. El desbloqueo autorizado sustituye el checkpoint bbaf48df8f517a89ebe6f3250822bb7ba88470b7. Schema 12 incorpora contrato inmutable 0/1 en Sale: historia 0/NULL; nuevas ventas 1/evaluación obligatoria con FK diferida y protección recíproca. Checkout integra evaluación, consumo, movimientos, balance, auditoría y snapshot de ticket configurado en su único commit.
+
+Recovery valida historia/hash sin recalcular catálogo ni stock; rollback conserva carrito y commit incierto recupera sin duplicar. DISABLED/PAUSED no consumen. Flag inicial DISABLED; no se activó instalación alguna. 1I.4 NO iniciada. No impresión física ni operaciones sobre producción. Versión de desarrollo, no lista para producción.
+
+Verificación final: 42/42 focalizadas; suite completa 364/364, 0 fallidas/omitidas; Release 0 errores/advertencias. Backup/restore, integridad, FKs y reconciliación aprobados. Evidencia y resultados vigentes: [reporte 1I.3](PHASE_1I3_REPORT.md), [ADR-019](decisions/ADR-019-checkout-inventory-contract.md) y evidence/phase1i3-*. El commit que incorpora este reporte fija el checkpoint de producto. El registro de bloqueo siguiente es histórico y quedó resuelto por autorización de 012.
+
+## Registro anterior
+
 
 # Continuidad — 1I.3 BLOQUEADA antes de implementar
 

@@ -18,10 +18,11 @@ public abstract class SalesFixture
     protected Product product = null!;
     protected string password = null!;
     protected readonly IClock clock = new SystemClock();
+    protected virtual int? FixtureSchemaVersion => null;
     [TestInitialize] public void Setup()
     {
         directory=Path.Combine(Path.GetTempPath(),"CasaMigaTests",Guid.NewGuid().ToString("N")); Directory.CreateDirectory(directory);
-        db=new(Path.Combine(directory,"casamiga.db")); db.Initialize();work=new(db);user=new(new CheckoutJournal(directory));
+        db=new(Path.Combine(directory,"casamiga.db")); if(FixtureSchemaVersion is { } v)SaleContractMigrationTests.InitializeThrough(db,v);else db.Initialize();work=new(db);user=new(new CheckoutJournal(directory));
         terminal=TerminalConfiguration.LoadOrCreate(directory);work.Run(s=>{s.EnsureTerminal(terminal,clock.UtcNow);return true;});
         var identity=new IdentityService(work,new LocalPasswords(),clock,user);password=Guid.NewGuid().ToString("N");
         identity.Bootstrap("admin","Prueba ventas",password);Assert.IsTrue(identity.Login("admin",password));

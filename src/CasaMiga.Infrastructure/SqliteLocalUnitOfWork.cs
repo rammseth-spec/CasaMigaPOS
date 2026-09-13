@@ -5,8 +5,14 @@ using Microsoft.Data.Sqlite;
 
 namespace CasaMiga.Infrastructure;
 
-public sealed partial class SqliteLocalUnitOfWork(Database database) : ILocalUnitOfWork, ILocalReadUnitOfWork
+public sealed partial class SqliteLocalUnitOfWork(Database database) : ILocalUnitOfWork, ILocalReadUnitOfWork, ILocalCheckoutUnitOfWork
 {
+    public T RunCheckout<T>(Func<ILocalStore,T> operation)
+    {
+        try { return Run(operation); }
+        catch(SqliteException e) when(e.SqliteErrorCode is 5 or 6)
+        {throw new CheckoutInventoryException(CheckoutInventoryError.InventoryConcurrencyConflict);}
+    }
     internal T RunTechnical<T>(Func<ILocalStore, SqliteConnection, SqliteTransaction, T> operation)
     {
         using var connection = database.Open();

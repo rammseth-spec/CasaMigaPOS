@@ -16,6 +16,7 @@ public sealed partial class SqliteLocalUnitOfWork
         }
         public void AddSale(Sale sale)
         {
+            var contract = HasInventoryContract();
             int position = 0;
             foreach (var item in sale.Items)
             {
@@ -28,11 +29,15 @@ public sealed partial class SqliteLocalUnitOfWork
                 ("$id", Id(sale.Payment.Id)), ("$sale", Id(sale.Id)), ("$applied", sale.Payment.Applied.Cents),
                 ("$received", sale.Payment.Received.Cents), ("$change", sale.Payment.Change.Cents));
             payment.ExecuteNonQuery();
-            using var header = Command("INSERT INTO sale VALUES($id,$operation,$user,$terminal,$cash,$sequence,$at,$subtotal,$total)",
+            using var header = Command("INSERT INTO sale(id,operation_id,user_id,terminal_id,cash_session_id,sequence,confirmed_utc,subtotal_cents,total_cents"
+                + (contract ? ",inventory_evaluation_contract_version,inventory_evaluation_id" : "")
+                + ") VALUES($id,$operation,$user,$terminal,$cash,$sequence,$at,$subtotal,$total"
+                + (contract ? ",1,$operation)" : ")"),
                 ("$id", Id(sale.Id)), ("$operation", Id(sale.OperationId)), ("$user", Id(sale.UserId)), ("$terminal", Id(sale.TerminalId)),
                 ("$cash", Id(sale.CashSessionId)), ("$sequence", sale.Sequence), ("$at", At(sale.ConfirmedAt)),
                 ("$subtotal", sale.Subtotal.Cents), ("$total", sale.Total.Cents));
             header.ExecuteNonQuery();
+            if(contract) CompleteInventory(sale);
         }
         public Sale? FindSaleByOperation(Guid operation)
         {

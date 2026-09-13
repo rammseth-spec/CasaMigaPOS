@@ -76,7 +76,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 database.Run(store => { store.EnsureTerminal(terminal, clock.UtcNow); return true; });
                 var journal = new CheckoutJournal(options.DataDirectory);
                 user = new UserSession(journal); login = new(database, new LocalPasswords(), clock, user); cash = new(database, user, clock); closing = new(database,user,clock);
-                var checkout = new CheckoutService(database,user,clock,terminal.Id,journal);
+                var checkout = new CheckoutService(database,user,clock,terminal.Id,journal, new CheckoutReceiptSnapshot(new PrintingConfigurationProvider(options.DataDirectory),TimeZoneInfo.Local));
                 var receipts = new ReceiptService(database,user,clock,terminal.Id,TimeZoneInfo.Local,
                     new PrintingConfigurationProvider(options.DataDirectory),new EscPosReceiptRenderer(),
                     new SerializedReceiptPrintTransport(new WindowsRawPrintTransport()));

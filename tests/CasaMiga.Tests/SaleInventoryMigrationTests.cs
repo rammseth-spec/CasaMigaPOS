@@ -87,7 +87,17 @@ public sealed class SaleInventoryMigrationTests
     [TestMethod] public void UpgradePreservesAllDataSchemaObjectsAndRecovery()
     {
         var request=Seed();var before=Data();var objects=Objects();var fks=FkContracts();var columns=Columns();
-        db.Initialize();db.Validate();
+        using(var connection=db.Open())
+        using(var transaction=connection.BeginTransaction())
+        {
+            var assembly=typeof(Database).Assembly;
+            using var reader=new StreamReader(assembly.GetManifestResourceStream(assembly.GetManifestResourceNames().Single(n=>n.Contains(".011_",StringComparison.Ordinal)))!);
+            var sql=reader.ReadToEnd();Execute(connection,transaction,sql);
+            using var command=new SqliteCommand("INSERT INTO schema_migration VALUES(11,$hash,$at)",connection,transaction);
+            command.Parameters.AddWithValue("$hash",Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(sql))));
+            command.Parameters.AddWithValue("$at",clock.UtcNow.ToString("O"));command.ExecuteNonQuery();transaction.Commit();
+        }
+        db.Validate();
         Assert.IsTrue(before.Keys.All(Data().ContainsKey));
         foreach(var pair in before.Where(x=>x.Key is not ("permission" or "role_permission" or "inventory_operation")))Assert.AreEqual(pair.Value,Data()[pair.Key],pair.Key); Assert.AreEqual(before["inventory_operation"].Replace("]",",null]"),Data()["inventory_operation"]);
         Assert.AreEqual("[0]",Rows("SELECT count(*) FROM sale_inventory_evaluation"));
@@ -104,7 +114,7 @@ public sealed class SaleInventoryMigrationTests
         var target=Path.Combine(directory,"restored");InstallationBackup.Restore(backup,target);
         var restored=new Database(Path.Combine(target,"casamiga.db"));restored.Validate();
         Assert.IsEmpty(new SqliteInventoryStore(restored,clock).Reconcile());
-        using var rc=restored.Open();using var q=new SqliteCommand("SELECT max(version) FROM schema_migration",rc);Assert.AreEqual(11L,q.ExecuteScalar());
+        using var rc=restored.Open();using var q=new SqliteCommand("SELECT max(version) FROM schema_migration",rc);Assert.AreEqual(12L,q.ExecuteScalar());
     }
 
     [TestMethod] public void FailureAfterRebuildRollsBackDataObjectsAndVersion()

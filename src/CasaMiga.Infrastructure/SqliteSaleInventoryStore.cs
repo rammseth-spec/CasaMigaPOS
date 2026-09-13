@@ -14,7 +14,7 @@ internal sealed record StoredConsumptionConfig(InventorySaleConsumptionState Sta
     DateTimeOffset UpdatedAt, Guid? UpdatedBy);
 
 // Technical primitives only. No activation, authorization use case or independent transaction.
-internal static class SqliteSaleInventoryStore
+internal static partial class SqliteSaleInventoryStore
 {
     internal static StoredConsumptionConfig ReadConfig(SqliteConnection connection, SqliteTransaction transaction)
     {
@@ -55,21 +55,9 @@ internal static class SqliteSaleInventoryStore
             throw new InventoryConsistencyException("Sólo MAIN está habilitada.");
         // Sale has no commercial request hash column. Include immutable commercial content in
         // this versioned evaluation hash instead of changing historical sale storage.
-        var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
-        {
-            version = 1, policyVersion = SaleConsumptionIdentity.PolicyVersion, status,
-            saleId = sale.Id, checkoutOperationId = sale.OperationId, actorId = sale.UserId,
-            terminalId = sale.TerminalId, cashSessionId = sale.CashSessionId, sequence = sale.Sequence,
-            confirmedUtc = sale.ConfirmedAt.ToString("O", CultureInfo.InvariantCulture),
-            receivedCents = sale.Payment.Received.Cents,
-            items = sale.Items.Select(x => new { productId = x.ProductId, name = x.ProductName,
-                priceCents = x.UnitPrice.Cents, quantity = x.Quantity }).ToArray(),
-            lines = lines?.Select(x => new { position = x.Position, productId = x.ProductId,
-                soldQuantity = x.SoldQuantity, trackInventory = x.TrackInventory,
-                linkId = x.ProductInventoryLinkId, itemId = x.InventoryItemId,
-                locationId = x.InventoryLocationId, dimension = x.Dimension?.ToString().ToUpperInvariant(),
-                factor = x.QuantityPerProductUnitAtomic, consumedAtomic = x.TotalConsumedAtomic }).ToArray()
-        }))));
+        var hash = EvaluationHash(sale,status,lines?.Select(x=>new InventorySnapshotV1(x.Position,x.ProductId,
+            x.SoldQuantity,x.TrackInventory,x.ProductInventoryLinkId,x.InventoryItemId,x.InventoryLocationId,
+            x.Dimension?.ToString().ToUpperInvariant(),x.QuantityPerProductUnitAtomic,x.TotalConsumedAtomic)).ToArray());
         var existing = Find(connection, transaction, sale.OperationId);
         if (existing is not null)
         {
@@ -116,6 +104,21 @@ internal static class SqliteSaleInventoryStore
             transaction.Release(savepoint);
             throw;
         }
+    }
+
+    private static string EvaluationHash(Sale sale,string status,InventorySnapshotV1[]? lines)
+    {
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new
+        {
+            version = 1, policyVersion = SaleConsumptionIdentity.PolicyVersion, status,
+            saleId = sale.Id, checkoutOperationId = sale.OperationId, actorId = sale.UserId,
+            terminalId = sale.TerminalId, cashSessionId = sale.CashSessionId, sequence = sale.Sequence,
+            confirmedUtc = sale.ConfirmedAt.ToString("O", CultureInfo.InvariantCulture),
+            receivedCents = sale.Payment.Received.Cents,
+            items = sale.Items.Select(x => new { productId = x.ProductId, name = x.ProductName,
+                priceCents = x.UnitPrice.Cents, quantity = x.Quantity }).ToArray(),
+            lines
+        }))));
     }
 
     private static SqliteCommand Command(SqliteConnection c, SqliteTransaction tx, string sql,

@@ -238,17 +238,7 @@ public sealed partial class SqliteInventoryStore(Database database, IClock clock
     public static string RequestHash(InventoryOperationRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var canonical = new
-        {
-            version = 1,
-            operationId = request.OperationId.ToString("D"),
-            actorId = request.ActorId.ToString("D"),
-            terminalId = request.TerminalId.ToString("D"),
-            kind = MovementKind(request.Kind),
-            reasonCode = request.ReasonCode,
-            note = request.Note,
-            externalReference = request.ExternalReference,
-            lines = request.Lines.OrderBy(x => x.InventoryLocationId).ThenBy(x => x.InventoryItemId).Select(x => new
+        return CanonicalRequestHash(request.OperationId,request.ActorId,request.TerminalId,MovementKind(request.Kind),request.ReasonCode,request.Note,request.ExternalReference,request.Lines.OrderBy(x => x.InventoryLocationId).ThenBy(x => x.InventoryItemId).Select(x => new
             {
                 itemId = x.InventoryItemId.ToString("D"),
                 locationId = x.InventoryLocationId.ToString("D"),
@@ -258,11 +248,15 @@ public sealed partial class SqliteInventoryStore(Database database, IClock clock
                 captureUnitCode = x.Capture.UnitCode,
                 capturedQuantity = x.Capture.NormalizedQuantity,
                 captureAtomicFactor = x.Capture.AtomicUnitsPerUnit
-            }).ToArray()
-        };
+            }).ToArray());
+    }
+    internal static string CanonicalRequestHash(Guid operation,Guid actor,Guid terminal,string kind,
+        string? reasonCode,string? note,string? externalReference,object lines)
+    {
+        var canonical=new {version=1,operationId=operation.ToString("D"),actorId=actor.ToString("D"),
+            terminalId=terminal.ToString("D"),kind,reasonCode,note,externalReference,lines};
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(canonical))));
     }
-
     private static void EnsureContext(SqliteConnection connection, SqliteTransaction transaction, Guid actor,
         Guid terminal, InventoryMovementKind kind)
     {

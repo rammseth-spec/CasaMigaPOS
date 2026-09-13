@@ -1,3 +1,22 @@
+# Incorporaciones FASE 1I.3
+
+Nuevos:
+- migrations/012_sale_inventory_evaluation_contract.sql
+- src/CasaMiga.Application/CheckoutInventoryException.cs
+- src/CasaMiga.Application/CheckoutReceiptSnapshot.cs
+- src/CasaMiga.Infrastructure/SqliteCheckoutInventory.cs
+- src/CasaMiga.Infrastructure/SqliteSaleInventoryRecovery.cs
+- tests/CasaMiga.Tests/CheckoutInventoryTests.cs
+- tests/CasaMiga.Tests/CheckoutInventoryLegacyTests.cs
+- tests/CasaMiga.Tests/SaleContractMigrationTests.cs
+- docs/decisions/ADR-019-checkout-inventory-contract.md
+- docs/evidence/phase1i3-verification.txt
+- docs/evidence/phase1i3-migration-hashes.txt
+
+Modificados: CheckoutService, LocalPorts, SqliteLocalUnitOfWork, SqliteSaleStore, SqliteSaleInventoryStore, SqliteInventoryStore y composición MainViewModel. Pruebas previas adaptan versión actual 12 o fijan explícitamente su esquema histórico; CheckoutTests espera excepción Application saneada. README, CURRENT_STATE, NEXT_STEPS, PHASE_1I3_REPORT, architecture, database, roadmap y este inventario actualizan continuidad. No cambios Domain ni migraciones 001–011.
+
+## Registro anterior — bloqueo resuelto
+
 # Checkpoint documental — bloqueo 1I.3
 
 Nuevo: docs/PHASE_1I3_REPORT.md. Modificados: docs/CURRENT_STATE.md, docs/NEXT_STEPS.md y este inventario. Sin cambios en src/tests/migrations. No migración 012.

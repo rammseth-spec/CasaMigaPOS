@@ -9,6 +9,7 @@ namespace CasaMiga.Tests;
 [TestClass]
 public sealed class SaleInventoryPersistenceTests : SalesFixture
 {
+    protected override int? FixtureSchemaVersion => 11;
     private InventoryItem SeedItem(long quantity = 20)
     {
         var store = new SqliteInventoryStore(db, clock);

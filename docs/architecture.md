@@ -89,3 +89,7 @@ Presentation incorpora Ventas, paginación de 50, folio exacto, rango, detalle y
 ## Frontera preparada en 1I.2
 
 SqliteInventoryStore.WriteOperation reutiliza el escritor de ledger/balance sobre una transacción del llamador. SqliteSaleInventoryStore es interno y sella evaluación y snapshots sin abrir conexión ni hacer commit; un savepoint elimina escrituras técnicas parciales ante fallo. RunTechnical permite probar venta/pago y consumo en una misma transacción sin cambiar ILocalUnitOfWork ni CheckoutService. No hay llamadas desde la aplicación, activación ni preflight. El esquema 11 queda DISABLED. ADR-018 fija FKs diferidas, UUIDv5 V1 e idempotencia para 1I.3.
+
+## Integración 1I.3
+
+La frontera preparada de 1I.2 ya está integrada: Checkout usa BEGIN IMMEDIATE y AddSale completa evaluación/consumo sobre la transacción existente. Snapshot de ticket configurado y auditoría comercial preceden al commit; impresión posterior. Contrato persistente 0/1 en Sale separa recovery histórico del obligatorio, sin reevaluar catálogo ni existencias actuales. Ver ADR-019 y PHASE_1I3_REPORT.md. No activación ni preflight 1I.4.
