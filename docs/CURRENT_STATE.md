@@ -1,8 +1,8 @@
-# Continuidad — FASE 1I.4: implementación lista, smoke humano pendiente
+# Continuidad — FASE 1I.4: completada, smoke humano confirmado
 
 Baseline de entrada: c0bae99ba4302443260c0b0c2551eac01748971f. 1I.4 incorpora preflight compartido, activación/pausa/reanudación transaccionales, permisos/versionado/auditoría y UI operativa mínima. Schema permanece en 12; migraciones 001–012 intactas, 013 ausente. No se habilitó ninguna instalación real.
 
-FASE 1I ABIERTA. 1I.4 NO APROBADA todavía: falta aceptación humana del smoke administrativo WPF. No se inició 1I.5. Ver PHASE_1I4_REPORT.md, PHASE_1I4_SMOKE.md y ADR-020. Versión de desarrollo, no lista para producción.
+FASE 1I ABIERTA. Smoke administrativo WPF 1I.4 completado mediante capturas y confirmación explícita del usuario. No se inició 1I.5. Ver PHASE_1I4_REPORT.md, PHASE_1I4_SMOKE.md y ADR-020. Versión de desarrollo, no lista para producción.
 
 ## Registro anterior
 
@@ -162,3 +162,5 @@ Verificación final: 170 aprobadas, 0 fallidas, 0 omitidas. Build Release: 0 err
 Bloque E fue revisado sólo hasta su precondición. La búsqueda dirigida encontró `src/CasaMiga.Presentation/Assets/README.md`, que declara que no existe un logotipo oficial y prohíbe generarlo o redibujarlo. No se modificó código, pruebas, migraciones ni configuración y no se imprimió otro ticket. Para continuar se necesita el archivo oficial aprobado, preferiblemente PNG monocromático con transparencia, alta resolución y proporciones originales.
 
 Limitaciones heredadas de 1F: los nombres mostrados en Historial siguen siendo actuales y no existen snapshots retroactivos. Los tickets anteriores a 1G capturan esos nombres al crear su primer snapshot. La zona horaria depende del equipo y LIMIT/OFFSET deberá revisarse con volúmenes mayores. Sigue siendo una versión de desarrollo y no está lista para producción.
+
+Verificación del cierre 1I.4: 399 pruebas aprobadas, 0 fallidas/omitidas; Release 0 errores/advertencias. Subtítulo corregido, publicación artifacts/phase1i4-final. No repetir smoke administrativo ni iniciar 1I.5 sin autorización.

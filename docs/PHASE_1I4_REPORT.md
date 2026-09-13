@@ -1,10 +1,10 @@
-# CASA MIGA POS — REPORTE DE CHECKPOINT FASE 1I.4
+# CASA MIGA POS — REPORTE FINAL FASE 1I.4
 
 1. FASE 1I ABIERTA.
-2. 1I.4 implementada y verificada técnicamente; NO APROBADA todavía, smoke humano pendiente.
+2. 1I.4 COMPLETADA: verificación técnica y smoke humano confirmados.
 3. Modelo: Codex basado en GPT-6; variante exacta no expuesta.
 4. HEAD inicial c0bae99ba4302443260c0b0c2551eac01748971f. El commit que incorpora este reporte identifica el nuevo checkpoint (git log -1 --format=%H -- docs/PHASE_1I4_REPORT.md).
-5. Commit previsto: feat: add safe inventory consumption activation and preflight. Implementación, pruebas y continuidad juntas.
+5. Implementación: 9531e0c0a5a8454feb3d81ba11c36e40d33bd623. Cierre: commit que incorpora esta actualización, con aceptación humana y corrección del subtítulo.
 6. Git: revisión y diff --check antes de commit; verificar árbol limpio después. Sin push ni remoto nuevo.
 7. Nuevos: SaleConsumptionService.cs, SqliteConsumptionConfiguration.cs, ConsumptionViewModel.cs, CheckoutInventoryMessages.cs, ConsumptionConfigurationTests.cs, ADR-020, PHASE_1I4_REPORT.md, PHASE_1I4_SMOKE.md, phase1i4-verification.txt.
 8. Modificados: LocalPorts.cs, SqliteInventoryStore.cs, CheckoutViewModel.cs, InventoryView.xaml/.cs, InventoryViewModel.cs, MainViewModel.cs, csproj de pruebas; README/CURRENT_STATE/NEXT_STEPS/FILES/architecture/domain/database/operations/roadmap. Domain ejecutable y CheckoutService intactos.
@@ -46,17 +46,17 @@
 44. Venta tras Resume: vuelve a consumir exactamente una vez, probado.
 45. Atomicidad: fallos antes/durante UPDATE, auditoría y antes de commit revierten config/version; historia sin cambios. Prueba de transiciones confirma sólo config/auditoría.
 46. Focalizadas: checkpoint ampliado 92/92, 0 fallidas/omitidas. Incluye nuevos servicios, UI de inventario y regresiones checkout. La prueba adicional de inmutabilidad de historia pasó en suite completa.
-47. Suite scripts/verify.ps1: 399 aprobadas, 0 fallidas, 0 omitidas; 35 casos adicionales frente a baseline 364. Duración 3 m 3 s.
-48. Restore y Release correctos: 0 errores/advertencias. Publicación local artifacts/phase1i4-smoke correcta.
-49. Smoke WPF: preparado, NO ejecutado/aceptado por humano en este checkpoint. Guía PHASE_1I4_SMOKE.md, 14 comprobaciones.
-50. Intervención requerida: Administrator (verificar/activar/pausar/reanudar), Manager (sólo lectura), Cashier (sin acceso) y caso inválido con mensaje de bloqueo. Ninguna observación manual inventada.
+47. Suite scripts/verify.ps1: 399 aprobadas, 0 fallidas, 0 omitidas; 35 casos adicionales frente a baseline 364. Verificación final repetida tras corregir subtítulo: 399/399, duración 2 m 58 s, log work/phase1i4-final-verify.log.
+48. Restore y Release correctos: 0 errores/advertencias. Publicación final artifacts/phase1i4-final correcta.
+49. Smoke WPF completado: 14 pasos cubiertos con capturas, confirmación humana y evidencia técnica. Ver PHASE_1I4_SMOKE.md para distinguir observaciones directas de comprobaciones automáticas.
+50. Intervención realizada: Administrator (verificar/activar/pausar/reanudar), Manager (sólo lectura), Cashier (sin acceso) y caso inválido con mensaje de bloqueo. Ninguna observación manual inventada.
 51. Migraciones 001–012 intactas frente a c0bae99; hashes conservan evidencia phase1i3-migration-hashes.txt.
 52. Migración 013 ausente.
 53. No impresión física, ni datos reales, ni ventas/caja en preparación de smoke. Tests usan bases temporales y transportes simulados.
-54. Riesgos: desarrollo, NO listo para producción; preflight no bloquea cambios posteriores de catálogo (Checkout revalida). UI pendiente de aceptación humana. NoChange requiere expectativas vigentes; tras conflicto se debe actualizar.
+54. Riesgos: desarrollo, NO listo para producción; preflight no bloquea cambios posteriores de catálogo (Checkout revalida). Smoke humano confirmado antes de la corrección exclusivamente textual del subtítulo; no se repiten transiciones. NoChange requiere expectativas vigentes; tras conflicto se debe actualizar.
 55. Pendiente 1I.5: smoke integral de venta, recuperación, backup y cierre, bajo nueva autorización. No sustituido por smoke administrativo.
 56. 1I.5 NO iniciada. Tampoco stock bajo, override, recetas, producción, compras, proveedores, lotes, caducidad, devoluciones, transferencias, rediseño, fullscreen, LAN, instalador o cajón.
-57. Próximo paso: completar exclusivamente smoke humano 1I.4 y registrar aceptación/reporte final; detenerse después.
+57. Próximo paso: revisar este cierre y autorizar separadamente 1I.5. Trabajo detenido, sin continuación automática.
 58. Modelo recomendado para 1I.5: Astra por validación integral de transacción/recuperación.
 
-Evidencia automática: TestResults/phase1i4-focused.trx, TestResults/foundation.trx y work/phase1i4-verify.log (locales); resumen versionado docs/evidence/phase1i4-verification.txt. Diseño y decisiones: ADR-020.
+Evidencia automática: TestResults/phase1i4-focused.trx, TestResults/foundation.trx y work/phase1i4-final-verify.log (locales); resumen versionado docs/evidence/phase1i4-verification.txt. Diseño y decisiones: ADR-020.

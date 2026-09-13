@@ -94,6 +94,6 @@ SqliteInventoryStore.WriteOperation reutiliza el escritor de ledger/balance sobr
 
 La frontera preparada de 1I.2 ya está integrada: Checkout usa BEGIN IMMEDIATE y AddSale completa evaluación/consumo sobre la transacción existente. Snapshot de ticket configurado y auditoría comercial preceden al commit; impresión posterior. Contrato persistente 0/1 en Sale separa recovery histórico del obligatorio, sin reevaluar catálogo ni existencias actuales. Ver ADR-019 y PHASE_1I3_REPORT.md. No activación ni preflight 1I.4.
 
-## FASE 1I.4 — pendiente de aceptación humana
+## FASE 1I.4 — smoke humano confirmado
 
 SaleConsumptionService combina ILocalReadUnitOfWork para status/preflight informativo e ILocalUnitOfWork BEGIN IMMEDIATE para transición. CheckConsumption comparte reglas; autorización, expected state/version, preflight, UPDATE y auditoría son atómicos. Reconciliación reutiliza el algoritmo existente con conexión del llamador. Ver ADR-020.

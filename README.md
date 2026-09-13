@@ -1,6 +1,6 @@
 # Casa Miga POS
 
-Aplicación Windows offline para una panadería mexicana. **FASE 1I abierta con 1I.1–1I.3 completadas**: Checkout integra venta e inventario en un único commit; schema 12 distingue ventas legacy y ventas con evaluación obligatoria. Flag inicial DISABLED; activación segura y preflight 1I.4 implementados, pendientes de aceptación humana WPF. Versión de desarrollo, no lista para producción. Ver [reporte 1I.4](docs/PHASE_1I4_REPORT.md) para evidencia vigente.
+Aplicación Windows offline para una panadería mexicana. **FASE 1I abierta con 1I.1–1I.4 completadas**: Checkout integra venta e inventario en un único commit; schema 12 distingue ventas legacy y ventas con evaluación obligatoria. Flag inicial DISABLED; activación segura y preflight 1I.4 implementados, con smoke humano completado. Versión de desarrollo, no lista para producción. Ver [reporte 1I.4](docs/PHASE_1I4_REPORT.md) para evidencia vigente.
 
 Stack: C# / .NET 10 LTS / WPF / Microsoft.Data.Sqlite / SQLite / MSTest.
 

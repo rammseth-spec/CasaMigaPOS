@@ -117,6 +117,6 @@ SUBMITTED sólo confirma aceptación por Winspool. Ante UNKNOWN revisar primero 
 
 Smoke final del Bloque F: un único request REPRINT `3ca46975-71af-4643-b80b-ff8290a5d356`, JobId 7, validado físicamente. No repetirlo. FASE 1G está cerrada en su alcance autorizado; cajón continúa deshabilitado hasta contar con hardware y especificación confirmada, y LAN permanece opcional.
 
-## FASE 1I.4 — pendiente de aceptación humana
+## FASE 1I.4 — smoke humano confirmado
 
 En Inventario, Administrator puede verificar configuración, activar, pausar y reanudar con confirmación. Manager sólo ve estado; Cashier no accede. Un preflight verde es informativo: activar/reanudar lo repite bajo transacción. Pausar permite ventas sin descuento automático, no modifica historia. Ante conflicto actualizar/revisar; ante divergencia corregir por proceso administrativo, sin reparación automática. Cambios posteriores de catálogo pueden bloquear ventas individuales en Checkout. Smoke aislado: PHASE_1I4_SMOKE.md. No habilitar producción.

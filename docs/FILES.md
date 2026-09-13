@@ -381,3 +381,7 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 - docs/evidence/phase1g-block-f-human-confirmation.md
 - docs/evidence/phase1g-block-f-post-smoke.json
 - docs/evidence/phase1g-block-f-render-contract.json
+
+## Cierre del smoke 1I.4
+
+Aceptación documentada mediante capturas y confirmación SI del rechazo de activación. MainViewModel.cs sólo corrige el subtítulo de Inventario; sin cambios funcionales, tests ni migraciones. Lanzadores .cmd locales corregidos y verificados (fuera de Git). Reporte, smoke, continuidad y evidencia actualizados. No se inicia 1I.5.

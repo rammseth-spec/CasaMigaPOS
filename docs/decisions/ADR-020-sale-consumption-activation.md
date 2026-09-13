@@ -1,6 +1,6 @@
 # ADR-020 — Preflight y control de consumo por ventas
 
-Estado: implementado técnicamente para 1I.4; aceptación WPF humana pendiente. Baseline c0bae99ba4302443260c0b0c2551eac01748971f. Sin cambios de esquema ni autorización para 1I.5.
+Estado: implementado técnicamente para 1I.4; aceptación WPF humana completada. Baseline c0bae99ba4302443260c0b0c2551eac01748971f. Sin cambios de esquema ni autorización para 1I.5.
 
 SaleConsumptionService ofrece GetStatus, Preflight y Change (Enable/Pause/Resume). GetStatus exige inventory.view. Preflight y toda transición revalidan exclusivamente inventory.sale_consumption.configure, usuario activo, sesión y terminal existente. No se infiere el permiso desde rol o permisos de inventario distintos; la matriz vigente lo concede sólo a Administrator. Manager ve estado, Cashier no obtiene acceso.
 

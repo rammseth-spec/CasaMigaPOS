@@ -1,8 +1,6 @@
-# Próximo paso — completar únicamente smoke humano 1I.4
+# Próximo paso — revisar 1I.4 y autorizar 1I.5 por separado
 
-Usar PHASE_1I4_SMOKE.md. Dos instalaciones sintéticas separadas, válida y con bloqueo por asociación faltante, ambas DISABLED/v1 inicialmente. No usar datos reales ni impresora, no abrir caja ni vender. Validar acciones Administrator, lectura Manager, ausencia de acceso Cashier y explicación de bloqueo. Registrar respuesta humana antes de declarar 1I.4 aprobada.
-
-No iniciar 1I.5 ni cerrar FASE 1I. Después de aceptación, entregar reporte final autocontenido y detenerse. 1I.5 requiere autorización nueva. Modelo recomendado para ese bloque integral: Astra. Mantener 001–012 inmutables; no 013.
+1I.4 completada con smoke administrativo humano confirmado. Revisar PHASE_1I4_REPORT.md y ADR-020. No continuar automáticamente: 1I.5 requiere autorización nueva para su smoke integral de venta, recuperación, backup y cierre. Modelo recomendado: Astra. FASE 1I sigue ABIERTA; versión de desarrollo, no lista para producción. Migraciones 001–012 inmutables; no 013.
 
 ## Registro anterior
 

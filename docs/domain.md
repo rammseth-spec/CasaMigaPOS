@@ -103,6 +103,6 @@ FASE 1F no cambia el dominio comercial. `SalesHistoryQuery`, `SalesHistoryRow`, 
 
 SaleConsumptionIdentity.OperationIdV1 deriva un UUIDv5 del CheckoutOperationId canónico con namespace 82b7820c-b1d4-4cb2-a5a6-19419f756cb9 y byte order de red. PolicyVersion=1 e IdentityVersion=1 son explícitos. Se modelan estados de evaluación Disabled/NoConsumption/Consumed y configuración Disabled/Enabled/Paused. No hay autorización ni caso de uso de activación en Domain. El permiso futuro del consumo automático sigue siendo sales.complete; no se requiere permiso administrativo de inventario para Cashier. Ver ADR-018.
 
-## FASE 1I.4 — pendiente de aceptación humana
+## FASE 1I.4 — smoke humano confirmado
 
 Los estados DISABLED, ENABLED y PAUSED existentes conservan su semántica. No se modifica Domain ejecutable. Contratos Application separan resultado de preflight/códigos de sus mensajes UI. Sólo Enable inicial, Pause y Resume; NoChange requiere expectativas vigentes. Factor positivo Int64, multiplicación y agregación checked en Checkout. Ver ADR-020.
