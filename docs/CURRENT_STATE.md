@@ -1,6 +1,6 @@
-# Continuidad — 1I.5: hardening técnico aprobado, smoke humano pendiente
+# Continuidad — 1I.5: smoke parcial verificado; pendiente Cashier con consumo ACTIVO
 
-FASE 1I ABIERTA. Suite completa 401/401; Release 0 errores y 0 advertencias. Backup/restauración, recuperación y reimpresión simulada verificados. Única corrección de producto: etiqueta Venta para SaleConsumption. Schema 12; 001–012 intactas, sin 013. Ver PHASE_1I5_REPORT.md y PHASE_1I5_SMOKE.md. No fases posteriores. Desarrollo, no listo para producción.
+FASE 1I ABIERTA. Suite completa 402/402; Release 0 errores y 0 advertencias. Backup/restauración, recuperación y reimpresión simulada verificados. Correcciones de presentación: etiqueta Venta y tres mensajes heredados de asociación. Schema 12; 001–012 intactas, sin 013. Ver PHASE_1I5_REPORT.md y PHASE_1I5_SMOKE.md. No fases posteriores. Desarrollo, no listo para producción.
 
 ## Registro anterior
 
@@ -170,3 +170,5 @@ Bloque E fue revisado sólo hasta su precondición. La búsqueda dirigida encont
 Limitaciones heredadas de 1F: los nombres mostrados en Historial siguen siendo actuales y no existen snapshots retroactivos. Los tickets anteriores a 1G capturan esos nombres al crear su primer snapshot. La zona horaria depende del equipo y LIMIT/OFFSET deberá revisarse con volúmenes mayores. Sigue siendo una versión de desarrollo y no está lista para producción.
 
 Verificación del cierre 1I.4: 399 pruebas aprobadas, 0 fallidas/omitidas; Release 0 errores/advertencias. Subtítulo corregido, publicación artifacts/phase1i4-final. No repetir smoke administrativo ni iniciar 1I.5 sin autorización.
+
+Checkpoint humano 1I.5: ver sección Avance humano de PHASE_1I5_REPORT.md. Dos ventas verificadas; falta Cashier con consumo ACTIVO. Texto heredado corregido; fase abierta.

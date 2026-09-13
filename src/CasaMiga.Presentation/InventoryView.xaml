@@ -69,7 +69,7 @@
    </DataGrid>
    <Button Content="Agregar presentación" Click="NewUnitClick" Visibility="{Binding CanConfigure,Converter={StaticResource VisibleWhen}}" HorizontalAlignment="Left" Margin="0,0,0,14"/>
    <TextBlock Text="Asociaciones con productos" FontSize="21" FontWeight="SemiBold"/>
-   <TextBlock Text="La asociación todavía no descuenta inventario durante las ventas." Foreground="{DynamicResource ErrorBrush}" Margin="0,4,0,6"/>
+   <TextBlock Text="La asociación descuenta existencias al confirmar la venta cuando el consumo automático está ACTIVO." TextWrapping="Wrap" Margin="0,4,0,6"/>
    <DataGrid ItemsSource="{Binding ProductLinks}" SelectedItem="{Binding SelectedLink}" Height="155" AutomationProperties.Name="Asociaciones de productos">
     <DataGrid.Columns><DataGridTextColumn Header="ProductId" Binding="{Binding ProductId}" Width="300"/><DataGridTextColumn Header="Cantidad por venta" Binding="{Binding Quantity}" Width="220"/></DataGrid.Columns>
    </DataGrid>
@@ -111,7 +111,7 @@
   </StackPanel>
 
   <StackPanel Visibility="{Binding IsLinkEditor,Converter={StaticResource VisibleWhen}}">
-   <TextBlock Text="Asociar producto" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="Esta asociación es informativa en 1H.4; las ventas todavía no descuentan inventario." Foreground="{DynamicResource ErrorBrush}" Margin="0,6,0,12"/>
+   <TextBlock Text="Asociar producto" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="La asociación descuenta existencias al confirmar la venta cuando el consumo automático está ACTIVO." TextWrapping="Wrap" Margin="0,6,0,12"/>
    <Grid Margin="0,0,0,10"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBox Text="{Binding ProductSearch,UpdateSourceTrigger=PropertyChanged}" MaxLength="160"/><Button Grid.Column="1" Content="Buscar" Click="SearchProductsClick" Margin="10,0,0,0"/></Grid>
    <DataGrid ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProduct}" Height="260" AutomationProperties.Name="Productos para asociar"><DataGrid.Columns><DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="140"/><DataGridTextColumn Header="Categoría" Binding="{Binding CategoryName}" Width="180"/><DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="90"/><DataGridTextColumn Header="ProductId" Binding="{Binding Product.Id}" Width="300"/></DataGrid.Columns></DataGrid>
    <DockPanel Margin="0,8,0,12"><WrapPanel DockPanel.Dock="Right"><Button Content="Anterior" Click="ProductPreviousClick" IsEnabled="{Binding HasProductPrevious}" Margin="0,0,8,0"/><Button Content="Siguiente" Click="ProductNextClick" IsEnabled="{Binding HasProductNext}"/></WrapPanel><TextBlock Text="{Binding ProductPageLabel}" FontSize="15" VerticalAlignment="Center"/></DockPanel>

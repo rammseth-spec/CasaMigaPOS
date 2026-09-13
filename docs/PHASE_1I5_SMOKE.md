@@ -40,3 +40,13 @@ Preparado: CONCHA-SMOKE-1I, nombre Concha sintética 1I, $19.00 por producto; Fi
 Esperados financieros manuales: fondo 0, dos ventas/pagos, efectivo aplicado $57.00. Stock final 8; un consumo -2, la venta pausada no consume. No ejecutar más ventas sin indicación. No cerrar FASE 1I hasta recibir confirmación humana y verificar evidencia.
 
 Se puede comprobar insuficiencia posteriormente con 9 unidades frente a 8, si resulta razonable: requerido/disponible, venta no registrada, carrito preservado; nunca pulsar alternativas de override. Esta comprobación todavía no se declara realizada.
+
+## Avance humano 2026-09-13 y desviación de rol
+
+Capturas del usuario confirman ACTIVO/saldo 10; venta 00000001 por SMOKEADMIN, 2 piezas/$38, recibido $100/cambio $62; carrito vacío/$0; movimiento Venta -2 (10→8), Inventario consistente; PAUSADO/saldo 8; login SMOKECASHIER con caja existente OPEN; venta 00000002 por $19, recibido $20/cambio $1; PAUSADO/saldo 8 después; reanudación ACTIVO/saldo 8. Usuario confirmó aplicación CERRADA.
+
+Consulta SQLite read-only posterior: dos ventas/pagos, CONSUMED y DISABLED respectivamente, ENABLED versión 4, apertura 0, efectivo aplicado 5700 centavos (ExpectedCash calculable $57), caja OPEN, pending ausente, integrity_check ok y cero violaciones FK. Ver evidence/phase1i5-manual.json. No se ejecutó otra venta ni se cerró caja desde herramientas.
+
+Los pasos 8–10 de la venta principal fueron realizados con Administrator, no Cashier. No se declaran cumplidos en el rol requerido. Pendiente humano: comprobar venta con consumo activo usando SMOKECASHIER, después de reabrir; una venta nueva de 2 unidades dejaría stock 6 y efectivo acumulado $95. No repetir la intención anterior ni crear otra caja. Esperar captura de login antes de instruir el cobro. No cerrar fase todavía.
+
+Defecto visual adicional: texto heredado en InventoryView.xaml afirmaba que la asociación todavía no descontaba. Se reemplaza por explicación condicionada al consumo ACTIVO y commit, con regresión InventoryAssociationHelpExplainsConditionalConsumption. Sin cambios de política ni migraciones.

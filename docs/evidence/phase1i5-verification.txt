@@ -6,3 +6,5 @@ Log local: work/phase1i5-verify.log; TRX: TestResults/foundation.trx.
 Migraciones 001–012: hashes comparados con phase1i3-migration-hashes.txt sin diferencias. 013 ausente.
 Backup y hash lógico: phase1i5-integral.json; binario local work/phase1i5-evidence/phase1i5.cmbackup.
 No impresión física. Smoke humano no ejecutado. git diff --check correcto.
+
+Checkpoint posterior a capturas: primera ejecución 401 aprobadas/1 fallida detectó otro texto heredado. Corregidas tres apariciones. Ejecución final scripts/verify.ps1 exit 0: 402 aprobadas, 0 fallidas, 0 omitidas, 2m48s; Release 0 errores/0 advertencias. Log work/phase1i5-final-verify-fixed.log. Capturas y consulta read-only en phase1i5-manual*. Fase abierta por smoke Cashier ACTIVO pendiente.

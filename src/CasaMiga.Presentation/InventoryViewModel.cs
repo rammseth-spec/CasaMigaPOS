@@ -312,7 +312,7 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
             throw new ArgumentException("Selecciona un producto.");
         var quantity = InventoryDisplay.ParseCapture(LinkQuantityAtomic, Detail.Item.Dimension);
         await Task.Run(() => service.LinkProductToInventoryItem(SelectedProduct.Product.Id, detailId.Value, quantity));
-        screen = "detail"; MessageIsSuccess = true; Message = "Producto asociado. Las ventas todavía no descuentan inventario.";
+        screen = "detail"; MessageIsSuccess = true; Message = "Producto asociado. Descontará existencias al confirmar la venta cuando el consumo automático esté ACTIVO.";
         await RefreshList(preserveMessage: true); await RefreshDetail(preserveMessage: true);
     });
 

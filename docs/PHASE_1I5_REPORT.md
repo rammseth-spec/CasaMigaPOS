@@ -25,3 +25,17 @@ Pruebas focalizadas previas a la corrección de etiqueta: 98 aprobadas, 0 fallid
 Smoke humano separado preparado según PHASE_1I5_SMOKE.md: DISABLED, 10 piezas, $19.00, caja sin abrir. Ninguna acción manual de 1I.5 se declara realizada todavía. Detenerse al solicitar activación inicial y avanzar sólo con respuestas del usuario. No impresora física, producción, recetas, compras, proveedores, rediseño, fullscreen ni 013. Sistema de desarrollo, no listo para producción.
 
 Después del smoke confirmado: completar las verificaciones de evidencia manual, actualizar cierre y entregar reporte final autocontenido con los 65 puntos solicitados. Mientras falte esa confirmación, FASE 1I permanece ABIERTA.
+
+## Avance humano 2026-09-13 y desviación de rol
+
+Capturas del usuario confirman ACTIVO/saldo 10; venta 00000001 por SMOKEADMIN, 2 piezas/$38, recibido $100/cambio $62; carrito vacío/$0; movimiento Venta -2 (10→8), Inventario consistente; PAUSADO/saldo 8; login SMOKECASHIER con caja existente OPEN; venta 00000002 por $19, recibido $20/cambio $1; PAUSADO/saldo 8 después; reanudación ACTIVO/saldo 8. Usuario confirmó aplicación CERRADA.
+
+Consulta SQLite read-only posterior: dos ventas/pagos, CONSUMED y DISABLED respectivamente, ENABLED versión 4, apertura 0, efectivo aplicado 5700 centavos (ExpectedCash calculable $57), caja OPEN, pending ausente, integrity_check ok y cero violaciones FK. Ver evidence/phase1i5-manual.json. No se ejecutó otra venta ni se cerró caja desde herramientas.
+
+Los pasos 8–10 de la venta principal fueron realizados con Administrator, no Cashier. No se declaran cumplidos en el rol requerido. Pendiente humano: comprobar venta con consumo activo usando SMOKECASHIER, después de reabrir; una venta nueva de 2 unidades dejaría stock 6 y efectivo acumulado $95. No repetir la intención anterior ni crear otra caja. Esperar captura de login antes de instruir el cobro. No cerrar fase todavía.
+
+Defecto visual adicional: texto heredado en InventoryView.xaml afirmaba que la asociación todavía no descontaba. Se reemplaza por explicación condicionada al consumo ACTIVO y commit, con regresión InventoryAssociationHelpExplainsConditionalConsumption. Sin cambios de política ni migraciones.
+
+La regresión detectó una segunda aparición del mismo texto heredado en el formulario Asociar producto; ambas se corrigieron. La primera ejecución de este bloque falló esa regresión; no se presentó como aprobada.
+
+Revisión completa del defecto: tres mensajes (detalle, formulario y confirmación de asociación). Regresión XAML y regresión del flujo SaveLink aprobadas. Verificación final scripts/verify.ps1: 402/402, cero fallidas/omitidas, Release cero errores/advertencias; log work/phase1i5-final-verify-fixed.log. No cambios de migraciones.

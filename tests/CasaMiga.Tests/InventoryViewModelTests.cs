@@ -140,6 +140,7 @@ public sealed class InventoryViewModelTests
         var product = catalog.CreateProduct(category.Id, "P-1", "Concha sintética", "", new Money(1000));
         await vm.ShowLinkEditorAsync(); vm.SelectedProduct = vm.Products.Single(x => x.Product.Id == product.Id);
         vm.LinkQuantityAtomic = "1"; await vm.SaveLinkAsync(); Assert.AreEqual(product.Id, vm.ProductLinks.Single().ProductId);
+        StringAssert.Contains(vm.Message, "cuando el consumo automático esté ACTIVO.");
         Assert.IsTrue(product.TrackInventory);
         vm.SelectedLink = vm.ProductLinks.Single(); await vm.UnlinkAsync(); Assert.AreEqual(0, vm.ProductLinks.Count);
         await vm.ToggleActiveAsync(); Assert.IsFalse(vm.Detail!.Item.IsActive);
@@ -247,6 +248,14 @@ public sealed class InventoryViewModelTests
         var path = Path.Combine(AppContext.BaseDirectory, "Presentation", "InventoryView.xaml");
         var xaml = File.ReadAllText(path);
         StringAssert.Contains(xaml, "Text=\"{Binding PendingOperationId,Mode=OneWay}\"");
+    }
+
+    [TestMethod]
+    public void InventoryAssociationHelpExplainsConditionalConsumption()
+    {
+        var xaml = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Presentation", "InventoryView.xaml"));
+        StringAssert.Contains(xaml, "al confirmar la venta cuando el consumo automático está ACTIVO.");
+        Assert.IsFalse(xaml.Contains("todavía no descuenta", StringComparison.Ordinal));
     }
 
     [TestMethod]
