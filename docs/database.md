@@ -145,3 +145,7 @@ Estados de evaluación: DISABLED sin líneas, NO_CONSUMPTION con todas las líne
 ## FASE 1I.4 — smoke humano confirmado
 
 Sin cambios de schema. Singleton de 011 se actualiza por versión y estado esperados, con incremento checked, actor/UTC y auditoría dentro de BEGIN IMMEDIATE. Los triggers existentes refuerzan las transiciones. Migraciones 001–012 intactas; no 013. NoChange y preflight fallido no escriben ni auditan transición.
+
+## Cierre FASE 1I / 1I.5
+
+FASE 1I CERRADA tras aprobación humana explícita. Ver PHASE_1I5_REPORT.md y evidencia phase1i5-*. Schema 12, sin migración 013; 402 pruebas aprobadas. Sin cambios arquitectónicos ni política comercial en el cierre. Versión de desarrollo, no lista para producción. No fase posterior iniciada. La caja del smoke permanece OPEN; no usar estos datos sintéticos como instalación comercial.

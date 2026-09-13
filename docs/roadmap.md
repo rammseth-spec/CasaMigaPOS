@@ -41,3 +41,7 @@ Actualización 1C: 1B aprobada; catálogo implementado, migración 004, smoke y 
 ## Actualización FASE 1D (histórica)
 
 1C aprobada. 1D implementa captura fatal, POS y carrito transitorio; 120 pruebas y smoke A–H, publicación y respaldo. Cart is transient and not a sale. Detenerse al entregar el reporte; 1E requiere autorización y definición comercial nuevas. Las notas de detención 1A–1C anteriores son históricas, no el alcance vigente.
+
+## Cierre FASE 1I / 1I.5
+
+FASE 1I CERRADA tras aprobación humana explícita. Ver PHASE_1I5_REPORT.md y evidencia phase1i5-*. Schema 12, sin migración 013; 402 pruebas aprobadas. Sin cambios arquitectónicos ni política comercial en el cierre. Versión de desarrollo, no lista para producción. No fase posterior iniciada. La caja del smoke permanece OPEN; no usar estos datos sintéticos como instalación comercial.

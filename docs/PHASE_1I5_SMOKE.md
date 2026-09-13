@@ -1,3 +1,21 @@
+# Smoke WPF 1I.5 — APROBADO por el usuario
+
+Los 21 pasos quedan completados; la venta requerida por Cashier se realizó al final, después de reanudar, para corregir la desviación inicial de rol sin borrar operaciones.
+
+| Pasos | Evidencia y cobertura |
+|---|---|
+| 1–3 | Mixta: preparación técnica DISABLED/10, navegación humana; producto preconfigurado, sin configuración manual necesaria. |
+| 4–6 | Mixta: activación humana confirmada en captura ACTIVO/10; transición persistida. Preflight cubierto técnicamente; su mensaje previo no tiene captura independiente. |
+| 7–10 | Mixta: login SMOKECASHIER/caja abierta, venta 00000003 $38/$100/$62; completado después de reanudación. Captura posterior del carrito vacío bajo Administrator y pending ausente; no se atribuye captura del carrito al Cashier. |
+| 11–15 | Mixta: saldo 6, historial Cashier -2 (8→6), consistencia visible y SQLite. |
+| 16–17 | Mixta: pausa visible y venta siguiente con evaluación DISABLED. |
+| 18 | Mixta: Cashier venta 00000002, $19/$20/$1. |
+| 19 | Mixta: saldo 8 después de venta pausada, sin consumo persistido. |
+| 20–21 | Mixta: reanudación visible ACTIVO, persistida ENABLED versión 4. |
+
+Intervención humana: capturas aportadas y aprobación final «SI». Insuficiencia no repetida manualmente: cubierta por pruebas automatizadas. Ninguna impresión física. Capturas conservadas en evidence/phase1i5-manual-captures; consulta en evidence/phase1i5-manual-final.json. Total manual $95, saldo final 6. Caja OPEN, sin cierre manual ni conteo; no afirmar diferencia manual cero. Backup/restauración y cierre de caja automatizados pertenecen a otra instalación.
+
+## Guion y checkpoints anteriores (históricos)
 # Smoke WPF final 1I — PENDIENTE DE CONFIRMACIÓN HUMANA
 
 Instalación nueva: work/phase1i5-smoke-20260913/valid. Lanzador: work/phase1i5-smoke-20260913/Abrir_smoke_1I5.cmd. Publicación: artifacts/phase1i5-smoke. La contraseña nueva para SMOKEADMIN, SMOKEMANAGER y SMOKECASHIER está en synthetic-credential.txt de esa carpeta; no reutilizar la de 1I.4 ni versionarla. Darla explícitamente al usuario cada vez que deba iniciar sesión.

@@ -395,3 +395,7 @@ Excluye .git, bin/obj, work, artifacts, TestResults y datos locales.
 ## Cierre del smoke 1I.4
 
 Aceptación documentada mediante capturas y confirmación SI del rechazo de activación. MainViewModel.cs sólo corrige el subtítulo de Inventario; sin cambios funcionales, tests ni migraciones. Lanzadores .cmd locales corregidos y verificados (fuera de Git). Reporte, smoke, continuidad y evidencia actualizados. No se inicia 1I.5.
+
+## Cierre FASE 1I / 1I.5
+
+FASE 1I CERRADA tras aprobación humana explícita. Ver PHASE_1I5_REPORT.md y evidencia phase1i5-*. Schema 12, sin migración 013; 402 pruebas aprobadas. Sin cambios arquitectónicos ni política comercial en el cierre. Versión de desarrollo, no lista para producción. No fase posterior iniciada. La caja del smoke permanece OPEN; no usar estos datos sintéticos como instalación comercial.

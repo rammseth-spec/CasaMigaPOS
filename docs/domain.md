@@ -106,3 +106,7 @@ SaleConsumptionIdentity.OperationIdV1 deriva un UUIDv5 del CheckoutOperationId c
 ## FASE 1I.4 — smoke humano confirmado
 
 Los estados DISABLED, ENABLED y PAUSED existentes conservan su semántica. No se modifica Domain ejecutable. Contratos Application separan resultado de preflight/códigos de sus mensajes UI. Sólo Enable inicial, Pause y Resume; NoChange requiere expectativas vigentes. Factor positivo Int64, multiplicación y agregación checked en Checkout. Ver ADR-020.
+
+## Cierre FASE 1I / 1I.5
+
+FASE 1I CERRADA tras aprobación humana explícita. Ver PHASE_1I5_REPORT.md y evidencia phase1i5-*. Schema 12, sin migración 013; 402 pruebas aprobadas. Sin cambios arquitectónicos ni política comercial en el cierre. Versión de desarrollo, no lista para producción. No fase posterior iniciada. La caja del smoke permanece OPEN; no usar estos datos sintéticos como instalación comercial.

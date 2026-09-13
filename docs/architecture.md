@@ -97,3 +97,7 @@ La frontera preparada de 1I.2 ya está integrada: Checkout usa BEGIN IMMEDIATE y
 ## FASE 1I.4 — smoke humano confirmado
 
 SaleConsumptionService combina ILocalReadUnitOfWork para status/preflight informativo e ILocalUnitOfWork BEGIN IMMEDIATE para transición. CheckConsumption comparte reglas; autorización, expected state/version, preflight, UPDATE y auditoría son atómicos. Reconciliación reutiliza el algoritmo existente con conexión del llamador. Ver ADR-020.
+
+## Cierre FASE 1I / 1I.5
+
+FASE 1I CERRADA tras aprobación humana explícita. Ver PHASE_1I5_REPORT.md y evidencia phase1i5-*. Schema 12, sin migración 013; 402 pruebas aprobadas. Sin cambios arquitectónicos ni política comercial en el cierre. Versión de desarrollo, no lista para producción. No fase posterior iniciada. La caja del smoke permanece OPEN; no usar estos datos sintéticos como instalación comercial.

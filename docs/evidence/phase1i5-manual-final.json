@@ -1,0 +1,246 @@
+{
+  "sales": [
+    {
+      "id": "7083839c-b7f4-474b-bc0b-bcc826428736",
+      "operation_id": "17c6acae-91b8-437c-95db-cb5a46126040",
+      "user_id": "607e850a-16cf-4745-9877-02b461577646",
+      "terminal_id": "9dde2d63-864d-4a80-9889-617d5b884080",
+      "cash_session_id": "4eb0d312-7b70-4838-ae7e-ba413504e7a7",
+      "sequence": 1,
+      "confirmed_utc": "2026-09-13T17:24:46.3487680\u002B00:00",
+      "subtotal_cents": 3800,
+      "total_cents": 3800,
+      "inventory_evaluation_contract_version": 1,
+      "inventory_evaluation_id": "17c6acae-91b8-437c-95db-cb5a46126040",
+      "username": "SMOKEADMIN"
+    },
+    {
+      "id": "1b64ab77-1df3-4003-b793-732baa921e30",
+      "operation_id": "b498c866-d8aa-42b0-9e61-63246384b4ac",
+      "user_id": "560a5410-65b2-4889-afda-be17c50ecf12",
+      "terminal_id": "9dde2d63-864d-4a80-9889-617d5b884080",
+      "cash_session_id": "4eb0d312-7b70-4838-ae7e-ba413504e7a7",
+      "sequence": 2,
+      "confirmed_utc": "2026-09-13T17:32:40.9967232\u002B00:00",
+      "subtotal_cents": 1900,
+      "total_cents": 1900,
+      "inventory_evaluation_contract_version": 1,
+      "inventory_evaluation_id": "b498c866-d8aa-42b0-9e61-63246384b4ac",
+      "username": "SMOKECASHIER"
+    },
+    {
+      "id": "60e78dd8-e036-4cdc-bec2-cfb187a90f1b",
+      "operation_id": "2be36e08-6596-4a54-8bf3-59f9438f0a03",
+      "user_id": "560a5410-65b2-4889-afda-be17c50ecf12",
+      "terminal_id": "9dde2d63-864d-4a80-9889-617d5b884080",
+      "cash_session_id": "4eb0d312-7b70-4838-ae7e-ba413504e7a7",
+      "sequence": 3,
+      "confirmed_utc": "2026-09-13T22:27:05.7154195\u002B00:00",
+      "subtotal_cents": 3800,
+      "total_cents": 3800,
+      "inventory_evaluation_contract_version": 1,
+      "inventory_evaluation_id": "2be36e08-6596-4a54-8bf3-59f9438f0a03",
+      "username": "SMOKECASHIER"
+    }
+  ],
+  "items": [
+    {
+      "sale_id": "7083839c-b7f4-474b-bc0b-bcc826428736",
+      "position": 1,
+      "product_id": "81722320-d9d9-4021-9d2e-748613a51c54",
+      "product_name": "Concha sint\u00E9tica 1I",
+      "unit_price_cents": 1900,
+      "quantity": 2,
+      "line_total_cents": 3800
+    },
+    {
+      "sale_id": "1b64ab77-1df3-4003-b793-732baa921e30",
+      "position": 1,
+      "product_id": "81722320-d9d9-4021-9d2e-748613a51c54",
+      "product_name": "Concha sint\u00E9tica 1I",
+      "unit_price_cents": 1900,
+      "quantity": 1,
+      "line_total_cents": 1900
+    },
+    {
+      "sale_id": "60e78dd8-e036-4cdc-bec2-cfb187a90f1b",
+      "position": 1,
+      "product_id": "81722320-d9d9-4021-9d2e-748613a51c54",
+      "product_name": "Concha sint\u00E9tica 1I",
+      "unit_price_cents": 1900,
+      "quantity": 2,
+      "line_total_cents": 3800
+    }
+  ],
+  "payments": [
+    {
+      "id": "6df21480-1bb9-4132-b44a-24344c42bb05",
+      "sale_id": "7083839c-b7f4-474b-bc0b-bcc826428736",
+      "method": "CASH",
+      "applied_cents": 3800,
+      "received_cents": 10000,
+      "change_cents": 6200
+    },
+    {
+      "id": "55416dd9-9f20-4dd9-b6a9-14e7437e8528",
+      "sale_id": "1b64ab77-1df3-4003-b793-732baa921e30",
+      "method": "CASH",
+      "applied_cents": 1900,
+      "received_cents": 2000,
+      "change_cents": 100
+    },
+    {
+      "id": "ab695aeb-3d48-4e90-8b27-90170771807a",
+      "sale_id": "60e78dd8-e036-4cdc-bec2-cfb187a90f1b",
+      "method": "CASH",
+      "applied_cents": 3800,
+      "received_cents": 10000,
+      "change_cents": 6200
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "17c6acae-91b8-437c-95db-cb5a46126040",
+      "sale_id": "7083839c-b7f4-474b-bc0b-bcc826428736",
+      "checkout_operation_id": "17c6acae-91b8-437c-95db-cb5a46126040",
+      "policy_version": 1,
+      "status": "CONSUMED",
+      "inventory_operation_id": "4475d671-f6eb-50d6-a26e-295939047c20",
+      "identity_version": 1,
+      "evaluation_sha256": "471FFFA7A6D127740CB62AC06089F781A95E98497AF92AB69207D854834DD3FD",
+      "confirmed_utc": "2026-09-13T17:24:46.3487680\u002B00:00"
+    },
+    {
+      "id": "b498c866-d8aa-42b0-9e61-63246384b4ac",
+      "sale_id": "1b64ab77-1df3-4003-b793-732baa921e30",
+      "checkout_operation_id": "b498c866-d8aa-42b0-9e61-63246384b4ac",
+      "policy_version": 1,
+      "status": "DISABLED",
+      "inventory_operation_id": null,
+      "identity_version": 1,
+      "evaluation_sha256": "6F62C1F22D91201EFE6237EEE7E3ACAC46CE5F74DE77D8D18432E4D678547914",
+      "confirmed_utc": "2026-09-13T17:32:40.9967232\u002B00:00"
+    },
+    {
+      "id": "2be36e08-6596-4a54-8bf3-59f9438f0a03",
+      "sale_id": "60e78dd8-e036-4cdc-bec2-cfb187a90f1b",
+      "checkout_operation_id": "2be36e08-6596-4a54-8bf3-59f9438f0a03",
+      "policy_version": 1,
+      "status": "CONSUMED",
+      "inventory_operation_id": "e20193a6-b506-5e80-9a2c-f97e207db8d3",
+      "identity_version": 1,
+      "evaluation_sha256": "AA993AD383169EA37C6C96CCBAAC9C25543CCAA47B8765F57A8F8038C5E94DF0",
+      "confirmed_utc": "2026-09-13T22:27:05.7154195\u002B00:00"
+    }
+  ],
+  "snapshots": [
+    {
+      "evaluation_id": "17c6acae-91b8-437c-95db-cb5a46126040",
+      "sale_id": "7083839c-b7f4-474b-bc0b-bcc826428736",
+      "position": 1,
+      "product_id": "81722320-d9d9-4021-9d2e-748613a51c54",
+      "sold_quantity": 2,
+      "track_inventory": 1,
+      "link_id": "f9619ddc-cd58-4fca-b432-9fc230d94629",
+      "item_id": "3661356e-e0a7-49dd-ad1e-28f080e2f57f",
+      "location_id": "10000000-0000-0000-0000-000000000001",
+      "dimension": "COUNT",
+      "quantity_per_product_unit_atomic": 1,
+      "total_consumed_atomic": 2,
+      "policy_version": 1
+    },
+    {
+      "evaluation_id": "2be36e08-6596-4a54-8bf3-59f9438f0a03",
+      "sale_id": "60e78dd8-e036-4cdc-bec2-cfb187a90f1b",
+      "position": 1,
+      "product_id": "81722320-d9d9-4021-9d2e-748613a51c54",
+      "sold_quantity": 2,
+      "track_inventory": 1,
+      "link_id": "f9619ddc-cd58-4fca-b432-9fc230d94629",
+      "item_id": "3661356e-e0a7-49dd-ad1e-28f080e2f57f",
+      "location_id": "10000000-0000-0000-0000-000000000001",
+      "dimension": "COUNT",
+      "quantity_per_product_unit_atomic": 1,
+      "total_consumed_atomic": 2,
+      "policy_version": 1
+    }
+  ],
+  "config": [
+    {
+      "id": 1,
+      "state": "ENABLED",
+      "version": 4,
+      "updated_utc": "2026-09-13T17:34:31.5641308\u002B00:00",
+      "updated_by": "607e850a-16cf-4745-9877-02b461577646"
+    }
+  ],
+  "movements": [
+    {
+      "id": "e516fd9f-ee53-4edc-b17d-79369b58265d",
+      "operation_id": "167a761c-d666-4bbd-8872-7364cdec209b",
+      "sequence": 1,
+      "item_id": "3661356e-e0a7-49dd-ad1e-28f080e2f57f",
+      "location_id": "10000000-0000-0000-0000-000000000001",
+      "dimension": "COUNT",
+      "is_opening": 1,
+      "delta_atomic": 10,
+      "balance_before_atomic": 0,
+      "balance_after_atomic": 10,
+      "capture_unit_code": "piece",
+      "captured_quantity": "10",
+      "capture_atomic_factor": 1
+    },
+    {
+      "id": "1c283239-ffe3-471e-aeef-0ed3cfa2cf63",
+      "operation_id": "4475d671-f6eb-50d6-a26e-295939047c20",
+      "sequence": 1,
+      "item_id": "3661356e-e0a7-49dd-ad1e-28f080e2f57f",
+      "location_id": "10000000-0000-0000-0000-000000000001",
+      "dimension": "COUNT",
+      "is_opening": 0,
+      "delta_atomic": -2,
+      "balance_before_atomic": 10,
+      "balance_after_atomic": 8,
+      "capture_unit_code": "piece",
+      "captured_quantity": "2",
+      "capture_atomic_factor": 1
+    },
+    {
+      "id": "a6c0f4e0-8cf0-4a47-837c-3129e9a5217e",
+      "operation_id": "e20193a6-b506-5e80-9a2c-f97e207db8d3",
+      "sequence": 1,
+      "item_id": "3661356e-e0a7-49dd-ad1e-28f080e2f57f",
+      "location_id": "10000000-0000-0000-0000-000000000001",
+      "dimension": "COUNT",
+      "is_opening": 0,
+      "delta_atomic": -2,
+      "balance_before_atomic": 8,
+      "balance_after_atomic": 6,
+      "capture_unit_code": "piece",
+      "captured_quantity": "2",
+      "capture_atomic_factor": 1
+    }
+  ],
+  "cash": [
+    {
+      "id": "4eb0d312-7b70-4838-ae7e-ba413504e7a7",
+      "terminal_id": "9dde2d63-864d-4a80-9889-617d5b884080",
+      "opened_by": "607e850a-16cf-4745-9877-02b461577646",
+      "opened_utc": "2026-09-13T17:24:08.4162530\u002B00:00",
+      "opening_cents": 0,
+      "state": "OPEN",
+      "closed_utc": null,
+      "closed_by": null,
+      "expected_cents": null,
+      "counted_cents": null,
+      "difference_cents": null
+    }
+  ],
+  "integrity": [
+    {
+      "integrity_check": "ok"
+    }
+  ],
+  "foreign_keys": [],
+  "pendingAbsent": true
+}

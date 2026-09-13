@@ -120,3 +120,7 @@ Smoke final del Bloque F: un único request REPRINT `3ca46975-71af-4643-b80b-ff8
 ## FASE 1I.4 — smoke humano confirmado
 
 En Inventario, Administrator puede verificar configuración, activar, pausar y reanudar con confirmación. Manager sólo ve estado; Cashier no accede. Un preflight verde es informativo: activar/reanudar lo repite bajo transacción. Pausar permite ventas sin descuento automático, no modifica historia. Ante conflicto actualizar/revisar; ante divergencia corregir por proceso administrativo, sin reparación automática. Cambios posteriores de catálogo pueden bloquear ventas individuales en Checkout. Smoke aislado: PHASE_1I4_SMOKE.md. No habilitar producción.
+
+## Cierre FASE 1I / 1I.5
+
+FASE 1I CERRADA tras aprobación humana explícita. Ver PHASE_1I5_REPORT.md y evidencia phase1i5-*. Schema 12, sin migración 013; 402 pruebas aprobadas. Sin cambios arquitectónicos ni política comercial en el cierre. Versión de desarrollo, no lista para producción. No fase posterior iniciada. La caja del smoke permanece OPEN; no usar estos datos sintéticos como instalación comercial.
