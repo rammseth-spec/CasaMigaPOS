@@ -141,3 +141,7 @@ Estados de evaluación: DISABLED sin líneas, NO_CONSUMPTION con todas las líne
 ## FASE 1I.3 — Schema 12
 
 012 añade inventory_evaluation_contract_version INTEGER NOT NULL DEFAULT 0 CHECK IN(0,1) e inventory_evaluation_id TEXT con FK diferida a sale_inventory_evaluation(id). CHECK acopla 0/NULL y 1/no-NULL. El índice único parcial ux_sale_inventory_evaluation impide reutilización. Tres triggers rechazan nuevas ventas legacy y exigen identidad recíproca de venta/operación/evaluación. Los triggers de inmutabilidad existentes cubren las columnas añadidas. ALTER TABLE aditivo preserva filas, índices y FKs; no reconstruye Sale, no genera backfill ni modifica 001–011. La migración completa participa en la transacción del migrador. Ver ADR-019 y evidencia phase1i3-migration-hashes.txt.
+
+## FASE 1I.4 — pendiente de aceptación humana
+
+Sin cambios de schema. Singleton de 011 se actualiza por versión y estado esperados, con incremento checked, actor/UTC y auditoría dentro de BEGIN IMMEDIATE. Los triggers existentes refuerzan las transiciones. Migraciones 001–012 intactas; no 013. NoChange y preflight fallido no escriben ni auditan transición.

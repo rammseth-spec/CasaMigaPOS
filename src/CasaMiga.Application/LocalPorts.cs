@@ -50,6 +50,9 @@ public interface ILocalCheckoutUnitOfWork { T RunCheckout<T>(Func<ILocalStore, T
 public interface ILocalReadUnitOfWork { T Read<T>(Func<ILocalStore, T> operation); }
 public interface ILocalStore
 {
+    ConsumptionStatus GetConsumptionStatus();
+    ConsumptionPreflight CheckConsumption(DateTimeOffset at);
+    void UpdateConsumption(ConsumptionStatus expected,ConsumptionStatus next);
     int UserCount();
     LocalUser? FindUser(string normalizedName);
     LocalUser? FindUser(Guid id);

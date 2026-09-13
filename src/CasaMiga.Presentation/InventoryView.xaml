@@ -4,6 +4,23 @@
  PreviewKeyDown="InventoryKeyDown">
  <StackPanel IsEnabled="{Binding Ready}">
   <StackPanel Visibility="{Binding IsList,Converter={StaticResource VisibleWhen}}">
+   <Border BorderBrush="#CBD5E1" BorderThickness="1" Padding="12" Margin="0,0,0,14" DataContext="{Binding Consumption}">
+    <StackPanel IsEnabled="{Binding Ready}">
+     <TextBlock Text="Consumo automático por ventas" FontSize="20" FontWeight="SemiBold"/>
+     <TextBlock Text="{Binding StateLabel}" FontWeight="Bold" Margin="0,6"/>
+     <TextBlock Text="{Binding Explanation}" TextWrapping="Wrap"/>
+     <TextBlock Text="{Binding Updated}" FontSize="14" Margin="0,4"/>
+     <WrapPanel Margin="0,8">
+      <Button Content="Actualizar estado" Click="ConsumptionRefreshClick" Margin="0,0,8,0"/>
+      <Button Content="Verificar configuración" Click="ConsumptionCheckClick" Visibility="{Binding CanConfigure,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,0"/>
+      <Button Content="Activar" Click="ConsumptionEnableClick" Visibility="{Binding CanEnable,Converter={StaticResource VisibleWhen}}"/>
+      <Button Content="Pausar" Click="ConsumptionPauseClick" Visibility="{Binding CanPause,Converter={StaticResource VisibleWhen}}"/>
+      <Button Content="Reanudar" Click="ConsumptionResumeClick" Visibility="{Binding CanResume,Converter={StaticResource VisibleWhen}}"/>
+     </WrapPanel>
+     <TextBlock Text="{Binding Message}" TextWrapping="Wrap"/>
+     <ScrollViewer MaxHeight="160" VerticalScrollBarVisibility="Auto"><ItemsControl ItemsSource="{Binding Problems}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,3"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></ScrollViewer>
+    </StackPanel>
+   </Border>
    <Grid Margin="0,0,0,12">
     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="220"/><ColumnDefinition Width="180"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <StackPanel Margin="0,0,8,0"><TextBlock Text="Buscar por código o nombre" FontSize="16"/><TextBox x:Name="SearchBox" Text="{Binding Search,UpdateSourceTrigger=PropertyChanged}" MaxLength="160" AutomationProperties.Name="Buscar inventario"/></StackPanel>

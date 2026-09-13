@@ -52,8 +52,9 @@ public sealed record InventoryHistoryRowView(InventoryMovementRow Row)
 }
 
 public sealed class InventoryViewModel(InventoryService service, CatalogService catalog,
-    Action<string, string?> log) : INotifyPropertyChanged
+    Action<string, string?> log,ConsumptionViewModel? consumption=null) : INotifyPropertyChanged
 {
+    public ConsumptionViewModel? Consumption {get;}=consumption;
     private string screen = "list";
     private int page;
     private int historyPage;
@@ -177,6 +178,7 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
             CanReceive = await Task.Run(() => service.Can("inventory.receive"));
             CanWaste = await Task.Run(() => service.Can("inventory.waste"));
             CanAdjust = await Task.Run(() => service.Can("inventory.adjust"));
+            if(Consumption is not null)await Consumption.LoadAsync();
             screen = "list"; page = 0; historyPage = 0; Search = "";
             SelectedKindFilter = KindFilters[0]; SelectedActiveFilter = ActiveFilters[0];
             await RefreshList();

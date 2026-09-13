@@ -1,3 +1,11 @@
+# Continuidad — FASE 1I.4: implementación lista, smoke humano pendiente
+
+Baseline de entrada: c0bae99ba4302443260c0b0c2551eac01748971f. 1I.4 incorpora preflight compartido, activación/pausa/reanudación transaccionales, permisos/versionado/auditoría y UI operativa mínima. Schema permanece en 12; migraciones 001–012 intactas, 013 ausente. No se habilitó ninguna instalación real.
+
+FASE 1I ABIERTA. 1I.4 NO APROBADA todavía: falta aceptación humana del smoke administrativo WPF. No se inició 1I.5. Ver PHASE_1I4_REPORT.md, PHASE_1I4_SMOKE.md y ADR-020. Versión de desarrollo, no lista para producción.
+
+## Registro anterior
+
 # Continuidad — FASE 1I.3 completada
 
 FASE 1I ABIERTA; 1I.1–1I.3 completadas. El desbloqueo autorizado sustituye el checkpoint bbaf48df8f517a89ebe6f3250822bb7ba88470b7. Schema 12 incorpora contrato inmutable 0/1 en Sale: historia 0/NULL; nuevas ventas 1/evaluación obligatoria con FK diferida y protección recíproca. Checkout integra evaluación, consumo, movimientos, balance, auditoría y snapshot de ticket configurado en su único commit.

@@ -1,0 +1,23 @@
+# ADR-020 — Preflight y control de consumo por ventas
+
+Estado: implementado técnicamente para 1I.4; aceptación WPF humana pendiente. Baseline c0bae99ba4302443260c0b0c2551eac01748971f. Sin cambios de esquema ni autorización para 1I.5.
+
+SaleConsumptionService ofrece GetStatus, Preflight y Change (Enable/Pause/Resume). GetStatus exige inventory.view. Preflight y toda transición revalidan exclusivamente inventory.sale_consumption.configure, usuario activo, sesión y terminal existente. No se infiere el permiso desde rol o permisos de inventario distintos; la matriz vigente lo concede sólo a Administrator. Manager ve estado, Cashier no obtiene acceso.
+
+GetStatus/Preflight usan ILocalReadUnitOfWork y conexión read-only. Change usa ILocalUnitOfWork.Run: BEGIN IMMEDIATE, autorización, lectura del singleton, comparación de versión Y estado esperados, preflight si va a ENABLED, UPDATE condicional, auditoría y único COMMIT. No abre otro writer ni hace retry invisible. El mismo CheckConsumption implementa las reglas para consulta y activación. Un verde previo nunca es autorización.
+
+Primero se compara la versión y el estado esperados; un cliente obsoleto recibe ConcurrencyConflict aunque el destino ya esté aplicado. Con expectativas vigentes: Enable/Resume sobre ENABLED y Pause sobre PAUSED devuelven NoChange sin auditoría ni incremento. Transiciones reales: Enable DISABLED→ENABLED, Pause ENABLED→PAUSED, Resume PAUSED→ENABLED. No hay acción que retorne a DISABLED; Pause desde DISABLED y Enable desde PAUSED se rechazan. Resume siempre repite preflight cuando cambia PAUSED a ENABLED. Pause no requiere preflight y puede suspender una configuración que dejó de ser válida.
+
+Preflight recorre todos los productos activos, sin paginación ni filtro por categoría. TrackInventory=false sin vínculo es válido, true sin vínculo y false con vínculo son bloqueadores. Para vínculo activo exige unicidad, artículo existente/activo, dimensión coincidente, factor Int64 positivo, MAIN válida y activa, balance y exactamente un movimiento OPENING_BALANCE confirmado. Cero inicializado es válido; la ausencia de apertura bloquea. Un factor positivo Int64 es representable para una unidad; la multiplicación por cantidad comercial y agregación siguen checked en Checkout. No introduce límites arbitrarios de compra ni float/double.
+
+La reconciliación utiliza la misma implementación de SqliteInventoryStore sobre la conexión/transacción del llamador. Comprueba todas las posiciones existentes de ledger/balance; una divergencia bloquea y no se repara. Un insumo sin producto no necesita vínculo ni apertura para habilitar, pero no se tolera una divergencia contable existente. Productos inactivos no bloquean por su configuración incompleta. Si después se activan o se altera una asociación, Checkout revalida dentro de cada venta y bloquea la configuración inválida; no se desactiva todo el sistema automáticamente.
+
+Resultado estructurado: CanEnable, CurrentState, CurrentVersion, CheckedUtc y problemas con código, identidad/nombre de producto/artículo cuando corresponden, y cantidades de reconciliación. Mensajes finales pertenecen a Presentation, no a Domain. NoChange y preflight fallido no producen auditoría: no existe política previa que obligue a registrar estos intentos y se evita ruido.
+
+Transiciones efectivas auditan inventory.sale_consumption.enabled/paused/resumed, actor, terminal, UTC, estados y versiones anterior/posterior dentro de la misma transacción. No modifican ventas, evaluaciones, snapshots, operaciones ni existencias históricas. PAUSED mantiene ventas v1 con evaluación DISABLED y efectivo normal. Resume válido restablece el consumo para ventas futuras.
+
+InventoryView incorpora un bloque mínimo con estado, explicación, fecha, actualización y acciones válidas. Manager ve sólo estado/actualización. Activar/Reanudar y Pausar requieren confirmación explícita con No por defecto. Durante pausa la advertencia explica que se seguirá vendiendo sin descontar existencias. Un conflicto exige actualizar y revisar; no cambia silenciosamente a una nueva versión. Bloqueadores se muestran en lista comprensible sin SQL/UUID.
+
+CheckoutInventoryMessages traduce errores estructurados y usa el nombre capturado en el carrito del intento. Insuficiencia muestra requerido/disponible mediante InventoryDisplay (g/kg, ml/L; pieza/piezas). No ofrece override ni administración al cajero. DISABLED/PAUSED no agregan popups por venta.
+
+El smoke de esta subfase es administrativo, con dos instalaciones sintéticas aisladas: válida y bloqueada por falta de asociación. No usa impresora, venta ni caja. Se detiene antes de la aceptación humana y no cierra FASE 1I. El smoke integral pertenece a 1I.5 y requiere autorización posterior.

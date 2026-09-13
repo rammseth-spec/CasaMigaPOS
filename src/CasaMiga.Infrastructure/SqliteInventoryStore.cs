@@ -215,6 +215,10 @@ public sealed partial class SqliteInventoryStore(Database database, IClock clock
     {
         using var connection = database.Open(readOnly: true);
         using var transaction = connection.BeginTransaction(deferred: true);
+        return Reconcile(connection,transaction);
+    }
+    internal static IReadOnlyList<InventoryReconciliationDifference> Reconcile(SqliteConnection connection,SqliteTransaction transaction)
+    {
         var ledger = new Dictionary<(Guid Item, Guid Location), long>();
         using (var command = Command(connection, transaction,
             "SELECT m.item_id,m.location_id,m.delta_atomic FROM inventory_movement m JOIN inventory_operation o ON o.id=m.operation_id WHERE o.state='CONFIRMED' ORDER BY m.item_id,m.location_id,o.confirmed_utc,o.id,m.sequence"))
@@ -228,7 +232,6 @@ public sealed partial class SqliteInventoryStore(Database database, IClock clock
         using (var command = Command(connection, transaction, "SELECT item_id,location_id,quantity_atomic FROM inventory_balance"))
         using (var rows = command.ExecuteReader())
             while (rows.Read()) balances[(Guid.Parse(rows.GetString(0)), Guid.Parse(rows.GetString(1)))] = rows.GetInt64(2);
-        transaction.Commit();
         return ledger.Keys.Union(balances.Keys).OrderBy(x => x.Location).ThenBy(x => x.Item)
             .Where(key => !balances.TryGetValue(key, out var balance) || !ledger.TryGetValue(key, out var sum) || balance != sum)
             .Select(key => new InventoryReconciliationDifference(key.Item, key.Location,

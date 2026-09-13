@@ -7,6 +7,7 @@ namespace CasaMiga.Presentation;
 public sealed class CheckoutViewModel(CheckoutService service, ReceiptService receipts, Money total, bool recovery) : INotifyPropertyChanged
 {
     private string received="";
+    private CheckoutRequest? attempt;
     public string Received { get=>received; set {received=value;Notify();} }
     public bool Busy { get; private set; }
     public bool Ready=>!Busy;
@@ -35,7 +36,8 @@ public sealed class CheckoutViewModel(CheckoutService service, ReceiptService re
     public Task ConfirmAsync()=>Run(async()=>
     {
         if(!TryReceived(out var amount))throw new CheckoutException("El recibido debe cubrir el total, con máximo dos decimales.");
-        Result=await Task.Run(()=>service.Confirm(service.Prepare(amount)));
+        attempt=await Task.Run(()=>service.Prepare(amount));
+        Result=await Task.Run(()=>service.Confirm(attempt));
         await PrintOriginalAsync();
     });
     public Task ResolveAsync()=>Run(async()=>
@@ -67,6 +69,7 @@ public sealed class CheckoutViewModel(CheckoutService service, ReceiptService re
         if(Busy)return;Busy=true;Message="";Notify();
         try {await action();}
         catch(AccessDeniedException e){Message=e.Message;}
+        catch(CheckoutInventoryException e){Message=CheckoutInventoryMessages.Format(e,attempt?.Cart.Lines.FirstOrDefault(l=>l.ProductId==e.ProductId)?.ProductName);}
         catch(CheckoutException e){Message=e.Message;}
         catch(ArgumentException){Message="Revisa el importe recibido. El cobro no pudo completarse.";}
         catch(OverflowException){Message="El importe excede el límite permitido. No se confirmó una nueva venta.";}

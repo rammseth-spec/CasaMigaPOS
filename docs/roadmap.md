@@ -28,8 +28,8 @@ Definition of Done por tarea: compila sin nuevas advertencias relevantes; prueba
 | 1F: historial y detalle de ventas | **CERRADA**: permiso, lectura deferred, migración 007, 170 pruebas, smoke y restore. |
 | 1G: ticket e impresión | **CERRADA en alcance autorizado**: USB/Winspool, snapshot, CP850, logo, corte y reimpresión validados; 195 pruebas. Cajón diferido por falta de hardware y LAN opcional. |
 | 1H: inventario y movimientos | **CERRADA**: Domain exacto, esquema 10, ledger/balance, Application, UI, permisos, smoke, restart y backup/restore; 290 pruebas. Sin consumo por venta. |
-| 1I: integración venta–inventario | **ABIERTA, 1I.1–1I.3 completadas**: checkout atómico y recovery, schema 12. Flag inicial DISABLED. |
-| 1I.4 y posteriores | Sin iniciar; requieren alcance y autorización nuevos. |
+| 1I: integración venta–inventario | **ABIERTA, 1I.1–1I.3 completadas**: checkout atómico y recovery, schema 12. Flag inicial DISABLED; 1I.4 implementada, smoke humano pendiente. |
+| 1I.5 y posteriores | Sin iniciar; requieren alcance y autorización nuevos. |
 
 ## Actualización FASE 1B
 

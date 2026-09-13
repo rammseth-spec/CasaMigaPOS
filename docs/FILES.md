@@ -1,3 +1,13 @@
+# Incorporaciones 1I.4
+
+Nuevos: Application/SaleConsumptionService.cs, Infrastructure/SqliteConsumptionConfiguration.cs, Presentation/ConsumptionViewModel.cs y CheckoutInventoryMessages.cs; tests/CasaMiga.Tests/ConsumptionConfigurationTests.cs; ADR-020, PHASE_1I4_REPORT.md, PHASE_1I4_SMOKE.md y evidence/phase1i4-verification.txt.
+
+Modificados: LocalPorts, SqliteInventoryStore (reconciliación reutilizable), CheckoutViewModel, InventoryView.xaml/.cs, InventoryViewModel, MainViewModel y csproj de pruebas (vínculo a ViewModels/formatter). Documentación: README, CURRENT_STATE, NEXT_STEPS, architecture, domain, database, operations, roadmap y FILES. Sin cambios Domain ejecutable, CheckoutService, migraciones ni transporte físico.
+
+Entorno local ignorado por Git: work/phase1i4-smoke-setup (generador), work/phase1i4-smoke-20260913 (dos bases/credencial/lanzadores), artifacts/phase1i4-smoke y logs/TRX. No contiene datos reales; no incluir credencial en commit.
+
+## Registro anterior
+
 # Incorporaciones FASE 1I.3
 
 Nuevos:

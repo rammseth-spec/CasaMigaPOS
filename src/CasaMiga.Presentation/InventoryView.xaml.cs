@@ -8,6 +8,19 @@ public partial class InventoryView : UserControl
 {
     public InventoryView() => InitializeComponent();
     private InventoryViewModel Model => (InventoryViewModel)DataContext;
+    private async void ConsumptionRefreshClick(object sender,RoutedEventArgs e)=>await Model.Consumption!.LoadAsync();
+    private async void ConsumptionCheckClick(object sender,RoutedEventArgs e)=>await Model.Consumption!.CheckAsync();
+    private async void ConsumptionEnableClick(object sender,RoutedEventArgs e)=>await ChangeConsumption(CasaMiga.Application.ConsumptionAction.Enable);
+    private async void ConsumptionResumeClick(object sender,RoutedEventArgs e)=>await ChangeConsumption(CasaMiga.Application.ConsumptionAction.Resume);
+    private async void ConsumptionPauseClick(object sender,RoutedEventArgs e)=>await ChangeConsumption(CasaMiga.Application.ConsumptionAction.Pause);
+    private async Task ChangeConsumption(CasaMiga.Application.ConsumptionAction action)
+    {
+        var message=action==CasaMiga.Application.ConsumptionAction.Pause
+            ?"Durante la pausa, las ventas continuarán registrándose pero no descontarán inventario. ¿Confirmas la pausa?"
+            :"Al activar esta función, las ventas de productos configurados descontarán existencias automáticamente. ¿Deseas continuar?";
+        var confirmed=MessageBox.Show(Window.GetWindow(this),message,"Consumo automático por ventas",MessageBoxButton.YesNo,MessageBoxImage.Question,MessageBoxResult.No)==MessageBoxResult.Yes;
+        await Model.Consumption!.ChangeAsync(action,confirmed);
+    }
     private async void SearchClick(object sender, RoutedEventArgs e) => await Model.SearchAsync();
     private async void PreviousClick(object sender, RoutedEventArgs e) => await Model.PageAsync(-1);
     private async void NextClick(object sender, RoutedEventArgs e) => await Model.PageAsync(1);

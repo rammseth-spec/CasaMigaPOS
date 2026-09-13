@@ -1,0 +1,11 @@
+FASE 1I.4 — checkpoint técnico, smoke humano pendiente
+Baseline c0bae99ba4302443260c0b0c2551eac01748971f
+Checkpoint focalizado: 92/92; 0 fallidas, 0 omitidas.
+scripts/verify.ps1: 399/399; 0 fallidas, 0 omitidas; 3 m 3 s.
+Restore correcto; Release 0 errores, 0 advertencias.
+Publicación local artifacts/phase1i4-smoke: correcta.
+Backup/restore automático: configuración e historia preservadas; Database.Validate y reconciliación correctos.
+Preparación sintética: valid DISABLED/v1 CanEnable=True; invalid DISABLED/v1 CanEnable=False, un bloqueador por falta de asociación.
+Sin ventas, pagos, caja ni impresora en preparación. Credenciales sintéticas fuera de Git.
+001–012 sin cambios; 013 ausente.
+Smoke WPF NO aceptado aún; 1I.5 NO iniciada.

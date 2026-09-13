@@ -85,7 +85,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 Catalog = new(catalogService,options.IsDevelopment,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 SalesHistory = new(new SalesHistoryService(database,user,TimeZoneInfo.Local),receipts,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 Inventory = new(new InventoryService(new SqliteInventoryStore(sqlite, clock), database, user, clock, terminal.Id),
-                    catalogService, (eventName,errorType)=>runtime.TryLog(eventName,errorType));
+                    catalogService, (eventName,errorType)=>runtime.TryLog(eventName,errorType),new ConsumptionViewModel(new SaleConsumptionService(database,database,user,clock,terminal.Id)));
                 screen = login.NeedsBootstrap() ? "bootstrap" : "login";
             });
         });
