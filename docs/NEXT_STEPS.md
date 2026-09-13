@@ -1,3 +1,9 @@
+# Próximo paso — smoke humano 1I.5
+
+Seguir PHASE_1I5_SMOKE.md por bloques cortos, dando siempre usuario y contraseña sintética al solicitar login. Empezar con SMOKEADMIN: saldo 10, verificar configuración, activar. Esperar confirmación antes de vender. No declarar cierre hasta completar aceptación humana y evidencia. Después emitir reporte de los 65 puntos autorizados y detenerse; no iniciar fase posterior.
+
+## Registro anterior
+
 # Próximo paso — revisar 1I.4 y autorizar 1I.5 por separado
 
 1I.4 completada con smoke administrativo humano confirmado. Revisar PHASE_1I4_REPORT.md y ADR-020. No continuar automáticamente: 1I.5 requiere autorización nueva para su smoke integral de venta, recuperación, backup y cierre. Modelo recomendado: Astra. FASE 1I sigue ABIERTA; versión de desarrollo, no lista para producción. Migraciones 001–012 inmutables; no 013.

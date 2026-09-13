@@ -1,3 +1,9 @@
+# Continuidad — 1I.5: hardening técnico aprobado, smoke humano pendiente
+
+FASE 1I ABIERTA. Suite completa 401/401; Release 0 errores y 0 advertencias. Backup/restauración, recuperación y reimpresión simulada verificados. Única corrección de producto: etiqueta Venta para SaleConsumption. Schema 12; 001–012 intactas, sin 013. Ver PHASE_1I5_REPORT.md y PHASE_1I5_SMOKE.md. No fases posteriores. Desarrollo, no listo para producción.
+
+## Registro anterior
+
 # Continuidad — FASE 1I.4: completada, smoke humano confirmado
 
 Baseline de entrada: c0bae99ba4302443260c0b0c2551eac01748971f. 1I.4 incorpora preflight compartido, activación/pausa/reanudación transaccionales, permisos/versionado/auditoría y UI operativa mínima. Schema permanece en 12; migraciones 001–012 intactas, 013 ausente. No se habilitó ninguna instalación real.

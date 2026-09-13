@@ -1,0 +1,21 @@
+{
+  "schema": 12,
+  "backupBytes": 29918,
+  "backupSha256": "CC88E88CEDFA6C697B84D76CE3D36E4F9673962DD6DB979D4894B51235B7827C",
+  "logicalSourceSha256": "3992968F3E8806AF8B6160869C9B82537B2920236722AEB847503BBFD1808609",
+  "logicalRestoredSha256": "3992968F3E8806AF8B6160869C9B82537B2920236722AEB847503BBFD1808609",
+  "firstOperationId": "ccb4b756-97cb-4c0e-ac11-f55ea8e8578a",
+  "firstFolio": "6aba8cc20b244c9cb741899c589bed0c-00000001",
+  "sales": 3,
+  "cashAppliedCents": 7600,
+  "openingCents": 50000,
+  "expectedCents": 57600,
+  "differenceCents": 0,
+  "finalStock": 7,
+  "integrity": "ok",
+  "foreignKeyViolations": 0,
+  "reconciliationDifferences": 0,
+  "retryNoMutation": true,
+  "restoreRecoveryNoMutation": true,
+  "printUnknownNoConsumption": true
+}

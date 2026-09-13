@@ -1,3 +1,13 @@
+# Archivos de checkpoint 1I.5
+
+- PHASE_1I5_REPORT.md: hardening técnico y límites del checkpoint.
+- PHASE_1I5_SMOKE.md: 21 pasos humanos pendientes.
+- evidence/phase1i5-verification.txt y phase1i5-integral.json: verificación y backup/restauración.
+- tests/CasaMiga.Tests/Phase1I5HardeningTests.cs: prueba integral y stock exacto.
+- src/CasaMiga.Presentation/InventoryViewModel.cs: etiqueta Venta.
+
+## Registro anterior
+
 # Incorporaciones 1I.4
 
 Nuevos: Application/SaleConsumptionService.cs, Infrastructure/SqliteConsumptionConfiguration.cs, Presentation/ConsumptionViewModel.cs y CheckoutInventoryMessages.cs; tests/CasaMiga.Tests/ConsumptionConfigurationTests.cs; ADR-020, PHASE_1I4_REPORT.md, PHASE_1I4_SMOKE.md y evidence/phase1i4-verification.txt.

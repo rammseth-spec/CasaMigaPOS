@@ -423,7 +423,7 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
     public static string MovementLabel(InventoryMovementKind value) => value switch
         { InventoryMovementKind.OpeningBalance => "Saldo inicial", InventoryMovementKind.Receipt => "Entrada",
           InventoryMovementKind.AdjustmentGain => "Ajuste positivo", InventoryMovementKind.AdjustmentLoss => "Ajuste negativo",
-          InventoryMovementKind.Waste => "Merma", _ => value.ToString() };
+          InventoryMovementKind.Waste => "Merma", InventoryMovementKind.SaleConsumption => "Venta", _ => value.ToString() };
     public static string ErrorMessage(InventoryError error) => error switch
     {
         InventoryError.Unauthorized => "No tienes permiso para realizar esta operación.",
