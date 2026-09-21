@@ -418,6 +418,9 @@ public sealed partial class SqliteInventoryStore(Database database, IClock clock
     {
         "OPENING_BALANCE" => InventoryMovementKind.OpeningBalance, "RECEIPT" => InventoryMovementKind.Receipt,
         "ADJUSTMENT_GAIN" => InventoryMovementKind.AdjustmentGain, "ADJUSTMENT_LOSS" => InventoryMovementKind.AdjustmentLoss,
-        "WASTE" => InventoryMovementKind.Waste, "SALE_CONSUMPTION" => InventoryMovementKind.SaleConsumption, _ => throw new InvalidDataException("Tipo de movimiento inválido.")
+        "WASTE" => InventoryMovementKind.Waste, "SALE_CONSUMPTION" => InventoryMovementKind.SaleConsumption,
+        "PRODUCTION_CONSUMPTION" => InventoryMovementKind.ProductionConsumption,
+        "PRODUCTION_OUTPUT" => InventoryMovementKind.ProductionOutput,
+        _ => throw new InvalidDataException("Tipo de movimiento inválido.")
     };
 }

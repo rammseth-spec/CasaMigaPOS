@@ -1,3 +1,14 @@
+# Checkpoint vigente — FASE 1J
+
+- 1J.1: Domain aprobado y conservado.
+- 1J.2: COMPLETADA: persistencia, migración 013, snapshots y contrato histórico; 466/466 pruebas y Release sin errores/advertencias.
+- 1J.3: NO iniciada. Proponer y autorizar confirmación atómica, stock, idempotencia/recuperación y políticas pendientes antes del primer movimiento.
+- UI de fórmulas/producción, datos productivos, rediseño y fullscreen: fuera de esta entrega.
+
+Desarrollo, NO listo para producción. Ver PHASE_1J2_REPORT.md.
+
+## Roadmap anterior
+
 # Roadmap y aceptación
 
 | Fase | Alcance | Condición de salida |

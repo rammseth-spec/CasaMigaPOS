@@ -1,3 +1,16 @@
+# Archivos de checkpoint 1J.2
+
+- migrations/013_recipes_and_production.sql: configuración, snapshots y contrato recíproco de producción; 001–012 intactas.
+- src/CasaMiga.Infrastructure/SqliteRecipeStore.cs: configuración versionada y concurrencia.
+- src/CasaMiga.Infrastructure/SqliteRecipeStore.Batches.cs: persistencia/consulta de DRAFT y snapshots, sin movimientos.
+- src/CasaMiga.Infrastructure/SqliteInventoryStore.cs: sólo lectura de nombres PRODUCTION_CONSUMPTION/OUTPUT; writer intacto.
+- tests/CasaMiga.Tests/RecipePersistenceTests.cs, RecipePlanningStorageTests.cs, RecipeContractTests.cs y RecipeUpgradeTests.cs: persistencia, exactitud, concurrencia, contrato sintético, backup y migraciones.
+- Tests existentes: únicamente expectativas de schema 12→13 en CashIdentityTests, FoundationTests, InventoryNoteMigrationTests, InventoryPersistenceTests, ReceiptTests, SaleInventoryMigrationTests, SalesHistoryTests y metadato de evidencia Phase1I5HardeningTests.
+- decisions/ADR-022-recipes-production-persistence.md, PHASE_1J2_REPORT.md y evidence/phase1j2-*: decisión, reporte y evidencia.
+- README, CURRENT_STATE, NEXT_STEPS, database, architecture, domain, operations y roadmap: continuidad actualizada.
+
+## Registro anterior
+
 # Archivos de checkpoint 1I.5
 
 - PHASE_1I5_REPORT.md: hardening técnico y límites del checkpoint.

@@ -1,3 +1,13 @@
+# Estado vigente — esquema 13 / 1J.2
+
+013_recipes_and_production.sql agrega 13 tablas: formula, formula_version, formula_ingredient, formula_alternative_group, formula_alternative_option, production_profile, production_profile_version, profile_formula_requirement, profile_direct_ingredient, production_batch, production_output_plan, production_formula_snapshot y production_input_snapshot. No hay seeds de fórmulas, perfiles, artículos o productos.
+
+Reconstruye únicamente inventory_operation para ampliar CHECK(kind), conservar historia y agregar FK compuesta diferida a lote CONFIRMED. No altera 001–012, Sale, inventory_movement ni inventory_balance. FKs habilitadas durante toda la migración, diferidas dentro de la transacción y verificadas al commit. Rollback probado a mitad de reconstrucción y al registrar 013. UUID/hash/contrato de consumo por venta preservados.
+
+Publicación/hijos y lotes confirmados son inmutables; versiones activas deben pertenecer al propietario y estar publicadas. Revisiones CAS, UNIQUE(owner,version), publicación creciente y un solo ActiveVersionId. Plan/real separados, snapshot de nombres y fuentes, racionales Int64 reducidos; issues de planificación conservados explícitamente en DRAFT. Triggers defensivos sin escritura de balance. Detalles y límites: decisions/ADR-022-recipes-production-persistence.md. Hashes: evidence/phase1j2-migration-hashes.txt.
+
+## Documentación de etapas anteriores
+
 # Modelo de datos
 
 ## Cierre de FASE 1H — esquema 10

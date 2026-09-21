@@ -1,3 +1,13 @@
+# Próximo paso — revisar 1J.2 y autorizar 1J.3 separadamente
+
+Revisar PHASE_1J2_REPORT.md, ADR-022 y evidencia phase1j2-*. La persistencia está preparada; no hay comando de confirmar producción. No continuar automáticamente.
+
+Antes del primer movimiento deben aprobarse: política MASS/VOLUME no representable; actual=0 y actual>planned (incluido lote totalmente cero frente a salida positiva obligatoria); contrato canónico/IDs deterministas y recuperación; permisos y auditoría Application; revalidación de configuración, asociaciones comerciales y stock en la misma transacción del writer existente. No inferir recetas reales ni activar datos productivos. UI, impresión, rediseño y fullscreen no pertenecen a este checkpoint.
+
+Modelo recomendado para 1J.3: Astra. FASE 1J ABIERTA; desarrollo, no listo para producción. 1J.3 no iniciada.
+
+## Registro anterior (histórico)
+
 # Próximo paso — revisar 1J.1 y autorizar 1J.2 separadamente
 
 Revisar PHASE_1J1_REPORT.md y ADR-021. Diseñar persistencia para Formula/Version, perfiles, alternativas y contrato multi-output; no volver al modelo Recipe→un producto. Definir constraints de una versión activa, inmutabilidad, snapshots y recuperación antes de escribir migración. No iniciar 1J.2 sin autorización expresa; 013 sigue ausente.

@@ -1,3 +1,11 @@
+# FASE 1J ABIERTA — 1J.2 persistencia de fórmulas, perfiles y lotes
+
+1J.2 COMPLETADA: 466/466 pruebas, 31/31 focalizadas, 0 fallidas/omitidas; Release 0 errores/advertencias. Schema 13; 001–012 intactas. Repositorio técnico Infrastructure para drafts/publicación/activación y consultas. Lotes DRAFT con snapshots exactos; escalas no representables permanecen pendientes sin redondeo. Contrato histórico de ambas operaciones de producción preparado y protegido con FKs diferidas. No ConfirmProduction, stock preflight, Application/UI ni producción real. Ver PHASE_1J2_REPORT.md y ADR-022. Baseline de entrada: 05cc19f94b192884114a3da007dcaa72c25f4308.
+
+1J.3 NO iniciada. Sistema de desarrollo, NO listo para producción. No se abrió el POS ni se modificó una instalación real durante esta subfase.
+
+## Registro anterior (histórico)
+
 # FASE 1J ABIERTA — 1J.1 Domain de fórmulas compartidas
 
 1J.1 COMPLETADA: 435/435 pruebas, 0 fallidas/omitidas, Release 0 errores/advertencias. Incorpora fórmulas y perfiles versionados, alternativas, escalado racional exacto, políticas COUNT por línea, planificación multi-output y cantidades reales separadas. No persiste ni mueve inventario. La autorización supera el diseño monoproducto previo. Ver PHASE_1J1_REPORT.md y ADR-021. Baseline de entrada 7cc103c864812d1b8586921bad45323608fdc4d7. 1J.2 NO iniciada; schema 12 y 001–012 intactas, 013 ausente. Desarrollo, no listo para producción.

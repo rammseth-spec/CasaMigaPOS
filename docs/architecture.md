@@ -1,3 +1,11 @@
+# Estado vigente — persistencia técnica 1J.2
+
+SqliteRecipeStore y su parcial Batches residen exclusivamente en Infrastructure y no se registran en composición/UI. Reutilizan los modelos y planificador puro de Domain 1J.1 sin modificar Domain. Escrituras en BEGIN IMMEDIATE, reemplazos de borrador con revisión esperada, publicación y activación explícitas; lecturas read-only consistentes. Permisos y auditoría de configuración quedan para una futura frontera Application.
+
+El repositorio sólo escribe configuración/snapshots de lotes. No valida stock, no reserva, no confirma producción, no escribe movimientos ni saldos ni dinero. El writer existente conserva la autoridad de InventoryBalance. Sólo se amplía su parser de lectura para dos futuros tipos. El contrato SQL prepara una transacción recíproca batch/consumo/salida con auditoría e inmutabilidad; su ejecución productiva NO está implementada. Ver ADR-022 y PHASE_1J2_REPORT.
+
+## Registro arquitectónico anterior
+
 # Arquitectura
 
 ## Inventario cerrado — FASE 1H

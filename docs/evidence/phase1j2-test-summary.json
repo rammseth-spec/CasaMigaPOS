@@ -1,0 +1,175 @@
+{
+  "baseline": "05cc19f94b192884114a3da007dcaa72c25f4308",
+  "schema": 13,
+  "total": 466,
+  "passed": 466,
+  "failed": 0,
+  "skipped": 0,
+  "recipeTests": 31,
+  "releaseErrors": 0,
+  "releaseWarnings": 0,
+  "integrity": "ok",
+  "foreignKeyViolations": 0,
+  "historicalMigrationsUnchanged": true,
+  "realInstallationTouched": false,
+  "productionConfirmationCommand": false,
+  "migration013Sha256": "CAC38A250CAF503A88E79FA07B77A2E2E22A20C3664F7254996323677AB555F1",
+  "trxSha256": "16D8E985F3243AB35FBC466BDEBA814D82E051EC03C093A157B69434FE947DC9",
+  "tests": [
+    {
+      "name": "DraftRetainsActualSeparatelyAndNeverTouchesLedger (3)",
+      "outcome": "Passed",
+      "duration": "00:00:00.7455974"
+    },
+    {
+      "name": "DraftReplacementUsesRevisionAndRollsBackChildrenOnFailure",
+      "outcome": "Passed",
+      "duration": "00:00:00.7347505"
+    },
+    {
+      "name": "ProfileCannotPublishDraftFormulaOrWrongDimension",
+      "outcome": "Passed",
+      "duration": "00:00:00.8054293"
+    },
+    {
+      "name": "DraftUsesStoredProfileIdentityAndRejectsForeignActualCount",
+      "outcome": "Passed",
+      "duration": "00:00:00.6739366"
+    },
+    {
+      "name": "MultiOutputSharesFormulaAndAdditionalPreparationsRemainGeneric",
+      "outcome": "Passed",
+      "duration": "00:00:00.8067592"
+    },
+    {
+      "name": "ReadBoundariesAndOverflowDoNotMutateStorage",
+      "outcome": "Passed",
+      "duration": "00:00:00.7398762"
+    },
+    {
+      "name": "PublicInventoryWorkflowStillRejectsBothProductionKinds",
+      "outcome": "Passed",
+      "duration": "00:00:00.6098590"
+    },
+    {
+      "name": "NonRepresentableMassPersistsUnresolvedDraftWithoutRoundedInputs",
+      "outcome": "Passed",
+      "duration": "00:00:00.6870003"
+    },
+    {
+      "name": "DraftRetainsActualSeparatelyAndNeverTouchesLedger (-1)",
+      "outcome": "Passed",
+      "duration": "00:00:00.6874161"
+    },
+    {
+      "name": "ProductionOperationsCannotCommitAgainstUnconfirmedBatch",
+      "outcome": "Passed",
+      "duration": "00:00:00.8949632"
+    },
+    {
+      "name": "DraftRetainsActualSeparatelyAndNeverTouchesLedger (0)",
+      "outcome": "Passed",
+      "duration": "00:00:00.7231831"
+    },
+    {
+      "name": "DraftRetainsActualSeparatelyAndNeverTouchesLedger (1)",
+      "outcome": "Passed",
+      "duration": "00:00:00.6952425"
+    },
+    {
+      "name": "DuplicateVersionAndWrongActiveOwnerAreRejected",
+      "outcome": "Passed",
+      "duration": "00:00:00.7127553"
+    },
+    {
+      "name": "FreshThirteenHasNoRecipeSeedsOrBalanceWritingTriggers",
+      "outcome": "Passed",
+      "duration": "00:00:00.5006662"
+    },
+    {
+      "name": "PublishedContentAndChildrenCannotBeMutatedOrReparented",
+      "outcome": "Passed",
+      "duration": "00:00:00.8026258"
+    },
+    {
+      "name": "BackupTwelveRestoreThenUpgradePreservesConsumedSale",
+      "outcome": "Passed",
+      "duration": "00:00:00.6219302"
+    },
+    {
+      "name": "IncompleteBatchAndOrphanReferencesAreRejected",
+      "outcome": "Passed",
+      "duration": "00:00:00.7327532"
+    },
+    {
+      "name": "CountUnspecifiedIsStoredButCannotBecomeResolvedProduction",
+      "outcome": "Passed",
+      "duration": "00:00:00.7225320"
+    },
+    {
+      "name": "StableOperationIdCannotDuplicateAndFailedDraftIsAtomic",
+      "outcome": "Passed",
+      "duration": "00:00:00.7197875"
+    },
+    {
+      "name": "ThirteenPreservesExistingSaleAndLedger",
+      "outcome": "Passed",
+      "duration": "00:00:00.5709072"
+    },
+    {
+      "name": "InitializeFailureAtMigrationRegistrationRollsBackAndCanRetry",
+      "outcome": "Passed",
+      "duration": "00:00:00.5921264"
+    },
+    {
+      "name": "FailureMidThirteenRebuildRollsBackSchemaAndAllPreviousRows",
+      "outcome": "Passed",
+      "duration": "00:00:00.5385565"
+    },
+    {
+      "name": "ProductionOriginAndNullStateCannotBypassReciprocalContract",
+      "outcome": "Passed",
+      "duration": "00:00:00.7572817"
+    },
+    {
+      "name": "ConcurrentPublicationHasSingleWinner",
+      "outcome": "Passed",
+      "duration": "00:00:00.6826246"
+    },
+    {
+      "name": "HistoricalVersionReferencesSurviveActivationChange",
+      "outcome": "Passed",
+      "duration": "00:00:00.7327237"
+    },
+    {
+      "name": "ConfirmedSyntheticContractIsImmutableAndRestorable",
+      "outcome": "Passed",
+      "duration": "00:00:01.1919841"
+    },
+    {
+      "name": "SnapshotNamesSurviveCatalogRenameAndBackupRestore",
+      "outcome": "Passed",
+      "duration": "00:00:00.8472302"
+    },
+    {
+      "name": "DirectOnlyDraftAndNoFormulaRecursion",
+      "outcome": "Passed",
+      "duration": "00:00:00.6955366"
+    },
+    {
+      "name": "RoundTripDraftAndPublishedConfiguration",
+      "outcome": "Passed",
+      "duration": "00:00:00.7469942"
+    },
+    {
+      "name": "ConcurrentActivationAndDraftEditsHaveOneWinner",
+      "outcome": "Passed",
+      "duration": "00:00:00.7611469"
+    },
+    {
+      "name": "PublishingVersionsMustFollowDomainOrderAndExactRevision",
+      "outcome": "Passed",
+      "duration": "00:00:00.7053963"
+    }
+  ]
+}

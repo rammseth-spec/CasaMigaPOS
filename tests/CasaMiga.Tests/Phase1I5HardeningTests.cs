@@ -83,7 +83,7 @@ public sealed class Phase1I5HardeningTests:SalesFixture
         if(Environment.GetEnvironmentVariable("CASAMIGA_HARDENING_EVIDENCE_DIR") is {} evidence)
         {
             Directory.CreateDirectory(evidence);File.Copy(backup,Path.Combine(evidence,"phase1i5.cmbackup"),true);
-            File.WriteAllText(Path.Combine(evidence,"phase1i5-integral.json"),JsonSerializer.Serialize(new{schema=12,backupBytes=size,backupSha256=backupHash,logicalSourceSha256=before,logicalRestoredSha256=before,firstOperationId=first.OperationId,firstFolio=first.Folio,sales=3,cashAppliedCents=7600,openingCents=50000,expectedCents=57600,differenceCents=0,finalStock=7,integrity="ok",foreignKeyViolations=0,reconciliationDifferences=0,retryNoMutation=true,restoreRecoveryNoMutation=true,printUnknownNoConsumption=true},new JsonSerializerOptions{WriteIndented=true}));
+            File.WriteAllText(Path.Combine(evidence,"phase1i5-integral.json"),JsonSerializer.Serialize(new{schema=13,backupBytes=size,backupSha256=backupHash,logicalSourceSha256=before,logicalRestoredSha256=before,firstOperationId=first.OperationId,firstFolio=first.Folio,sales=3,cashAppliedCents=7600,openingCents=50000,expectedCents=57600,differenceCents=0,finalStock=7,integrity="ok",foreignKeyViolations=0,reconciliationDifferences=0,retryNoMutation=true,restoreRecoveryNoMutation=true,printUnknownNoConsumption=true},new JsonSerializerOptions{WriteIndented=true}));
         }
     }
     [TestMethod]

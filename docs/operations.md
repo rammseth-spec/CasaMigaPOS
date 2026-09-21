@@ -1,3 +1,13 @@
+# Operación vigente — almacenamiento 1J.2, sin flujo productivo
+
+No hay pantalla de fórmulas/producción ni permisos nuevos. No cargar recetas reales mediante SQL ni utilizar el repositorio técnico como servicio autorizado de usuario. El POS, Checkout, cierre de caja, impresión y consumo por venta mantienen su comportamiento anterior.
+
+El arranque aplicará 013 por el mecanismo normal de backup/migración/validación cuando se ejecute una instalación; en esta entrega sólo se usaron bases sintéticas de tests. Backup y restauración existentes funcionan con schema 13 y conservan configuración, drafts y contratos históricos. Se probó también restaurar backup 12 y migrarlo. Restaurar a directorio nuevo; validar integridad y FKs, no editar producción. Los tests eliminan sus directorios temporales; la evidencia persistente registra resultados, no una base comercial.
+
+Para verificar esta entrega: scripts/verify.ps1; pruebas Recipe* para persistencia/migración/contrato y regresiones existentes de 1I. No se necesita smoke WPF ni impresora. Ver PHASE_1J2_REPORT y ADR-022. 1J.3 requiere autorización separada.
+
+## Instrucciones de etapas anteriores
+
 # Operación de caja, venta y respaldo — FASE 1E
 
 ## Inventario — cierre FASE 1H

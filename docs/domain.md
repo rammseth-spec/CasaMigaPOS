@@ -1,3 +1,11 @@
+# Estado vigente — 1J.2 conserva Domain 1J.1
+
+No se modificó Domain. Fórmulas/perfiles mantienen los constructores, colecciones inmutables, versionado y planificación multi-output de ADR-021. Infrastructure rehidrata versiones sin introducir setters, infraestructura ni UI en Domain.
+
+Persistencia conserva cantidades atómicas Int64, racionales positivos reducidos y políticas COUNT por ingrediente/opción. MASS/VOLUME no representables no se redondean: se guarda DRAFT con issues y requerimientos, sin inputs resueltos ficticios. Actual nullable, cero o mayor al plan se distingue del planned con marca pendiente; no se decide aceptación de producción. No ConfirmProduction ni algoritmo determinista nuevo de operaciones. Ver ADR-022.
+
+## Registro de reglas de etapas anteriores
+
 # Dominio y reglas
 
 ## Plan de consumo por venta — FASE 1I.1
