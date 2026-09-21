@@ -1,3 +1,8 @@
+# FASE 1J ABIERTA — 1J.1 Domain de fórmulas compartidas
+
+1J.1 COMPLETADA: 435/435 pruebas, 0 fallidas/omitidas, Release 0 errores/advertencias. Incorpora fórmulas y perfiles versionados, alternativas, escalado racional exacto, políticas COUNT por línea, planificación multi-output y cantidades reales separadas. No persiste ni mueve inventario. La autorización supera el diseño monoproducto previo. Ver PHASE_1J1_REPORT.md y ADR-021. Baseline de entrada 7cc103c864812d1b8586921bad45323608fdc4d7. 1J.2 NO iniciada; schema 12 y 001–012 intactas, 013 ausente. Desarrollo, no listo para producción.
+
+## Registro anterior
 # FASE 1I — CERRADA
 
 1I.5 completada. Usuario aprobó explícitamente el smoke con «SI» después de las capturas finales: Cashier vendió con consumo ACTIVO, stock 8→6, carrito vacío/$0 e Inventario consistente. Primera venta adicional fue Administrator y se conserva como evidencia, sin borrar ni repetir su intención. Tres ventas manuales: $38 + $19 + $38 = $95 CASH; apertura $0, ExpectedCash calculado $95. Caja sintética permanece OPEN, sin conteo/cierre manual. ENABLED v4, dos consumos -2 y saldo 6; checkout.pending ausente. Consulta final read-only: integrity_check ok, FK 0.

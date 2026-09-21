@@ -1,0 +1,15 @@
+2026-09-20 — FASE 1J.1
+Baseline: 7cc103c864812d1b8586921bad45323608fdc4d7.
+Checkpoint inicial: 28 nuevas pruebas aprobadas.
+Focalizadas finales: 53 aprobadas, 0 fallidas, 0 omitidas (33 ProductionDomainTests + 20 InventoryDomainTests).
+Log: work/phase1j1-focused.log; TRX TestResults/phase1j1-focused.trx.
+Oficial: scripts/verify.ps1 -Dotnet work/dotnet/dotnet.exe -PackageSource work/nuget-feed.
+Exit 0. Build Release 0 errores, 0 advertencias, 4.40s.
+Suite completa 435 aprobadas, 0 fallidas, 0 omitidas, 2m56s.
+Log: work/phase1j1-verify.log; TRX TestResults/foundation.trx.
+Hashes de migraciones 001–012 comparados con phase1i5-migration-hashes.txt: sin diferencias. 013 ausente.
+Archivos de producto preexistentes comparados con baseline: sin cambios. Sólo cuatro archivos nuevos Domain y una clase nueva de pruebas.
+Sin modificaciones Application/Infrastructure/Presentation/Checkout/Sale/Payment/ExpectedCash/consumo de ventas/tickets/impresión.
+Nuevo Domain sin referencia a SQLite/Infrastructure/UI; sin float/double. No stock consultado ni inventario movido.
+Sin pruebas manuales WPF ni seeds productivos. Suite previa ejecuta pruebas con bases temporales como regresión.
+Revisión de diff y git diff --check correctos. 1J.2 no iniciada; schema 12 sin cambios.

@@ -45,3 +45,7 @@ Actualización 1C: 1B aprobada; catálogo implementado, migración 004, smoke y 
 ## Cierre FASE 1I / 1I.5
 
 FASE 1I CERRADA tras aprobación humana explícita. Ver PHASE_1I5_REPORT.md y evidencia phase1i5-*. Schema 12, sin migración 013; 402 pruebas aprobadas. Sin cambios arquitectónicos ni política comercial en el cierre. Versión de desarrollo, no lista para producción. No fase posterior iniciada. La caja del smoke permanece OPEN; no usar estos datos sintéticos como instalación comercial.
+
+## FASE 1J.1 — Domain puro
+
+Fórmulas técnicas compartidas sin inventario intermedio obligatorio; FormulaVersion sólo referencia ingredientes físicos. ProductProductionProfileVersion referencia versiones de fórmula y componentes directos. ProductionPlan agrega preparación por versión antes de escalado y COUNT por línea; ProductionActualOutput no recalcula consumo. Ver ADR-021 y PHASE_1J1_REPORT.md. Sin schema, persistencia, UI, permisos ni cambios de 1I. 1J abierta; 1J.2 no iniciada.

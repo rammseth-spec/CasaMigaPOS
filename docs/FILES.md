@@ -399,3 +399,7 @@ Aceptación documentada mediante capturas y confirmación SI del rechazo de acti
 ## Cierre FASE 1I / 1I.5
 
 FASE 1I CERRADA tras aprobación humana explícita. Ver PHASE_1I5_REPORT.md y evidencia phase1i5-*. Schema 12, sin migración 013; 402 pruebas aprobadas. Sin cambios arquitectónicos ni política comercial en el cierre. Versión de desarrollo, no lista para producción. No fase posterior iniciada. La caja del smoke permanece OPEN; no usar estos datos sintéticos como instalación comercial.
+
+## Archivos 1J.1
+
+ProductionScaling.cs (racionales/políticas/errores), ProductionFormula.cs (versiones/alternativas), ProductionProfile.cs (perfiles), ProductionPlan.cs (plan/actual), todos en src/CasaMiga.Domain. Pruebas: tests/CasaMiga.Tests/ProductionDomainTests.cs. Documentación: PHASE_1J1_REPORT.md, decisions/ADR-021-shared-formulas-production-domain.md y evidence/phase1j1-verification.txt.

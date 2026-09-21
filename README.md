@@ -1,6 +1,6 @@
 # Casa Miga POS
 
-Aplicación Windows offline para una panadería mexicana. **FASE 1I CERRADA: 1I.5 y smoke humano aprobados**: Checkout integra venta e inventario en un único commit; schema 12 distingue ventas legacy y ventas con evaluación obligatoria. Flag inicial DISABLED; activación segura y preflight 1I.4 implementados, con smoke humano completado. Versión de desarrollo, no lista para producción. Ver [reporte 1I.5](docs/PHASE_1I5_REPORT.md) para evidencia vigente.
+Aplicación Windows offline para una panadería mexicana. **FASE 1I CERRADA; FASE 1J ABIERTA únicamente con Domain 1J.1**: Checkout integra venta e inventario en un único commit; schema 12 distingue ventas legacy y ventas con evaluación obligatoria. Flag inicial DISABLED; activación segura y preflight 1I.4 implementados, con smoke humano completado. Versión de desarrollo, no lista para producción. Ver [reporte 1J.1](docs/PHASE_1J1_REPORT.md) para continuidad y evidencia. Fórmulas y planificación puras, sin producción persistente ni UI; 1J.2 no iniciada.
 
 Stack: C# / .NET 10 LTS / WPF / Microsoft.Data.Sqlite / SQLite / MSTest.
 
@@ -16,7 +16,7 @@ El primer restore requiere Internet; la aplicación no. No hay servicios cloud n
 Al arrancar se respalda, migra y valida la instalación. El paquete .cmbackup incluye base, terminal.json y manifiesto; restauración validada a directorio nuevo. Reiniciar exige login y recupera la caja abierta sin alterar su fondo ni timestamp. Salir del usuario o cerrar la ventana no cierra caja. El cierre requiere confirmar conteo y luego confirmar cierre; volver conserva el conteo. Los importes se ocultan hasta confirmar el conteo ciego.
 
 - `src/`: Domain, Application, Infrastructure, Presentation y utilidad Maintenance.
-- `tests/`: dinero, cantidades físicas, servicios y consultas de inventario, UI/ViewModel, ledger, persistencia, identidad, autorización, concurrencia, carrito, venta, historial, tickets, recuperación, diagnóstico y backup. Resultados vigentes: 402 pruebas aprobadas; ver reporte 1I.5.
+- `tests/`: dinero, cantidades físicas, servicios y consultas de inventario, UI/ViewModel, ledger, persistencia, identidad, autorización, concurrencia, carrito, venta, historial, tickets, recuperación, diagnóstico y backup. Resultados vigentes: 435 pruebas aprobadas; ver reporte 1J.1.
 - `migrations/`: SQL inmutable versionado, recursos del ensamblado.
 - `docs/`: arquitectura, operación, decisiones y evidencia.
 - `research/`: investigación de FASE 0; `scripts/`: verificación/publicación de desarrollo.
