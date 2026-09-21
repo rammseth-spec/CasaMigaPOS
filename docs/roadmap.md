@@ -1,3 +1,9 @@
+# Checkpoint vigente — corrección 1J.3B
+
+1J.1, 1J.2 y 1J.3A conservadas. 1J.3B aprovisiona permisos mediante 015/schema 15. 1J.3 funcional permanece pendiente de autorización de reanudación. No servicios nuevos ni UI 1J.4. FASE 1J ABIERTA, desarrollo no listo para producción. Ver PHASE_1J3B_REPORT.md.
+
+## Registro anterior (histórico)
+
 # Checkpoint vigente — FASE 1J
 
 - 1J.1: Domain aprobado y conservado.

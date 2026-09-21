@@ -1,3 +1,19 @@
+# Estado vigente — schema 15 / permisos 1J.3B
+
+015_recipe_and_production_permissions.sql añade exclusivamente cinco filas permission y nueve role_permission. Identidades: permission.name y app_role.name TEXT, sin GUIDs ni IDs numéricos. No cambia tablas, constraints, triggers ni permisos anteriores. 001–014 intactas; 016 ausente. Migración y registro de versión comparten la transacción existente de Database.Initialize.
+
+| Permiso | Administrator | Manager | Cashier |
+|---|---|---|---|
+| recipe.view | Sí | Sí | No |
+| recipe.configure | Sí | No | No |
+| production.view | Sí | Sí | No |
+| production.create | Sí | Sí | No |
+| production.confirm | Sí | Sí | No |
+
+HasPermission permanece basado en asignaciones persistidas y usuario activo. Permisos desconocidos se deniegan. No hay aprovisionamiento paralelo al startup ni servicios 1J.3. Ver PHASE_1J3B_REPORT.md.
+
+## Registro anterior (histórico)
+
 # Estado vigente — esquema 14 / corrección 1J.3A
 
 014_allow_zero_output_production_batches.sql reconstruye únicamente production_batch. Copia temporal transaccional, tabla nueva, renombrado al nombre final antes de reinsertar datos, restauración de índice/triggers y foreign_key_check obligatorio. FKs permanecen habilitadas; referencias diferidas. No cambia inventory_operation, inventory_movement ni inventory_balance.

@@ -1,3 +1,11 @@
+# Próximo paso — revisar corrección 1J.3B
+
+Revisar PHASE_1J3B_REPORT.md y evidencia phase1j3b-*. Permisos aprovisionados mediante migración 015, sin bypass ni inicialización paralela. Autorizar separadamente la reanudación de 1J.3 funcional; los servicios futuros deberán revalidar HasPermission con la matriz aprobada.
+
+1J.3 sigue PENDIENTE; 1J.4 no iniciada. Modelo recomendado para reanudar: Astra, conforme a la autorización. FASE 1J ABIERTA; desarrollo, no listo para producción.
+
+## Registro anterior (histórico)
+
 # Próximo paso — revisar corrección 1J.3A
 
 Revisar PHASE_1J3A_REPORT.md y evidencia phase1j3a-*. El bloqueo de esquema por salida totalmente cero queda corregido en 014. 1J.3 funcional permanece pendiente de autorización de reanudación: no hay PrepareProduction, ConfirmProduction ni nuevos permisos/UI. No iniciar 1J.4 automáticamente.

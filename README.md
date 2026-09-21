@@ -1,12 +1,12 @@
 # Casa Miga POS
 
-Aplicación Windows offline para una panadería mexicana. **FASE 1I CERRADA; FASE 1J ABIERTA, corrección 1J.3A implementada**: schema 14 permite lotes confirmados con producción real cero y consumo obligatorio. No hay servicios de confirmación de producción ni UI nueva. Checkout y consumo por venta mantienen su comportamiento. Versión de desarrollo, NO lista para producción. Ver [reporte 1J.3A](docs/PHASE_1J3A_REPORT.md). 1J.3 funcional pendiente; no reanudar automáticamente.
+Aplicación Windows offline para una panadería mexicana. **FASE 1I CERRADA; FASE 1J ABIERTA, corrección 1J.3B implementada**: schema 15 aprovisiona permisos de recetas y producción, preservando el contrato de salida cero. No hay servicios de confirmación de producción ni UI nueva. Checkout y consumo por venta mantienen su comportamiento. Versión de desarrollo, NO lista para producción. Ver [reporte 1J.3B](docs/PHASE_1J3B_REPORT.md). 1J.3 funcional pendiente; no reanudar automáticamente.
 
 Stack: C# / .NET 10 LTS / WPF / Microsoft.Data.Sqlite / SQLite / MSTest.
 
 ## Continuar
 
-1. Leer [estado](docs/CURRENT_STATE.md), [próximos pasos](docs/NEXT_STEPS.md) y [reporte 1J.3A](docs/PHASE_1J3A_REPORT.md).
+1. Leer [estado](docs/CURRENT_STATE.md), [próximos pasos](docs/NEXT_STEPS.md) y [reporte 1J.3B](docs/PHASE_1J3B_REPORT.md).
 2. Instalar SDK .NET 10.0.400 x64 o parche compatible y ejecutar `./scripts/verify.ps1`.
 3. Ejecutar `dotnet run --project src/CasaMiga.Presentation`.
 4. En una carpeta nueva, crear el primer administrador desde la pantalla inicial; después iniciar sesión y abrir caja con fondo cero o positivo.
@@ -16,7 +16,7 @@ El primer restore requiere Internet; la aplicación no. No hay servicios cloud n
 Al arrancar se respalda, migra y valida la instalación. El paquete .cmbackup incluye base, terminal.json y manifiesto; restauración validada a directorio nuevo. Reiniciar exige login y recupera la caja abierta sin alterar su fondo ni timestamp. Salir del usuario o cerrar la ventana no cierra caja. El cierre requiere confirmar conteo y luego confirmar cierre; volver conserva el conteo. Los importes se ocultan hasta confirmar el conteo ciego.
 
 - `src/`: Domain, Application, Infrastructure, Presentation y utilidad Maintenance.
-- `tests/`: dinero, cantidades físicas, servicios y consultas de inventario, UI/ViewModel, ledger, persistencia, identidad, autorización, concurrencia, carrito, venta, historial, tickets, recuperación, diagnóstico y backup. Resultados vigentes: 466/466 pruebas aprobadas, 0 fallidas/omitidas; Release 0 errores/advertencias. Ver reporte 1J.2.
+- `tests/`: dinero, cantidades físicas, servicios y consultas de inventario, UI/ViewModel, ledger, persistencia, identidad, autorización, concurrencia, carrito, venta, historial, tickets, recuperación, diagnóstico y backup. Resultados vigentes: 491/491 pruebas aprobadas, 0 fallidas/omitidas; Release 0 errores/advertencias. Ver reporte 1J.3B.
 - `migrations/`: SQL inmutable versionado, recursos del ensamblado.
 - `docs/`: arquitectura, operación, decisiones y evidencia.
 - `research/`: investigación de FASE 0; `scripts/`: verificación/publicación de desarrollo.

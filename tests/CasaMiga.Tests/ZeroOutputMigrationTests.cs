@@ -69,7 +69,7 @@ public sealed partial class RecipePersistenceTests
         Assert.ThrowsExactly<SqliteException>(()=>Sql($"UPDATE production_output_plan SET actual_count=-1 WHERE batch_id='{id}'"));db.Validate();
     }
 
-    private string AllRows(bool migrations=false)
+    private string AllRows(bool migrations=false, bool excludeProductionPermissions=false)
     {
         using var c=db.Open(readOnly:true);using var q=c.CreateCommand();
         q.CommandText="SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name";
@@ -77,7 +77,10 @@ public sealed partial class RecipePersistenceTests
         var result=new List<string>();
         foreach(var table in tables.Where(x=>migrations||x!="schema_migration"))
         {
-            q.CommandText="SELECT * FROM \""+table+"\"";using var r=q.ExecuteReader();var rows=new List<string>();
+            q.CommandText="SELECT * FROM \""+table+"\"";
+            if(excludeProductionPermissions && table is "permission" or "role_permission")
+                q.CommandText+=" WHERE "+(table=="permission"?"name":"permission_name")+" NOT IN ('recipe.view','recipe.configure','production.view','production.create','production.confirm')";
+            using var r=q.ExecuteReader();var rows=new List<string>();
             while(r.Read()){var values=new object[r.FieldCount];r.GetValues(values);rows.Add(JsonSerializer.Serialize(values));}
             result.Add(table+string.Join("\n",rows.Order(StringComparer.Ordinal)));
         }
@@ -102,7 +105,7 @@ public sealed partial class RecipePersistenceTests
                 s.AddReceiptSnapshot(new(sale.Id,document.Version,json,ReceiptDocumentCodec.Hash(json),sale.ConfirmedAt));return true;
             });
             Assert.AreEqual(1L,old.Sql("SELECT count(*) FROM inventory_operation WHERE kind='SALE_CONSUMPTION'"));
-            var rows=old.AllRows();
+            var rows=old.AllRows(excludeProductionPermissions:true);
             var before=old.AllRows(true);
             var opSchema=old.Sql("SELECT sql FROM sqlite_master WHERE name='inventory_operation'");
             if(mode=="midway")
@@ -119,8 +122,8 @@ public sealed partial class RecipePersistenceTests
                 old.Sql("CREATE TRIGGER inject_014 BEFORE INSERT ON schema_migration WHEN NEW.version=14 BEGIN SELECT RAISE(ABORT,'injected'); END");
                 Assert.ThrowsExactly<SqliteException>(()=>old.db.Initialize());Assert.AreEqual(before,old.AllRows(true));old.db.Validate();old.Sql("DROP TRIGGER inject_014");
             }
-            old.db.Initialize();old.db.Validate();Assert.AreEqual(rows,old.AllRows());
-            Assert.AreEqual(14L,old.Sql("SELECT max(version) FROM schema_migration"));
+            old.db.Initialize();old.db.Validate();Assert.AreEqual(rows,old.AllRows(excludeProductionPermissions:true));
+            Assert.AreEqual(15L,old.Sql("SELECT max(version) FROM schema_migration"));
             Assert.AreEqual(opSchema,old.Sql("SELECT sql FROM sqlite_master WHERE name='inventory_operation'"));
             Assert.AreEqual(0L,old.Sql("SELECT count(*) FROM sqlite_master WHERE name LIKE '%_014'"));
             Assert.IsEmpty(new SqliteInventoryStore(old.db,old.clock).Reconcile());

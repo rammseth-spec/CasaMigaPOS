@@ -1,3 +1,11 @@
+# FASE 1J ABIERTA — corrección 1J.3B
+
+Migración 015 aprovisiona cinco permisos y nueve asignaciones usando permission/role_permission. Schema 15. Administrator 5/5; Manager 4/5 sin recipe.configure; Cashier 0/5. HasPermission y src intactos. Ver PHASE_1J3B_REPORT.md. Verificación: 8/8 focalizadas, 491/491 suite completa, 0 fallidas/omitidas; Release 0 errores/advertencias de compilación.
+
+1J.3 funcional PENDIENTE. No reanudar automáticamente ni iniciar 1J.4. Desarrollo, NO listo para producción. Baseline: a76951f86eaf0a9810fd701273358bea25f7dec2.
+
+## Registro anterior (histórico)
+
 # FASE 1J ABIERTA — corrección 1J.3A
 
 Migración 014: schema 14 admite lotes confirmados con todas las cantidades reales en cero, consumo confirmado obligatorio y ninguna operación de salida. Si existe una cantidad positiva, la salida confirmada es obligatoria. Sólo se reconstruye production_batch; migraciones 001–013 intactas, sin cambios en src. Ver PHASE_1J3A_REPORT.md. Verificación: 51/51 focalizadas, 486/486 suite completa, 0 fallidas/omitidas; Release 0 errores/advertencias de compilación; backup/restore, integridad, FKs y rollback aprobados.

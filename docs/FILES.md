@@ -1,3 +1,13 @@
+# Checkpoint 1J.3B
+
+- migrations/015_recipe_and_production_permissions.sql: cinco permisos, nueve asignaciones.
+- tests/CasaMiga.Tests/ProductionPermissionMigrationTests.cs: HasPermission real, fresh, upgrade, rollback y backup/restore.
+- Tests anteriores: schema esperado 15; comparación histórica excluye únicamente los cinco permisos nuevos y sus asignaciones durante upgrades exitosos. Rollback sigue comparando todas las filas.
+- README, CURRENT_STATE, NEXT_STEPS, database, roadmap, FILES, PHASE_1J3B_REPORT y evidence/phase1j3b-*: continuidad/evidencia.
+- src y 001–014 intactos.
+
+## Registro anterior (histórico)
+
 # Archivos de checkpoint correctivo 1J.3A
 
 - migrations/014_allow_zero_output_production_batches.sql: corrección de salida cero, única migración nueva.
