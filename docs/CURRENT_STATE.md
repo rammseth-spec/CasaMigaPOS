@@ -1,3 +1,11 @@
+# FASE 1J ABIERTA — corrección 1J.3A
+
+Migración 014: schema 14 admite lotes confirmados con todas las cantidades reales en cero, consumo confirmado obligatorio y ninguna operación de salida. Si existe una cantidad positiva, la salida confirmada es obligatoria. Sólo se reconstruye production_batch; migraciones 001–013 intactas, sin cambios en src. Ver PHASE_1J3A_REPORT.md. Verificación: 51/51 focalizadas, 486/486 suite completa, 0 fallidas/omitidas; Release 0 errores/advertencias de compilación; backup/restore, integridad, FKs y rollback aprobados.
+
+1J.3 funcional sigue PENDIENTE y no se reanuda automáticamente. 1J.4 no iniciada. Desarrollo, NO listo para producción. Baseline de entrada: 2f5e4579255d88b9c85c58bcfa4d6b1107bb63d5.
+
+## Registro anterior (histórico)
+
 # FASE 1J ABIERTA — 1J.2 persistencia de fórmulas, perfiles y lotes
 
 1J.2 COMPLETADA: 466/466 pruebas, 31/31 focalizadas, 0 fallidas/omitidas; Release 0 errores/advertencias. Schema 13; 001–012 intactas. Repositorio técnico Infrastructure para drafts/publicación/activación y consultas. Lotes DRAFT con snapshots exactos; escalas no representables permanecen pendientes sin redondeo. Contrato histórico de ambas operaciones de producción preparado y protegido con FKs diferidas. No ConfirmProduction, stock preflight, Application/UI ni producción real. Ver PHASE_1J2_REPORT.md y ADR-022. Baseline de entrada: 05cc19f94b192884114a3da007dcaa72c25f4308.

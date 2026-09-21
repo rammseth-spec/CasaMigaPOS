@@ -1,3 +1,11 @@
+# Estado vigente — esquema 14 / corrección 1J.3A
+
+014_allow_zero_output_production_batches.sql reconstruye únicamente production_batch. Copia temporal transaccional, tabla nueva, renombrado al nombre final antes de reinsertar datos, restauración de índice/triggers y foreign_key_check obligatorio. FKs permanecen habilitadas; referencias diferidas. No cambia inventory_operation, inventory_movement ni inventory_balance.
+
+CONFIRMED exige consumo confirmado recíproco y ActualCount resueltos. EXISTS(actual_count>0) exige salida confirmada recíproca; sin positivos, output_operation_id debe ser NULL y no puede existir PRODUCTION_OUTPUT asociado. No se suman cantidades reales para decidir presencia. No se admiten operaciones vacías ni movimientos de producción cero; no se crea WASTE. 001–013 inmutables. Ver PHASE_1J3A_REPORT.md para pruebas y límites; 1J.3 funcional pendiente.
+
+## Registro anterior (histórico)
+
 # Estado vigente — esquema 13 / 1J.2
 
 013_recipes_and_production.sql agrega 13 tablas: formula, formula_version, formula_ingredient, formula_alternative_group, formula_alternative_option, production_profile, production_profile_version, profile_formula_requirement, profile_direct_ingredient, production_batch, production_output_plan, production_formula_snapshot y production_input_snapshot. No hay seeds de fórmulas, perfiles, artículos o productos.

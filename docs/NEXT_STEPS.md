@@ -1,3 +1,11 @@
+# Próximo paso — revisar corrección 1J.3A
+
+Revisar PHASE_1J3A_REPORT.md y evidencia phase1j3a-*. El bloqueo de esquema por salida totalmente cero queda corregido en 014. 1J.3 funcional permanece pendiente de autorización de reanudación: no hay PrepareProduction, ConfirmProduction ni nuevos permisos/UI. No iniciar 1J.4 automáticamente.
+
+Modelo recomendado para reanudar 1J.3: Astra. Mantener writer de InventoryBalance único, atomicidad, consumo obligatorio y salida sólo cuando haya cantidades reales positivas. FASE 1J ABIERTA; desarrollo, no listo para producción.
+
+## Registro anterior (histórico)
+
 # Próximo paso — revisar 1J.2 y autorizar 1J.3 separadamente
 
 Revisar PHASE_1J2_REPORT.md, ADR-022 y evidencia phase1j2-*. La persistencia está preparada; no hay comando de confirmar producción. No continuar automáticamente.

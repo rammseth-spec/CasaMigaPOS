@@ -8,9 +8,9 @@ namespace CasaMiga.Tests;
 public sealed partial class RecipePersistenceTests
 {
     // Synthetic SQL contract fixture only. There is deliberately no equivalent product command/writer.
-    private Guid HistoricalContract(bool sealBatch=true)
+    private Guid HistoricalContract(bool sealBatch=true, long actual=2, bool? includeOutput=null, bool includeConsumption=true, Action<SqliteConnection,SqliteTransaction,Guid>? beforeSeal=null, long? outputDelta=null, int outputLineCount=1, bool invertConsumption=false)
     {
-        Publish();var id=Draft(2);var batch=recipes.GetProductionBatch(id)!;
+        Publish();var id=Draft(actual);var batch=recipes.GetProductionBatch(id)!;
         foreach(var input in batch.Inputs)
             inventory.RegisterOpeningBalance(new(Guid.NewGuid(),input.ItemId,SqliteInventoryStore.MainLocationId,10000,
                 input.Required.Dimension switch{InventoryDimension.Mass=>"mg",InventoryDimension.Volume=>"uL",_=>"piece"}));
@@ -22,14 +22,19 @@ public sealed partial class RecipePersistenceTests
             for(int i=0;i<args.Length;i++)q.Parameters.AddWithValue("$"+i,args[i] is Guid g?g.ToString("D"):args[i]??DBNull.Value);
             q.ExecuteNonQuery();
         }
-        var consume=Guid.NewGuid();var output=Guid.NewGuid();var hash=new string('A',64);
-        E("UPDATE production_batch SET consumption_operation_id=$1,output_operation_id=$2,request_sha256=$3 WHERE id=$0",id,consume,output,hash);
+        var consume=Guid.NewGuid();Guid? output=(includeOutput??actual>0)?Guid.NewGuid():null;var hash=new string('A',64);
+        E("UPDATE production_batch SET consumption_operation_id=$1,output_operation_id=$2,request_sha256=$3 WHERE id=$0",id,includeConsumption?consume:null,output,hash);
+        if(includeConsumption) {
         Operation(consume,"PRODUCTION_CONSUMPTION",batch.Inputs.Count);
         int sequence=0;
-        foreach(var line in batch.Inputs)Movement(consume,++sequence,line.ItemId,line.Required.Dimension,-line.Required.AtomicUnits,10000);
+        foreach(var line in batch.Inputs)Movement(consume,++sequence,line.ItemId,line.Required.Dimension,(invertConsumption?1:-1)*line.Required.AtomicUnits,10000);
         Audit("inventory.operation.confirmed",consume);E("UPDATE inventory_operation SET state='CONFIRMED',confirmed_utc=$1 WHERE id=$0",consume,at.ToString("O"));
-        Operation(output,"PRODUCTION_OUTPUT",1);Movement(output,1,finished.Id,InventoryDimension.Count,2,0);
-        Audit("inventory.operation.confirmed",output);E("UPDATE inventory_operation SET state='CONFIRMED',confirmed_utc=$1 WHERE id=$0",output,at.ToString("O"));
+        }
+        if(output is {} outputId) {
+        Operation(outputId,"PRODUCTION_OUTPUT",outputLineCount);Movement(outputId,1,finished.Id,InventoryDimension.Count,outputDelta??actual,0);
+        Audit("inventory.operation.confirmed",outputId);E("UPDATE inventory_operation SET state='CONFIRMED',confirmed_utc=$1 WHERE id=$0",outputId,at.ToString("O"));
+        }
+        beforeSeal?.Invoke(c,t,id);
         if(sealBatch){Audit("production.confirmed",id);E("UPDATE production_batch SET status='CONFIRMED',confirmed_utc=$1 WHERE id=$0",id,at.AddMinutes(3).ToString("O"));}
         t.Commit();return id;
         void Operation(Guid operation,string kind,int count)=>E("INSERT INTO inventory_operation(id,request_sha256,kind,state,actor_id,terminal_id,expected_line_count,created_utc,production_batch_id,production_batch_status) VALUES($0,$1,$2,'PENDING',$3,$4,$5,$6,$7,'CONFIRMED')",operation,hash,kind,user.Current!.Id,terminal.Id,count,at.ToString("O"),id);

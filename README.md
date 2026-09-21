@@ -1,12 +1,12 @@
 # Casa Miga POS
 
-Aplicación Windows offline para una panadería mexicana. **FASE 1I CERRADA; FASE 1J ABIERTA, 1J.2 implementada**: schema 13 prepara fórmulas/perfiles versionados, lotes DRAFT y snapshots históricos. No hay confirmación de producción ni UI nueva. Checkout y consumo por venta mantienen su comportamiento. Versión de desarrollo, NO lista para producción. Ver [reporte 1J.2](docs/PHASE_1J2_REPORT.md) y [ADR-022](docs/decisions/ADR-022-recipes-production-persistence.md). 1J.3 NO iniciada.
+Aplicación Windows offline para una panadería mexicana. **FASE 1I CERRADA; FASE 1J ABIERTA, corrección 1J.3A implementada**: schema 14 permite lotes confirmados con producción real cero y consumo obligatorio. No hay servicios de confirmación de producción ni UI nueva. Checkout y consumo por venta mantienen su comportamiento. Versión de desarrollo, NO lista para producción. Ver [reporte 1J.3A](docs/PHASE_1J3A_REPORT.md). 1J.3 funcional pendiente; no reanudar automáticamente.
 
 Stack: C# / .NET 10 LTS / WPF / Microsoft.Data.Sqlite / SQLite / MSTest.
 
 ## Continuar
 
-1. Leer [estado](docs/CURRENT_STATE.md), [próximos pasos](docs/NEXT_STEPS.md) y [reporte 1J.2](docs/PHASE_1J2_REPORT.md).
+1. Leer [estado](docs/CURRENT_STATE.md), [próximos pasos](docs/NEXT_STEPS.md) y [reporte 1J.3A](docs/PHASE_1J3A_REPORT.md).
 2. Instalar SDK .NET 10.0.400 x64 o parche compatible y ejecutar `./scripts/verify.ps1`.
 3. Ejecutar `dotnet run --project src/CasaMiga.Presentation`.
 4. En una carpeta nueva, crear el primer administrador desde la pantalla inicial; después iniciar sesión y abrir caja con fondo cero o positivo.

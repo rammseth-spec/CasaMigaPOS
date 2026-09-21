@@ -1,3 +1,14 @@
+# Archivos de checkpoint correctivo 1J.3A
+
+- migrations/014_allow_zero_output_production_batches.sql: corrección de salida cero, única migración nueva.
+- tests/CasaMiga.Tests/ZeroOutputMigrationTests.cs: contrato, rechazos, upgrade con historia, rollback y backup/restore.
+- tests/CasaMiga.Tests/RecipeContractTests.cs: fixture SQL sintético parametrizado, sin writer productivo nuevo.
+- Tests existentes: expectativas de schema 13→14; sin cambio de alcance funcional.
+- README, CURRENT_STATE, NEXT_STEPS, database, FILES, PHASE_1J3A_REPORT y evidence/phase1j3a-*: continuidad y evidencia.
+- src y migraciones 001–013 permanecen intactos.
+
+## Registro anterior (histórico)
+
 # Archivos de checkpoint 1J.2
 
 - migrations/013_recipes_and_production.sql: configuración, snapshots y contrato recíproco de producción; 001–012 intactas.

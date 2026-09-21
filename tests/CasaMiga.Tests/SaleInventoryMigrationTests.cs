@@ -114,7 +114,7 @@ public sealed class SaleInventoryMigrationTests
         var target=Path.Combine(directory,"restored");InstallationBackup.Restore(backup,target);
         var restored=new Database(Path.Combine(target,"casamiga.db"));restored.Validate();
         Assert.IsEmpty(new SqliteInventoryStore(restored,clock).Reconcile());
-        using var rc=restored.Open();using var q=new SqliteCommand("SELECT max(version) FROM schema_migration",rc);Assert.AreEqual(13L,q.ExecuteScalar());
+        using var rc=restored.Open();using var q=new SqliteCommand("SELECT max(version) FROM schema_migration",rc);Assert.AreEqual(14L,q.ExecuteScalar());
     }
 
     [TestMethod] public void FailureAfterRebuildRollsBackDataObjectsAndVersion()

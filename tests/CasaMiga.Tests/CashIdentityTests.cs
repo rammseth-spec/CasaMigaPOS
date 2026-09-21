@@ -195,7 +195,7 @@ public sealed class CashIdentityTests
         previous.Initialize(); previous.Validate();
         using var connection=previous.Open();using var query=connection.CreateCommand();
         query.CommandText="SELECT name FROM category WHERE id='c'";Assert.AreEqual("Pan dulce",query.ExecuteScalar());
-        query.CommandText="SELECT count(*) FROM schema_migration";Assert.AreEqual(13L,query.ExecuteScalar());
+        query.CommandText="SELECT count(*) FROM schema_migration";Assert.AreEqual(14L,query.ExecuteScalar());
         query.CommandText="SELECT count(*) FROM app_user";Assert.AreEqual(0L,query.ExecuteScalar());
     }
 }
