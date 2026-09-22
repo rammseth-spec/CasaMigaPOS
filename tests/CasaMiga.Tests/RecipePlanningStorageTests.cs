@@ -1,3 +1,4 @@
+using CasaMiga.Application;
 using CasaMiga.Domain;
 using CasaMiga.Infrastructure;
 using Microsoft.Data.Sqlite;

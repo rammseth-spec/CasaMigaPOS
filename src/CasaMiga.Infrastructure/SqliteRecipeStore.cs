@@ -1,16 +1,12 @@
 using System.Globalization;
 using CasaMiga.Domain;
+using CasaMiga.Application;
 using Microsoft.Data.Sqlite;
 
 namespace CasaMiga.Infrastructure;
 
-public sealed record StoredVersion<T>(T Value, long Revision);
-public sealed record FormulaSummary(Guid Id, string Code, string Name, Guid? ActiveVersionId, long Revision);
-public sealed record ProfileSummary(Guid Id, Guid ProductId, Guid FinishedItemId, Guid? ActiveVersionId, long Revision);
-public sealed class RecipeConcurrencyException() : InvalidOperationException("La versión cambió o ya no es un borrador.");
-
-/// <summary>Technical storage only. Not registered as a user-facing service; authorization belongs to a future application boundary.</summary>
-public sealed partial class SqliteRecipeStore(Database database)
+/// <summary>Technical storage only. Not registered as a user-facing service; authorization is enforced by RecipeService and ProductionService.</summary>
+public sealed partial class SqliteRecipeStore(Database database) : IRecipeStore
 {
     public void CreateFormula(Formula formula, string name, DateTimeOffset at) => Write((c,t) =>
         Execute(c,t,"INSERT INTO formula(id,code,name,created_utc) VALUES($0,$1,$2,$3)",formula.Id,formula.Code,name,At(at)));
@@ -150,13 +146,20 @@ public sealed partial class SqliteRecipeStore(Database database)
     private static void Activate(SqliteConnection c, SqliteTransaction t, string table, Guid id, Guid? versionId, long revision) =>
         Changed(Execute(c,t,$"UPDATE {table} SET active_version_id=$1,revision=revision+1 WHERE id=$0 AND revision=$2",id,versionId,revision));
 
+    private SqliteConnection? scopedConnection;
+    private SqliteTransaction? scopedTransaction;
+    internal SqliteRecipeStore(Database database, SqliteConnection connection, SqliteTransaction transaction) : this(database)
+    { scopedConnection=connection; scopedTransaction=transaction; }
+
     private void Write(Action<SqliteConnection,SqliteTransaction> action)
     {
+        if(scopedConnection is not null){action(scopedConnection,scopedTransaction!);return;}
         using var c = database.Open(); using var t = c.BeginTransaction(deferred:false);
         action(c,t); t.Commit();
     }
     private T Read<T>(Func<SqliteConnection,SqliteTransaction,T> action)
     {
+        if(scopedConnection is not null)return action(scopedConnection,scopedTransaction!);
         using var c = database.Open(readOnly:true); using var t = c.BeginTransaction(deferred:true);
         var result = action(c,t); t.Commit(); return result;
     }

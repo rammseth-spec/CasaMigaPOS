@@ -1,3 +1,11 @@
+# Próximo paso — revisión de 1J.3 y autorización separada de 1J.4
+
+Revisar PHASE_1J3_REPORT.md, ADR-023 y evidencia phase1j3-*. No iniciar automáticamente UI. Preparar propuesta de interacción para fórmulas/perfiles, alternativas, preview sin reserva, actuals cero/superiores al plan, confirmación y recuperación conservando OperationId/ExpectedRevision.
+
+Límites actuales: MAIN; saldos inicializados; plan DRAFT sin edición funcional; confirmación por creador/terminal; sin transferencia entre usuarios. No datos productivos reales, impresión, rediseño ni fullscreen. FASE 1J ABIERTA, desarrollo NO listo para producción. Astra recomendado para revisar contrato crítico; Sol para UI tras autorización.
+
+## Registro anterior (histórico)
+
 # Próximo paso — revisar corrección 1J.3B
 
 Revisar PHASE_1J3B_REPORT.md y evidencia phase1j3b-*. Permisos aprovisionados mediante migración 015, sin bypass ni inicialización paralela. Autorizar separadamente la reanudación de 1J.3 funcional; los servicios futuros deberán revalidar HasPermission con la matriz aprobada.

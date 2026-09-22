@@ -67,7 +67,7 @@ public sealed partial class SqliteInventoryStore(Database database, IClock clock
         InventoryBalanceExpectation? expectation = null)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (request.Kind == InventoryMovementKind.SaleConsumption)
+        if (request.Kind is InventoryMovementKind.SaleConsumption or InventoryMovementKind.ProductionConsumption or InventoryMovementKind.ProductionOutput)
             throw new InventoryConsistencyException("Use el camino interno de evaluación de venta.");
         var hash = RequestHash(request);
         try
@@ -103,10 +103,12 @@ public sealed partial class SqliteInventoryStore(Database database, IClock clock
     // Caller owns commit/rollback; this is the only ledger and balance writer.
     internal static PersistedInventoryOperation WriteOperation(SqliteConnection connection,
         SqliteTransaction transaction, InventoryOperationRequest request,
-        InventoryBalanceExpectation? expectation, DateTimeOffset at, Guid? evaluationId = null)
+        InventoryBalanceExpectation? expectation, DateTimeOffset at, Guid? evaluationId = null, Guid? productionBatchId = null)
     {
         if ((request.Kind == InventoryMovementKind.SaleConsumption) != evaluationId.HasValue)
             throw new InventoryConsistencyException("Origen de consumo inválido.");
+        if ((request.Kind is InventoryMovementKind.ProductionConsumption or InventoryMovementKind.ProductionOutput) != productionBatchId.HasValue)
+            throw new InventoryConsistencyException("Origen de producción inválido.");
         var hash = RequestHash(request);
         if (expectation is not null)
         {
@@ -124,9 +126,10 @@ public sealed partial class SqliteInventoryStore(Database database, IClock clock
 
         using (var pending = Command(connection, transaction,
             "INSERT INTO inventory_operation(id,request_sha256,kind,state,actor_id,terminal_id,reason_code,note,external_reference,expected_line_count,created_utc"
-            + (evaluationId.HasValue ? ",sale_evaluation_id" : "")
+            + (evaluationId.HasValue ? ",sale_evaluation_id" : "") + (productionBatchId.HasValue ? ",production_batch_id,production_batch_status" : "")
             + ") VALUES($id,$hash,$kind,'PENDING',$actor,$terminal,$reason,$note,$reference,$count,$at"
-            + (evaluationId.HasValue ? ",$evaluation)" : ")"),
+            + (evaluationId.HasValue ? ",$evaluation" : "") + (productionBatchId.HasValue ? ",$batch,'CONFIRMED')" : ")"),
+            ("$batch", productionBatchId?.ToString("D")),
             ("$evaluation", evaluationId?.ToString("D")), ("$id", Id(request.OperationId)), ("$hash", hash), ("$kind", MovementKind(request.Kind)),
             ("$actor", Id(request.ActorId)), ("$terminal", Id(request.TerminalId)), ("$reason", request.ReasonCode),
             ("$note", request.Note), ("$reference", request.ExternalReference), ("$count", request.Lines.Count), ("$at", At(at))))
@@ -350,7 +353,7 @@ public sealed partial class SqliteInventoryStore(Database database, IClock clock
             row.GetInt64(2), ParseAt(row.GetString(3))) : null;
     }
 
-    private static PersistedInventoryOperation? ReadOperation(SqliteConnection connection,
+    internal static PersistedInventoryOperation? ReadOperation(SqliteConnection connection,
         SqliteTransaction? transaction, Guid operationId)
     {
         string hash, kind; Guid actor, terminal; string? reason, note, reference; DateTimeOffset? confirmed;
@@ -412,7 +415,7 @@ public sealed partial class SqliteInventoryStore(Database database, IClock clock
     {
         InventoryMovementKind.OpeningBalance => "OPENING_BALANCE", InventoryMovementKind.Receipt => "RECEIPT",
         InventoryMovementKind.AdjustmentGain => "ADJUSTMENT_GAIN", InventoryMovementKind.AdjustmentLoss => "ADJUSTMENT_LOSS",
-        InventoryMovementKind.Waste => "WASTE", InventoryMovementKind.SaleConsumption => "SALE_CONSUMPTION", _ => throw new ArgumentOutOfRangeException(nameof(kind))
+        InventoryMovementKind.Waste => "WASTE", InventoryMovementKind.SaleConsumption => "SALE_CONSUMPTION", InventoryMovementKind.ProductionConsumption => "PRODUCTION_CONSUMPTION", InventoryMovementKind.ProductionOutput => "PRODUCTION_OUTPUT", _ => throw new ArgumentOutOfRangeException(nameof(kind))
     };
     private static InventoryMovementKind ParseMovementKind(string value) => value switch
     {

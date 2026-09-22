@@ -1,3 +1,11 @@
+# Estado vigente — servicios de producción 1J.3
+
+Domain admite solicitudes de consumo/salida productiva por una factoría específica y conserva checked Int64 y signos estrictos. El constructor genérico sigue rechazando producción. Planificación, alternativas y racionales de 1J.1 se reutilizan sin redondeo MASS/VOLUME.
+
+Ver ADR-023 y PHASE_1J3_REPORT.md para contrato, evidencia y limitaciones.
+
+## Registro anterior (histórico)
+
 # Estado vigente — 1J.2 conserva Domain 1J.1
 
 No se modificó Domain. Fórmulas/perfiles mantienen los constructores, colecciones inmutables, versionado y planificación multi-output de ADR-021. Infrastructure rehidrata versiones sin introducir setters, infraestructura ni UI en Domain.

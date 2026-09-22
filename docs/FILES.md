@@ -1,3 +1,11 @@
+# Estado vigente — servicios de producción 1J.3
+
+Application: ProductionService, RecipeService, ProductionPorts, ProductionRecords y ProductionContract. Infrastructure: SqliteProductionUnitOfWork; SqliteRecipeStore comparte transacción; SqliteInventoryStore conserva escritor único. Domain: Inventory.cs permite factoría productiva. Tests: ProductionServiceTests y ProductionServicePlanningTests; RecipePlanningStorageTests ajusta namespace del modelo movido. Decisión: ADR-023-production-application-atomicity.md. Reporte/evidencia: PHASE_1J3_REPORT.md y phase1j3-*.
+
+Ver ADR-023 y PHASE_1J3_REPORT.md para contrato, evidencia y limitaciones.
+
+## Registro anterior (histórico)
+
 # Checkpoint 1J.3B
 
 - migrations/015_recipe_and_production_permissions.sql: cinco permisos, nueve asignaciones.

@@ -1,17 +1,8 @@
 using CasaMiga.Domain;
+using CasaMiga.Application;
 using System.Text.Json;
 
 namespace CasaMiga.Infrastructure;
-
-public sealed record StoredProductionOutput(Guid ProductId, Guid FinishedItemId, Guid ProfileVersionId,
-    string ProductName, string ItemName, string ProfileName, long PlannedCount, long? ActualCount, bool ActualPolicyPending);
-public sealed record StoredProductionFormula(Guid FormulaVersionId, string Name, InventoryQuantity Required, ProductionRatio Factor);
-public sealed record StoredProductionInput(Guid ItemId, string Name, InventoryQuantity Required,
-    Guid? FormulaVersionId, Guid? ProfileVersionId, Guid? GroupId, Guid? OptionId, IngredientCountPolicy Policy, ProductionRatio ExactAtomic);
-public sealed record StoredProductionBatch(Guid Id, Guid OperationId, string Status, Guid CreatedBy, Guid TerminalId,
-    DateTimeOffset CreatedAt, DateTimeOffset? ConfirmedAt, string? Notes, int ContractVersion, int IdentityVersion,
-    string? RequestSha256, Guid? ConsumptionOperationId, Guid? OutputOperationId, string PlanningIssuesJson,
-    IReadOnlyList<StoredProductionOutput> Outputs, IReadOnlyList<StoredProductionFormula> Formulas, IReadOnlyList<StoredProductionInput> Inputs);
 
 public sealed partial class SqliteRecipeStore
 {

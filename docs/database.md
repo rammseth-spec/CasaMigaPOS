@@ -1,3 +1,11 @@
+# Estado vigente — servicios de producción 1J.3
+
+Schema continúa 15; 001–015 intactas y 016 ausente. Confirmación escribe snapshots finales, operaciones, movimientos, balances, audit y CONFIRMED en una transacción. Cero total conserva output_operation_id NULL y sólo consumo. No cambian tablas, guards ni HasPermission.
+
+Ver ADR-023 y PHASE_1J3_REPORT.md para contrato, evidencia y limitaciones.
+
+## Registro anterior (histórico)
+
 # Estado vigente — schema 15 / permisos 1J.3B
 
 015_recipe_and_production_permissions.sql añade exclusivamente cinco filas permission y nueve role_permission. Identidades: permission.name y app_role.name TEXT, sin GUIDs ni IDs numéricos. No cambia tablas, constraints, triggers ni permisos anteriores. 001–014 intactas; 016 ausente. Migración y registro de versión comparten la transacción existente de Database.Initialize.

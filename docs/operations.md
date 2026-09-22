@@ -1,3 +1,11 @@
+# Estado vigente — servicios de producción 1J.3
+
+Producción disponible mediante servicios Application, todavía sin UI. No editar SQL de instalaciones reales. Conservar OperationId raíz y ExpectedRevision para reintentos; ante resultado incierto consultar/reintentar la misma identidad. Lote ligado a creador/terminal, MAIN e inventarios inicializados. Cambiar plan/alternativas requiere nuevo DRAFT. Backup/restauración existentes; no se abre POS ni imprime en esta subfase.
+
+Ver ADR-023 y PHASE_1J3_REPORT.md para contrato, evidencia y limitaciones.
+
+## Registro anterior (histórico)
+
 # Operación vigente — almacenamiento 1J.2, sin flujo productivo
 
 No hay pantalla de fórmulas/producción ni permisos nuevos. No cargar recetas reales mediante SQL ni utilizar el repositorio técnico como servicio autorizado de usuario. El POS, Checkout, cierre de caja, impresión y consumo por venta mantienen su comportamiento anterior.

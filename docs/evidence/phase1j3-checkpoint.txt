@@ -1,0 +1,9 @@
+Baseline: a1e7ef044f215a680526d65b7ea62d575d870b35
+Schema: 15; migrations 001-015 byte-identical to baseline; 016 absent.
+No Presentation changes. No UI or physical smoke. No real installation modified.
+Application permission path: active persisted user + HasPermission + existing terminal.
+Production complete: one SQLite transaction, existing inventory writer only.
+Canonical contract and limitations: docs/decisions/ADR-023-production-application-atomicity.md.
+Focused tests: 29 passed, 0 failed, 0 skipped (see phase1j3-focused.txt).
+Git diff --check passed before final documentation commit.
+Final scripts/verify.ps1: 520 passed, 0 failed, 0 skipped. Release: 0 compiler errors, 0 compiler warnings. No push or remote changes.

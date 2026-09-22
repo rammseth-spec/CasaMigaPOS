@@ -1,3 +1,11 @@
+# FASE 1J ABIERTA — 1J.3 servicios funcionales
+
+1J.3 COMPLETADA: Prepare/Create/ConfirmProduction y RecipeService, permisos persistidos, confirmación atómica, idempotencia y recuperación. Schema 15; migraciones 001–015 intactas, 016 ausente. Baseline: a1e7ef044f215a680526d65b7ea62d575d870b35. Ver ADR-023, PHASE_1J3_REPORT.md y evidencia phase1j3-*.
+
+Verificación final: scripts/verify.ps1 aprobado, 520/520 pruebas, 0 fallidas/omitidas; Release 0 errores/advertencias de compilación. 29/29 focalizadas aprobadas. Desarrollo, NO listo para producción. 1J.4 no iniciada; no UI ni operaciones reales.
+
+## Registro anterior (histórico)
+
 # FASE 1J ABIERTA — corrección 1J.3B
 
 Migración 015 aprovisiona cinco permisos y nueve asignaciones usando permission/role_permission. Schema 15. Administrator 5/5; Manager 4/5 sin recipe.configure; Cashier 0/5. HasPermission y src intactos. Ver PHASE_1J3B_REPORT.md. Verificación: 8/8 focalizadas, 491/491 suite completa, 0 fallidas/omitidas; Release 0 errores/advertencias de compilación.

@@ -1,3 +1,11 @@
+# Estado vigente — servicios de producción 1J.3
+
+ProductionService y RecipeService en Application dependen de puertos propios. SqliteProductionUnitOfWork comparte conexión/transacción con SqliteRecipeStore y el writer existente de inventario. Permisos y auditoría dentro de la transacción; recuperación histórica antes de catálogo vivo. No composición/UI productiva.
+
+Ver ADR-023 y PHASE_1J3_REPORT.md para contrato, evidencia y limitaciones.
+
+## Registro anterior (histórico)
+
 # Estado vigente — persistencia técnica 1J.2
 
 SqliteRecipeStore y su parcial Batches residen exclusivamente en Infrastructure y no se registran en composición/UI. Reutilizan los modelos y planificador puro de Domain 1J.1 sin modificar Domain. Escrituras en BEGIN IMMEDIATE, reemplazos de borrador con revisión esperada, publicación y activación explícitas; lecturas read-only consistentes. Permisos y auditoría de configuración quedan para una futura frontera Application.

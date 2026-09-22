@@ -1,3 +1,11 @@
+# Estado vigente — servicios de producción 1J.3
+
+1J.3 implementa servicios y confirmación atómica sobre schema 15. 1J sigue ABIERTA. 1J.4 NO iniciada: requiere revisión/autorización separada para UI, mensajes estructurados, conservación de identidad y experiencia de recuperación. Desarrollo, no listo para producción.
+
+Ver ADR-023 y PHASE_1J3_REPORT.md para contrato, evidencia y limitaciones.
+
+## Registro anterior (histórico)
+
 # Checkpoint vigente — corrección 1J.3B
 
 1J.1, 1J.2 y 1J.3A conservadas. 1J.3B aprovisiona permisos mediante 015/schema 15. 1J.3 funcional permanece pendiente de autorización de reanudación. No servicios nuevos ni UI 1J.4. FASE 1J ABIERTA, desarrollo no listo para producción. Ver PHASE_1J3B_REPORT.md.
