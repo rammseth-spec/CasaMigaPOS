@@ -14,4 +14,5 @@ public sealed record StoredProductionInput(Guid ItemId, string Name, InventoryQu
 public sealed record StoredProductionBatch(Guid Id, Guid OperationId, string Status, Guid CreatedBy, Guid TerminalId,
     DateTimeOffset CreatedAt, DateTimeOffset? ConfirmedAt, string? Notes, int ContractVersion, int IdentityVersion,
     string? RequestSha256, Guid? ConsumptionOperationId, Guid? OutputOperationId, string PlanningIssuesJson,
-    IReadOnlyList<StoredProductionOutput> Outputs, IReadOnlyList<StoredProductionFormula> Formulas, IReadOnlyList<StoredProductionInput> Inputs);
+    IReadOnlyList<StoredProductionOutput> Outputs, IReadOnlyList<StoredProductionFormula> Formulas, IReadOnlyList<StoredProductionInput> Inputs,
+    string CreatedByName = "", string TerminalName = "");

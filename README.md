@@ -1,12 +1,14 @@
 # Casa Miga POS
 
-Aplicación Windows offline para una panadería mexicana. **FASE 1I CERRADA; FASE 1J ABIERTA, 1J.3 funcional completada**: servicios de recetas y producción con confirmación atómica, idempotencia y recuperación sobre schema 15. Sin UI productiva ni migración 016. Versión de desarrollo, NO lista para producción. Ver [reporte 1J.3](docs/PHASE_1J3_REPORT.md). 1J.4 NO iniciada.
+**FASE 1J abierta; subfase 1J.4 completada y aprobada.** La aplicación de desarrollo ya ofrece UI WPF funcional para consultar/configurar recetas y perfiles, planear producción multi-output, previsualizar necesidades, crear borradores, capturar resultados reales, confirmar y consultar historial. Administrator configura; Manager opera en modo autorizado; Cashier no ve Recetas ni Producción. Schema 15, migraciones 001–015 intactas, sin 016. Ver [reporte 1J.4](docs/PHASE_1J4_REPORT.md), [smoke](docs/PHASE_1J4_SMOKE.md) y [guía UI](docs/recipe-production-ui.md). 1J.5 no está iniciada.
+
+Aplicación Windows offline para una panadería mexicana. Versión de desarrollo, NO lista para producción.
 
 Stack: C# / .NET 10 LTS / WPF / Microsoft.Data.Sqlite / SQLite / MSTest.
 
 ## Continuar
 
-1. Leer [estado](docs/CURRENT_STATE.md), [próximos pasos](docs/NEXT_STEPS.md) y [reporte 1J.3](docs/PHASE_1J3_REPORT.md).
+1. Leer [estado](docs/CURRENT_STATE.md), [próximos pasos](docs/NEXT_STEPS.md) y [reporte 1J.4](docs/PHASE_1J4_REPORT.md).
 2. Instalar SDK .NET 10.0.400 x64 o parche compatible y ejecutar `./scripts/verify.ps1`.
 3. Ejecutar `dotnet run --project src/CasaMiga.Presentation`.
 4. En una carpeta nueva, crear el primer administrador desde la pantalla inicial; después iniciar sesión y abrir caja con fondo cero o positivo.
@@ -16,7 +18,7 @@ El primer restore requiere Internet; la aplicación no. No hay servicios cloud n
 Al arrancar se respalda, migra y valida la instalación. El paquete .cmbackup incluye base, terminal.json y manifiesto; restauración validada a directorio nuevo. Reiniciar exige login y recupera la caja abierta sin alterar su fondo ni timestamp. Salir del usuario o cerrar la ventana no cierra caja. El cierre requiere confirmar conteo y luego confirmar cierre; volver conserva el conteo. Los importes se ocultan hasta confirmar el conteo ciego.
 
 - `src/`: Domain, Application, Infrastructure, Presentation y utilidad Maintenance.
-- `tests/`: dinero, cantidades físicas, servicios y consultas de inventario, UI/ViewModel, ledger, persistencia, identidad, autorización, concurrencia, carrito, venta, historial, tickets, recuperación, diagnóstico y backup. Resultados 1J.3: 520/520 pruebas, 0 fallidas/omitidas; Release 0 errores/advertencias de compilación. Ver reporte y evidencia persistente.
+- `tests/`: dinero, cantidades físicas, recetas/producción, UI/ViewModel, inventario, ledger, persistencia, identidad, autorización, concurrencia, carrito, venta, historial, tickets, recuperación, diagnóstico y backup. Resultados 1J.4: 530/530 pruebas, 0 fallidas/omitidas; Release 0 errores/advertencias de compilación.
 - `migrations/`: SQL inmutable versionado, recursos del ensamblado.
 - `docs/`: arquitectura, operación, decisiones y evidencia.
 - `research/`: investigación de FASE 0; `scripts/`: verificación/publicación de desarrollo.

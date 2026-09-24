@@ -1,3 +1,13 @@
+# Operación vigente — UI funcional 1J.4
+
+Administrator puede configurar fórmulas y perfiles desde **Recetas**; Manager sólo consulta. Las versiones publicadas no se editan: se crea una versión DRAFT, se publica y luego se activa. Usar cantidades operativas exactas (`g/kg`, `ml/L`, `pieza`).
+
+Administrator y Manager pueden crear una **Producción**: agregan productos/cantidades, calculan necesidades, revisan existencias y crean el DRAFT. El preview no reserva. El DRAFT queda bloqueado y la confirmación sigue ligada al creador y terminal. Capturar un real entero no negativo por producto y revisar la advertencia si todos son cero. Ante resultado incierto, actualizar/consultar historial conservando la identidad en vez de crear otro lote. Cashier no tiene acceso.
+
+El historial es read-only. No editar SQLite, saldos, snapshots ni estados manualmente. Para pruebas usar `CASAMIGA_DATA_DIR` aislado; no introducir recetas reales sin autorización y mediciones aprobadas. Ver `recipe-production-ui.md`, `PHASE_1J4_REPORT.md` y `PHASE_1J4_SMOKE.md`.
+
+## Registro anterior (histórico)
+
 # Estado vigente — servicios de producción 1J.3
 
 Producción disponible mediante servicios Application, todavía sin UI. No editar SQL de instalaciones reales. Conservar OperationId raíz y ExpectedRevision para reintentos; ante resultado incierto consultar/reintentar la misma identidad. Lote ligado a creador/terminal, MAIN e inventarios inicializados. Cambiar plan/alternativas requiere nuevo DRAFT. Backup/restauración existentes; no se abre POS ni imprime en esta subfase.

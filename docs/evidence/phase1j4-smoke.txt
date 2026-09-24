@@ -1,0 +1,14 @@
+FASE 1J.4 — EVIDENCIA SINTÉTICA
+Fecha: 2026-09-24
+Data dir local ignorado: work/phase1j4-smoke-20260922
+
+Fórmula FORMULA-J14: versión 1 publicada y activa.
+Perfiles: A y B publicados y activos.
+Plan: A=2, B=3.
+Preview: preparación=650 g; insumo A=325 g; líquido=65 ml; COUNT=8 pieza; disponible.
+DRAFT: creador Manager sintético; terminal CASA-MIGA-CAJA-01; restaurado tras reinicio.
+Actual: A=1 (<2); B=4 (>3).
+Confirmación: exitosa, histórica y read-only.
+Inventario final: masa A 24.675 kg; alternativo 25 kg; líquido 19.935 L; COUNT 192; salida A 1; salida B 4.
+Base: integrity_check=ok; foreign_key_check=0; production.created=1; production.confirmed=1.
+Cashier: sin navegación Recetas/Producción.

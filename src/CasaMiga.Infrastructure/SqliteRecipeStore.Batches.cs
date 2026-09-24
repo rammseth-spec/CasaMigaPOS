@@ -72,7 +72,7 @@ public sealed partial class SqliteRecipeStore
 
     public StoredProductionBatch? GetProductionBatch(Guid id) => Read((c,t) =>
     {
-        var r=Rows(c,t,"SELECT operation_id,status,created_by,terminal_id,created_utc,confirmed_utc,notes,contract_version,identity_version,request_sha256,consumption_operation_id,output_operation_id,planning_issues_json FROM production_batch WHERE id=$0",id).SingleOrDefault();
+        var r=Rows(c,t,"SELECT b.operation_id,b.status,b.created_by,b.terminal_id,b.created_utc,b.confirmed_utc,b.notes,b.contract_version,b.identity_version,b.request_sha256,b.consumption_operation_id,b.output_operation_id,b.planning_issues_json,u.display_name,t.name FROM production_batch b JOIN app_user u ON u.id=b.created_by JOIN terminal t ON t.id=b.terminal_id WHERE b.id=$0",id).SingleOrDefault();
         if (r is null) return null;
         var outputs=Rows(c,t,"SELECT product_id,finished_item_id,profile_version_id,product_name,item_name,profile_name,planned_count,actual_count,actual_policy_pending FROM production_output_plan WHERE batch_id=$0 ORDER BY sequence",id)
             .Select(x => new StoredProductionOutput(G(x,0),G(x,1),G(x,2),S(x,3),S(x,4),S(x,5),L(x,6),x[7] is DBNull ? null : L(x,7),L(x,8)==1)).ToArray();
@@ -81,7 +81,7 @@ public sealed partial class SqliteRecipeStore
         var inputs=Rows(c,t,"SELECT item_id,item_name,dimension,required_atomic,formula_version_id,profile_version_id,group_id,option_id,count_policy,exact_numerator,exact_denominator FROM production_input_snapshot WHERE batch_id=$0 ORDER BY sequence",id)
             .Select(x => new StoredProductionInput(G(x,0),S(x,1),Quantity(x,2,3),NG(x,4),NG(x,5),NG(x,6),NG(x,7),ParsePolicy(S(x,8)),new(L(x,9),L(x,10)))).ToArray();
         return new StoredProductionBatch(id,G(r,0),S(r,1),G(r,2),G(r,3),Date(r,4),r[5] is DBNull ? null : Date(r,5),r[6] as string,
-            checked((int)L(r,7)),checked((int)L(r,8)),r[9] as string,NG(r,10),NG(r,11),S(r,12),Array.AsReadOnly(outputs),Array.AsReadOnly(formulas),Array.AsReadOnly(inputs));
+            checked((int)L(r,7)),checked((int)L(r,8)),r[9] as string,NG(r,10),NG(r,11),S(r,12),Array.AsReadOnly(outputs),Array.AsReadOnly(formulas),Array.AsReadOnly(inputs),S(r,13),S(r,14));
     });
 
     public IReadOnlyList<Guid> ListProductionBatchIds(int limit=50,int offset=0) => Read((c,t) =>

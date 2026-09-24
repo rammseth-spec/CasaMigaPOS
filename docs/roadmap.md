@@ -1,3 +1,11 @@
+# Estado vigente — UI funcional de recetas y producción 1J.4
+
+1J.1–1J.4 completadas. 1J.4 integra Recetas y Producción en WPF, con permisos por rol, configuración versionada, builder multi-output, preview, DRAFT bloqueado, captura/confirmación y consulta histórica. Smoke sintético aprobado. Schema 15; migraciones 001–015 intactas; sin 016.
+
+1J.5 permanece pendiente de propuesta/autorización separada para hardening operativo. Rediseño profesional, fullscreen, recetas reales, compras/proveedores e impresión de producción siguen fuera de alcance. FASE 1J abierta; desarrollo no listo para producción.
+
+## Registro anterior (histórico)
+
 # Estado vigente — servicios de producción 1J.3
 
 1J.3 implementa servicios y confirmación atómica sobre schema 15. 1J sigue ABIERTA. 1J.4 NO iniciada: requiere revisión/autorización separada para UI, mensajes estructurados, conservación de identidad y experiencia de recuperación. Desarrollo, no listo para producción.

@@ -1,3 +1,11 @@
+# Archivos de checkpoint 1J.4
+
+Nuevos: `Presentation/RecipeView.xaml/.cs`, `RecipeViewModel.cs`, `ProductionView.xaml/.cs`, `ProductionViewModel.cs`; `tests/RecipeProductionViewModelTests.cs`; `PHASE_1J4_REPORT.md`, `PHASE_1J4_SMOKE.md`, `recipe-production-ui.md` y evidencia `phase1j4-*`.
+
+Modificados: navegación `MainViewModel`, `MainWindow.xaml/.cs`, `PosView.xaml/.cs`; conversión operativa exacta `InventoryDisplay`; lectura de nombres en `ProductionRecords` y `SqliteRecipeStore.Batches`; csproj de pruebas; README, CURRENT_STATE, NEXT_STEPS, operations, roadmap y FILES. Sin cambios en Domain, servicios críticos, writers de inventario ni migraciones 001–015.
+
+## Registro anterior (histórico)
+
 # Estado vigente — servicios de producción 1J.3
 
 Application: ProductionService, RecipeService, ProductionPorts, ProductionRecords y ProductionContract. Infrastructure: SqliteProductionUnitOfWork; SqliteRecipeStore comparte transacción; SqliteInventoryStore conserva escritor único. Domain: Inventory.cs permite factoría productiva. Tests: ProductionServiceTests y ProductionServicePlanningTests; RecipePlanningStorageTests ajusta namespace del modelo movido. Decisión: ADR-023-production-application-atomicity.md. Reporte/evidencia: PHASE_1J3_REPORT.md y phase1j3-*.

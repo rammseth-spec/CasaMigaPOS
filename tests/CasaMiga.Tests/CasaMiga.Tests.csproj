@@ -10,5 +10,11 @@
     <Compile Include="../../src/CasaMiga.Presentation/InventoryViewModel.cs" Link="Presentation/InventoryViewModel.cs" />
     <Compile Include="../../src/CasaMiga.Presentation/InventoryDisplay.cs" Link="Presentation/InventoryDisplay.cs" />
     <Content Include="../../src/CasaMiga.Presentation/InventoryView.xaml" Link="Presentation/InventoryView.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <Compile Include="../../src/CasaMiga.Presentation/RecipeViewModel.cs" Link="Presentation/RecipeViewModel.cs" />
+    <Compile Include="../../src/CasaMiga.Presentation/ProductionViewModel.cs" Link="Presentation/ProductionViewModel.cs" />
+    <Content Include="../../src/CasaMiga.Presentation/RecipeView.xaml" Link="Presentation/RecipeView.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../src/CasaMiga.Presentation/ProductionView.xaml" Link="Presentation/ProductionView.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../src/CasaMiga.Presentation/ProductionView.xaml.cs" Link="Presentation/ProductionView.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../src/CasaMiga.Presentation/MainWindow.xaml" Link="Presentation/MainWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

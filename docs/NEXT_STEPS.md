@@ -1,3 +1,13 @@
+# Próximo paso — proponer y autorizar 1J.5 por separado
+
+1J.4 está completada y aprobada. Revisar `PHASE_1J4_REPORT.md`, `PHASE_1J4_SMOKE.md` y `recipe-production-ui.md`. No continuar automáticamente.
+
+La propuesta de 1J.5 debe centrarse en hardening operativo: evaluar la restricción creador/terminal del borrador, reintentos y recuperación ante resultado incierto, smoke de faltantes/cambios de stock y zero-output total, backup/restauración del flujo UI y criterios para introducir recetas reales mediante captura autorizada. Mantener schema 15 salvo autorización expresa de una necesidad estructural; no iniciar rediseño, fullscreen, compras/proveedores, impresión de producción ni datos reales.
+
+Modelo recomendado para proponer y ejecutar 1J.5: **Astra** si el alcance incluye recuperación/concurrencia crítica; **Sol** sólo para ajustes UI aislados ya cubiertos por contratos. FASE 1J permanece abierta; desarrollo, NO listo para producción.
+
+## Registro anterior (histórico)
+
 # Próximo paso — revisión de 1J.3 y autorización separada de 1J.4
 
 Revisar PHASE_1J3_REPORT.md, ADR-023 y evidencia phase1j3-*. No iniciar automáticamente UI. Preparar propuesta de interacción para fórmulas/perfiles, alternativas, preview sin reserva, actuals cero/superiores al plan, confirmación y recuperación conservando OperationId/ExpectedRevision.

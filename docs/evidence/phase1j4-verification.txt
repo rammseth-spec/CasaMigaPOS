@@ -1,0 +1,17 @@
+CASA MIGA POS — FASE 1J.4 — VERIFICACIÓN FINAL
+Fecha: 2026-09-24
+Baseline: a14007d9921e378e57aabd5e68de7e34f7464389
+
+Comando:
+./scripts/verify.ps1 -Dotnet work/dotnet/dotnet.exe -PackageSource work/nuget-feed
+
+Restore: aprobado desde feed local bloqueado.
+Build Release: 0 errores, 0 advertencias.
+Suite completa: 530 superadas, 0 fallidas, 0 omitidas; duración 5 m 13 s.
+TRX: TestResults/foundation.trx (artefacto local ignorado).
+Pruebas focalizadas nuevas: 10/10 aprobadas.
+Filtro ampliado de persistencia/recetas durante implementación: 87/87 aprobado.
+git diff --check: aprobado; sólo avisos informativos de normalización CRLF/LF.
+Migraciones: git diff contra baseline sin cambios bajo migrations/; 001–015 intactas; 016 ausente.
+Schema smoke: 15; integrity_check=ok; foreign_key_check=0.
+No impresión, ventas ni caja durante el smoke 1J.4.

@@ -1,3 +1,11 @@
+# FASE 1J ABIERTA — 1J.4 UI funcional completada y aprobada
+
+Baseline de entrada: `a14007d9921e378e57aabd5e68de7e34f7464389`. Recetas y Producción están integradas en WPF sin duplicar reglas críticas: las Views/ViewModels llaman `RecipeService` y `ProductionService`. Administrator consulta y configura; Manager consulta recetas y crea/confirma producción; Cashier no ve los módulos. El smoke sintético humano validó fórmula/versiones, dos perfiles, plan multi-output, preview agregado, borrador recuperado tras reinicio, resultados menor/mayor al plan, confirmación, saldos, historial y restricción de Cashier.
+
+Verificación final: `scripts/verify.ps1` con feed local aprobado; 530/530 pruebas, 0 fallidas y 0 omitidas; Release con 0 errores y 0 advertencias. Schema 15, migraciones 001–015 intactas y sin 016. `integrity_check=ok` y cero violaciones FK en la base de smoke. Desarrollo, NO listo para producción. 1J.5 NO iniciada. Ver `PHASE_1J4_REPORT.md`, `PHASE_1J4_SMOKE.md` y evidencia `phase1j4-*`.
+
+## Registro anterior (histórico)
+
 # FASE 1J ABIERTA — 1J.3 servicios funcionales
 
 1J.3 COMPLETADA: Prepare/Create/ConfirmProduction y RecipeService, permisos persistidos, confirmación atómica, idempotencia y recuperación. Schema 15; migraciones 001–015 intactas, 016 ausente. Baseline: a1e7ef044f215a680526d65b7ea62d575d870b35. Ver ADR-023, PHASE_1J3_REPORT.md y evidencia phase1j3-*.

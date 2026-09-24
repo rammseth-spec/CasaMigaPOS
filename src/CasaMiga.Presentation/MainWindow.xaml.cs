@@ -26,10 +26,14 @@ public partial class MainWindow : Window
     private async void PosCatalogRequested(object? sender,EventArgs e)=>await Model.ShowCatalogAsync();
     private async void PosSalesRequested(object? sender,EventArgs e)=>await Model.ShowSalesHistoryAsync();
     private async void PosInventoryRequested(object? sender,EventArgs e)=>await Model.ShowInventoryAsync();
+    private async void PosRecipesRequested(object? sender,EventArgs e)=>await Model.ShowRecipesAsync();
+    private async void PosProductionRequested(object? sender,EventArgs e)=>await Model.ShowProductionAsync();
     private void PosLogoutRequested(object? sender,EventArgs e)=>LogoutClick(this,new RoutedEventArgs());
     private async void CatalogNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowCatalogAsync();
     private async void SalesNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowSalesHistoryAsync();
     private async void InventoryNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowInventoryAsync();
+    private async void RecipesNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowRecipesAsync();
+    private async void ProductionNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowProductionAsync();
     private async void CashNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowCashAsync();
     private async void BeginClosingClick(object sender, RoutedEventArgs e)
     {
