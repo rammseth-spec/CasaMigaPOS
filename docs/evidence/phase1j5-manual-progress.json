@@ -1,0 +1,148 @@
+{
+  "batches": [
+    {
+      "id": "fc7dd163-517f-4b07-aba0-3fa1f8e37982",
+      "status": "CONFIRMED",
+      "created_utc": "2026-09-24T08:56:56.7845080+00:00",
+      "confirmed_utc": "2026-09-24T09:03:03.3033112+00:00",
+      "consumption_operation_id": "9eb9b47d-5356-54bf-b47a-a0469c8999c3",
+      "output_operation_id": "bfb81273-cd8c-55fe-8667-9551430cfb48"
+    },
+    {
+      "id": "1c15b583-15d2-40e9-b2fa-9afa4e4f04ea",
+      "status": "CONFIRMED",
+      "created_utc": "2026-09-27T00:42:55.9160721+00:00",
+      "confirmed_utc": "2026-09-27T00:46:05.9069958+00:00",
+      "consumption_operation_id": "2391dfd7-6c9e-5ac5-8ab5-94bb1ba7e60e",
+      "output_operation_id": "36cf229d-27e3-53b0-8186-3bf0d2c76c4b"
+    },
+    {
+      "id": "a5bbac42-14e3-4c1f-ab6f-bdf45332cb34",
+      "status": "CONFIRMED",
+      "created_utc": "2026-09-27T00:47:46.8583637+00:00",
+      "confirmed_utc": "2026-09-27T00:49:00.1833603+00:00",
+      "consumption_operation_id": "263db127-f73e-5e49-86fc-b44b7066a4e6",
+      "output_operation_id": "3be6b3c3-a931-5d54-852e-38c7c34b388d"
+    },
+    {
+      "id": "9c15fc3a-619c-4936-be85-bd588d6be3f6",
+      "status": "CONFIRMED",
+      "created_utc": "2026-09-27T00:50:42.4750531+00:00",
+      "confirmed_utc": "2026-09-27T00:51:19.2889032+00:00",
+      "consumption_operation_id": "9e0ef971-42e3-5e0f-bacc-078b1d36ceb2",
+      "output_operation_id": null
+    },
+    {
+      "id": "f5803c58-12b1-4af7-9fcd-6ad90fc71474",
+      "status": "DRAFT",
+      "created_utc": "2026-09-27T00:52:42.5030538+00:00",
+      "confirmed_utc": null,
+      "consumption_operation_id": null,
+      "output_operation_id": null
+    }
+  ],
+  "outputs": [
+    {
+      "batch_id": "fc7dd163-517f-4b07-aba0-3fa1f8e37982",
+      "product_name": "Producto sintético B",
+      "planned_count": 3,
+      "actual_count": 4
+    },
+    {
+      "batch_id": "fc7dd163-517f-4b07-aba0-3fa1f8e37982",
+      "product_name": "Producto sintético A",
+      "planned_count": 2,
+      "actual_count": 1
+    },
+    {
+      "batch_id": "1c15b583-15d2-40e9-b2fa-9afa4e4f04ea",
+      "product_name": "Producto sintético B",
+      "planned_count": 3,
+      "actual_count": 3
+    },
+    {
+      "batch_id": "1c15b583-15d2-40e9-b2fa-9afa4e4f04ea",
+      "product_name": "Producto sintético A",
+      "planned_count": 8,
+      "actual_count": 8
+    },
+    {
+      "batch_id": "a5bbac42-14e3-4c1f-ab6f-bdf45332cb34",
+      "product_name": "Producto sintético B",
+      "planned_count": 3,
+      "actual_count": 4
+    },
+    {
+      "batch_id": "a5bbac42-14e3-4c1f-ab6f-bdf45332cb34",
+      "product_name": "Producto sintético A",
+      "planned_count": 2,
+      "actual_count": 1
+    },
+    {
+      "batch_id": "9c15fc3a-619c-4936-be85-bd588d6be3f6",
+      "product_name": "Producto sintético B",
+      "planned_count": 3,
+      "actual_count": 0
+    },
+    {
+      "batch_id": "9c15fc3a-619c-4936-be85-bd588d6be3f6",
+      "product_name": "Producto sintético A",
+      "planned_count": 2,
+      "actual_count": 0
+    },
+    {
+      "batch_id": "f5803c58-12b1-4af7-9fcd-6ad90fc71474",
+      "product_name": "Producto sintético B",
+      "planned_count": 3,
+      "actual_count": null
+    },
+    {
+      "batch_id": "f5803c58-12b1-4af7-9fcd-6ad90fc71474",
+      "product_name": "Producto sintético A",
+      "planned_count": 2,
+      "actual_count": null
+    }
+  ],
+  "balances": [
+    {
+      "code": "SMOKE-J14-LIQ",
+      "dimension": "VOLUME",
+      "quantity_atomic": 19680000
+    },
+    {
+      "code": "SMOKE-J14-MASA-A",
+      "dimension": "MASS",
+      "quantity_atomic": 23400000
+    },
+    {
+      "code": "SMOKE-J14-MASA-B",
+      "dimension": "MASS",
+      "quantity_atomic": 25000000
+    },
+    {
+      "code": "SMOKE-J14-OUT-A",
+      "dimension": "COUNT",
+      "quantity_atomic": 10
+    },
+    {
+      "code": "SMOKE-J14-OUT-B",
+      "dimension": "COUNT",
+      "quantity_atomic": 11
+    },
+    {
+      "code": "SMOKE-J14-PIEZA",
+      "dimension": "COUNT",
+      "quantity_atomic": 162
+    }
+  ],
+  "audit": [
+    {
+      "action": "production.confirmed",
+      "count": 4
+    },
+    {
+      "action": "production.created",
+      "count": 5
+    }
+  ]
+}

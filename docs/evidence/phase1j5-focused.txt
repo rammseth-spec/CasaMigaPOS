@@ -1,0 +1,4 @@
+FASE 1J.5 — focalizadas
+36 aprobadas / 0 fallidas / 0 omitidas
+Refresh: 2 pruebas fallaron antes de la corrección y aprobaron después.
+1J.5 backup: casamiga-20260927T000123110Z-773bada3a8074dfe8125779fbea550c4.cmbackup; bytes=44535; SHA256=BA9ED02D1CA30061E23C965423010AFE9C578A244E8ADAC8BE6DEF87BDD2BEEB

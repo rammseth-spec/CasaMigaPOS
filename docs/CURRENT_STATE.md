@@ -1,3 +1,12 @@
+# FASE 1J CLOSED — 1J.5 completada
+
+Baseline oficial: el commit único que incorpora este cierre, hijo directo de `13da5007eac455e7f88a993b85527b9e848a7d4f`; su SHA exacto se entrega en el reporte final de conversación. No se inserta el hash propio dentro del commit para evitar una referencia circular.
+
+Schema 15; 001–015 intactas, sin 016. 533/533 pruebas; 0 fallidas/omitidas; Release 0 errores/advertencias. Recetas versionadas, perfiles productivos, multi-output, Planned/Actual, zero-output, validación de stock, idempotencia/recuperación, backup/restore y permisos verificados. Smoke humano aprobado en autorización final. UI funcional con refresco y selector de inventario.
+
+Restricciones aceptadas: plan DRAFT no editable; confirmación por creador y terminal original; COUNT requiere pieza, sin alias pza. Desarrollo, NO V1 completa ni production ready. Ver PHASE_1J5_REPORT.md y PHASE_1J5_SMOKE.md.
+
+## Registro anterior (histórico)
 # FASE 1J ABIERTA — 1J.4 UI funcional completada y aprobada
 
 Baseline de entrada: `a14007d9921e378e57aabd5e68de7e34f7464389`. Recetas y Producción están integradas en WPF sin duplicar reglas críticas: las Views/ViewModels llaman `RecipeService` y `ProductionService`. Administrator consulta y configura; Manager consulta recetas y crea/confirma producción; Cashier no ve los módulos. El smoke sintético humano validó fórmula/versiones, dos perfiles, plan multi-output, preview agregado, borrador recuperado tras reinicio, resultados menor/mayor al plan, confirmación, saldos, historial y restricción de Cashier.

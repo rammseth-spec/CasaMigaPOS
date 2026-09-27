@@ -1,0 +1,5 @@
+Serie de pruebas para C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\tests\CasaMiga.Tests\bin\Release\net10.0\CasaMiga.Tests.dll (.NETCoreApp,Version=v10.0)
+1 archivos de prueba en total coincidieron con el patrón especificado.
+Archivo de resultados: C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\TestResults\phase1j5-final-ui.trx
+
+Correctas! - Con error:     0, Superado:     6, Omitido:     0, Total:     6, Duración: 7 s - CasaMiga.Tests.dll (net10.0)

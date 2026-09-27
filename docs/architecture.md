@@ -1,3 +1,7 @@
+## Revisión 1J.5
+
+Cambios acotados al refresco en RecipeViewModel y selector en InventoryView/InventoryViewModel mediante InventoryService.List. No SQL desde Presentation ni reglas Domain duplicadas. No cambia Domain, ProductionContract, IDs deterministas, HasPermission ni writer de inventario. Pruebas nuevas verifican stock cambiante mediante InventoryService, nueva sesión y rechazo de otro actor/terminal, y backup/restauración mixtos. Los datos de negocio siguen pasando por Application.
+
 # Estado vigente — servicios de producción 1J.3
 
 ProductionService y RecipeService en Application dependen de puertos propios. SqliteProductionUnitOfWork comparte conexión/transacción con SqliteRecipeStore y el writer existente de inventario. Permisos y auditoría dentro de la transacción; recuperación histórica antes de catálogo vivo. No composición/UI productiva.

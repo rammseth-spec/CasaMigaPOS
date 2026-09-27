@@ -1,3 +1,7 @@
+## Hardening 1J.5 completada
+
+Las listas de fórmulas/perfiles se refrescan al cargar el detalle después de guardar, publicar o activar; Volver ya no conserva el estado anterior. COUNT requiere escribir "pieza"; "pza" no es una unidad de captura admitida. La confirmación de otro usuario/terminal sigue rechazada; mismo usuario y terminal puede continuar con una sesión nueva.
+
 # UI funcional de recetas y producción
 
 Disponible desde 1J.4 para instalaciones de desarrollo. `Administrator` ve y configura Recetas, perfiles y Producción. `Manager` consulta Recetas en modo de sólo lectura y crea/confirma Producción. `Cashier` no recibe navegación ni acceso Application a estos módulos.

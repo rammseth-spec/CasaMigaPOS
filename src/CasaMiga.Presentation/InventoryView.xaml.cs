@@ -22,6 +22,11 @@ public partial class InventoryView : UserControl
         await Model.Consumption!.ChangeAsync(action,confirmed);
     }
     private async void SearchClick(object sender, RoutedEventArgs e) => await Model.SearchAsync();
+    private async void SearchChoiceChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (((ComboBox)sender).SelectedItem is InventorySearchChoice choice && Model.Ready)
+            await Model.ChooseSearchAsync(choice);
+    }
     private async void PreviousClick(object sender, RoutedEventArgs e) => await Model.PageAsync(-1);
     private async void NextClick(object sender, RoutedEventArgs e) => await Model.PageAsync(1);
     private async void DetailClick(object sender, RoutedEventArgs e) => await Model.OpenDetailAsync();

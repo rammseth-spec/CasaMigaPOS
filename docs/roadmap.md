@@ -1,3 +1,9 @@
+## FASE 1J CLOSED
+
+1J.1–1J.5 completadas. Hardening, smoke humano y backup/restore aprobados. No siguiente fase iniciada. Desarrollo, no V1 completa.
+
+## Registro histórico
+
 # Estado vigente — UI funcional de recetas y producción 1J.4
 
 1J.1–1J.4 completadas. 1J.4 integra Recetas y Producción en WPF, con permisos por rol, configuración versionada, builder multi-output, preview, DRAFT bloqueado, captura/confirmación y consulta histórica. Smoke sintético aprobado. Schema 15; migraciones 001–015 intactas; sin 016.

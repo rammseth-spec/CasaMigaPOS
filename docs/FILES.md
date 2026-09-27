@@ -1,3 +1,7 @@
+## Archivos 1J.5 completada
+
+Producto: RecipeViewModel.cs (refresco), InventoryView.xaml/.cs e InventoryViewModel.cs (selector). Pruebas: RecipeProductionViewModelTests.cs y Phase1J5HardeningTests.cs. Documentación: PHASE_1J5_REPORT.md, PHASE_1J5_SMOKE.md y evidence/phase1j5-*. Datos/ejecutable sintéticos bajo work/phase1j5-smoke-20260926 y artifacts/phase1j5-smoke, ignorados.
+
 # Archivos de checkpoint 1J.4
 
 Nuevos: `Presentation/RecipeView.xaml/.cs`, `RecipeViewModel.cs`, `ProductionView.xaml/.cs`, `ProductionViewModel.cs`; `tests/RecipeProductionViewModelTests.cs`; `PHASE_1J4_REPORT.md`, `PHASE_1J4_SMOKE.md`, `recipe-production-ui.md` y evidencia `phase1j4-*`.

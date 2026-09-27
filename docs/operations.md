@@ -1,3 +1,7 @@
+## Validación 1J.5 completada
+
+Dataset aislado work/phase1j5-smoke-20260926 restaurado desde backup real de datos sintéticos. No confundir cerrar aplicación con cerrar caja. El relevo de producción entre usuarios no está implementado: el creador debe confirmar desde la terminal original. Si se crea otro plan, controlar operativamente que el borrador anterior no se confirme también. Smoke manual aprobado; FASE 1J CLOSED. Copia restaurada: work/phase1j5-restored-20260926. Evidencia persistente: evidence/phase1j5-persistent-restore.json.
+
 # Operación vigente — UI funcional 1J.4
 
 Administrator puede configurar fórmulas y perfiles desde **Recetas**; Manager sólo consulta. Las versiones publicadas no se editan: se crea una versión DRAFT, se publica y luego se activa. Usar cantidades operativas exactas (`g/kg`, `ml/L`, `pieza`).
@@ -152,3 +156,5 @@ En Inventario, Administrator puede verificar configuración, activar, pausar y r
 ## Cierre FASE 1I / 1I.5
 
 FASE 1I CERRADA tras aprobación humana explícita. Ver PHASE_1I5_REPORT.md y evidencia phase1i5-*. Schema 12, sin migración 013; 402 pruebas aprobadas. Sin cambios arquitectónicos ni política comercial en el cierre. Versión de desarrollo, no lista para producción. No fase posterior iniciada. La caja del smoke permanece OPEN; no usar estos datos sintéticos como instalación comercial.
+
+Inventario: puede elegirse un artículo en la lista bajo el buscador por nombre y código; la selección ejecuta su búsqueda. Tipo y Estado se aplican al pulsar Buscar. El texto de búsqueda sigue disponible.

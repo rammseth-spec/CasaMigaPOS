@@ -8,6 +8,10 @@ namespace CasaMiga.Presentation;
 public sealed record InventoryKindFilter(InventoryItemKind? Value, string Label);
 public sealed record InventoryActiveFilter(bool? Value, string Label);
 public sealed record InventoryUnitChoice(string Code, string Label);
+public sealed record InventorySearchChoice(Guid Id, string Code, string Name)
+{
+    public string Label => $"{Name} · {Code}";
+}
 public sealed record InventoryItemKindChoice(InventoryItemKind Value, string Label);
 public sealed record InventoryDimensionChoice(InventoryDimension Value, string Label);
 public sealed record WasteReasonChoice(WasteReason Value, string Label);
@@ -104,6 +108,25 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
     public InventoryKindFilter SelectedKindFilter { get; set; } = new(null, "Todos los tipos");
     public InventoryActiveFilter SelectedActiveFilter { get; set; } = new(true, "Activos");
     public string Search { get; set; } = "";
+    public IReadOnlyList<InventorySearchChoice> SearchChoices { get; private set; } = [];
+    private async Task RefreshSearchChoices()
+    {
+        var choices = new List<InventorySearchChoice>();
+        for (var choicePage = 0; ; choicePage++)
+        {
+            var result = await Task.Run(() => service.List(new(Kind: SelectedKindFilter.Value,
+                Active: SelectedActiveFilter.Value, Page: choicePage, PageSize: 100)));
+            choices.AddRange(result.Items.Select(x => new InventorySearchChoice(x.InventoryItemId, x.Code, x.Name)));
+            if (choices.Count >= result.Total || result.Items.Count == 0) break;
+        }
+        SearchChoices = choices.OrderBy(x => x.Name, StringComparer.CurrentCultureIgnoreCase).ThenBy(x => x.Code).ToArray();
+    }
+    public Task ChooseSearchAsync(InventorySearchChoice choice) => Run(async () =>
+    {
+        Search = choice.Code; page = 0;
+        await RefreshList();
+        SelectedItem = Items.FirstOrDefault(x => x.Id == choice.Id);
+    });
     public IReadOnlyList<InventoryRowView> Items { get; private set; } = [];
     public InventoryRowView? SelectedItem { get; set; }
     public string PageLabel { get; private set; } = "";
@@ -331,13 +354,14 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
 
     public void Forget()
     {
-        Items = []; Detail = null; History = []; Products = []; SelectedItem = null; detailId = null;
+        SearchChoices = []; Items = []; Detail = null; History = []; Products = []; SelectedItem = null; detailId = null;
         pendingOperationId = null; screen = "list"; Message = ""; CanView = CanConfigure = CanReceive = CanWaste = CanAdjust = false;
         Notify();
     }
 
     private async Task RefreshList(bool preserveMessage = false)
     {
+        await RefreshSearchChoices();
         var result = await Task.Run(() => service.List(new(Search, SelectedKindFilter?.Value,
             SelectedActiveFilter?.Value, page, 50)));
         Items = result.Items.Select(x => new InventoryRowView(x)).ToArray(); SelectedItem = null;

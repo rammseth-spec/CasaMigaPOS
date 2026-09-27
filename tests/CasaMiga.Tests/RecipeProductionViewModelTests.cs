@@ -17,6 +17,8 @@ public sealed partial class RecipePersistenceTests
         vm.Ingredients[0].Item=vm.Items.Single(x=>x.Id==flour.Id);vm.Ingredients[0].Quantity="500";vm.Ingredients[0].Unit="g";await vm.SaveFormulaVersionAsync();Assert.IsTrue(vm.MessageIsSuccess,vm.Message);Assert.HasCount(1,vm.Versions,vm.Message);
         vm.SelectedVersion=vm.Versions.Single();await vm.PublishAsync();Assert.IsTrue(vm.PublishedFormulas.Any(x=>x.Id==vm.Versions.Single().Id));vm.SelectedVersion=vm.Versions.Single();await vm.ActivateAsync();
         Assert.IsTrue(vm.Versions.Single().Active);Assert.AreEqual("Publicada",vm.Versions.Single().State);Assert.IsTrue(vm.MessageIsSuccess);
+        Assert.AreEqual("Versión 1",vm.Formulas.Single(x=>x.Code=="UI-FORMULA").ActiveVersion);
+        Assert.AreEqual("No",vm.Formulas.Single(x=>x.Code=="UI-FORMULA").Draft);
         vm.SelectedVersion=vm.Versions.Single();await vm.EditFormulaVersionAsync();Assert.IsFalse(vm.IsFormulaEditor);StringAssert.Contains(vm.Message,"publicadas");
     }
 
@@ -36,6 +38,8 @@ public sealed partial class RecipePersistenceTests
         var vm=RecipeVm();await vm.LoadAsync();Assert.IsTrue(vm.Items.Any(x=>x.Id==nextItem.Id),vm.Message);Assert.IsTrue(vm.Products.Any(x=>x.Id==next.Id),vm.Message);await vm.ShowProfilesAsync();vm.NewProfile();vm.ProfileProduct=vm.Products.Single(x=>x.Id==next.Id);vm.ProfileFinishedItem=vm.Items.Single(x=>x.Id==nextItem.Id);await vm.CreateProfileAsync();
         vm.NewProfileVersion();vm.Name="Perfil sintético";vm.AddFormulaRequirement();vm.FormulaRequirements[0].Formula=vm.PublishedFormulas.Single(x=>x.Id==version.Id);vm.FormulaRequirements[0].Quantity="25";vm.FormulaRequirements[0].Unit="g";vm.AddDirectIngredient();vm.DirectIngredients[0].Item=vm.Items.Single(x=>x.Id==topping.Id);vm.DirectIngredients[0].Quantity="1";vm.DirectIngredients[0].Unit="pieza";vm.DirectIngredients[0].Policy=IngredientCountPolicy.ExactWholeCount;
         await vm.SaveProfileVersionAsync();vm.SelectedVersion=vm.Versions.Single();await vm.PublishProfileAsync();vm.SelectedVersion=vm.Versions.Single();await vm.ActivateProfileAsync();Assert.IsTrue(vm.Versions.Single().Active);
+        vm.Back();Assert.AreEqual("Versión 1",vm.Profiles.Single(x=>x.Summary.ProductId==next.Id).ActiveVersion);
+        Assert.AreEqual("No",vm.Profiles.Single(x=>x.Summary.ProductId==next.Id).Draft);
     }
 
     [TestMethod] public async Task RecipeAndProductionNavigationRespectRoles()

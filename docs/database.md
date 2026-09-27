@@ -1,3 +1,7 @@
+## Cierre 1J.5
+
+Schema 15; migraciones 001–015 verificadas byte a byte y SHA-256 contra baseline 13da5007eac455e7f88a993b85527b9e848a7d4f. Sin 016. Restore nativo aprobado; todas las tablas equivalentes al origen. Ver evidence/phase1j5-persistent-restore.json.
+
 # Estado vigente — servicios de producción 1J.3
 
 Schema continúa 15; 001–015 intactas y 016 ausente. Confirmación escribe snapshots finales, operaciones, movimientos, balances, audit y CONFIRMED en una transacción. Cero total conserva output_operation_id NULL y sólo consumo. No cambian tablas, guards ni HasPermission.

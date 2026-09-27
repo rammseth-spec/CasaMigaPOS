@@ -1,3 +1,20 @@
+# Próximos trabajos posibles — FASE 1J CLOSED
+
+No iniciar automáticamente ninguna fase. Requieren alcance y autorización separados:
+
+1. Carga autorizada de recetas reales Casa Miga.
+2. Completar datos pendientes: cocoa concha, rendimiento cobertura, relleno rol, Procali por dona, azúcar dona, toppings dona, toppings polvorón, cuernito relleno, bolillo y puerquito. No inferir ni seedear.
+3. Rediseño visual profesional.
+4. Fullscreen/F11.
+5. Hardening general V1.
+6. Instalador Windows.
+7. Validación Windows 10/11.
+8. Pruebas físicas finales.
+
+Recomendación: revisar y autorizar el siguiente alcance con Astra. El cierre de recetas/producción no certifica preparación comercial global.
+
+## Registro histórico (sustituido por el estado superior)
+
 # Próximo paso — proponer y autorizar 1J.5 por separado
 
 1J.4 está completada y aprobada. Revisar `PHASE_1J4_REPORT.md`, `PHASE_1J4_SMOKE.md` y `recipe-production-ui.md`. No continuar automáticamente.
