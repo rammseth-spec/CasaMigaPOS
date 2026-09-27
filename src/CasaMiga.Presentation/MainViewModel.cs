@@ -30,6 +30,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool CanViewProduction { get; private set; }
     private CatalogService? catalogService;
     public bool CanNavigate => user?.Current is not null;
+    public bool IsSignedOut => !CanNavigate;
     private IdentityService? login;
     private CashService? cash;
     private CashClosingService? closing;
@@ -62,6 +63,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string Subtitle => screen switch { "catalog" => "Categorías y productos · Sin proceso de venta.", "salesHistory"=>"Ventas confirmadas · Consulta de solo lectura.", "inventory" => "Existencias y movimientos del almacén principal · consulta abajo el estado del consumo automático por ventas.", "recipes"=>"Fórmulas y perfiles productivos versionados.", "production"=>"Planeación, confirmación e historial de producción.", "counting" => "Cuenta el efectivo sin consultar el esperado. Continuar guarda tu conteo y no permite cambiarlo después.", "closingResult" => "Revisa el resultado y confirma el cierre definitivo.", "bootstrap" => "Configura el primer administrador. No hay contraseñas predeterminadas.", "login" => "Identifícate para consultar o abrir esta caja.", "opening" => "Registra el efectivo con el que comienza la sesión.", "dashboard" => "Sesión local · Tus datos permanecen en este equipo.", _ => "Validando base y respaldo…" };
     public string UserLabel => $"Usuario: {user?.Current?.DisplayName}";
     public string TerminalLabel => $"Terminal: {terminal?.Name}";
+    public string CurrentUserName => user?.Current?.DisplayName ?? "";
+    public string CurrentTerminalName => terminal?.Name ?? "";
+    public string CurrentRoleLabel { get; private set; } = "";
     public string CashLabel => opened is null ? "CAJA CERRADA" : "CAJA ABIERTA";
     public string CashDetails => opened is null ? "Captura el fondo inicial para comenzar." :
         $"Abierta por: {opened.OpenedByName}\nHora de apertura: {opened.Session.OpenedAt.ToLocalTime():dd/MM/yyyy HH:mm:ss zzz}\n\nImportes ocultos hasta confirmar el conteo ciego. Las ventas confirmadas en efectivo se incluyen en el cierre.";
@@ -113,7 +117,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (!await Task.Run(() => login!.Login(name, password))) { Message = "No se pudo iniciar sesión. Revisa tus datos o espera un minuto e inténtalo de nuevo."; return; }
         await RefreshAsync(); screen = "dashboard";
     });
-    public void Logout() { if (Busy) return; user?.SignOut(); Pos?.ForgetView(); SalesHistory?.Forget(); Inventory?.Forget(); opened = null; closingResult = null; CountedAmount = ""; CanViewSales=false; CanViewInventory=false;CanViewRecipes=false;CanViewProduction=false; screen = "login"; Message = ""; Notify(); }
+    public void Logout() { if (Busy) return; user?.SignOut(); Pos?.ForgetView(); SalesHistory?.Forget(); Inventory?.Forget(); opened = null; closingResult = null; CountedAmount = ""; CanViewSales=false; CanViewInventory=false;CanViewRecipes=false;CanViewProduction=false;CurrentRoleLabel=""; screen = "login"; Message = ""; Notify(); }
     public void ShowOpening() { if (Busy || !CanOpen) return; Amount = "0.00"; screen = "opening"; Message = ""; Notify(); }
     public void CancelOpening() { if (Busy) return; screen = "dashboard"; Message = ""; Notify(); }
     public Task OpenAsync() => Execute(async () =>
@@ -165,6 +169,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         CanViewInventory = await Task.Run(() => Inventory!.CanEnter());
         CanViewRecipes=await Task.Run(()=>catalogService!.Can("recipe.view"));
         CanViewProduction=await Task.Run(()=>catalogService!.Can("production.view"));
+        var canConfigureRecipes=await Task.Run(()=>catalogService!.Can("recipe.configure"));
+        CurrentRoleLabel=canConfigureRecipes?"Administrador":CanViewProduction?"Manager":"Cajero";
     }
     private async Task Execute(Func<Task> action)
     {

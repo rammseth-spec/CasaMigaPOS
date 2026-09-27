@@ -1,3 +1,13 @@
+# Próximo paso — definir y autorizar FASE 1K.2
+
+1K.1 está aprobada y cerrada. No iniciar 1K.2 automáticamente: preparar un alcance separado y obtener autorización antes de cambiar persistencia, migraciones o catálogo visual.
+
+Requisito formal reservado para 1K.2: el POS usará fotografías reales proporcionadas por Casa Miga, asociadas a Product, con fotografía original, derivado optimizado, tarjeta FOTO + NOMBRE + PRECIO, fallback sin foto, caché/rendimiento, backup/restore y cambio de fotografía. No usar IA, stock, Internet ni productos ajenos. 1K.1 no agrega persistencia ni migración para imágenes.
+
+Modelo recomendado para 1K.2: **Sol** para diseño WPF/POS; detenerse y reconsiderar si el alcance exige persistencia, migración o cambios de negocio.
+
+## Registro anterior
+
 # Próximos trabajos posibles — FASE 1J CLOSED
 
 No iniciar automáticamente ninguna fase. Requieren alcance y autorización separados:
@@ -208,3 +218,5 @@ Cuando el asset esté disponible, reanudar el Bloque E desde el checkpoint `PHAS
 Antes de producción continúan pendientes datos reales, logo monocromático aprobado, administración/recuperación de usuarios, zona horaria comercial configurable, retención/segunda copia/cifrado, pruebas físicas, licencia y distribución. FASE 1G no está cerrada.
 
 Checkpoint vigente 1I.5: reabrir instalación existente, login SMOKECASHIER y comprobar venta con consumo ACTIVO; principal anterior fue Administrator. No cerrar fase ni repetir esa intención.
+
+Revisión adicional completada: logo completo, iconos, hover estable, ausencia de cambios visuales al bloquear la navegación y pestañas de Catálogo/Recetas con selección verde.

@@ -1,0 +1,38 @@
+  Determinando los proyectos que se van a restaurar...
+  Todos los proyectos están actualizados para la restauración.
+  CasaMiga.Domain -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Domain\bin\Release\net10.0\CasaMiga.Domain.dll
+  CasaMiga.Application -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Application\bin\Release\net10.0\CasaMiga.Application.dll
+  CasaMiga.Infrastructure -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Infrastructure\bin\Release\net10.0\CasaMiga.Infrastructure.dll
+  CasaMiga.Maintenance -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Maintenance\bin\Release\net10.0\CasaMiga.Maintenance.dll
+  CasaMiga.Presentation -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\src\CasaMiga.Presentation\bin\Release\net10.0-windows\CasaMiga.Presentation.dll
+  CasaMiga.Tests -> C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\tests\CasaMiga.Tests\bin\Release\net10.0\CasaMiga.Tests.dll
+
+Compilación correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:01.59
+Serie de pruebas para C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\tests\CasaMiga.Tests\bin\Release\net10.0\CasaMiga.Tests.dll (.NETCoreApp,Version=v10.0)
+1 archivos de prueba en total coincidieron con el patrón especificado.
+ADVERTENCIA: Se sobrescribirá el archivo de resultados: C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\TestResults\foundation.trx
+Archivo de resultados: C:\Users\ramms\Documents\ChatGPT\Casa Miga POS V1\TestResults\foundation.trx
+
+Correctas! - Con error:     0, Superado:   535, Omitido:     0, Total:   535, Duración: 4 m 44 s - CasaMiga.Tests.dll (net10.0)
+
+Revisión visual posterior solicitada por el usuario:
+- Nueva suite scripts/verify.ps1: 535/535, 0 fallidas/omitidas, 5m07s; compilación Release 0/0.
+- Corrección posterior de recursos: carga del diccionario compilado y MainWindow aprobadas; smoke directo del acceso con panel verde y Entrar blanco.
+- Causa del texto oscuro: setter global TextBlock.Foreground con prioridad sobre herencia. Retirado; verificación sobre árbol visual real mediante scripts/verify-theme.ps1.
+- Contraste global de botones corregido mediante propagación explícita de Foreground.
+- Logo oficial derivado en PNG HD 3080 x 1786; SHA-256 A1858372624CDDC87091A3DCFCBC5FA5E21F8C2621C5D5C6E2ACEE6D363B06CC.
+- Icono multirresolución 16-256 px sobre Fondo Natural; SHA-256 A1C759AF8A61B098FBE1F5EF45CAF410FCC0419491C7E2B1085B1AB9217CFD58.
+- Hoja de Aguacate BEREL 405N aplicada como #4A5D4E por autorización explícita del usuario.
+- Fullscreen automático tras login; Esc y logout restauran el estado anterior.
+- Fullscreen mediante F11/botón del header, autorizado expresamente después de la primera revisión.
+- git diff --check: aprobado.
+- Domain/Application/Infrastructure/migrations sin cambios contra 152d0ecc03911c71863de8ffac21e668516885f6.
+- Migration 016: ausente.
+
+Revisión menú 27/09/2026: scripts/verify.ps1 aprobado, 535/535 (5m46s), Release 0 errores/advertencias. Después del ajuste final de encabezado: compilación WPF y focal Phase1K1ShellTests 2/2 aprobadas. verify-theme.ps1 aprobado, incluida pestaña verde/blanca y color estable al deshabilitar navegación. Render shell inspeccionado a 960x820 y 1280x820. Sin cambios en Domain/Application/Infrastructure/migrations.
+
+Cierre formal 27/09/2026: el usuario indicó que el resultado visual se ve bien y autorizó ejecutar el cierre y entregar el reporte. Smoke visual aprobado. No se realizaron operaciones financieras, de inventario ni producción durante esta revisión. FASE 1K.1 cerrada; 1K.2 no iniciada.

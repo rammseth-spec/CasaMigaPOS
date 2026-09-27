@@ -1,7 +1,7 @@
 <UserControl x:Class="CasaMiga.Presentation.CatalogView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" PreviewKeyDown="CatalogKeyDown">
  <StackPanel IsEnabled="{Binding Ready}">
   <TextBlock Text="DEMO / DESARROLLO · Los precios de prueba no son precios comerciales." Foreground="{DynamicResource BrandBrush}" FontSize="16" Visibility="{Binding IsDevelopment,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,12"/>
-  <WrapPanel Margin="0,0,0,16"><Button Content="Productos" Click="ProductsClick" Margin="0,0,12,8"/><Button Content="Categorías" Click="CategoriesClick" Margin="0,0,0,8"/></WrapPanel>
+  <WrapPanel Margin="0,0,0,16"><Button Content="Productos" Style="{StaticResource SectionTabButton}" Tag="{Binding IsProducts}" Click="ProductsClick" Margin="0,0,12,8"/><Button Content="Categorías" Style="{StaticResource SectionTabButton}" Tag="{Binding IsCategories}" Click="CategoriesClick" Margin="0,0,0,8"/></WrapPanel>
   <StackPanel Visibility="{Binding IsCategories,Converter={StaticResource VisibleWhen}}">
    <TextBlock Text="Categorías · incluye inactivas" Margin="0,0,0,8"/>
    <DataGrid x:Name="CategoryList" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" Height="190" AutomationProperties.Name="Categorías">

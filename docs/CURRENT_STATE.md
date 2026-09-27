@@ -1,3 +1,17 @@
+# FASE 1K.1 CLOSED — shell visual aprobado
+
+El usuario aprobó visualmente la versión final el 27/09/2026. El menú muestra el logo completo con margen interior, iconos vectoriales, jerarquía de grupos y pestañas, hover independiente sin cambio visual al bloquear navegación, contenido ajustado al ancho y encabezado adaptable. El shell WPF también fue renderizado y revisado a 960 y 1280 píxeles.
+
+Revisión anterior: eliminada la imposición global de Foreground en TextBlock que seguía oscureciendo botones. Verificación del árbol visual WPF e imagen renderizada confirma blanco en botones primarios. Acceso rediseñado en dos columnas con panel Hoja de Aguacate y formulario claro.
+
+Baseline de entrada: `152d0ecc03911c71863de8ffac21e668516885f6`. 1K.1 reemplaza la navegación superior por un shell WPF con sidebar, header, área de contenido y pie de estado, manteniendo ViewModels y servicios existentes. La visibilidad usa los permisos ya calculados; Application continúa como autoridad. Login, logout, caja y navegación conservan sus handlers.
+
+Identidad: maestro oficial `assets/brand/Variant04/CasaMiga_LOGO_OFICIAL_VECTOR.svg`, VARIANTE 04 — SONRISA DELGADA, derivado PNG transparente HD 3080 × 1786 e icono ICO multirresolución para WPF. Paleta: Pan Artesanal `#4B2E19`, Fondo Natural `#FDF8EF`, Trigo Suave `#A67C52`; Hoja de Aguacate BEREL 405N usa `#4A5D4E`, equivalencia digital aproximada autorizada por el usuario. Presentation no referencia Opción 07. La revisión visual originó corrección global de contraste de botones, navegación verde y fullscreen automático tras login, expresamente autorizados.
+
+Verificación automatizada: 535/535 pruebas, 0 fallidas, 0 omitidas; Release 0 errores/advertencias; focal 1K.1 2/2; tema WPF materializado y validado. Schema 15; migraciones 001–015 coinciden con los hashes del cierre 1J.5; no existe 016. El smoke fue visual y no realizó operaciones financieras, de inventario o producción. FASE 1K.1 está cerrada; 1K.2 no inició.
+
+## Registro anterior
+
 # FASE 1J CLOSED — 1J.5 completada
 
 Baseline oficial: el commit único que incorpora este cierre, hijo directo de `13da5007eac455e7f88a993b85527b9e848a7d4f`; su SHA exacto se entrega en el reporte final de conversación. No se inserta el hash propio dentro del commit para evitar una referencia circular.

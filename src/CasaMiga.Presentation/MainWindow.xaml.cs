@@ -3,6 +3,11 @@ using System.Windows.Input;
 namespace CasaMiga.Presentation;
 public partial class MainWindow : Window
 {
+    private bool isFullScreen;
+    private WindowState windowStateBeforeFullScreen;
+    private WindowStyle windowStyleBeforeFullScreen;
+    private ResizeMode resizeModeBeforeFullScreen;
+
     public MainWindow() => InitializeComponent();
     private MainViewModel Model => (MainViewModel)DataContext;
     private async void BootstrapClick(object sender, RoutedEventArgs e)
@@ -16,6 +21,7 @@ public partial class MainWindow : Window
     {
         var password = LoginPassword.Password; LoginPassword.Clear();
         await Model.LoginAsync(LoginUser.Text, password);
+        if (Model.CanNavigate) EnterFullScreen();
     }
     private void LoginPasswordKeyDown(object sender, KeyEventArgs e) { if (e.Key == Key.Enter) { e.Handled = true; LoginClick(sender,e); } }
     private void ShowOpeningClick(object sender, RoutedEventArgs e) { Model.ShowOpening(); OpeningAmount.Focus(); OpeningAmount.SelectAll(); }
@@ -46,12 +52,45 @@ public partial class MainWindow : Window
     private async void ConfirmCloseClick(object sender, RoutedEventArgs e) => await Model.ConfirmCloseAsync();
     private void WindowKeyDown(object sender, KeyEventArgs e)
     {
-        if(e.Key==Key.Escape && (Model.IsCounting || Model.IsClosingResult || Model.IsOpening))
+        if(e.Key==Key.F11)
+        { e.Handled=true; ToggleFullScreen(); }
+        else if(e.Key==Key.Escape && isFullScreen)
+        { e.Handled=true; ExitFullScreen(); }
+        else if(e.Key==Key.Escape && (Model.IsCounting || Model.IsClosingResult || Model.IsOpening))
         { e.Handled=true; if(Model.IsOpening) Model.CancelOpening(); else Model.BackFromClosing(); }
         else if(e.Key==Key.Enter && Keyboard.FocusedElement==CountedInput && Model.IsCounting)
         {e.Handled=true; SubmitCountClick(sender,e);}
         else if(e.Key==Key.Enter && Keyboard.FocusedElement==OpeningAmount && Model.IsOpening)
         {e.Handled=true; OpenClick(sender,e);}
+    }
+    private void FullScreenClick(object sender, RoutedEventArgs e) => ToggleFullScreen();
+    private void ToggleFullScreen()
+    {
+        if (isFullScreen) { ExitFullScreen(); return; }
+        EnterFullScreen();
+    }
+    private void EnterFullScreen()
+    {
+        if (isFullScreen) return;
+        windowStateBeforeFullScreen = WindowState;
+        windowStyleBeforeFullScreen = WindowStyle;
+        resizeModeBeforeFullScreen = ResizeMode;
+        WindowState = WindowState.Normal;
+        WindowStyle = WindowStyle.None;
+        ResizeMode = ResizeMode.NoResize;
+        WindowState = WindowState.Maximized;
+        isFullScreen = true;
+        FullScreenButton.Content = "Salir de pantalla completa · F11";
+    }
+    private void ExitFullScreen()
+    {
+        if (!isFullScreen) return;
+        WindowState = WindowState.Normal;
+        WindowStyle = windowStyleBeforeFullScreen;
+        ResizeMode = resizeModeBeforeFullScreen;
+        WindowState = windowStateBeforeFullScreen;
+        isFullScreen = false;
+        FullScreenButton.Content = "Pantalla completa · F11";
     }
     private bool DiscardBefore(string action)
     {
@@ -63,7 +102,7 @@ public partial class MainWindow : Window
     private void LogoutClick(object sender, RoutedEventArgs e)
     {
         if(Model.Busy || Model.Pos?.Busy==true || !DiscardBefore("salir del usuario"))return;
-        LoginPassword.Clear();Model.Logout();LoginUser.Focus();
+        ExitFullScreen();LoginPassword.Clear();Model.Logout();LoginUser.Focus();
     }
     private void WindowClosing(object? sender,System.ComponentModel.CancelEventArgs e)
     {

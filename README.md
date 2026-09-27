@@ -1,5 +1,7 @@
 # Casa Miga POS
 
+**FASE 1K.1 CERRADA Y APROBADA VISUALMENTE.** El nuevo shell WPF incorpora sidebar por permisos, header operativo, área de contenido común, estilos semánticos, contraste legible, logotipo HD, icono oficial y pantalla completa F11. La identidad usa el maestro oficial **VARIANTE 04 — SONRISA DELGADA** y la paleta documentada; no usa Opción 07 en Presentation. FASE 1K.2 no inició. Ver [reporte 1K.1](docs/PHASE_1K1_REPORT.md) y [smoke visual](docs/PHASE_1K1_SMOKE.md).
+
 **FASE 1J CLOSED; 1J.5 completada.** Recetas/perfiles versionados, producción multi-output, Planned/Actual, zero-output, validación de stock, recuperación, permisos y backup/restore verificados. UI funcional con refresco y selector de inventario. Schema 15; migraciones 001–015 intactas, sin 016. 533/533 pruebas; Release 0 errores/advertencias. Ver [reporte final](docs/PHASE_1J5_REPORT.md).
 
 Aplicación Windows offline para una panadería mexicana. Versión de desarrollo, NO lista para producción.
@@ -23,7 +25,7 @@ Al arrancar se respalda, migra y valida la instalación. El paquete .cmbackup in
 - `docs/`: arquitectura, operación, decisiones y evidencia.
 - `research/`: investigación de FASE 0; `scripts/`: verificación/publicación de desarrollo.
 
-Venta y pago en efectivo se confirman juntos. El efecto de impresión siempre ocurre después del commit. El inventario dispone de casos de uso Application expuestos mediante la UI 1H.4 aprobada; el consumo al vender sólo ocurre con el flag ENABLED; existe flujo administrativo de activación, pausa y reanudación con preflight autoritativo. La Qian quedó validada para el baseline de impresión del Bloque D; otras capacidades físicas permanecen fuera de alcance o pendientes. La identidad visual es temporal y está identificada como tal. No se ha elegido licencia de distribución ni publicado un remoto.
+Venta y pago en efectivo se confirman juntos. El efecto de impresión siempre ocurre después del commit. El inventario dispone de casos de uso Application expuestos mediante la UI 1H.4 aprobada; el consumo al vender sólo ocurre con el flag ENABLED; existe flujo administrativo de activación, pausa y reanudación con preflight autoritativo. La Qian quedó validada para el baseline de impresión del Bloque D; otras capacidades físicas permanecen fuera de alcance o pendientes. La identidad visual de Presentation usa el manual oficial del 14 de septiembre de 2026. Hoja de Aguacate se referencia como `BEREL 405N` y usa la equivalencia digital aproximada `#4A5D4E` autorizada por el usuario. No se ha elegido licencia de distribución ni publicado un remoto.
 
 
 POS: usuario activo, catalog.view, pos.use y caja OPEN sin conteo confirmado. Cobrar exige además sales.complete. Categorías/productos activos, búsqueda nombre/SKU y páginas de 50. Cart sigue siendo transitorio y no es una venta. Conserva nombre/precio al agregar; sólo el commit comercial permite vaciarlo después de cobrar. Un resultado incierto exige verificación por UUID antes de volver a operar. Demo explícita sólo desarrollo.

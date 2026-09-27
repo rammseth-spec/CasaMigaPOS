@@ -1,3 +1,11 @@
+## Shell visual 1K.1
+
+Presentation renderiza el maestro vectorial autorizado mediante un PNG transparente HD 3080 × 1786 y un ICO multirresolución, ambos derivados sin reinterpretar la geometría. El shell aplica escalado de alta calidad, colores semánticos centralizados y una plantilla de botones que propaga explícitamente `Foreground`. El modo fullscreen es estado exclusivo de `MainWindow`: F11 o el botón del header cambian `WindowStyle`, `ResizeMode` y `WindowState`, sin tocar ViewModels ni casos de uso.
+
+Presentation conserva un único `MainViewModel` y las instancias existentes de módulos. `MainWindow` organiza login y operación en dos estados: tras autenticar, muestra sidebar fija, header contextual, contenido compartido y pie de estado; POS reutiliza el mismo shell. Los botones llaman los handlers existentes y la visibilidad se enlaza a permisos ya calculados, sin convertir la UI en autoridad de autorización.
+
+`Resources/Theme.xaml` concentra colores semánticos, tipografía segura de Windows y estilos para botones, inputs, cards, estados y DataGrid. El SVG oficial convertido a contornos permanece inmutable bajo `assets/brand/Variant04`; Presentation incluye un PNG transparente derivado directamente y lo muestra con `Stretch=Uniform`. No hay referencias nuevas de Presentation hacia Domain/Application/Infrastructure ni cambios de composición crítica.
+
 ## Revisión 1J.5
 
 Cambios acotados al refresco en RecipeViewModel y selector en InventoryView/InventoryViewModel mediante InventoryService.List. No SQL desde Presentation ni reglas Domain duplicadas. No cambia Domain, ProductionContract, IDs deterministas, HasPermission ni writer de inventario. Pruebas nuevas verifican stock cambiante mediante InventoryService, nueva sesión y rechazo de otro actor/terminal, y backup/restauración mixtos. Los datos de negocio siguen pasando por Application.

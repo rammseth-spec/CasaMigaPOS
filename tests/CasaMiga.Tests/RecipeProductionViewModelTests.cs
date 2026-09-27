@@ -89,7 +89,7 @@ public sealed partial class RecipePersistenceTests
     {
         var root=Path.Combine(AppContext.BaseDirectory,"Presentation");var recipe=File.ReadAllText(Path.Combine(root,"RecipeView.xaml"));var production=File.ReadAllText(Path.Combine(root,"ProductionView.xaml"))+File.ReadAllText(Path.Combine(root,"ProductionView.xaml.cs"));var main=File.ReadAllText(Path.Combine(root,"MainWindow.xaml"));
         foreach(var forbidden in new[]{"canonical hash","OperationId","numerator","denominator","µL"," mg"})Assert.IsFalse((recipe+production).Contains(forbidden,StringComparison.OrdinalIgnoreCase),forbidden);
-        foreach(var required in new[]{"Caja","Catálogo","Ventas","Inventario","Recetas","Producción","POS"})StringAssert.Contains(main,required);
+        foreach(var required in new[]{"Caja","Catálogo","Historial de ventas","Inventario","Recetas","Producción","Punto de venta"})StringAssert.Contains(main,required);
         StringAssert.Contains(production,"Esta producción no generará producto terminado");StringAssert.Contains(production,"Planeado");StringAssert.Contains(production,"Real obtenido");
     }
 

@@ -1,3 +1,14 @@
+## Archivos 1K.1
+
+- `src/CasaMiga.Presentation/Assets/CasaMigaLogo.png`: derivado HD 3080 × 1786 del SVG oficial.
+- `src/CasaMiga.Presentation/Assets/CasaMiga.ico`: icono multirresolución 16–256 px derivado del mismo maestro.
+
+- Identidad: `assets/brand/Variant04/CasaMiga_MANUAL_FINAL.pdf`, `CasaMiga_LOGO_OFICIAL_VECTOR.svg` y README de procedencia; derivado WPF en `src/CasaMiga.Presentation/Assets/CasaMigaLogo.png`.
+- Shell: `MainWindow.xaml`, `MainViewModel.cs`, `PosView.xaml` y `Resources/Theme.xaml`; registro del recurso en Presentation.csproj.
+- Pruebas: `Phase1K1ShellTests.cs`, actualización del rótulo de navegación en `RecipeProductionViewModelTests.cs` y vínculos de assets/XAML en el csproj de pruebas.
+- Documentación/evidencia: `PHASE_1K1_REPORT.md`, `PHASE_1K1_SMOKE.md`, `evidence/phase1k1-verification.txt` y actualizaciones de continuidad.
+- Sin cambios en Domain, Application, Infrastructure ni migraciones. `work/phase1k1-*` y `artifacts/phase1k1-smoke` son locales/ignorados.
+
 ## Archivos 1J.5 completada
 
 Producto: RecipeViewModel.cs (refresco), InventoryView.xaml/.cs e InventoryViewModel.cs (selector). Pruebas: RecipeProductionViewModelTests.cs y Phase1J5HardeningTests.cs. Documentación: PHASE_1J5_REPORT.md, PHASE_1J5_SMOKE.md y evidence/phase1j5-*. Datos/ejecutable sintéticos bajo work/phase1j5-smoke-20260926 y artifacts/phase1j5-smoke, ignorados.

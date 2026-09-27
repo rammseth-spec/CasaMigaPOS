@@ -3,5 +3,8 @@
 *.md text eol=lf
 *.sql text eol=lf
 *.ps1 text eol=crlf
+*.pdf binary
+*.png binary
+*.ico binary
 # Applied migrations are hashed byte-for-byte; never normalize their line endings.
 migrations/*.sql -text

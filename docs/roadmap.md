@@ -1,3 +1,9 @@
+## FASE 1K — 1K.1 cerrada
+
+- 1K.1: shell, navegación y sistema visual implementados, verificados y aprobados visualmente el 27/09/2026.
+- 1K.2: no iniciada. Requerirá fotografías reales Casa Miga por Product; no IA, stock photos ni imágenes de Internet.
+- Fullscreen/F11 se incorporó a 1K.1 por autorización expresa posterior a la primera revisión visual. Instalador y matriz Windows permanecen fuera.
+
 ## FASE 1J CLOSED
 
 1J.1–1J.5 completadas. Hardening, smoke humano y backup/restore aprobados. No siguiente fase iniciada. Desarrollo, no V1 completa.

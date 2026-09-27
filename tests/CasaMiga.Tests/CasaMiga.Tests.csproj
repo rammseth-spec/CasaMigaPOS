@@ -16,5 +16,12 @@
     <Content Include="../../src/CasaMiga.Presentation/ProductionView.xaml" Link="Presentation/ProductionView.xaml" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../src/CasaMiga.Presentation/ProductionView.xaml.cs" Link="Presentation/ProductionView.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../src/CasaMiga.Presentation/MainWindow.xaml" Link="Presentation/MainWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../src/CasaMiga.Presentation/MainWindow.xaml.cs" Link="Presentation/MainWindow.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../src/CasaMiga.Presentation/App.xaml" Link="Presentation/App.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../src/CasaMiga.Presentation/PosView.xaml" Link="Presentation/PosView.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../src/CasaMiga.Presentation/Resources/Theme.xaml" Link="Presentation/Resources/Theme.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../src/CasaMiga.Presentation/Assets/CasaMigaLogo.png" Link="Presentation/Assets/CasaMigaLogo.png" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../src/CasaMiga.Presentation/Assets/CasaMiga.ico" Link="Presentation/Assets/CasaMiga.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="../../assets/brand/Variant04/CasaMiga_LOGO_OFICIAL_VECTOR.svg" Link="Presentation/Assets/CasaMiga_LOGO_OFICIAL_VECTOR.svg" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
