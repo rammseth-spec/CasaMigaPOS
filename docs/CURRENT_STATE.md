@@ -1,4 +1,12 @@
-# FASE 1K.1 CLOSED — shell visual aprobado
+# FASE 1K ABIERTA — 1K.2A diseño completado, pendiente autorización
+
+Baseline intacto: `58bdcbd34692e14ced3f85fdeb82fca5d6b8b794`. 1K.1 sigue cerrada. 1K.2 está en diseño; no implementada. 1K.2B no inició. Schema actual 15; 001–015 intactas, sin 016.
+
+Propuesta principal: ProductPhoto opcional por Product, originales retenidos en bundles locales portables, metadata/puntero SQLite, derivado JPEG Q85 hasta 512 cuadrado y caché acotada. Se propone 016 y backup v2 con lectura v1, más recuperación de media faltante explícita; nada de esto se ha aplicado. Ver `PHASE_1K2A_DESIGN.md` para DDL propuesto, protocolo de publicación/recuperación, ProductCard, permisos y 36 pruebas futuras.
+
+Evidencia ejecutada: probe WPF aislado con carta técnica no fotográfica, 512/768 JPEG/PNG, carga y liberación de handles; ver `evidence/phase1k2a-image-probe-results.md`. Calidad con fotos reales, rendimiento del POS y Windows 10/LTSC siguen pendientes. 535/535 y Release 0/0 son evidencia previa de 1K.1; no se repitió suite por cambios documentales. src/tests/migrations permanecen intactos. Documentación/probe sin commit mientras se autoriza arquitectura; no push.
+
+## Registro anterior — 1K.1 CLOSED
 
 El usuario aprobó visualmente la versión final el 27/09/2026. El menú muestra el logo completo con margen interior, iconos vectoriales, jerarquía de grupos y pestañas, hover independiente sin cambio visual al bloquear navegación, contenido ajustado al ancho y encabezado adaptable. El shell WPF también fue renderizado y revisado a 960 y 1280 píxeles.
 

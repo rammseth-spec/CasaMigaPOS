@@ -1,4 +1,10 @@
-# Próximo paso — definir y autorizar FASE 1K.2
+# Próximo paso — revisar propuesta 1K.2A y autorizar 1K.2B
+
+Leer `PHASE_1K2A_DESIGN.md`. Autorizar por separado ProductPhoto, DDL 016 propuesto, originales retenidos, JPEG/PNG de entrada, derivado JPEG Q85/512, caché 64 MiB, backup v2 compatible con v1 y recuperación explícita de media perdida. No crear migración ni implementar automáticamente. El diseño y probe quedan sin commit por la restricción expresa de arquitectura no autorizada.
+
+Para validar calidad antes de fijar importación: 3–5 fotografías reales con Product identificado; la falta del resto no bloquea un catálogo mixto con fallback. Confirmar edición/build de Windows 10/LTSC y resolución/DPI para validación en el equipo objetivo. Modelo recomendado para implementación: Astra por atomicidad, persistencia, backup y recuperación.
+
+## Propuesta previa — sustituida por el diseño 1K.2A
 
 1K.1 está aprobada y cerrada. No iniciar 1K.2 automáticamente: preparar un alcance separado y obtener autorización antes de cambiar persistencia, migraciones o catálogo visual.
 

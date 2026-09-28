@@ -56,6 +56,10 @@ Propietario: cash.close. Tercero: cash.close y cash.close.other. Administrator y
 
 Fórmula 1B: esperado = fondo; entradas, retiros, ventas y devoluciones son cero. Diferencia = contado − esperado. Cero es caja exacta; positivo sobrante; negativo faltante. Tras cerrar puede abrirse otra sesión con otro ID; la histórica queda CLOSED e inmutable.
 
+## Propuesta de fotos 1K.2A (no implementada)
+
+El respaldo vigente sigue siendo v1 con tres entradas. `PHASE_1K2A_DESIGN.md`, sección 9, propone un manifiesto v2 que enumera DB, terminal, originales y thumbnails registrados, con hashes y límites. Requiere autorización posterior: no añadir manualmente fotos a paquetes v1 ni ejecutar DDL propuesto. Restore nuevo conservaría lectura de v1 y publicaría siempre a carpeta nueva. La ruta de emergencia para media perdida está propuesta como `.cmrecovery` explícito; todavía no existe en el programa y no equivale a un backup completo.
+
 ## Backup completo
 
 ```powershell

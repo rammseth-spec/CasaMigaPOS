@@ -1,3 +1,7 @@
+## Propuesta 1K.2A — pendiente, no adoptada
+
+`PHASE_1K2A_DESIGN.md` propone ProductPhoto en Application, metadata transaccional y bundles de archivos en Infrastructure, codec/caché WPF en Presentation. Una foto principal opcional por Product; original y crop inmutables por revisión; thumbnail reparable mediante archivo nombrado por hash y cambio auditado. Se requiere proponer 016 y backup v2, no creados. Domain, carrito, checkout y lógica de producción no se alteran. La coordinación DB/filesystem, restore, emergencia y las alternativas están especificadas en el diseño. Este apartado no declara esa arquitectura implementada ni autorizada.
+
 ## Shell visual 1K.1
 
 Presentation renderiza el maestro vectorial autorizado mediante un PNG transparente HD 3080 × 1786 y un ICO multirresolución, ambos derivados sin reinterpretar la geometría. El shell aplica escalado de alta calidad, colores semánticos centralizados y una plantilla de botones que propaga explícitamente `Foreground`. El modo fullscreen es estado exclusivo de `MainWindow`: F11 o el botón del header cambian `WindowStyle`, `ResizeMode` y `WindowState`, sin tocar ViewModels ni casos de uso.
