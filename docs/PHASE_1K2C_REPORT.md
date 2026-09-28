@@ -7,7 +7,7 @@ Fecha: 28/09/2026. Documento autocontenido. La implementación se confirma por e
 1. **FASE 1K:** permanece ABIERTA hasta autorización de cierre formal separada.
 2. **FASE 1K.2:** objetivo funcional de catálogo fotográfico completado; no se inicia trabajo posterior.
 3. **FASE 1K.2C:** COMPLETADA Y APROBADA VISUALMENTE; el usuario solicitó el reporte final después de la revisión preparada.
-4. **Modelo utilizado:** Sol.
+4. **Modelo utilizado:** Codex sobre GPT-6, modelo efectivo de esta sesión; la autorización recomendaba Sol.
 5. **HEAD inicial:** `95e9d9c12c44c3d956bfd11fc00ce8a5bf3615a9`.
 6. **HEAD final:** el SHA exacto se entrega en la conversación tras crear el commit documental.
 7. **Commits:** un commit de producto y, si aplica, un commit documental de cierre; ambos SHA se entregan en la conversación.
