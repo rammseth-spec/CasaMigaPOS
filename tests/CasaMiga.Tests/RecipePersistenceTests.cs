@@ -23,7 +23,7 @@ public sealed class RecipeMigrationTests : SalesFixture
         config.Change(ConsumptionAction.Enable,config.GetStatus());
         var sale = Persist();
         db.Initialize(); db.Validate();
-        Assert.AreEqual(15L, Sql("SELECT max(version) FROM schema_migration"));
+        Assert.AreEqual(16L, Sql("SELECT max(version) FROM schema_migration"));
         Assert.AreEqual(sale.Total.Cents, Sql("SELECT total_cents FROM sale"));
         Assert.AreEqual(0L, Sql("SELECT count(*) FROM formula"));
         Assert.AreEqual(8L, Sql("SELECT quantity_atomic FROM inventory_balance"));

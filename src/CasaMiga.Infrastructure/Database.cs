@@ -93,6 +93,11 @@ public sealed class Database(string path)
                 command.CommandText="SELECT (SELECT count(*) FROM measurement_unit)=7 AND (SELECT count(*) FROM inventory_location WHERE code='MAIN' AND name='Almacén principal')=1 AND (SELECT count(*) FROM permission WHERE name LIKE 'inventory.%')=5 AND (SELECT count(*) FROM role_permission WHERE permission_name LIKE 'inventory.%')=8";
                 if(Convert.ToInt64(command.ExecuteScalar())!=1)throw new InvalidOperationException("La migración de inventario no creó sus seeds completos.");
             }
+            if (i + 1 == 16)
+            {
+                command.CommandText = "SELECT count(*) FROM sqlite_master WHERE name IN ('product_photo_asset','product_photo','product_photo_asset_no_delete','product_photo_asset_immutable','product_photo_no_delete','product_photo_revision')";
+                if (Convert.ToInt64(command.ExecuteScalar()) != 6) throw new InvalidOperationException("La migración de fotos no creó sus restricciones.");
+            }
             command.CommandText = "INSERT INTO schema_migration VALUES($v,$hash,$at)";
             command.Parameters.AddWithValue("$hash", hash);
             command.Parameters.AddWithValue("$at", DateTimeOffset.UtcNow.ToString("O"));

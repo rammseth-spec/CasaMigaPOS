@@ -75,7 +75,8 @@ public sealed partial class RecipePersistenceTests
         q.CommandText="SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name";
         var tables=new List<string>();using(var r=q.ExecuteReader())while(r.Read())tables.Add(r.GetString(0));
         var result=new List<string>();
-        foreach(var table in tables.Where(x=>migrations||x!="schema_migration"))
+        // Historical business snapshot excludes new photo-only tables when comparing pre-photo upgrades.
+        foreach(var table in tables.Where(x=>(migrations||x!="schema_migration") && (!excludeProductionPermissions || x is not ("product_photo" or "product_photo_asset"))))
         {
             q.CommandText="SELECT * FROM \""+table+"\"";
             if(excludeProductionPermissions && table is "permission" or "role_permission")
@@ -123,7 +124,7 @@ public sealed partial class RecipePersistenceTests
                 Assert.ThrowsExactly<SqliteException>(()=>old.db.Initialize());Assert.AreEqual(before,old.AllRows(true));old.db.Validate();old.Sql("DROP TRIGGER inject_014");
             }
             old.db.Initialize();old.db.Validate();Assert.AreEqual(rows,old.AllRows(excludeProductionPermissions:true));
-            Assert.AreEqual(15L,old.Sql("SELECT max(version) FROM schema_migration"));
+            Assert.AreEqual(16L,old.Sql("SELECT max(version) FROM schema_migration"));
             Assert.AreEqual(opSchema,old.Sql("SELECT sql FROM sqlite_master WHERE name='inventory_operation'"));
             Assert.AreEqual(0L,old.Sql("SELECT count(*) FROM sqlite_master WHERE name LIKE '%_014'"));
             Assert.IsEmpty(new SqliteInventoryStore(old.db,old.clock).Reconcile());

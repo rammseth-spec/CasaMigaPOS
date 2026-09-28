@@ -8,6 +8,6 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Falló restore.' }
     & $Dotnet build CasaMigaPOS.slnx -c Release --no-restore
     if ($LASTEXITCODE -ne 0) { throw 'Falló compilación.' }
-    & $Dotnet test CasaMigaPOS.slnx -c Release --no-build --no-restore --logger 'trx;LogFileName=foundation.trx' --results-directory TestResults
+    & $Dotnet test CasaMigaPOS.slnx -c Release --no-build --no-restore --logger 'trx;LogFilePrefix=foundation' --results-directory TestResults
     if ($LASTEXITCODE -ne 0) { throw 'Fallaron pruebas.' }
 } finally { Pop-Location }

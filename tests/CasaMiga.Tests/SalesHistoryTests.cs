@@ -171,7 +171,7 @@ public sealed class SalesHistoryTests : SalesFixture
         oldDb.Initialize();oldDb.Validate();
         Assert.AreEqual(oldSale.Id,new SalesHistoryService(oldWork,oldUser,TimeZoneInfo.Utc).Detail(oldSale.Id)!.Sale.Id);
         using var connection=oldDb.Open();using var command=connection.CreateCommand();
-        command.CommandText="SELECT count(*) FROM schema_migration";Assert.AreEqual(15L,command.ExecuteScalar());
+        command.CommandText="SELECT count(*) FROM schema_migration";Assert.AreEqual(16L,command.ExecuteScalar());
         command.CommandText="SELECT count(*) FROM sqlite_master WHERE type='index' AND name='ix_sale_history'";Assert.AreEqual(1L,command.ExecuteScalar());
         command.CommandText="SELECT count(*) FROM role_permission WHERE permission_name='sales.view'";Assert.AreEqual(2L,command.ExecuteScalar());
     }
