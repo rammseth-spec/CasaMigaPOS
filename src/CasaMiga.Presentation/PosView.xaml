@@ -7,14 +7,29 @@
    <Button Grid.Column="1" Content="Buscar / actualizar" Click="SearchClick" Margin="8,0,0,0"/>
   </Grid>
   <ScrollViewer Grid.Row="3" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0,0,0,8">
-   <ItemsControl ItemsSource="{Binding Categories}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Button Content="{Binding Label}" Tag="{Binding Id}" Click="CategoryClick" Margin="0,0,8,4"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+   <ItemsControl ItemsSource="{Binding Categories}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Button Content="{Binding Label}" Tag="{Binding Selected}" CommandParameter="{Binding Id}" Style="{StaticResource SectionTabButton}" Click="CategoryClick" Margin="0,0,8,4"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
   </ScrollViewer>
   <Grid Grid.Row="4"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="410"/></Grid.ColumnDefinitions>
    <Grid Margin="0,0,16,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <TextBlock Text="Productos · pulsa para agregar" FontWeight="SemiBold" Margin="0,0,0,8"/>
     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
      <ItemsControl ItemsSource="{Binding Products}" IsEnabled="{Binding CanOperate}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate>
-      <Button Style="{StaticResource ProductTile}" Tag="{Binding Product.Id}" Click="ProductClick" AutomationProperties.Name="{Binding Name}"><StackPanel><TextBlock Text="{Binding Name}" FontSize="19" Foreground="White" FontWeight="SemiBold" TextAlignment="Center"/><TextBlock Text="{Binding Price}" FontSize="23" Foreground="White" TextAlignment="Center" Margin="0,8,0,0"/></StackPanel></Button>
+      <Button Style="{StaticResource ProductTile}" Tag="{Binding Id}" Click="ProductClick" IsEnabled="{Binding IsActive}" ToolTip="{Binding Name}" AutomationProperties.Name="{Binding Name}">
+       <Grid><Grid.RowDefinitions><RowDefinition Height="168"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="10" ClipToBounds="True">
+         <Grid>
+          <Image Source="{Binding Photo}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" Visibility="{Binding HasPhoto,Converter={StaticResource VisibleWhen}}"/>
+          <Grid Visibility="{Binding IsFallback,Converter={StaticResource VisibleWhen}}">
+           <Path Data="M4,5 L16,5 18,8 18,17 2,17 2,8 Z M7,5 L8.5,2 11.5,2 13,5 M10,9 A3,3 0 1 1 9.99,9" Stroke="{DynamicResource WheatBrush}" StrokeThickness="1.6" Stretch="Uniform" Width="48" Height="48" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+           <TextBlock Text="Sin foto" Style="{StaticResource CaptionText}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,18"/>
+          </Grid>
+         </Grid>
+        </Border>
+        <TextBlock Grid.Row="1" Text="{Binding Name}" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" TextAlignment="Left" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="44" Margin="2,10,2,2"/>
+        <TextBlock Grid.Row="2" Text="{Binding CategoryName}" Style="{StaticResource CaptionText}" TextTrimming="CharacterEllipsis" Margin="2,0"/>
+        <TextBlock Grid.Row="3" Text="{Binding Price}" FontSize="21" Foreground="{DynamicResource PrimaryBrush}" FontWeight="Bold" TextAlignment="Left" Margin="2,7,2,0"/>
+       </Grid>
+      </Button>
      </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
     </ScrollViewer>
     <DockPanel Grid.Row="2" Margin="0,8,0,0"><WrapPanel DockPanel.Dock="Right"><Button Content="Anterior" Click="PreviousClick" IsEnabled="{Binding Previous}" MinWidth="100"/><Button Content="Siguiente" Click="NextClick" IsEnabled="{Binding Next}" MinWidth="100" Margin="8,0,0,0"/></WrapPanel><TextBlock Text="{Binding PageLabel}" FontSize="14" VerticalAlignment="Center"/></DockPanel>

@@ -1,0 +1,6 @@
+FASE 1K.2C — MIGRACIONES
+Baseline: 95e9d9c12c44c3d956bfd11fc00ce8a5bf3615a9
+Resultado: el directorio migrations no tiene cambios respecto del baseline.
+Schema vigente: 16.
+016_product_photos.sql SHA-256: 9223CAA06CD02FA32E874CC1516EE0C6DB798CB76E2FBE1BF267BAB9B695ED76
+Las migraciones 001–015 permanecen byte por byte en el estado del baseline.

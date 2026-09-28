@@ -1,3 +1,13 @@
+## Archivos 1K.2C
+
+- `src/CasaMiga.Presentation/ProductPhotoUi.cs`: ProductCard, gateway async y caché LRU 64 MiB.
+- `PosView.xaml/.cs`, `PosViewModel.cs`, `Resources/Theme.xaml`: grid fotográfico, categorías seleccionadas y flujo Add vigente.
+- `CatalogView.xaml/.cs`, `CatalogViewModel.cs`, `PhotoCropDialog.xaml/.cs`: administración, procedencia, preview, crop, Replace y Remove.
+- `tools/CasaMiga.Phase1K2CSmoke/`: validador CSV/JSON y generador por servicios para carpeta nueva.
+- `tests/CasaMiga.PhotoTests/ProductPhotoUiTests.cs`, `Phase1K1ShellTests.cs`: caché, fallback, datos autoritativos, 100 cards y estructura XAML.
+- `docs/product-photo-ui.md`, `phase1k2c-provisional-map.md`, `PHASE_1K2C_REPORT.md`: operación, mapa y reporte.
+- Datos y archivos autorizados extraídos viven bajo `work/phase1k2c-*`, ignorados. No se incluyen fotos comerciales en binarios o Git.
+
 ## Archivos 1K.2B
 
 - `migrations/016_product_photos.sql`: metadata, selección y constraints de fotos.

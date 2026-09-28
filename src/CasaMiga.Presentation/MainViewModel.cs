@@ -91,9 +91,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 var receipts = new ReceiptService(database,user,clock,terminal.Id,TimeZoneInfo.Local,
                     new PrintingConfigurationProvider(options.DataDirectory),new EscPosReceiptRenderer(),
                     new SerializedReceiptPrintTransport(new WindowsRawPrintTransport()));
-                Pos = new(new PosService(database,user,terminal.Id),checkout,receipts,()=>UserLabel + " · " + TerminalLabel,(eventName,errorType)=>runtime.TryLog(eventName,errorType)){IsDevelopment=options.IsDevelopment};
+                var photoService=new ProductPhotoService(new SqliteProductPhotoStore(sqlite),new ProductPhotoFileStore(options.DataDirectory),new WpfProductPhotoProcessor(),user,clock,terminal.Id);
+                var photoUi=new ProductPhotoUiGateway(photoService,new BoundedProductPhotoCache());
+                Pos = new(new PosService(database,user,terminal.Id),checkout,receipts,photoUi,()=>UserLabel + " · " + TerminalLabel,(eventName,errorType)=>runtime.TryLog(eventName,errorType)){IsDevelopment=options.IsDevelopment};
                 catalogService = new CatalogService(database,user,clock,terminal.Id,options.IsDevelopment);
-                Catalog = new(catalogService,options.IsDevelopment,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
+                Catalog = new(catalogService,photoUi,options.IsDevelopment,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 SalesHistory = new(new SalesHistoryService(database,user,TimeZoneInfo.Local),receipts,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 Inventory = new(new InventoryService(new SqliteInventoryStore(sqlite, clock), database, user, clock, terminal.Id),
                     catalogService, (eventName,errorType)=>runtime.TryLog(eventName,errorType),new ConsumptionViewModel(new SaleConsumptionService(database,database,user,clock,terminal.Id)));
@@ -111,6 +113,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         if (password != confirmation) throw new ArgumentException("Las contraseñas no coinciden.");
         await Task.Run(() => login!.Bootstrap(name, display, password));
         screen = "login";
+        Message = "Administrador creado. Inicia sesión con el usuario y la contraseña que acabas de elegir.";
+        MessageIsSuccess = true;
     });
     public Task LoginAsync(string name, string password) => Execute(async () =>
     {

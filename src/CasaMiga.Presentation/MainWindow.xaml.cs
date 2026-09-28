@@ -13,9 +13,13 @@ public partial class MainWindow : Window
     private async void BootstrapClick(object sender, RoutedEventArgs e)
     {
         var password = BootstrapPassword.Password; var confirmation = BootstrapConfirmation.Password;
-        BootstrapPassword.Clear(); BootstrapConfirmation.Clear();
         await Model.BootstrapAsync(BootstrapUser.Text, BootstrapName.Text, password, confirmation);
-        if (Model.IsLogin) LoginUser.Focus();
+        if (Model.IsLogin)
+        {
+            BootstrapPassword.Clear(); BootstrapConfirmation.Clear();
+            LoginUser.Text = BootstrapUser.Text.Trim();
+            LoginPassword.Focus();
+        }
     }
     private async void LoginClick(object sender, RoutedEventArgs e)
     {

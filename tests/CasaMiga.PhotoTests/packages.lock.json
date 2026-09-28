@@ -299,6 +299,12 @@
           "Microsoft.Data.Sqlite": "[10.0.11, )",
           "Microsoft.Extensions.Identity.Core": "[10.0.11, )"
         }
+      },
+      "casamiga.presentation": {
+        "type": "Project",
+        "dependencies": {
+          "CasaMiga.Infrastructure": "[1.0.0, )"
+        }
       }
     }
   }

@@ -30,6 +30,23 @@
   </StackPanel>
   <StackPanel Visibility="{Binding IsProductEditor,Converter={StaticResource VisibleWhen}}">
    <TextBlock Text="{Binding EditorTitle}" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,12"/>
+   <Border Background="{DynamicResource SurfaceSecondaryBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="14" Margin="0,0,0,16">
+    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="180"/><ColumnDefinition Width="18"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+     <Border Width="180" Height="180" Background="{DynamicResource SurfaceBrush}" CornerRadius="10" ClipToBounds="True">
+      <Grid><Image Source="{Binding CurrentPhoto}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" Visibility="{Binding HasCurrentPhoto,Converter={StaticResource VisibleWhen}}"/>
+       <Grid Visibility="{Binding HasNoCurrentPhoto,Converter={StaticResource VisibleWhen}}"><Path Data="M4,5 L16,5 18,8 18,17 2,17 2,8 Z M7,5 L8.5,2 11.5,2 13,5 M10,9 A3,3 0 1 1 9.99,9" Stroke="{DynamicResource WheatBrush}" StrokeThickness="1.6" Stretch="Uniform" Width="52" Height="52"/><TextBlock Text="Sin foto" Style="{StaticResource CaptionText}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,26"/></Grid>
+      </Grid>
+     </Border>
+     <StackPanel Grid.Column="2">
+      <TextBlock Text="Fotografía del producto" Style="{StaticResource SectionTitleText}"/>
+      <TextBlock Text="{Binding CurrentPhotoStatus}" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,12"/>
+      <TextBlock Text="Tipo de fotografía"/>
+      <ComboBox SelectedValue="{Binding PhotoProvenance}" SelectedValuePath="Tag" Margin="0,4,0,12" IsEnabled="{Binding CanManagePhoto}"><ComboBoxItem Content="Foto real" Tag="REAL"/><ComboBoxItem Content="Foto provisional" Tag="PROVISIONAL"/></ComboBox>
+      <WrapPanel><Button Content="Agregar / cambiar foto" Click="ChangePhotoClick" IsEnabled="{Binding CanManagePhoto}" Margin="0,0,12,8"/><Button Content="Quitar foto" Click="RemovePhotoClick" IsEnabled="{Binding CanRemovePhoto}" Style="{StaticResource SecondaryButton}" Margin="0,0,0,8"/></WrapPanel>
+      <TextBlock Text="Guarda primero los productos nuevos; después podrás asociar su fotografía." Style="{StaticResource CaptionText}" Visibility="{Binding CannotManagePhoto,Converter={StaticResource VisibleWhen}}"/>
+     </StackPanel>
+    </Grid>
+   </Border>
    <TextBlock Text="Nombre"/><TextBox x:Name="ProductName" Text="{Binding Name,UpdateSourceTrigger=PropertyChanged}" MaxLength="160" AutomationProperties.Name="Nombre de producto" Margin="0,4,0,12"/>
    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
     <StackPanel Margin="0,0,12,12"><TextBlock Text="Categoría"/><ComboBox ItemsSource="{Binding Categories}" SelectedValuePath="Id" SelectedValue="{Binding ProductCategoryId}" AutomationProperties.Name="Categoría del producto" Margin="0,4,0,0"/></StackPanel>

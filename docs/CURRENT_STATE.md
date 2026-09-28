@@ -1,4 +1,10 @@
-# FASE 1K ABIERTA — 1K.2B completada
+# FASE 1K ABIERTA — 1K.2C completada y aprobada
+
+28/09/2026. 1K.2C completada: ProductCard fotográfica, fallback neutral, categoría/búsqueda/paginación, carga async y caché LRU 64 MiB; administración agrega/cambia/quita foto mediante ProductPhotoService y crop cuadrado. Dataset aislado v2 validó CSV=JSON: 26 Products, 4 categorías, 4 PROVISIONAL, 0 REAL y 22 SIN FOTO. La instalación comercial no fue poblada. Migration 016 y arquitectura 1K.2B permanecen intactas. El usuario solicitó el reporte final tras la revisión preparada, cerrando la aprobación visual. Verificación: 535/535 regresión + 98/98 foto = 633/633, Release 0 errores/advertencias, backup/restore aislado correcto y responsive 960×820, 1280×820, 1920×1080. FASE 1K permanece abierta hasta un cierre formal separado; no iniciar otra subfase.
+
+## Registro anterior — 1K.2B y corrección de acceso
+
+Corrección de acceso solicitada el 28/09/2026, posterior al cierre: formulario de primer administrador compacto en dos columnas, logo proporcionado y composición centrada en la altura disponible con scroll de respaldo. El ajuste posterior de login amplía el bloque a un máximo de 1160 DIP y equilibra márgenes superior e inferior. Las contraseñas ya no se borran al fallar validación; al crear la cuenta se confirma el éxito, se conserva el usuario en login y se enfoca contraseña. No cambia IdentityService ni la política de 12–128 caracteres. La captura del usuario correspondía a una instalación sin administrador, no al backup sintético; las credenciales photo-admin publicadas previamente sólo sirven en ese backup restaurado. Ver `evidence/access-layout-20260928.md`.
 
 28/09/2026. 1K.1 cerrada; 1K.2A aprobada y checkpoint `089066c04b8a9f69aa6a4468af6f8d146036d576`; 1K.2B implementada/verificada. 1K.2 sigue abierta; 1K.2C no iniciada. Baseline de producto `58bdcbd34692e14ced3f85fdeb82fca5d6b8b794`.
 

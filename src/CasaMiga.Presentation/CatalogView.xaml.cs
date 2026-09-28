@@ -1,6 +1,8 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using Microsoft.Win32;
 namespace CasaMiga.Presentation;
 public partial class CatalogView:UserControl
 {
@@ -20,6 +22,25 @@ public partial class CatalogView:UserControl
     private async void PreviousClick(object s,RoutedEventArgs e)=>await Model.PageAsync(-1);
     private async void NextClick(object s,RoutedEventArgs e)=>await Model.PageAsync(1);
     private async void DemoClick(object s,RoutedEventArgs e)=>await Model.DemoAsync();
+    private async void ChangePhotoClick(object s,RoutedEventArgs e)
+    {
+        var picker=new OpenFileDialog{Title="Seleccionar fotografía del producto",Filter="Fotografías JPEG o PNG|*.jpg;*.jpeg;*.png",CheckFileExists=true,Multiselect=false};
+        if(picker.ShowDialog(Window.GetWindow(this))!=true)return;
+        try
+        {
+            var bytes=await File.ReadAllBytesAsync(picker.FileName);
+            var dialog=new PhotoCropDialog(Window.GetWindow(this),bytes);
+            if(dialog.ShowDialog()!=true)return;
+            await Model.SetPhotoAsync(Path.GetFileName(picker.FileName),bytes,dialog.Crop);
+        }
+        catch(CasaMiga.Application.ProductPhotoException error){MessageBox.Show(Window.GetWindow(this),error.Message,"Casa Miga · Fotografía",MessageBoxButton.OK,MessageBoxImage.Warning);}
+        catch(IOException){MessageBox.Show(Window.GetWindow(this),"No se pudo leer la fotografía. Revisa el archivo y vuelve a intentar.","Casa Miga · Fotografía",MessageBoxButton.OK,MessageBoxImage.Warning);}
+    }
+    private async void RemovePhotoClick(object s,RoutedEventArgs e)
+    {
+        if(MessageBox.Show(Window.GetWindow(this),"¿Quitar la fotografía de este producto? El producto y su historial se conservarán.","Casa Miga · Quitar foto",MessageBoxButton.YesNo,MessageBoxImage.Question)!=MessageBoxResult.Yes)return;
+        await Model.RemovePhotoAsync();
+    }
     private async void CatalogKeyDown(object s,KeyEventArgs e)
     {
         if(e.Key==Key.Escape&&(Model.IsCategoryEditor||Model.IsProductEditor)){e.Handled=true;await Model.CancelAsync();}

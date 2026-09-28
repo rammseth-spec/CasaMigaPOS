@@ -5,6 +5,6 @@
     <PackageReference Include="MSTest.TestAdapter" Version="3.10.4" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <ProjectReference Include="../../src/CasaMiga.Infrastructure/CasaMiga.Infrastructure.csproj" />
-    <Compile Include="../../src/CasaMiga.Presentation/WpfProductPhotoProcessor.cs" Link="WpfProductPhotoProcessor.cs" />
+    <ProjectReference Include="../../src/CasaMiga.Presentation/CasaMiga.Presentation.csproj" />
   </ItemGroup>
 </Project>

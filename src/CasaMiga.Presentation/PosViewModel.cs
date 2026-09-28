@@ -3,7 +3,7 @@ using System.Globalization;
 using CasaMiga.Application;
 using CasaMiga.Domain;
 namespace CasaMiga.Presentation;
-public sealed record PosCategory(Guid? Id, string Label);
+public sealed record PosCategory(Guid? Id, string Label, bool Selected);
 public sealed record PosCartLine(CartLine Line)
 {
     public Guid Id => Line.ProductId;
@@ -13,7 +13,8 @@ public sealed record PosCartLine(CartLine Line)
     public string Total => PosViewModel.Format(Line.LineTotal);
     public bool CanDecrease => Quantity > 1;
 }
-public sealed class PosViewModel(PosService service, CheckoutService checkout, ReceiptService receipts, Func<string> operatorLabel, Action<string,string?> log) : INotifyPropertyChanged
+public sealed class PosViewModel(PosService service, CheckoutService checkout, ReceiptService receipts,
+    IProductPhotoUiGateway photos, Func<string> operatorLabel, Action<string,string?> log) : INotifyPropertyChanged
 {
     private Guid? category;
     private int page;
@@ -41,7 +42,8 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
     }
     public string Message { get; private set; } = "";
     public IReadOnlyList<PosCategory> Categories { get; private set; } = [];
-    public IReadOnlyList<ProductRow> Products { get; private set; } = [];
+    private CancellationTokenSource photoLoad = new();
+    public IReadOnlyList<ProductCardViewModel> Products { get; private set; } = [];
     public IReadOnlyList<PosCartLine> Lines => cart?.Lines.Select(l=>new PosCartLine(l)).ToArray() ?? [];
     public bool HasLines => cart is { IsEmpty:false };
     public bool IsEmpty => !HasLines;
@@ -64,9 +66,24 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
     }
     private void Apply(PosPage result)
     {
-        cart=result.Cart;Products=result.Products.Items;
-        Categories=new[]{new PosCategory(null,category is null?"✓ Todas":"Todas")}.Concat(result.Categories.Select(c=>new PosCategory(c.Id,(c.Id==category?"✓ ":"")+c.Name))).ToArray();
+        cart=result.Cart;
+        var cards=result.Products.Items.Select(row=>new ProductCardViewModel(row)).ToArray();Products=cards;StartPhotoLoad(cards);
+        Categories=new[]{new PosCategory(null,"Todos",category is null)}.Concat(result.Categories.Select(c=>new PosCategory(c.Id,c.Name,c.Id==category))).ToArray();
         PageLabel=$"{result.Products.Total} productos · página {page+1}";Next=(page+1)*result.Products.PageSize<result.Products.Total;
+    }
+    private void StartPhotoLoad(IReadOnlyList<ProductCardViewModel> cards)
+    {
+        photoLoad.Cancel();photoLoad.Dispose();photoLoad=new();
+        _=LoadPhotosSafeAsync(cards,photoLoad.Token);
+    }
+    private async Task LoadPhotosSafeAsync(IReadOnlyList<ProductCardViewModel> cards,CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.WhenAll(cards.Select(async card=>card.SetPhoto(await photos.LoadAsync(card.Id,cancellationToken))));
+        }
+        catch(OperationCanceledException){ }
+        catch(Exception error){log("pos.photo.load.failed",error.GetType().Name);}
     }
     private async Task Refresh()=>Apply(await Task.Run(()=>service.Load(Search,category,page)));
     public Task SearchAsync()=>Run(async()=>{page=0;await Refresh();});
@@ -77,7 +94,7 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
     public Task DecrementAsync(Guid id)=>Run(async()=>cart=await Task.Run(()=>service.Decrement(id)));
     public Task RemoveAsync(Guid id)=>Run(async()=>cart=await Task.Run(()=>service.Remove(id)));
     public void Discard(bool confirmed){service.Discard(confirmed);cart=null;Message="";Notify();}
-    public void ForgetView(){cart=null;Products=[];Categories=[];Search="";Message="";Notify();}
+    public void ForgetView(){photoLoad.Cancel();cart=null;Products=[];Categories=[];Search="";Message="";Notify();}
     public Task AfterCheckoutAsync()=>Run(EnterAsync);
     private async Task Run(Func<Task> operation)
     {

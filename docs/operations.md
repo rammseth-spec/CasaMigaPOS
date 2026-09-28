@@ -58,6 +58,14 @@ Fórmula 1B: esperado = fondo; entradas, retiros, ventas y devoluciones son cero
 
 ## Fotografías 1K.2B — operación vigente
 
+### UI 1K.2C
+
+En Punto de venta, seleccionar una tarjeta completa agrega el producto mediante el carrito existente. Las fotos cargan en segundo plano; un placeholder “Sin foto” es normal y no bloquea venta. Categoría y búsqueda pueden combinarse. La procedencia no se muestra al cajero.
+
+En Catálogo, editar un producto muestra Foto real, Foto provisional, Sin foto o Foto no disponible. Sólo quien conserve `products.edit` puede agregar/cambiar/quitar. Elegir archivo abre crop cuadrado; cancelar no modifica. Al reemplazar se conserva ProductId, precio, historial, receta e inventario. Quitar foto no elimina el producto. No mover archivos bajo `product-images` manualmente.
+
+El generador `tools/CasaMiga.Phase1K2CSmoke` es sólo para carpeta nueva y catálogo controlado. Compara CSV/JSON y se detiene ante discrepancia. No usarlo contra `%LOCALAPPDATA%/CasaMigaPOS` ni una instalación del negocio. El mapa vigente está en `phase1k2c-provisional-map.md`.
+
 Schema 16 incorpora originales/derivados administrados bajo `DataDirectory/product-images/v1/<PhotoId>/`. No moverlos manualmente, no guardar fotos junto al ejecutable ni cambiar filas SQLite para corregir asociaciones. Producto inactivo puede administrarse con products.edit sin reactivarlo. `PROVISIONAL` y `REAL` son procedencia; nunca duplicar Product por cambiar a foto real.
 
 En 1K.2B se usa API/harness, sin UI temporal ni importación masiva. `ProductPhotoService.Import`, `Remove`, `Recover`, `Repair` y `Reconcile` documentados en `product-photos.md`. Operar con DirectoryLease de instalación. Import y Remove conservan OperationId para resolver respuesta incierta antes de otro intento; `Recover` no necesita archivo de origen. `Repair` explícito requiere original íntegro; no reescribe el original. Reconcile permite vista previa y limpieza de archivos sin referencia de al menos 24 horas, bajo gate. Binarios retirados se limpian después del commit; errores de limpieza se concilian posteriormente.
@@ -174,3 +182,8 @@ En Inventario, Administrator puede verificar configuración, activar, pausar y r
 FASE 1I CERRADA tras aprobación humana explícita. Ver PHASE_1I5_REPORT.md y evidencia phase1i5-*. Schema 12, sin migración 013; 402 pruebas aprobadas. Sin cambios arquitectónicos ni política comercial en el cierre. Versión de desarrollo, no lista para producción. No fase posterior iniciada. La caja del smoke permanece OPEN; no usar estos datos sintéticos como instalación comercial.
 
 Inventario: puede elegirse un artículo en la lista bajo el buscador por nombre y código; la selección ejecuta su búsqueda. Tipo y Estado se aplican al pulsar Buscar. El texto de búsqueda sigue disponible.
+# Operación 1K.2C — catálogo visual
+
+El POS carga thumbnails derivados, nunca originales, y presenta foto/fallback, nombre y precio. Categoría y búsqueda pueden combinarse; la página conserva hasta 50 productos. La tarjeta completa agrega por el flujo POS vigente. En Catálogo, un usuario con `products.edit` puede agregar/cambiar/quitar foto, elegir REAL/PROVISIONAL y confirmar un crop cuadrado; guardar primero un Product nuevo. No editar archivos de `product-images` ni SQLite manualmente.
+
+Para pruebas de catálogo usar una carpeta `CASAMIGA_DATA_DIR` aislada. El dataset `work/phase1k2c-smoke-20260928-v2` contiene datos sintéticos/autorizados y no representa la instalación comercial. Las credenciales de smoke no aplican a otra instalación. Consultar `product-photo-ui.md`, `phase1k2c-provisional-map.md` y `PHASE_1K2C_REPORT.md`.

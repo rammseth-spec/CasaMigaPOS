@@ -1,0 +1,20 @@
+<Window x:Class="CasaMiga.Presentation.PhotoCropDialog" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="Casa Miga · Ajustar foto" Width="900" Height="720" MinWidth="760" MinHeight="620" WindowStartupLocation="CenterOwner" Background="{DynamicResource BackgroundBrush}" ShowInTaskbar="False">
+ <Grid Margin="24"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <StackPanel Margin="0,0,0,14"><TextBlock Text="Ajustar fotografía" Style="{StaticResource PageTitleText}"/><TextBlock Text="Mueve el recorte cuadrado con los controles. El archivo original no se modifica." Foreground="{DynamicResource TextSecondaryBrush}"/></StackPanel>
+  <Border Grid.Row="1" Background="{DynamicResource SurfaceSecondaryBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="8">
+   <Grid x:Name="PreviewHost" ClipToBounds="True" SizeChanged="PreviewSizeChanged">
+    <Image x:Name="PreviewImage" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+    <Canvas x:Name="Overlay" IsHitTestVisible="False"><Rectangle x:Name="CropRectangle" Stroke="{DynamicResource WheatBrush}" StrokeThickness="4" Fill="#18FFFFFF"/></Canvas>
+   </Grid>
+  </Border>
+  <StackPanel Grid.Row="2" Margin="0,16,0,16">
+   <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="18"/><ColumnDefinition/></Grid.ColumnDefinitions>
+    <StackPanel><TextBlock Text="Posición horizontal"/><Slider x:Name="CropX" Minimum="0" ValueChanged="CropChanged"/><TextBlock x:Name="CropXLabel" Style="{StaticResource CaptionText}"/></StackPanel>
+    <StackPanel Grid.Column="2"><TextBlock Text="Posición vertical"/><Slider x:Name="CropY" Minimum="0" ValueChanged="CropChanged"/><TextBlock x:Name="CropYLabel" Style="{StaticResource CaptionText}"/></StackPanel>
+   </Grid>
+   <StackPanel Margin="0,12,0,0"><TextBlock Text="Tamaño del recorte"/><Slider x:Name="CropEdge" Minimum="256" ValueChanged="EdgeChanged"/><TextBlock x:Name="CropEdgeLabel" Style="{StaticResource CaptionText}"/></StackPanel>
+  </StackPanel>
+  <DockPanel Grid.Row="3"><TextBlock x:Name="DimensionsLabel" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}"/><StackPanel DockPanel.Dock="Right" Orientation="Horizontal"><Button Content="Cancelar" Style="{StaticResource SecondaryButton}" Click="CancelClick" Margin="0,0,12,0"/><Button Content="Usar este recorte" Click="AcceptClick"/></StackPanel></DockPanel>
+ </Grid>
+</Window>

@@ -2,41 +2,46 @@
  <Grid>
   <!-- Acceso y preparación: el shell operativo aparece sólo después de autenticar. -->
   <ScrollViewer Visibility="{Binding IsSignedOut,Converter={StaticResource VisibleWhen}}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-   <Grid Margin="40" MinHeight="560" MaxWidth="1080">
+   <Grid MinHeight="{Binding ViewportHeight,RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
+   <Grid Margin="24,16" MaxWidth="1160" VerticalAlignment="Center">
     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="500"/></Grid.ColumnDefinitions>
-    <Border Background="{StaticResource AvocadoLeafBrush}" CornerRadius="24,0,0,24" Padding="36" Margin="0,24,0,24">
+    <Border Background="{StaticResource AvocadoLeafBrush}" CornerRadius="24" Padding="36" Margin="0,0,0,0">
      <StackPanel VerticalAlignment="Center">
-      <TextBlock Text="HECHO EN CASA MIGA" Foreground="{DynamicResource NaturalBackgroundBrush}" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,24"/>
-      <TextBlock Text="Cada día,&#10;un buen comienzo." Foreground="{DynamicResource NaturalBackgroundBrush}" FontSize="36" FontWeight="SemiBold" Margin="0,0,0,24"/>
-      <Border Width="48" Height="3" Background="{DynamicResource WheatBrush}" HorizontalAlignment="Left" Margin="0,0,0,24"/>
+      <TextBlock Text="HECHO EN CASA MIGA" Foreground="{DynamicResource NaturalBackgroundBrush}" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,12"/>
+      <TextBlock Text="Cada día,&#10;un buen comienzo." Foreground="{DynamicResource NaturalBackgroundBrush}" FontSize="36" FontWeight="SemiBold" Margin="0,0,0,12"/>
+      <Border Width="48" Height="3" Background="{DynamicResource WheatBrush}" HorizontalAlignment="Left" Margin="0,0,0,12"/>
       <TextBlock Text="Tu panadería, en orden." Foreground="{DynamicResource NaturalBackgroundBrush}" FontSize="20"/>
       <TextBlock Text="Ventas, caja y producción en un solo lugar." Foreground="{DynamicResource NaturalBackgroundBrush}" Margin="0,12,0,0"/>
      </StackPanel>
     </Border>
-    <StackPanel Grid.Column="1" Margin="24,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Center">
-     <Image Source="/CasaMiga.Presentation;component/Assets/CasaMigaLogo.png" Width="275.92" Height="160" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" SnapsToDevicePixels="True" HorizontalAlignment="Center" Margin="0,0,0,24" AutomationProperties.Name="Logo oficial Casa Miga"/>
-     <Border Style="{StaticResource CardStyle}" BorderThickness="0" Padding="32">
+    <StackPanel Grid.Column="1" Margin="24,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Top">
+     <Image Source="/CasaMiga.Presentation;component/Assets/CasaMigaLogo.png" Width="165.552" Height="96" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" SnapsToDevicePixels="True" HorizontalAlignment="Center" Margin="0,0,0,12" AutomationProperties.Name="Logo oficial Casa Miga"/>
+     <Border Style="{StaticResource CardStyle}" BorderThickness="0" Padding="20">
       <StackPanel>
        <TextBlock Text="{Binding Heading}" Style="{StaticResource PageTitleText}" Margin="0,0,0,6"/>
-       <TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,24"/>
-       <StackPanel Visibility="{Binding IsBootstrap,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
-        <TextBlock Text="Usuario administrador"/><TextBox x:Name="BootstrapUser" AutomationProperties.Name="Usuario administrador" MaxLength="80" Margin="0,6,0,14"/>
-        <TextBlock Text="Nombre para mostrar"/><TextBox x:Name="BootstrapName" AutomationProperties.Name="Nombre para mostrar" MaxLength="100" Margin="0,6,0,14"/>
-        <TextBlock Text="Contraseña · de 12 a 128 caracteres"/><PasswordBox x:Name="BootstrapPassword" AutomationProperties.Name="Contraseña inicial" MaxLength="128" Margin="0,6,0,14"/>
-        <TextBlock Text="Confirmar contraseña"/><PasswordBox x:Name="BootstrapConfirmation" AutomationProperties.Name="Confirmar contraseña" MaxLength="128" Margin="0,6,0,20"/>
-        <Button Content="Crear administrador" Click="BootstrapClick"/>
-       </StackPanel>
+       <TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,12"/>
+       <Grid Visibility="{Binding IsBootstrap,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="16"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <StackPanel><TextBlock Text="Usuario administrador"/><TextBox x:Name="BootstrapUser" AutomationProperties.Name="Usuario administrador" MaxLength="80" Margin="0,6,0,14"/></StackPanel>
+        <StackPanel Grid.Column="2"><TextBlock Text="Nombre para mostrar"/><TextBox x:Name="BootstrapName" AutomationProperties.Name="Nombre para mostrar" MaxLength="100" Margin="0,6,0,14"/></StackPanel>
+        <StackPanel Grid.Row="1"><TextBlock Text="Contraseña"/><PasswordBox x:Name="BootstrapPassword" AutomationProperties.Name="Contraseña inicial" MaxLength="128" Margin="0,6,0,8"/></StackPanel>
+        <StackPanel Grid.Row="1" Grid.Column="2"><TextBlock Text="Confirmar contraseña"/><PasswordBox x:Name="BootstrapConfirmation" AutomationProperties.Name="Confirmar contraseña" MaxLength="128" Margin="0,6,0,8"/></StackPanel>
+        <TextBlock Grid.Row="2" Grid.ColumnSpan="3" Text="Elige una contraseña de 12 a 128 caracteres y escríbela igual en ambos campos." Style="{StaticResource CaptionText}" Margin="0,0,0,16"/>
+        <Button Grid.Row="3" Grid.ColumnSpan="3" Content="Crear administrador" Click="BootstrapClick"/>
+       </Grid>
        <StackPanel Visibility="{Binding IsLogin,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
         <TextBlock Text="Usuario"/><TextBox x:Name="LoginUser" AutomationProperties.Name="Usuario" MaxLength="80" Margin="0,6,0,16"/>
         <TextBlock Text="Contraseña"/><PasswordBox x:Name="LoginPassword" AutomationProperties.Name="Contraseña" MaxLength="128" Margin="0,6,0,24" KeyDown="LoginPasswordKeyDown"/>
         <Button Content="Entrar" Click="LoginClick"/>
        </StackPanel>
-       <TextBlock Text="{Binding Message}" Margin="0,18,0,0" AutomationProperties.LiveSetting="Polite"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+       <TextBlock Text="{Binding Message}" Margin="0,10,0,0" AutomationProperties.LiveSetting="Polite"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
        <TextBlock Text="Procesando…" Margin="0,10,0,0" Foreground="{DynamicResource TextSecondaryBrush}" Visibility="{Binding Busy,Converter={StaticResource VisibleWhen}}"/>
       </StackPanel>
      </Border>
-     <TextBlock Text="Aplicación local · Versión de desarrollo" Style="{StaticResource CaptionText}" TextAlignment="Center" Margin="0,18,0,0"/>
+     <TextBlock Text="Aplicación local · Versión de desarrollo" Style="{StaticResource CaptionText}" TextAlignment="Center" Margin="0,8,0,0"/>
     </StackPanel>
+   </Grid>
    </Grid>
   </ScrollViewer>
 

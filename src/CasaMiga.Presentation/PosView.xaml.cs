@@ -21,7 +21,7 @@ public partial class PosView : UserControl
     private void ProductionClick(object s,RoutedEventArgs e)=>ProductionRequested?.Invoke(this,EventArgs.Empty);
     private void LogoutClick(object s,RoutedEventArgs e)=>LogoutRequested?.Invoke(this,EventArgs.Empty);
     private async void SearchClick(object s,RoutedEventArgs e)=>await Model.SearchAsync();
-    private async void CategoryClick(object s,RoutedEventArgs e)=>await Model.CategoryAsync(((Button)s).Tag as Guid?);
+    private async void CategoryClick(object s,RoutedEventArgs e)=>await Model.CategoryAsync(((Button)s).CommandParameter as Guid?);
     private async void ProductClick(object s,RoutedEventArgs e)=>await Model.AddAsync((Guid)((Button)s).Tag);
     private async void IncreaseClick(object s,RoutedEventArgs e)=>await Model.IncrementAsync((Guid)((Button)s).Tag);
     private async void DecreaseClick(object s,RoutedEventArgs e)=>await Model.DecrementAsync((Guid)((Button)s).Tag);

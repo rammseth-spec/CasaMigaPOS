@@ -1,4 +1,12 @@
-# Próximo paso — revisión del cierre 1K.2B y autorización separada de 1K.2C
+# Próximo paso — cierre formal separado de FASE 1K
+
+1K.2C quedó completada y aprobada el 28/09/2026. Leer `PHASE_1K2C_REPORT.md`, `product-photo-ui.md` y `phase1k2c-provisional-map.md`. FASE 1K permanece abierta únicamente para una autorización de cierre formal separada. No iniciar automáticamente otra subfase, instalador, carga en la instalación comercial ni cambios estructurales a 1K.2B.
+
+Las 22 tarjetas SIN FOTO y las cuatro PROVISIONAL requieren fotografías reales proporcionadas por Casa Miga. Un futuro reemplazo debe usar el flujo administrativo REAL y conservar ProductId, precio, historial, receta e inventario. Modelo recomendado para un cierre exclusivamente documental: Sol; usar Astra sólo si aparece un defecto estructural demostrado.
+
+## Registro anterior — revisión 1K.2B
+
+Primero revisar la corrección de acceso del 28/09: en instalación nueva crear administrador con contraseña propia de 12–128 caracteres, confirmarla e iniciar sesión. No usar credenciales del backup de smoke en otra instalación. El formulario corregido, con login centrado y márgenes equilibrados, y la compilación Release están preparados para revisión. Esto no inicia 1K.2C.
 
 1K.2B terminó con 621/621 pruebas y Release limpio. Leer `PHASE_1K2B_REPORT.md`, `product-photos.md` y la adenda normativa en `PHASE_1K2A_DESIGN.md`.
 

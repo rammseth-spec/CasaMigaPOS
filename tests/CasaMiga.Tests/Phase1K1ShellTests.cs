@@ -17,8 +17,10 @@ public sealed class Phase1K1ShellTests
         var shell = File.ReadAllText(Presentation("MainWindow.xaml"));
         var shellCode = File.ReadAllText(Presentation("MainWindow.xaml.cs"));
         var pos = File.ReadAllText(Presentation("PosView.xaml"));
+        var catalog = File.ReadAllText(Presentation("CatalogView.xaml"));
+        var crop = File.ReadAllText(Presentation("PhotoCropDialog.xaml"));
         var theme = File.ReadAllText(Presentation(Path.Combine("Resources", "Theme.xaml")));
-        _ = XDocument.Parse(app); _ = XDocument.Parse(shell); _ = XDocument.Parse(pos); _ = XDocument.Parse(theme);
+        _ = XDocument.Parse(app); _ = XDocument.Parse(shell); _ = XDocument.Parse(pos); _ = XDocument.Parse(catalog); _ = XDocument.Parse(crop); _ = XDocument.Parse(theme);
 
         StringAssert.Contains(app, "Resources/Theme.xaml");
         foreach (var resource in new[] { "BackgroundBrush", "SurfaceBrush", "SurfaceSecondaryBrush", "PrimaryBrush",
@@ -52,6 +54,12 @@ public sealed class Phase1K1ShellTests
         StringAssert.Contains(shellCode, "ExitFullScreen();LoginPassword.Clear();Model.Logout()");
         StringAssert.Contains(shellCode, "WindowStyle.None");
         StringAssert.Contains(theme, "TextElement.Foreground=\"{TemplateBinding Foreground}\"");
+        StringAssert.Contains(pos,"ProductTile");StringAssert.Contains(pos,"{Binding Photo}");StringAssert.Contains(pos,"{Binding IsFallback");
+        StringAssert.Contains(pos,"{Binding CategoryName}");StringAssert.Contains(pos,"{Binding Price}");StringAssert.Contains(pos,"CommandParameter=\"{Binding Id}\"");
+        Assert.IsFalse(pos.Contains("PhotoStatus",StringComparison.Ordinal));
+        StringAssert.Contains(catalog,"CurrentPhotoStatus");StringAssert.Contains(catalog,"Foto provisional");StringAssert.Contains(catalog,"Foto real");
+        StringAssert.Contains(catalog,"ChangePhotoClick");StringAssert.Contains(catalog,"RemovePhotoClick");
+        StringAssert.Contains(crop,"CropRectangle");StringAssert.Contains(crop,"CropX");StringAssert.Contains(crop,"CropY");StringAssert.Contains(crop,"CropEdge");
     }
 
     [TestMethod]

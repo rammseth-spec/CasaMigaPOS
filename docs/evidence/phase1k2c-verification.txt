@@ -1,0 +1,50 @@
+CASA MIGA POS — FASE 1K.2C — EVIDENCIA AUTOMATIZADA
+Fecha local: 2026-09-28
+Baseline: 95e9d9c12c44c3d956bfd11fc00ce8a5bf3615a9
+
+scripts/verify.ps1
+- Restore locked: correcto
+- Release: 0 errores, 0 advertencias
+- CasaMiga.Tests: 535/535 correctas, 0 fallidas, 0 omitidas
+- CasaMiga.PhotoTests: 98/98 correctas, 0 fallidas, 0 omitidas
+- Total: 633/633 correctas, 0 fallidas, 0 omitidas
+- TRX: TestResults/foundation_net10.0_20260928122226.trx
+- TRX: TestResults/foundation_net10.0_20260928121835.trx
+
+Pruebas focalizadas 1K.2C
+- ProductPhotoUiTests: 12/12
+- Phase1K1ShellTests: 2/2
+- Caché hit/LRU/bounded/invalidation, replace/remove, archivo liberado,
+  thumbnail ausente, centered/custom crop, campos comerciales y 100 cards.
+
+Dataset controlado
+- Ruta ignorada: work/phase1k2c-smoke-20260928-v2
+- Fuente CSV comparada exactamente con JSON antes de crear datos
+- Products: 26
+- Categories: 4
+- Photos: 4
+- PROVISIONAL: 4
+- REAL: 0
+- SIN FOTO: 22
+- Caja sintética: OPEN, fondo $0
+- Instalación comercial/predeterminada: no modificada ni poblada
+
+Backup/restore
+- Backup v2 validado: 2,583,245 bytes; incluye los binarios activos
+- Restore aislado: work/phase1k2c-restored-20260928
+- Verificación posterior del restore: 26 Products, 4 Categories,
+  4 Photos, 4 PROVISIONAL, 0 REAL
+
+Responsive técnico
+- work/phase1k2c-layout-review/960x820.png: operable, 1 card y carrito
+- work/phase1k2c-layout-review/1280x820.png: operable, 2 cards y carrito
+- work/phase1k2c-layout-review/1920x1080.png: operable, 5 cards y carrito
+
+Integridad
+- Schema: 16
+- Migration 016 SHA-256:
+  9223CAA06CD02FA32E874CC1516EE0C6DB798CB76E2FBE1BF267BAB9B695ED76
+- git diff baseline -- migrations: sin cambios
+- git diff --check: correcto
+
+El smoke visual humano se registra por separado; esta evidencia no lo sustituye.
