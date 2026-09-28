@@ -47,16 +47,18 @@
 
   <!-- Shell operativo 1K.1 -->
   <Grid Visibility="{Binding CanNavigate,Converter={StaticResource VisibleWhen}}">
-   <Grid.ColumnDefinitions><ColumnDefinition Width="248"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+   <Grid.ColumnDefinitions><ColumnDefinition Width="{Binding SidebarWidth}"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
    <Border Grid.ColumnSpan="2" Height="5" VerticalAlignment="Top" Background="{StaticResource AvocadoLeafBrush}" Panel.ZIndex="5"/>
    <Border Background="{StaticResource AvocadoLeafBrush}" BorderBrush="{DynamicResource WheatBrush}" BorderThickness="0,0,1,0">
-    <Grid Margin="18,18,18,16">
+    <Grid Margin="10,14,10,12">
      <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-     <Border Background="{DynamicResource NaturalBackgroundBrush}" CornerRadius="16" Padding="16" Margin="0,0,0,12">
-      <Image Source="/CasaMiga.Presentation;component/Assets/CasaMigaLogo.png" MaxWidth="176" Height="108" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" SnapsToDevicePixels="True" HorizontalAlignment="Center" AutomationProperties.Name="Logo oficial Casa Miga"/>
+     <Border Background="{DynamicResource NaturalBackgroundBrush}" CornerRadius="16" Padding="10" Margin="0,0,0,8">
+      <Image Source="/CasaMiga.Presentation;component/Assets/CasaMigaLogo.png" MaxWidth="176" Height="72" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" SnapsToDevicePixels="True" HorizontalAlignment="Center" AutomationProperties.Name="Logo oficial Casa Miga"/>
      </Border>
      <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
       <StackPanel IsEnabled="{Binding IsReady}">
+       <Button Content="Expandir" Tag="M4,4 L16,10 4,16" Click="TogglePosSidebarClick" Style="{StaticResource SidebarNavButton}" Visibility="{Binding IsPosSidebarCompact,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Expandir navegación"/>
+       <Button Content="Contraer navegación" Tag="M16,4 L4,10 16,16" Click="TogglePosSidebarClick" Style="{StaticResource SidebarNavButton}" Visibility="{Binding IsPosSidebarExpanded,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Contraer navegación"/>
        <TextBlock Text="OPERACIÓN" Style="{StaticResource SidebarGroupText}"/>
        <Button Tag="M2,3 L18,3 18,14 2,14 Z M6,18 L14,18 M10,14 L10,18" Content="Punto de venta" Click="PosNavigationClick" AutomationProperties.Name="Ir a Punto de venta"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource SidebarNavButton}"><Style.Triggers><DataTrigger Binding="{Binding IsPos}" Value="True"><Setter Property="Background" Value="{DynamicResource PrimarySoftBrush}"/><Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger></Style.Triggers></Style></Button.Style></Button>
        <Button Tag="M2,7 L18,7 18,18 2,18 Z M5,7 L5,2 15,2 15,7 M7,12 L13,12" Content="Caja" Click="CashNavigationClick" AutomationProperties.Name="Ir a Caja"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource SidebarNavButton}"><Style.Triggers><DataTrigger Binding="{Binding IsDashboard}" Value="True"><Setter Property="Background" Value="{DynamicResource PrimarySoftBrush}"/><Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger><DataTrigger Binding="{Binding IsOpening}" Value="True"><Setter Property="Background" Value="{DynamicResource PrimarySoftBrush}"/><Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/></DataTrigger><DataTrigger Binding="{Binding IsCounting}" Value="True"><Setter Property="Background" Value="{DynamicResource PrimarySoftBrush}"/><Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/></DataTrigger><DataTrigger Binding="{Binding IsClosingResult}" Value="True"><Setter Property="Background" Value="{DynamicResource PrimarySoftBrush}"/><Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/></DataTrigger></Style.Triggers></Style></Button.Style></Button>
@@ -79,20 +81,20 @@
 
    <Grid Grid.Column="1">
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="26,16">
+    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="20,10">
      <StackPanel>
       <DockPanel LastChildFill="True">
        <Button DockPanel.Dock="Right" x:Name="FullScreenButton" Content="Pantalla completa · F11" Click="FullScreenClick" Style="{StaticResource SecondaryButton}" MinWidth="174" MinHeight="40" Padding="12,7" Margin="16,0,0,0" VerticalAlignment="Top" AutomationProperties.Name="Alternar pantalla completa"/>
        <StackPanel><TextBlock Text="{Binding Heading}" Style="{StaticResource PageTitleText}"/><TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="14" Margin="0,3,0,0"/></StackPanel>
       </DockPanel>
-      <WrapPanel HorizontalAlignment="Left" Margin="-6,12,0,0">
+      <WrapPanel HorizontalAlignment="Left" Margin="-6,7,0,0">
        <Border Style="{StaticResource StatusPill}"><StackPanel><TextBlock Text="{Binding CurrentUserName}" FontWeight="SemiBold" FontSize="14"/><TextBlock Text="{Binding CurrentRoleLabel}" Style="{StaticResource CaptionText}"/></StackPanel></Border>
        <Border Style="{StaticResource StatusPill}"><StackPanel><TextBlock Text="Terminal" Style="{StaticResource CaptionText}"/><TextBlock Text="{Binding CurrentTerminalName}" FontWeight="SemiBold" FontSize="14"/></StackPanel></Border>
       </WrapPanel>
      </StackPanel>
     </Border>
 
-    <Grid Grid.Row="1" Margin="24,20">
+    <Grid Grid.Row="1" Margin="{Binding ShellContentMargin}">
      <ScrollViewer Visibility="{Binding IsNotPos,Converter={StaticResource VisibleWhen}}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
       <Border Style="{StaticResource CardStyle}" HorizontalAlignment="Stretch">
        <StackPanel>

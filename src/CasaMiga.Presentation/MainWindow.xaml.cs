@@ -32,6 +32,7 @@ public partial class MainWindow : Window
     private void CancelOpeningClick(object sender, RoutedEventArgs e) => Model.CancelOpening();
     private async void OpenClick(object sender, RoutedEventArgs e) => await Model.OpenAsync();
     private async void PosNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowPosAsync();
+    private void TogglePosSidebarClick(object sender,RoutedEventArgs e)=>Model.TogglePosSidebar();
     private async void PosCashRequested(object? sender,EventArgs e)=>await Model.ShowCashAsync();
     private async void PosCatalogRequested(object? sender,EventArgs e)=>await Model.ShowCatalogAsync();
     private async void PosSalesRequested(object? sender,EventArgs e)=>await Model.ShowSalesHistoryAsync();

@@ -8,6 +8,7 @@ public sealed class CheckoutViewModel(CheckoutService service, ReceiptService re
 {
     private string received="";
     private CheckoutRequest? attempt;
+    private bool printRequested;
     public string Received { get=>received; set {received=value;Notify();} }
     public bool Busy { get; private set; }
     public bool Ready=>!Busy;
@@ -33,23 +34,32 @@ public sealed class CheckoutViewModel(CheckoutService service, ReceiptService re
         if(!decimal.TryParse(Received,NumberStyles.AllowDecimalPoint,CultureInfo.InvariantCulture,out var pesos))return false;
         try {amount=Money.FromPesos(pesos);return amount.Cents>=total.Cents;}catch(ArgumentException){return false;}catch(OverflowException){return false;}
     }
-    public Task ConfirmAsync()=>Run(async()=>
+    public Task ConfirmAsync(bool print)=>Run(async()=>
     {
         if(!TryReceived(out var amount))throw new CheckoutException("El recibido debe cubrir el total, con máximo dos decimales.");
+        printRequested=print;
         attempt=await Task.Run(()=>service.Prepare(amount));
         Result=await Task.Run(()=>service.Confirm(attempt));
-        await PrintOriginalAsync();
+        if(print)await PrintOriginalAsync();
+        else PrintMessage="Venta cobrada correctamente. Quedó registrada en Historial sin imprimir ticket.";
     });
     public Task ResolveAsync()=>Run(async()=>
     {
         Result=await Task.Run(service.Resolve);
         if(Result is null)Message="Se verificó la base: este intento no tiene una venta confirmada. Vuelve al POS para revisar el carrito.";
-        else await PrintOriginalAsync();
+        else if(printRequested)await PrintOriginalAsync();
+        else PrintMessage="Venta confirmada y registrada en Historial. No se imprimió ticket durante la recuperación.";
     });
     private async Task PrintOriginalAsync()
     {
-        try{PrintResult=await Task.Run(()=>receipts.PrintOriginal(Result!));PrintMessage=PrintResult.Message;}
-        catch(Exception){PrintMessage="La venta quedó confirmada, pero no se pudo preparar el ticket. Reintenta después de revisar la configuración.";}
+        try
+        {
+            PrintResult=await Task.Run(()=>receipts.PrintOriginal(Result!));
+            PrintMessage=PrintResult.State is ReceiptPrintState.Failed or ReceiptPrintState.Unknown
+                ? "Venta cobrada correctamente. No fue posible imprimir el ticket. Puedes reimprimirlo desde Historial."
+                : PrintResult.Message;
+        }
+        catch(Exception){PrintMessage="Venta cobrada correctamente. No fue posible imprimir el ticket. Puedes reimprimirlo desde Historial.";}
     }
     public Task RetryPrintAsync()=>Run(async()=>
     {

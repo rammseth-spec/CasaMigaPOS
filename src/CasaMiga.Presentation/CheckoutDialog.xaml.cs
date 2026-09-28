@@ -13,7 +13,8 @@ public partial class CheckoutDialog : Window
         Loaded+=(_,_)=>ReceivedInput.Focus();
         PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape && !Model.Busy){e.Handled=true;Close();}};
     }
-    private async void ConfirmClick(object sender,RoutedEventArgs e)=>await Model.ConfirmAsync();
+    private async void ConfirmWithoutPrintClick(object sender,RoutedEventArgs e)=>await Model.ConfirmAsync(false);
+    private async void ConfirmAndPrintClick(object sender,RoutedEventArgs e)=>await Model.ConfirmAsync(true);
     private async void ResolveClick(object sender,RoutedEventArgs e)=>await Model.ResolveAsync();
     private async void RetryPrintClick(object sender,RoutedEventArgs e)=>await Model.RetryPrintAsync();
     private async void BackClick(object sender,RoutedEventArgs e){if(await Model.LeaveAsync())Close();}

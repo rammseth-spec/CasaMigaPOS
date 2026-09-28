@@ -33,6 +33,7 @@ public sealed class CatalogViewModel(CatalogService service,IProductPhotoUiGatew
     public bool CanRemovePhoto=>CanManagePhoto&&photo.PhotoId is not null;
     public System.Windows.Media.Imaging.BitmapSource? CurrentPhoto=>photo.Image;
     public string CurrentPhotoStatus=>photo.Error is null?photo.Status:$"{photo.Status} · {photo.Error}";
+    public string PhotoActionLabel=>HasCurrentPhoto?"Cambiar foto":"Agregar foto";
     public string PhotoProvenance {get;set;}="REAL";
     public string Message {get;private set;}="";
     public string EditorTitle=>(editingId is null?"Crear ":"Editar ")+(IsProductEditor?"producto":"categoría");

@@ -1,0 +1,28 @@
+CASA MIGA POS — FASE 1K.2C-R1 — VERIFICACIÓN FINAL
+Fecha local: 2026-09-28
+Baseline: 37617a8ca41ed322fd2bf594a2d0d542974aee90
+
+scripts/verify.ps1:
+- Build Release: correcto
+- Errores: 0
+- Advertencias: 0
+- CasaMiga.Tests: 535/535, 0 fallidas, 0 omitidas
+- CasaMiga.PhotoTests: 103/103, 0 fallidas, 0 omitidas
+- Total: 638/638
+
+Dataset aislado prepare/verify:
+- Products: 26
+- Categories: 4
+- Photos: 26
+- PROVISIONAL: 26
+- REAL: 0
+- SIN FOTO: 0
+- Schema: 16
+
+Control estructural:
+- migration 016 SHA-256: 9223CAA06CD02FA32E874CC1516EE0C6DB798CB76E2FBE1BF267BAB9B695ED76
+- migrations sin cambios contra baseline: sí
+- ProductPhoto Foundation/backup/restore sin cambios: sí
+- inventario/recetas/producción sin cambios: sí
+- instalación comercial poblada: no
+- aprobación visual humana: pendiente

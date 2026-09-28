@@ -20,14 +20,14 @@ public partial class PosView : UserControl
     private void RecipesClick(object s,RoutedEventArgs e)=>RecipesRequested?.Invoke(this,EventArgs.Empty);
     private void ProductionClick(object s,RoutedEventArgs e)=>ProductionRequested?.Invoke(this,EventArgs.Empty);
     private void LogoutClick(object s,RoutedEventArgs e)=>LogoutRequested?.Invoke(this,EventArgs.Empty);
-    private async void SearchClick(object s,RoutedEventArgs e)=>await Model.SearchAsync();
-    private async void CategoryClick(object s,RoutedEventArgs e)=>await Model.CategoryAsync(((Button)s).CommandParameter as Guid?);
+    private async void SearchClick(object s,RoutedEventArgs e){await Model.SearchAsync();ProductCatalogScroll.ScrollToTop();}
+    private async void CategoryClick(object s,RoutedEventArgs e){await Model.CategoryAsync(((Button)s).CommandParameter as Guid?);ProductCatalogScroll.ScrollToTop();}
     private async void ProductClick(object s,RoutedEventArgs e)=>await Model.AddAsync((Guid)((Button)s).Tag);
     private async void IncreaseClick(object s,RoutedEventArgs e)=>await Model.IncrementAsync((Guid)((Button)s).Tag);
     private async void DecreaseClick(object s,RoutedEventArgs e)=>await Model.DecrementAsync((Guid)((Button)s).Tag);
     private async void RemoveClick(object s,RoutedEventArgs e)=>await Model.RemoveAsync((Guid)((Button)s).Tag);
-    private async void PreviousClick(object s,RoutedEventArgs e)=>await Model.PageAsync(-1);
-    private async void NextClick(object s,RoutedEventArgs e)=>await Model.PageAsync(1);
+    private async void PreviousClick(object s,RoutedEventArgs e){await Model.PageAsync(-1);ProductCatalogScroll.ScrollToTop();}
+    private async void NextClick(object s,RoutedEventArgs e){await Model.PageAsync(1);ProductCatalogScroll.ScrollToTop();}
     private async void CheckoutClick(object s,RoutedEventArgs e)
     {
         if(!Model.Ready)return;
@@ -41,7 +41,7 @@ public partial class PosView : UserControl
     }
     private async void PosKeyDown(object s,KeyEventArgs e)
     {
-        if(e.Key==Key.Enter && Keyboard.FocusedElement==SearchInput){e.Handled=true;await Model.SearchAsync();}
+        if(e.Key==Key.Enter && Keyboard.FocusedElement==SearchInput){e.Handled=true;await Model.SearchAsync();ProductCatalogScroll.ScrollToTop();}
         else if(e.Key==Key.Escape){e.Handled=true;SearchInput.Focus();SearchInput.SelectAll();}
     }
 }

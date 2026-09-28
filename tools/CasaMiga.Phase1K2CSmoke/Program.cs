@@ -6,6 +6,9 @@ using CasaMiga.Domain;
 using CasaMiga.Infrastructure;
 using CasaMiga.Presentation;
 using Microsoft.VisualBasic.FileIO;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 if(args.Length==3&&args[0]=="verify")
 {
@@ -16,16 +19,18 @@ if(args.Length==3&&args[0]=="verify")
     if(!verifyIdentity.Login("catalog-admin",args[2]))throw new InvalidOperationException("Credencial smoke inválida.");
     var verifyCatalog=new CatalogService(new SqliteLocalUnitOfWork(verifyDatabase),verifySession,verifyClock,verifyTerminal.Id,true);
     var verifyProducts=verifyCatalog.Products(new("",null,true,0));var verifyPhotos=new SqliteProductPhotoStore(verifyDatabase).Active();
-    Console.WriteLine(JsonSerializer.Serialize(new{Products=verifyProducts.Total,Categories=verifyCatalog.Categories(true).Count,Photos=verifyPhotos.Count,Provisional=verifyPhotos.Count(p=>p.Provenance=="PROVISIONAL"),Real=verifyPhotos.Count(p=>p.Provenance=="REAL")},new JsonSerializerOptions{WriteIndented=true}));return 0;
+    Console.WriteLine(JsonSerializer.Serialize(new{Products=verifyProducts.Total,Categories=verifyCatalog.Categories(true).Count,Photos=verifyPhotos.Count,Provisional=verifyPhotos.Count(p=>p.Provenance=="PROVISIONAL"),Real=verifyPhotos.Count(p=>p.Provenance=="REAL"),WithoutPhoto=verifyProducts.Total-verifyPhotos.Count},new JsonSerializerOptions{WriteIndented=true}));return 0;
 }
-if (args.Length != 4 || args[0] != "prepare")
+if (args.Length != 5 || args[0] != "prepare")
 {
-    Console.Error.WriteLine("Uso: prepare <paquete extraído> <directorio nuevo> <contraseña smoke> | verify <directorio> <contraseña smoke>"); return 2;
+    Console.Error.WriteLine("Uso: prepare <paquete extraído> <assets preparados nuevos> <dataset nuevo> <contraseña smoke> | verify <directorio> <contraseña smoke>"); return 2;
 }
-var package=Path.GetFullPath(args[1]);var target=Path.GetFullPath(args[2]);var password=args[3];
+var package=Path.GetFullPath(args[1]);var prepared=Path.GetFullPath(args[2]);var target=Path.GetFullPath(args[3]);var password=args[4];
 if(!Directory.Exists(package)||!Path.IsPathFullyQualified(target)||target.StartsWith(@"\\",StringComparison.Ordinal))throw new ArgumentException("Rutas locales requeridas.");
 if(Directory.Exists(target)&&Directory.EnumerateFileSystemEntries(target).Any())throw new InvalidOperationException("El dataset de smoke requiere una carpeta nueva y vacía.");
-var rows=ReadAndValidate(package);Directory.CreateDirectory(target);
+if(Directory.Exists(prepared)&&Directory.EnumerateFileSystemEntries(prepared).Any())throw new InvalidOperationException("La carpeta de assets preparados debe ser nueva y vacía.");
+var rows=ReadAndValidate(package);Directory.CreateDirectory(target);Directory.CreateDirectory(prepared);
+Exception? preparationError=null;var preparationThread=new Thread(()=>{try{PrepareAssets(package,prepared,rows);}catch(Exception error){preparationError=error;}});preparationThread.SetApartmentState(ApartmentState.STA);preparationThread.Start();preparationThread.Join();if(preparationError is not null)throw new InvalidOperationException("No se pudieron preparar los assets provisionales.",preparationError);
 using var lease=new DirectoryLease(target);
 var clock=new SystemClock();var options=new FoundationOptions(target,true);new FoundationRuntime(options).Start();
 var database=new Database(Path.Combine(target,"casamiga.db"));var unit=new SqliteLocalUnitOfWork(database);
@@ -44,19 +49,13 @@ foreach(var row in rows)
 }
 new CashService(unit,session,clock).Open(terminal.Id,new Money(0));
 var photos=new ProductPhotoService(new SqliteProductPhotoStore(database),new ProductPhotoFileStore(target),new WpfProductPhotoProcessor(),session,clock,terminal.Id);
-var mapping=new[]{
-    new Map("Danés con crema pastelera","referencia_real_danes_crema_pastelera.png",new PhotoCrop(19,320,700)),
-    new Map("Vaso de café","imagen_vaso_cafe_referencia.png",new PhotoCrop(165,105,460)),
-    new Map("Leche Kirkland entera","imagen_leche_kirkland_entera_referencia.png",new PhotoCrop(190,110,430)),
-    new Map("Leche Kirkland deslactosada light","imagen_leche_kirkland_deslactosada_light_referencia.png",new PhotoCrop(190,110,430))
-};
-foreach(var map in mapping)
+foreach(var row in rows)
 {
-    var product=products[map.Product];var file=Path.Combine(package,map.File);using var input=File.OpenRead(file);
-    photos.Import(new(product.Id,0,Guid.NewGuid(),map.File,"PROVISIONAL",map.Crop),input);
+    var product=products[row.Name];var name=$"{row.Id:00}.png";using var input=File.OpenRead(Path.Combine(prepared,name));
+    photos.Import(new(product.Id,0,Guid.NewGuid(),name,"PROVISIONAL",new PhotoCrop(0,0,512)),input);
 }
 using var schemaConnection=database.Open(true);using var schemaCommand=schemaConnection.CreateCommand();schemaCommand.CommandText="SELECT MAX(version) FROM schema_migration";var schema=Convert.ToInt32(schemaCommand.ExecuteScalar(),CultureInfo.InvariantCulture);
-var result=new{Directory=target,User="catalog-admin",Products=products.Count,Categories=categories.Count,Provisional=mapping.Length,Real=0,WithoutPhoto=products.Count-mapping.Length,Schema=schema};
+var result=new{Directory=target,PreparedAssets=prepared,User="catalog-admin",Products=products.Count,Categories=categories.Count,Provisional=rows.Count,Real=0,WithoutPhoto=0,Schema=schema};
 Console.WriteLine(JsonSerializer.Serialize(result,new JsonSerializerOptions{WriteIndented=true}));return 0;
 
 static IReadOnlyList<Row> ReadAndValidate(string package)
@@ -73,5 +72,34 @@ static IReadOnlyList<Row> ReadAndValidate(string package)
     if(json.Select(row=>row.Id).Distinct().Count()!=26||json.Select(row=>row.Name).Distinct(StringComparer.Ordinal).Count()!=26)throw new InvalidDataException("Identidades duplicadas.");
     return json;
 }
+static void PrepareAssets(string package,string output,IReadOnlyList<Row> rows)
+{
+    var sources=new[]{
+        new AssetSource(1,"referencia_visual_catalogo.png",new(12,152,218,200)),new AssetSource(2,"referencia_visual_catalogo.png",new(245,152,232,200)),
+        new AssetSource(3,"referencia_visual_catalogo.png",new(498,152,288,196)),new AssetSource(4,"referencia_visual_catalogo.png",new(806,152,281,203)),
+        new AssetSource(5,"referencia_visual_catalogo.png",new(1106,152,255,205)),new AssetSource(6,"referencia_visual_catalogo.png",new(11,480,220,199)),
+        new AssetSource(7,"referencia_visual_catalogo.png",new(251,480,206,196)),new AssetSource(8,"referencia_visual_catalogo.png",new(477,480,201,196)),
+        new AssetSource(9,"referencia_visual_catalogo.png",new(702,481,200,195)),new AssetSource(10,"referencia_visual_catalogo.png",new(921,481,209,196)),
+        new AssetSource(11,"referencia_visual_catalogo.png",new(1148,480,212,197)),new AssetSource(12,"referencia_visual_catalogo.png",new(12,790,209,201)),
+        new AssetSource(13,"referencia_visual_catalogo.png",new(239,790,210,201)),new AssetSource(14,"referencia_visual_catalogo.png",new(469,790,208,199)),
+        new AssetSource(15,"referencia_visual_catalogo.png",new(698,790,204,199)),new AssetSource(16,"referencia_visual_catalogo.png",new(923,790,211,201)),
+        new AssetSource(17,"referencia_visual_catalogo.png",new(1150,790,210,201)),new AssetSource(18,"referencia_visual_catalogo_con_bebidas.png",new(204,686,180,145)),
+        new AssetSource(19,"referencia_visual_catalogo_con_bebidas.png",new(395,686,178,145)),new AssetSource(20,"referencia_visual_catalogo_con_bebidas.png",new(963,95,178,166)),
+        new AssetSource(21,"referencia_visual_catalogo_con_bebidas.png",new(1341,95,181,166)),new AssetSource(22,"referencia_visual_catalogo_con_bebidas.png",new(584,686,178,145)),
+        new AssetSource(23,"referencia_visual_catalogo_con_bebidas.png",new(773,686,180,145)),new AssetSource(24,"imagen_vaso_cafe_referencia.png",new(165,105,460,460)),
+        new AssetSource(25,"imagen_leche_kirkland_entera_referencia.png",new(190,110,430,430)),new AssetSource(26,"imagen_leche_kirkland_deslactosada_light_referencia.png",new(190,110,430,430))};
+    if(sources.Length!=26||rows.Select(r=>r.Id).Except(sources.Select(s=>s.Id)).Any())throw new InvalidDataException("El mapeo provisional no cubre exactamente los 26 productos.");
+    var mapping=new List<object>();
+    foreach(var source in sources)
+    {
+        var input=Path.Combine(package,source.File);var decoder=BitmapDecoder.Create(new Uri(input),BitmapCreateOptions.PreservePixelFormat,BitmapCacheOption.OnLoad);var frame=decoder.Frames.Single();
+        if(source.Crop.X<0||source.Crop.Y<0||source.Crop.X+source.Crop.Width>frame.PixelWidth||source.Crop.Y+source.Crop.Height>frame.PixelHeight)throw new InvalidDataException($"Crop inválido: {source.File}");
+        var crop=new CroppedBitmap(frame,source.Crop);var side=480d;var scale=Math.Min(side/crop.PixelWidth,side/crop.PixelHeight);var width=crop.PixelWidth*scale;var height=crop.PixelHeight*scale;
+        var visual=new DrawingVisual();RenderOptions.SetBitmapScalingMode(visual,BitmapScalingMode.HighQuality);using(var drawing=visual.RenderOpen()){drawing.DrawRectangle(new SolidColorBrush(Color.FromRgb(253,248,239)),null,new Rect(0,0,512,512));drawing.DrawImage(crop,new Rect((512-width)/2,(512-height)/2,width,height));}
+        var target=new RenderTargetBitmap(512,512,96,96,PixelFormats.Pbgra32);target.Render(visual);var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(target));var file=$"{source.Id:00}.png";using(var stream=File.Create(Path.Combine(output,file)))encoder.Save(stream);
+        var row=rows.Single(r=>r.Id==source.Id);mapping.Add(new{row.Id,Product=row.Name,Source=source.File,Crop=new{source.Crop.X,source.Crop.Y,source.Crop.Width,source.Crop.Height},Asset=file,Provenance="PROVISIONAL"});
+    }
+    File.WriteAllText(Path.Combine(output,"mapping.json"),JsonSerializer.Serialize(mapping,new JsonSerializerOptions{WriteIndented=true}));
+}
 sealed record Row(int Id,string Name,int PriceMxn,string Category,string Note);
-sealed record Map(string Product,string File,PhotoCrop Crop);
+sealed record AssetSource(int Id,string File,Int32Rect Crop);

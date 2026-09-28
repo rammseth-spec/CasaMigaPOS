@@ -1,8 +1,10 @@
-# Próximo paso — cierre formal separado de FASE 1K
+# Próximo paso — aprobación humana de 1K.2C-R1
 
-1K.2C quedó completada y aprobada el 28/09/2026. Leer `PHASE_1K2C_REPORT.md`, `product-photo-ui.md` y `phase1k2c-provisional-map.md`. FASE 1K permanece abierta únicamente para una autorización de cierre formal separada. No iniciar automáticamente otra subfase, instalador, carga en la instalación comercial ni cambios estructurales a 1K.2B.
+Revisar el smoke aislado preparado con 26 fotos PROVISIONAL, rail POS compacto, cards, carrito, ambos botones de cobro, administración de imagen y crop visual. Leer `PHASE_1K2C_R1_REPORT.md`, `product-photo-ui.md` y `phase1k2c-provisional-map.md`. No declarar aprobación visual hasta recibir confirmación explícita del usuario. FASE 1K permanece abierta; no cargar la instalación comercial, iniciar instalador ni cambiar 1K.2B.
 
-Las 22 tarjetas SIN FOTO y las cuatro PROVISIONAL requieren fotografías reales proporcionadas por Casa Miga. Un futuro reemplazo debe usar el flujo administrativo REAL y conservar ProductId, precio, historial, receta e inventario. Modelo recomendado para un cierre exclusivamente documental: Sol; usar Astra sólo si aparece un defecto estructural demostrado.
+Las 26 imágenes actuales son PROVISIONAL y requieren reemplazo futuro por fotografías reales proporcionadas por Casa Miga. El reemplazo debe usar el flujo administrativo REAL y conservar ProductId, precio, historial, receta e inventario.
+
+Requerimiento futuro formal, no implementado: agregar `Tipo de venta` persistente en Sale con valores **Mostrador**, **Pedido** y **Pedido a tienda**. Pedido/Pedido a tienda debe admitir cliente, tienda o persona de referencia y nota opcional; debe aparecer en Historial, backup/restore, ticket y reimpresión. No debe ser texto temporal de Presentation. Requiere subfase separada con revisión de persistencia y modelo Astra.
 
 ## Registro anterior — revisión 1K.2B
 

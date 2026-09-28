@@ -12,10 +12,11 @@
   <TextBlock Text="{Binding PrintMessage}" Visibility="{Binding HasResult,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,12" AutomationProperties.LiveSetting="Polite"/>
   <Button Content="Reintentar ticket" Click="RetryPrintClick" IsEnabled="{Binding CanRetryPrint}" Visibility="{Binding HasResult,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,12"/>
   <TextBlock Text="{Binding Message}" Foreground="{DynamicResource ErrorBrush}" Margin="0,12,0,16" AutomationProperties.LiveSetting="Polite"/>
-  <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="16"/><ColumnDefinition/></Grid.ColumnDefinitions>
-   <Button Content="Volver al POS" Click="BackClick" IsEnabled="{Binding Ready}"/>
-   <Button Grid.Column="2" Content="Confirmar cobro" Click="ConfirmClick" IsEnabled="{Binding CanConfirm}" Visibility="{Binding IsCapture,Converter={StaticResource VisibleWhen}}"/>
-   <Button Grid.Column="2" Content="Verificar resultado" Click="ResolveClick" IsEnabled="{Binding Ready}" Visibility="{Binding Recovery,Converter={StaticResource VisibleWhen}}"/>
+  <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
+   <Button Content="Volver al POS" Click="BackClick" IsEnabled="{Binding Ready}" Style="{StaticResource SecondaryButton}"/>
+   <Button Grid.Column="2" Content="Cobrar" Click="ConfirmWithoutPrintClick" IsEnabled="{Binding CanConfirm}" Visibility="{Binding IsCapture,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Cobrar sin imprimir ticket"/>
+   <Button Grid.Column="4" Content="Cobrar + imprimir ticket" Click="ConfirmAndPrintClick" IsEnabled="{Binding CanConfirm}" Visibility="{Binding IsCapture,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Cobrar e imprimir ticket"/>
+   <Button Grid.Column="2" Grid.ColumnSpan="3" Content="Verificar resultado" Click="ResolveClick" IsEnabled="{Binding Ready}" Visibility="{Binding Recovery,Converter={StaticResource VisibleWhen}}"/>
   </Grid>
  </StackPanel>
 </Window>
