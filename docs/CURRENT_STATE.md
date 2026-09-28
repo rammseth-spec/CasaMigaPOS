@@ -1,4 +1,16 @@
-# FASE 1K ABIERTA — 1K.2A diseño completado, pendiente autorización
+# FASE 1K ABIERTA — 1K.2B completada
+
+28/09/2026. 1K.1 cerrada; 1K.2A aprobada y checkpoint `089066c04b8a9f69aa6a4468af6f8d146036d576`; 1K.2B implementada/verificada. 1K.2 sigue abierta; 1K.2C no iniciada. Baseline de producto `58bdcbd34692e14ced3f85fdeb82fca5d6b8b794`.
+
+Implementación en `e872479fafd0389dbc32508f0a632ef331799bb9`; cierre documental separado. HEAD exacto del cierre se informa en conversación y copia local del reporte final, evitando referencia circular en su propio commit.
+
+Schema 16 con `016_product_photos.sql`; 001–015 SHA-256 intactos. ProductPhotoService, puertos, almacén SQLite/archivos, codec WPF, respaldo v2 y restore v1/v2. Una asociación opcional, PROVISIONAL/REAL, nombre informativo sin ruta; original byte por byte, EXIF/crop reproducible y thumbnail JPEG Q85 hasta 512. Retirados se limpian tras commit, metadata/audit permanece. Sin caché de bitmaps ni UI final. Ver `product-photos.md` y `PHASE_1K2B_REPORT.md`.
+
+Verificación final `scripts/verify.ps1`: 621/621 (535 existentes + 86 nuevas), 0 fallidas/omitidas; Release 0 warnings/errores. Smoke aislado import/replace/remove/reimport/backup/restore completo, sin ventas reales ni catálogo del negocio. Artefacto local bajo `work/phase1k2b-smoke`; evidencia portable bajo `docs/evidence/phase1k2b-*`. La aplicación del usuario fue cerrada por él para liberar build; no se arrancó contra sus datos ni se migró esa instalación.
+
+Límites: normal backup/restore falla con media ausente/corrupta; no existe modo emergency. Repair explícito exige original válido y products.edit. Windows 10/LTSC y calidad con fotografías reales no certificados. Detenerse: siguiente fase requiere autorización.
+
+## Registro anterior — diseño 1K.2A
 
 Baseline intacto: `58bdcbd34692e14ced3f85fdeb82fca5d6b8b794`. 1K.1 sigue cerrada. 1K.2 está en diseño; no implementada. 1K.2B no inició. Schema actual 15; 001–015 intactas, sin 016.
 

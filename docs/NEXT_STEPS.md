@@ -1,4 +1,12 @@
-# Próximo paso — revisar propuesta 1K.2A y autorizar 1K.2B
+# Próximo paso — revisión del cierre 1K.2B y autorización separada de 1K.2C
+
+1K.2B terminó con 621/621 pruebas y Release limpio. Leer `PHASE_1K2B_REPORT.md`, `product-photos.md` y la adenda normativa en `PHASE_1K2A_DESIGN.md`.
+
+No continuar automáticamente. 1K.2C podrá incorporar UI administrativa de importación/crop, ProductCard FOTO + NOMBRE + PRECIO, fallback, caché acotada y carga estructurada explícita del paquete provisional. Mantener ProductId al sustituir PROVISIONAL por REAL. CSV/JSON autorizados serán la autoridad para productos; no inferir datos desde fotos.
+
+Pendiente: aprobación de alcance, fotografías reales, equipo Windows 10/LTSC exacto y validación visual/rendimiento en POS. No se autoriza ahora carga de 26 productos, instalador ni cambios de reglas comerciales. Modelo recomendado: Sol para integración visual sobre estos contratos; Astra si cambia persistencia/backup/recovery.
+
+## Registro histórico — siguiente paso al terminar 1K.2A
 
 Leer `PHASE_1K2A_DESIGN.md`. Autorizar por separado ProductPhoto, DDL 016 propuesto, originales retenidos, JPEG/PNG de entrada, derivado JPEG Q85/512, caché 64 MiB, backup v2 compatible con v1 y recuperación explícita de media perdida. No crear migración ni implementar automáticamente. El diseño y probe quedan sin commit por la restricción expresa de arquitectura no autorizada.
 

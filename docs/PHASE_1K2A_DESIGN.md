@@ -1,5 +1,21 @@
 # CASA MIGA POS — DISEÑO FASE 1K.2A
 
+## Adenda normativa 1K.2B — 28/09/2026
+
+El usuario aprobó este diseño como base y autorizó 016 y la implementación de la infraestructura de fotos. El checkpoint documental original está en `089066c04b8a9f69aa6a4468af6f8d146036d576`. **Esta adenda sustituye las propuestas históricas incompatibles que aparecen más abajo.** El detalle implementado está en `product-photos.md` y el cierre en `PHASE_1K2B_REPORT.md`.
+
+- Procedencia obligatoria `PROVISIONAL`/`REAL`; nombre original informativo sin ruta, máximo 255 caracteres. Se añaden esas dos columnas y sus constraints al DDL propuesto. Original, procedencia y crop permanecen inmutables por activo; sustituir crea otro PhotoId para el mismo Product.
+- Se conservan metadata histórica y auditoría, **no binarios retirados indefinidamente**. Reemplazar/quitar limpia el bundle anterior después del commit cuando no está referenciado. Backup v2 enumera sólo originales y derivados actuales desde el snapshot. Las propuestas anteriores de retener/incluir todas las revisiones quedan revocadas.
+- Se mantienen las dos tablas STRICT, FK compuesta de propiedad y revisión monotónica, incluso sin foto. Los triggers que impiden borrar filas protegen metadata; no obligan a retener archivos históricos. Hash/número de bytes del derivado pueden cambiar por repair auditado.
+- Codec WPF sin acceso a archivos, JPEG/PNG, orientación EXIF 1–8, crop entero cuadrado sobre coordenadas orientadas, mínimo 256; JPEG Q85 hasta 512 sin upscale; PNG alfa sobre `#FDF8EF`. El original no se reescribe. Escalado por promedio de área, sin filtro estético.
+- Gate por instalación cubre preparación/publicación, lectura, reparación, backup y limpieza; orden gate → DB. El codec se ejecuta fuera de la transacción SQLite. Mantener DirectoryLease durante toda operación sobre una instalación, también con harness administrativo.
+- La reparación es explícita mediante `ProductPhotoService.Repair`; lectura no repara silenciosamente. Los huérfanos se concilian bajo gate con referencias actuales y antigüedad mínima de 24 horas. No se implementa cuarentena de siete días: ningún archivo vigente se considera huérfano; los archivos sin referencia antiguos son candidatos a limpieza autorizada.
+- No se necesita caché de bitmaps en esta subfase; lectura devuelve bytes acotados y verificados. Caché/UI final se reserva para 1K.2C, con presupuesto propuesto de 64 MiB, sin implementación anticipada.
+- Backup v1 sigue disponible para snapshots anteriores a schema 16 y se restaura/migra; schema 16 produce v2. El formato actual no tenía modo de emergencia. Según la condición de la autorización 1K.2B, no se crea `.cmrecovery`: pérdida/corrupción de media hace fallar backup/restore normal. No se presenta una instalación incompleta como restauración válida. El arranque conserva su comportamiento de fallo si no puede respaldar; recuperación controlada descrita en operaciones.
+- Esta subfase usa fixtures sintéticos y harness/tests. No implementa ProductCard, selector de fotos, categorías visuales, caché POS ni carga de 26 productos. Todo el diseño UI que sigue se reserva para autorización 1K.2C.
+
+## Documento original de 1K.2A — registro histórico
+
 Fecha: 27/09/2026. Estado: análisis y propuesta terminados, **pendiente autorización de implementación**. FASE 1K abierta; 1K.1 cerrada; 1K.2 en diseño, no implementada; 1K.2B no iniciada.
 
 Modelo utilizado: Codex basado en GPT-6; la sesión no expone un identificador verificable de variante. La autorización recomienda Astra; no se afirma un cambio de modelo realizado por herramientas.

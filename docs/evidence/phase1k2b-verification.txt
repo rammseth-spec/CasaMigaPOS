@@ -1,0 +1,48 @@
+FASE 1K.2B — verification record, closed 2026-09-28 (America/Mexico_City)
+Baseline product: 58bdcbd34692e14ced3f85fdeb82fca5d6b8b794
+1K.2A documentation checkpoint: 089066c04b8a9f69aa6a4468af6f8d146036d576
+1K.2B implementation: e872479fafd0389dbc32508f0a632ef331799bb9
+
+Executed final product verification:
+scripts/verify.ps1 -Dotnet (Resolve-Path ./work/.dotnet/dotnet.exe)
+Restore locked mode: success.
+Release solution build: success, 0 warnings, 0 errors (7.72 seconds).
+CasaMiga.PhotoTests: 86 passed, 0 failed, 0 skipped (56 seconds).
+CasaMiga.Tests: 535 passed, 0 failed, 0 skipped (4 minutes 49 seconds).
+Aggregate: 621/621 passed. Seven projects built, two test projects.
+TRX files retained locally:
+TestResults/foundation_net10.0_20260927200431.trx
+TestResults/foundation_net10.0_20260927200824.trx
+Photo TRX SHA256: 22BE47015D3CB44CD181516BC14E714D418D90C43C0D247B8ED18BA7BE7A72A1
+Regression TRX SHA256: 1D323EB970ACF595B6FDCA150D421F66711A120C622FA55C2C2BDD02CB96F876
+
+Additional final isolated smoke, 2026-09-28:
+dotnet test tests/CasaMiga.PhotoTests -c Release --no-build --no-restore
+  --filter FullyQualifiedName~SmokeEvidenceCanBeRetainedWithoutRealCatalog
+  --logger trx;LogFileName=photo-smoke.trx --results-directory TestResults
+CASAMIGA_PHOTO_SMOKE_DIR=work/phase1k2b-smoke (absolute workspace path supplied at execution)
+Result: 1/1 passed, 0 failed, 0 skipped; 1 second.
+Smoke TRX SHA256: 4D5981B19DC8D7012C1EE97BA539207AF5397D46D77DBA788622FB98D2081DDD
+Original -> import -> replace -> remove -> reimport -> backup v2 -> restore v2 -> original equality.
+Artifacts: phase1k2b-smoke.json and phase1k2b-manifest.json in this evidence directory.
+Binary backup and synthetic account credentials stay in ignored work/phase1k2b-smoke.
+No business catalog changes, no actual sales, no application startup against user data.
+
+Review:
+- Migration 001–015 hashes match phase1k1-migration-hashes.txt, 15/15.
+- Migration 016 SHA256: 9223CAA06CD02FA32E874CC1516EE0C6DB798CB76E2FBE1BF267BAB9B695ED76.
+- Domain and existing commercial services unchanged from baseline.
+- Existing test edits: final schema 15->16 expectations; exclude new photo tables only from pre-photo business-history comparisons.
+- New image tests use synthetic technical charts, not generated/stock bread photography.
+- git diff --check and staged diff check: success before product commit.
+- No push, no remote creation, no history rewrite.
+
+Intermediate runs (not substituted for final verification):
+- Initial build was blocked by running Casa Miga; user closed it. Final Release passed cleanly.
+- Initial test restore was blocked by sandbox network permissions; authorized restore succeeded.
+- Photo tests expanded 52 -> 77 -> 85 -> final 86, all passing at each run.
+- Prior isolated regression run: 535/535 passed.
+
+Limits: synthetic fixtures; no physical power-cut/disk-full certification; no real photo quality or Windows10/LTSC certification.
+Normal backup/restore rejects missing or corrupt media. No emergency/degraded format implemented.
+No UI grid, ProductCard, mass 26-product import, or phase1K.2C work.

@@ -1,3 +1,14 @@
+## Archivos 1K.2B
+
+- `migrations/016_product_photos.sql`: metadata, selección y constraints de fotos.
+- `src/CasaMiga.Application/ProductPhotoContracts.cs`, `ProductPhotoService.cs`: API/puertos, autorización, CAS, reintento y recuperación.
+- `src/CasaMiga.Infrastructure/SqliteProductPhotoStore.cs`, `ProductPhotoFileStore.cs`: metadata, gate, staging, publicación y limpieza.
+- `src/CasaMiga.Infrastructure/InstallationBackup.cs`, `Database.cs`: v1/v2, validación de paquetes y guard de migración.
+- `src/CasaMiga.Presentation/WpfProductPhotoProcessor.cs`: JPEG/PNG, EXIF, crop, alfa y derivación; sin filesystem ni UI nueva.
+- `tests/CasaMiga.PhotoTests/`: 86 pruebas Windows/WIC, persistencia, seguridad, concurrencia y smoke. Tests anteriores sólo actualizan schema esperado y comparación histórica de tablas previas.
+- `CasaMigaPOS.slnx`, `scripts/verify.ps1`: incluir nuevo proyecto y evitar sobrescritura de TRX entre proyectos; paquetes existentes con lock, sin dependencia de imágenes externa.
+- `docs/product-photos.md`, `PHASE_1K2B_REPORT.md`, adenda 1K.2A y `evidence/phase1k2b-*`: contratos y cierre. Backups/credenciales sintéticos sólo bajo `work/`, ignorado.
+
 ## Archivos 1K.1
 
 - `src/CasaMiga.Presentation/Assets/CasaMigaLogo.png`: derivado HD 3080 × 1786 del SVG oficial.

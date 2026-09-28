@@ -2,6 +2,10 @@
 
 Estado: adoptado en FASE 1B, 2026-09-06.
 
+Actualización 1K.2B, 28/09/2026: las decisiones de conteo permanecen intactas. El contrato de backup de tres archivos descrito abajo es v1 histórico. Para schema 16 se adopta v2: manifiesto con lista de archivos, tamaños, SHA-256 y roles; DB/terminal y fotos originales/derivadas **activas** exclusivamente. Gate de media → snapshot SQLite → archivos referenciados por ese snapshot → ZIP temporal → validación real del paquete → publicación final. Retirados y huérfanos quedan excluidos, aunque la metadata/audit histórica sigue en SQLite.
+
+Restore conserva compatibilidad v1, valida v2 y publica únicamente a carpeta nueva. Rutas permitidas cerradas, límites de entrada/paquete, duplicados incluso por mayúsculas rechazados; no usa extracción genérica. Media ausente/alterada falla; no existe modo emergency/degraded en esta versión. Ver `../product-photos.md` y `../PHASE_1K2B_REPORT.md`.
+
 El conteo ciego es un registro durable e inmutable separado del cierre definitivo. Continuar guarda cash_count y su auditoría antes de revelar importes; volver o reiniciar conserva ese conteo. Confirmar cierre realiza una segunda transacción. No aceptar un monto diferente enviado desde la UI después de revelar el esperado. Una corrección futura necesitará un flujo explícito y auditado; no se añade en 1B.
 
 En esta fase esperado = fondo. Por prioridad del requisito de no revelar indirectamente el esperado, la vista de caja abierta y el formulario de conteo ocultan el fondo; aparece en el resultado después del conteo. El operador puede recordar el fondo que él mismo capturó al abrir; ningún software puede evitar ese conocimiento previo. No existe un historial visible que permita consultar importes durante el conteo.

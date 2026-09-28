@@ -1,4 +1,10 @@
-## Propuesta 1K.2A — pendiente, no adoptada
+## Product Photo Foundation 1K.2B — implementada
+
+Application contiene ProductPhotoService/DTO/puertos: autorización persistida, CAS de revisión, OperationId/audit y recuperación de resultados. Infrastructure implementa metadata SQLite y archivos portables dentro de DataDirectory; Presentation sólo aporta el codec WPF, sin escribir DB/archivos. Domain/Product, servicios comerciales y UI POS no cambian. Ver `product-photos.md`.
+
+016 incorpora `product_photo_asset` (metadata histórica original/crop/procedencia y thumbnail reparable) y `product_photo` (selección/revisión). Publicación de bundle completo antes del commit; archivos viejos se limpian después. Gate de media compartido con backup y lecturas, siempre antes de DB; DirectoryLease exclusivo entre procesos. Backup v2 toma referencias del snapshot y excluye binarios retirados. Restore v1/v2 valida antes de publicar destino nuevo. No hay caché de bitmaps ni formato de emergencia en esta subfase.
+
+## Propuesta original 1K.2A — registro histórico sustituido por su adenda
 
 `PHASE_1K2A_DESIGN.md` propone ProductPhoto en Application, metadata transaccional y bundles de archivos en Infrastructure, codec/caché WPF en Presentation. Una foto principal opcional por Product; original y crop inmutables por revisión; thumbnail reparable mediante archivo nombrado por hash y cambio auditado. Se requiere proponer 016 y backup v2, no creados. Domain, carrito, checkout y lógica de producción no se alteran. La coordinación DB/filesystem, restore, emergencia y las alternativas están especificadas en el diseño. Este apartado no declara esa arquitectura implementada ni autorizada.
 

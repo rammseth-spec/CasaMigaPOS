@@ -1,0 +1,14 @@
+{
+  "schema": 16,
+  "synthetic": true,
+  "product": "3e53b52b-3fef-42ff-acae-366aa74f55c2",
+  "import": "62e2a592-8cf6-4461-afc5-777d3cb652f0",
+  "replace": "98b9d992-d4ca-4286-b0c8-da0f1009977c",
+  "removed": true,
+  "final": "9436f31e-9a25-414c-a8fd-f9a178d41474",
+  "restored": "9436f31e-9a25-414c-a8fd-f9a178d41474",
+  "file": "casamiga-20260928T063554922Z-5cba37a06550404f97b6f2eefb32aefa.cmbackup",
+  "bytes": 39304,
+  "sha256": "128740BB7F048E7BF22B6C1A9053DA61F04C40D6773B312A26C474E86B8C1ED5",
+  "realBusinessSales": 0
+}

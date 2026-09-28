@@ -1,5 +1,7 @@
 # Casa Miga POS
 
+**FASE 1K.2B COMPLETADA — Product Photo Foundation.** Schema 16: foto opcional por Product, procedencia PROVISIONAL/REAL, originales exactos, derivado JPEG Q85 hasta 512, publicación recuperable, limpieza de retirados y backup v2 compatible con restore v1. Ver [contrato de fotos](docs/product-photos.md) y [reporte 1K.2B](docs/PHASE_1K2B_REPORT.md). 621/621 pruebas (535 regresión + 86 fotos), Release 0 errores/advertencias. Sin UI fotográfica final ni carga masiva; 1K.2C no iniciada. Los estados anteriores siguientes son históricos.
+
 **FASE 1K.1 CERRADA Y APROBADA VISUALMENTE.** El nuevo shell WPF incorpora sidebar por permisos, header operativo, área de contenido común, estilos semánticos, contraste legible, logotipo HD, icono oficial y pantalla completa F11. La identidad usa el maestro oficial **VARIANTE 04 — SONRISA DELGADA** y la paleta documentada; no usa Opción 07 en Presentation. FASE 1K.2 está en diseño: [propuesta 1K.2A](docs/PHASE_1K2A_DESIGN.md), sin implementación ni migración 016. Ver [reporte 1K.1](docs/PHASE_1K1_REPORT.md) y [smoke visual](docs/PHASE_1K1_SMOKE.md).
 
 **FASE 1J CLOSED; 1J.5 completada.** Recetas/perfiles versionados, producción multi-output, Planned/Actual, zero-output, validación de stock, recuperación, permisos y backup/restore verificados. UI funcional con refresco y selector de inventario. Schema 15; migraciones 001–015 intactas, sin 016. 533/533 pruebas; Release 0 errores/advertencias. Ver [reporte final](docs/PHASE_1J5_REPORT.md).

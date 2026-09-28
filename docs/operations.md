@@ -56,7 +56,19 @@ Propietario: cash.close. Tercero: cash.close y cash.close.other. Administrator y
 
 Fórmula 1B: esperado = fondo; entradas, retiros, ventas y devoluciones son cero. Diferencia = contado − esperado. Cero es caja exacta; positivo sobrante; negativo faltante. Tras cerrar puede abrirse otra sesión con otro ID; la histórica queda CLOSED e inmutable.
 
-## Propuesta de fotos 1K.2A (no implementada)
+## Fotografías 1K.2B — operación vigente
+
+Schema 16 incorpora originales/derivados administrados bajo `DataDirectory/product-images/v1/<PhotoId>/`. No moverlos manualmente, no guardar fotos junto al ejecutable ni cambiar filas SQLite para corregir asociaciones. Producto inactivo puede administrarse con products.edit sin reactivarlo. `PROVISIONAL` y `REAL` son procedencia; nunca duplicar Product por cambiar a foto real.
+
+En 1K.2B se usa API/harness, sin UI temporal ni importación masiva. `ProductPhotoService.Import`, `Remove`, `Recover`, `Repair` y `Reconcile` documentados en `product-photos.md`. Operar con DirectoryLease de instalación. Import y Remove conservan OperationId para resolver respuesta incierta antes de otro intento; `Recover` no necesita archivo de origen. `Repair` explícito requiere original íntegro; no reescribe el original. Reconcile permite vista previa y limpieza de archivos sin referencia de al menos 24 horas, bajo gate. Binarios retirados se limpian después del commit; errores de limpieza se concilian posteriormente.
+
+Backup v2 normal incluye DB, terminal y sólo originales/derivados activos; manifiesto enumera ruta lógica, bytes, hash y rol. Se valida `.partial` antes de publicar `.cmbackup`. Restore admite v1 histórico y v2, sólo hacia directorio nuevo. v1 migra a 16 sin inventar fotos. No se incluyen staging, huérfanos, retirados, contraseñas en texto ni directorios fuente.
+
+Si faltan/corrompen archivos actuales, backup/restore normal falla. No hay modo emergency ni éxito degradado; el arranque también puede detenerse al fallar su respaldo obligatorio. Conservar instalación y último backup íntegro. Si el original es válido, un harness administrativo con identidad autorizada puede ejecutar Repair con la app cerrada/lease adquirido; si el original se perdió, restaurar un backup íntegro a carpeta nueva o importar una sustitución autorizada mediante el servicio. No aceptar un hash nuevo para bytes corruptos ni renombrar un .db como backup completo. Estas acciones no cambian venta/caja/inventario.
+
+Smoke aislado retenido bajo `work/phase1k2b-smoke`; no contiene datos comerciales. No abrir la instalación del negocio sólo para ensayar schema 16. Para repetir smoke: fijar `CASAMIGA_PHOTO_SMOKE_DIR` a una carpeta local de evidencia y ejecutar el test `SmokeEvidenceCanBeRetainedWithoutRealCatalog`; el harness importa/reemplaza/quita/reimporta, respalda y restaura un Product sintético. Credenciales del backup sintético se dejan únicamente en esa carpeta ignorada.
+
+## Propuesta de fotos 1K.2A — histórica, sustituida por la sección anterior
 
 El respaldo vigente sigue siendo v1 con tres entradas. `PHASE_1K2A_DESIGN.md`, sección 9, propone un manifiesto v2 que enumera DB, terminal, originales y thumbnails registrados, con hashes y límites. Requiere autorización posterior: no añadir manualmente fotos a paquetes v1 ni ejecutar DDL propuesto. Restore nuevo conservaría lectura de v1 y publicaría siempre a carpeta nueva. La ruta de emergencia para media perdida está propuesta como `.cmrecovery` explícito; todavía no existe en el programa y no equivale a un backup completo.
 

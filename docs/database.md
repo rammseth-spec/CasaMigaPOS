@@ -1,4 +1,12 @@
-## Cierre 1J.5
+## Estado vigente — schema 16 / fotografías 1K.2B
+
+`016_product_photos.sql` añade dos tablas STRICT y cuatro triggers, exclusivamente fotos de Product. `product_photo_asset` conserva metadata inmutable de original, filename sin ruta, procedencia PROVISIONAL/REAL, EXIF/crop y descriptor de thumbnail reparable. `product_photo` guarda puntero nullable y revisión monotónica; FK compuesta impide asociar asset de otro Product. Auditoría usa `audit_entry` existente, con OperationId como PK, sin tabla nueva de permisos ni operaciones.
+
+SHA-256 016: `9223CAA06CD02FA32E874CC1516EE0C6DB798CB76E2FBE1BF267BAB9B695ED76`. 001–015 sin cambios, evidencia en `evidence/phase1k2b-migration-hashes.txt`. No cambia la tabla Product. Metadata retirada continúa para trazabilidad; sus binarios se pueden retirar tras commit. Backup incluye DB completa y sólo archivos de asociaciones vigentes. Ver `product-photos.md` y `PHASE_1K2B_REPORT.md`.
+
+Pruebas: upgrade 15→16, fresh16, rollback completo ante fallo de registro, constraints/propiedad, invariantes históricas y restore v1/v2. La instalación real no se editó; al próximo inicio con esta versión se seguirá el protocolo normal prebackup/migración/postbackup.
+
+## Cierre 1J.5 — histórico
 
 Schema 15; migraciones 001–015 verificadas byte a byte y SHA-256 contra baseline 13da5007eac455e7f88a993b85527b9e848a7d4f. Sin 016. Restore nativo aprobado; todas las tablas equivalentes al origen. Ver evidence/phase1j5-persistent-restore.json.
 
