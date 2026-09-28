@@ -1,4 +1,4 @@
-<UserControl x:Class="CasaMiga.Presentation.PosView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" PreviewKeyDown="PosKeyDown">
+<UserControl x:Class="CasaMiga.Presentation.PosView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" PreviewKeyDown="PosKeyDown" IsVisibleChanged="PosVisibilityChanged">
  <Grid IsEnabled="{Binding Ready}">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <DockPanel Grid.Row="1" Margin="0,0,0,6"><TextBlock DockPanel.Dock="Right" Text="DEMO · precios de prueba" Foreground="{DynamicResource BrandBrush}" FontSize="14" Visibility="{Binding IsDevelopment,Converter={StaticResource VisibleWhen}}"/><TextBlock Text="Venta temporal hasta confirmar el cobro" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="14"/></DockPanel>
@@ -15,7 +15,7 @@
     <ScrollViewer x:Name="ProductCatalogScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
      <ItemsControl ItemsSource="{Binding Products}" IsEnabled="{Binding CanOperate}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate>
       <Button Style="{StaticResource ProductTile}" Tag="{Binding Id}" Click="ProductClick" IsEnabled="{Binding IsActive}" ToolTip="{Binding Name}" AutomationProperties.Name="{Binding Name}">
-       <Grid><Grid.RowDefinitions><RowDefinition Height="162"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+       <Grid><Grid.RowDefinitions><RowDefinition Height="160"/><RowDefinition Height="48"/><RowDefinition Height="32"/></Grid.RowDefinitions>
         <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="10" ClipToBounds="True">
          <Grid>
           <Image Source="{Binding Photo}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" Visibility="{Binding HasPhoto,Converter={StaticResource VisibleWhen}}"/>
@@ -25,8 +25,8 @@
           </Grid>
          </Grid>
         </Border>
-        <TextBlock Grid.Row="1" Text="{Binding Name}" FontSize="15" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" TextAlignment="Left" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="40" Margin="2,8,2,1"/>
-        <TextBlock Grid.Row="2" Text="{Binding Price}" FontSize="20" Foreground="{DynamicResource PrimaryBrush}" FontWeight="Bold" TextAlignment="Left" Margin="2,4,2,0"/>
+        <TextBlock Grid.Row="1" Text="{Binding Name}" FontSize="15" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" TextAlignment="Left" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="44" Margin="2,7,2,0" VerticalAlignment="Top"/>
+        <TextBlock Grid.Row="2" Text="{Binding Price}" FontSize="20" Foreground="{DynamicResource PrimaryBrush}" FontWeight="Bold" TextAlignment="Left" Margin="2,0" VerticalAlignment="Center"/>
        </Grid>
       </Button>
      </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>

@@ -1,6 +1,6 @@
 # Próximo paso — aprobación humana de 1K.2C-R1
 
-Revisar el smoke aislado preparado con 26 fotos PROVISIONAL, rail POS compacto, cards, carrito, ambos botones de cobro, administración de imagen y crop visual. Leer `PHASE_1K2C_R1_REPORT.md`, `product-photo-ui.md` y `phase1k2c-provisional-map.md`. No declarar aprobación visual hasta recibir confirmación explícita del usuario. FASE 1K permanece abierta; no cargar la instalación comercial, iniciar instalador ni cambiar 1K.2B.
+Revisar el smoke aislado preparado con 26 fotos PROVISIONAL, cards de 184 x 276 DIP con nombre/precio completos, rail POS contraído sólo con iconos centrados, carrito, ambos botones de cobro, administración de imagen y crop visual. Confirmar especialmente que al entrar al POS el catálogo comienza arriba y que expandir/contraer navegación no deja textos ni scrollbar recortados. Leer `PHASE_1K2C_R1_REPORT.md`, `product-photo-ui.md` y `phase1k2c-provisional-map.md`. No declarar aprobación visual hasta recibir confirmación explícita del usuario. FASE 1K permanece abierta; no cargar la instalación comercial, iniciar instalador ni cambiar 1K.2B.
 
 Las 26 imágenes actuales son PROVISIONAL y requieren reemplazo futuro por fotografías reales proporcionadas por Casa Miga. El reemplazo debe usar el flujo administrativo REAL y conservar ProductId, precio, historial, receta e inventario.
 

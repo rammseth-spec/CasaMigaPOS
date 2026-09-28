@@ -15,6 +15,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool IsPosSidebarCompact => IsPos && !posSidebarExpanded;
     public bool IsPosSidebarExpanded => IsPos && posSidebarExpanded;
     public double SidebarWidth => IsPosSidebarCompact ? 84 : 248;
+    public System.Windows.Controls.ScrollBarVisibility SidebarScrollBarVisibility => IsPosSidebarCompact
+        ? System.Windows.Controls.ScrollBarVisibility.Hidden
+        : System.Windows.Controls.ScrollBarVisibility.Auto;
     public System.Windows.Thickness ShellContentMargin => IsPos ? new(14,12,14,12) : new(24,20,24,20);
     public void TogglePosSidebar(){if(!IsPos)return;posSidebarExpanded=!posSidebarExpanded;Notify();}
     public bool HasCart => user?.Cart is { IsEmpty:false };

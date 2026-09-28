@@ -55,7 +55,7 @@
      <Border Background="{DynamicResource NaturalBackgroundBrush}" CornerRadius="16" Padding="10" Margin="0,0,0,8">
       <Image Source="/CasaMiga.Presentation;component/Assets/CasaMigaLogo.png" MaxWidth="176" Height="72" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" SnapsToDevicePixels="True" HorizontalAlignment="Center" AutomationProperties.Name="Logo oficial Casa Miga"/>
      </Border>
-     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="{Binding SidebarScrollBarVisibility}" HorizontalScrollBarVisibility="Disabled">
       <StackPanel IsEnabled="{Binding IsReady}">
        <Button Content="Expandir" Tag="M4,4 L16,10 4,16" Click="TogglePosSidebarClick" Style="{StaticResource SidebarNavButton}" Visibility="{Binding IsPosSidebarCompact,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Expandir navegación"/>
        <Button Content="Contraer navegación" Tag="M16,4 L4,10 16,16" Click="TogglePosSidebarClick" Style="{StaticResource SidebarNavButton}" Visibility="{Binding IsPosSidebarExpanded,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Contraer navegación"/>
@@ -74,7 +74,7 @@
      <StackPanel Grid.Row="2">
       <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Margin="0,8,0,10"/>
       <Button Content="Salir de mi usuario" Click="LogoutClick" Tag="M8,2 L2,2 2,18 8,18 M7,10 L18,10 M14,6 L18,10 14,14" Style="{StaticResource SidebarNavButton}" Foreground="{DynamicResource NaturalBackgroundBrush}" HorizontalContentAlignment="Left" MinWidth="0" AutomationProperties.Name="Salir de mi usuario"/>
-      <TextBlock Text="Versión de desarrollo" Style="{StaticResource CaptionText}" Foreground="{DynamicResource NaturalBackgroundBrush}" Margin="12,6,0,0"/>
+      <TextBlock Text="Versión de desarrollo" Style="{StaticResource CaptionText}" Foreground="{DynamicResource NaturalBackgroundBrush}" Margin="12,6,0,0" Visibility="{Binding IsNotPos,Converter={StaticResource VisibleWhen}}"/>
      </StackPanel>
     </Grid>
    </Border>

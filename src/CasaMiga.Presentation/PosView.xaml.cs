@@ -34,6 +34,10 @@ public partial class PosView : UserControl
         new CheckoutDialog(Window.GetWindow(this),Model.Checkout,Model.Receipts,Model.TotalMoney,Model.RecoveryRequired).ShowDialog();
         await Model.AfterCheckoutAsync();
     }
+    private void PosVisibilityChanged(object sender,DependencyPropertyChangedEventArgs e)
+    {
+        if(IsVisible)Dispatcher.BeginInvoke(ProductCatalogScroll.ScrollToTop);
+    }
     private void ClearClick(object s,RoutedEventArgs e)
     {
         if(Model.HasLines && !DiscardDialog.Confirm(Window.GetWindow(this),"limpiar el carrito"))return;

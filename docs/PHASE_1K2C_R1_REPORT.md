@@ -67,10 +67,12 @@ El mapa reproducible completo está en `phase1k2c-provisional-map.md` y `evidenc
 - Header permanente corregido a **Punto de venta**; los textos de preparación sólo corresponden al arranque.
 - Sidebar POS: rail compacto de 84 DIP con botón de expansión; el shell administrativo conserva 248 DIP y toda su navegación.
 - Contenido POS con margen reducido; catálogo/carrito usan proporción aproximada 70/30 con mínimos para 960 DIP.
-- ProductCard: 184×252, fotografía 162 DIP como elemento dominante, nombre y precio; se quitó la categoría repetida de cada card.
+- ProductCard: 184×276, fotografía 160 DIP como elemento dominante y filas reservadas de 48/32 DIP para nombre/precio; se quitó la categoría repetida de cada card. Esta distribución corrige el recorte observado en nombres de dos líneas y precios.
 - Búsqueda compacta por nombre/SKU y categorías rápidas de DB.
-- El scroll vuelve arriba al buscar, cambiar categoría o página.
+- El scroll vuelve arriba al entrar al POS, buscar, cambiar categoría o página; evita reabrir el catálogo en una fila parcial.
 - Carrito visible con cantidad, `+`, `−`, eliminar, subtotal y total.
+
+Después de la primera revisión humana se corrigió el rail contraído: los encabezados de grupo, etiquetas y versión se ocultan; cada icono se centra en todo el ancho, el scrollbar lateral desaparece y el nombre completo sigue disponible como tooltip. Expandir recupera el menú administrativo completo.
 
 ## Cobro, impresión e Historial
 

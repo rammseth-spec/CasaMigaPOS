@@ -57,11 +57,13 @@ public sealed class Phase1K1ShellTests
         StringAssert.Contains(pos,"ProductTile");StringAssert.Contains(pos,"{Binding Photo}");StringAssert.Contains(pos,"{Binding IsFallback");
         Assert.IsFalse(pos.Contains("{Binding CategoryName}",StringComparison.Ordinal));StringAssert.Contains(pos,"{Binding Price}");StringAssert.Contains(pos,"CommandParameter=\"{Binding Id}\"");
         StringAssert.Contains(pos,"ProductCatalogScroll");StringAssert.Contains(pos,"Width=\"7*\"");StringAssert.Contains(pos,"Width=\"3*\"");
+        StringAssert.Contains(pos,"Height=\"48\"");StringAssert.Contains(pos,"Height=\"32\"");StringAssert.Contains(pos,"IsVisibleChanged=\"PosVisibilityChanged\"");
         Assert.IsFalse(pos.Contains("PhotoStatus",StringComparison.Ordinal));
         StringAssert.Contains(catalog,"IMAGEN DEL PRODUCTO");StringAssert.Contains(catalog,"CurrentPhotoStatus");StringAssert.Contains(catalog,"Foto provisional");StringAssert.Contains(catalog,"Foto real");
         StringAssert.Contains(catalog,"ChangePhotoClick");StringAssert.Contains(catalog,"RemovePhotoClick");
         StringAssert.Contains(crop,"CropRectangle");StringAssert.Contains(crop,"OverlayMouseDown");StringAssert.Contains(crop,"ResizeHandle");StringAssert.Contains(crop,"Ajuste avanzado por coordenadas");
-        StringAssert.Contains(shell,"SidebarWidth");StringAssert.Contains(shell,"IsPosSidebarCompact");
+        StringAssert.Contains(shell,"SidebarWidth");StringAssert.Contains(shell,"IsPosSidebarCompact");StringAssert.Contains(shell,"SidebarScrollBarVisibility");
+        StringAssert.Contains(theme,"x:Name=\"NavLabel\"");StringAssert.Contains(theme,"x:Name=\"NavIcon\"");StringAssert.Contains(theme,"Value=\"276\"");
         var smoke=File.ReadAllText(Presentation("Phase1K2CSmoke.Program.cs"));
         Assert.AreEqual(26,Count(smoke,"new AssetSource("));StringAssert.Contains(smoke,"mapping.json");StringAssert.Contains(smoke,"Provenance=\"PROVISIONAL\"");
     }

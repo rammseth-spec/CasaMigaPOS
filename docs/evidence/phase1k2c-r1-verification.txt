@@ -26,3 +26,20 @@ Control estructural:
 - inventario/recetas/producción sin cambios: sí
 - instalación comercial poblada: no
 - aprobación visual humana: pendiente
+
+Corrección visual posterior a la primera revisión humana:
+- ProductCard: 184 x 276 DIP
+- filas internas: foto 160 DIP, nombre 48 DIP, precio 32 DIP
+- scroll del catálogo reiniciado al entrar, buscar, filtrar o paginar
+- rail contraído: sólo iconos centrados, sin grupos, etiquetas, versión ni scrollbar
+- nombres completos disponibles como tooltip en navegación contraída
+
+Verificación posterior a la corrección:
+- Build Release: correcto
+- Errores: 0
+- Advertencias: 0
+- CasaMiga.Tests: 535/535, 0 fallidas, 0 omitidas
+- CasaMiga.PhotoTests: 103/103, 0 fallidas, 0 omitidas
+- Total: 638/638
+- migration 016 SHA-256: 9223CAA06CD02FA32E874CC1516EE0C6DB798CB76E2FBE1BF267BAB9B695ED76
+- aprobación visual humana de esta corrección: pendiente
