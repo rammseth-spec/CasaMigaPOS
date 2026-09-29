@@ -36,6 +36,7 @@ public sealed class CheckoutViewModel(CheckoutService service, ReceiptService re
     }
     public Task ConfirmAsync(bool print)=>Run(async()=>
     {
+        if(!IsCapture)return;
         if(!TryReceived(out var amount))throw new CheckoutException("El recibido debe cubrir el total, con máximo dos decimales.");
         printRequested=print;
         attempt=await Task.Run(()=>service.Prepare(amount));

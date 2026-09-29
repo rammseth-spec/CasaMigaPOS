@@ -1,0 +1,47 @@
+CASA MIGA POS — FASE 1K.2C-R2
+Fecha: 2026-09-28
+Baseline: ad00cfec3e55ad95f0ab2adf127c29f18f25a58d
+
+Comando final: scripts/verify.ps1 -Dotnet work/.dotnet/dotnet.exe -OutputPath bin/R2/
+Restore locked: correcto
+Build: Release, 0 errores, 0 advertencias
+CasaMiga.Tests: 536/536, 0 fallidas, 0 omitidas
+CasaMiga.PhotoTests: 105/105, 0 fallidas, 0 omitidas
+Total: 641/641
+TRX: foundation_net10.0_20260928173617.trx y foundation_net10.0_20260928173158.trx
+Focalizadas impresión: 26/26
+Focalizadas fotos/Presentation: 28/28
+git diff --check: correcto
+
+Schema 16. Sin cambios en migrations/.
+016 SHA256: 9223CAA06CD02FA32E874CC1516EE0C6DB798CB76E2FBE1BF267BAB9B695ED76
+Domain/Application: sin modificaciones.
+No cambios en ProductPhoto Foundation, driver, spooler, reglas financieras, recetas o producción.
+
+Dataset controlado: 26 Products / 4 categorías / 26 PROVISIONAL / 0 REAL / 0 SIN FOTO.
+Importación por ProductPhotoService; CSV/JSON equivalentes.
+Contact sheet inspeccionada; conchas diferenciadas; bebidas individuales.
+Danés individual descartado por panes superpuestos/adyacentes; se conserva mosaico limpio.
+
+Evidencia checkout: 3 ventas / 3 pagos / 3 entradas Historial / 3 requests.
+Sin ticket: cero requests en el momento de ese cobro.
+Con ticket: request posterior al commit.
+Reprint: misma Sale, sin movimientos de inventario ni nuevo pago.
+Fallo sintético: Sale conservada, carrito no restaurado.
+Transporte sólo a archivos: 0 impresiones físicas.
+
+Logo: Variante 04; 576x341; PNG grayscale 1-bit.
+Logo SHA256: 288A871404AFDEAE88A8FC9F1970BF4E6AE5D7AFBCA2E2774603EE65FD16A4DE
+Raster original/reprint cotejado píxel a píxel con PNG oficial: correcto.
+Opción 07: no embebida ni seleccionada por código activo.
+Manual página 1 cotejado visualmente: techo, pan, cortes, wordmark, sonrisa, PANADERÍA, guiones.
+
+Render WPF: POS compacto/expandido, 1024x768, catálogo, foto admin, crop con preview.
+Revisión humana R2: pendiente.
+Qian física original/reprint/corte: pendiente; cola POS-80 detectada.
+
+Incidencia resuelta de validación: la aplicación anterior bloqueó el destino Release habitual.
+Se validó el mismo código Release en bin/R2 sin detener ni modificar esa sesión.
+Pedidos: requisitos documentados, no implementados. Sin migración 017 ni instalador.
+
+Tras el cierre de la aplicación anterior: dotnet build CasaMigaPOS.slnx -c Release --no-restore también correcto en salida habitual, 0 errores y 0 advertencias.

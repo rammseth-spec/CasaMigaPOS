@@ -1,5 +1,7 @@
 # Identidad oficial Casa Miga — Variante 04
 
+R2 incorpora `CasaMiga_Ticket_Termico_576px_1bit.png`: 576×341, 1-bit, SHA-256 `288A871404AFDEAE88A8FC9F1970BF4E6AE5D7AFBCA2E2774603EE65FD16A4DE`. Derivación reproducible desde el PNG HD verificado del maestro mediante `scripts/prepare-ticket-logo.py`; ver `docs/printing-variant04.md`. Único recurso térmico embebido activo.
+
 Fuente de verdad de FASE 1K:
 
 - `CasaMiga_MANUAL_FINAL.pdf`: manual oficial de identidad y producción, versión del 14 de septiembre de 2026. SHA-256: `4A4C5F0C175B0B13CBC70E534F64EAEF49A3CDD40B44B1B0AFC8D566B611FBE3`.

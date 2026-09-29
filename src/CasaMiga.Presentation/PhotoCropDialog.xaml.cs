@@ -21,7 +21,7 @@ public partial class PhotoCropDialog : Window
         using var stream=new MemoryStream(bytes,false);var decoder=BitmapDecoder.Create(stream,BitmapCreateOptions.PreservePixelFormat,BitmapCacheOption.OnLoad);
         if(decoder.Frames.Count!=1)throw new ProductPhotoException("Selecciona una sola imagen JPEG o PNG.");
         var frame=decoder.Frames[0];var orientation=ReadOrientation(frame);var width=orientation>=5?frame.PixelHeight:frame.PixelWidth;var height=orientation>=5?frame.PixelWidth:frame.PixelHeight;
-        frame.Freeze();PreviewImage.Source=frame;PreviewImage.LayoutTransform=OrientationTransform(orientation);model=new(width,height);DataContext=model;model.PropertyChanged+=(_,_)=>UpdateOverlay();
+        frame.Freeze();var oriented=new TransformedBitmap(frame,OrientationTransform(orientation));oriented.Freeze();PreviewImage.Source=oriented;model=new(width,height);DataContext=model;model.PropertyChanged+=(_,_)=>UpdateOverlay();
         DimensionsLabel.Text=$"Imagen orientada: {width} × {height} px";Loaded+=(_,_)=>UpdateOverlay();
     }
     private static int ReadOrientation(BitmapFrame frame)
@@ -37,8 +37,9 @@ public partial class PhotoCropDialog : Window
     private void PreviewSizeChanged(object sender,SizeChangedEventArgs e)=>UpdateOverlay();
     private void UpdateOverlay()
     {
-        if(PreviewHost.ActualWidth<=0||PreviewHost.ActualHeight<=0)return;var scale=Scale;var left=(PreviewHost.ActualWidth-model.Width*scale)/2+model.X*scale;var top=(PreviewHost.ActualHeight-model.Height*scale)/2+model.Y*scale;var size=model.Edge*scale;
+        if(model is null||PreviewHost.ActualWidth<=0||PreviewHost.ActualHeight<=0)return;var scale=Scale;var left=(PreviewHost.ActualWidth-model.Width*scale)/2+model.X*scale;var top=(PreviewHost.ActualHeight-model.Height*scale)/2+model.Y*scale;var size=model.Edge*scale;
         CropRectangle.Width=size;CropRectangle.Height=size;Canvas.SetLeft(CropRectangle,left);Canvas.SetTop(CropRectangle,top);Canvas.SetLeft(ResizeHandle,left+size-11);Canvas.SetTop(ResizeHandle,top+size-11);
+        var crop=model.Crop;CropPreview.Source=new CroppedBitmap((BitmapSource)PreviewImage.Source,new Int32Rect(crop.X,crop.Y,crop.Edge,crop.Edge));
     }
     private void OverlayMouseDown(object sender,MouseButtonEventArgs e)
     {

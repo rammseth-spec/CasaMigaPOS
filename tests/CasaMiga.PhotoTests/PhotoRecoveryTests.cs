@@ -81,6 +81,7 @@ public sealed class PhotoRecoveryTests
     {
         using var f = new PhotoFixture(); f.Sql("UPDATE app_user SET role_name='Manager'"); var photo = f.Import().Photo!;
         f.Sql("UPDATE app_user SET role_name='Cashier'"); Assert.AreEqual(photo, f.Service.Current(f.Product.Id).Photo); Assert.IsTrue(f.Service.ReadThumbnail(f.Product.Id)!.Length > 0);
+        Assert.ThrowsExactly<AccessDeniedException>(() => f.Import(1));
         Assert.ThrowsExactly<AccessDeniedException>(() => f.Service.Remove(f.Product.Id, 1, Guid.NewGuid()));
         Assert.ThrowsExactly<AccessDeniedException>(() => f.Service.Repair(f.Product.Id, 1, Guid.NewGuid()));
     }

@@ -22,7 +22,14 @@ public sealed class PhotoCropViewModel : INotifyPropertyChanged
     public double X { get=>x; set {x=Math.Clamp(value,0,MaximumX);Changed();} }
     public double Y { get=>y; set {y=Math.Clamp(value,0,MaximumY);Changed();} }
     public double Edge { get=>edge; set {edge=Math.Clamp(value,MinimumEdge,MaximumEdge);x=Math.Min(x,MaximumX);y=Math.Min(y,MaximumY);Changed();} }
-    public PhotoCrop Crop=>new((int)Math.Round(X),(int)Math.Round(Y),(int)Math.Round(Edge));
+    public PhotoCrop Crop
+    {
+        get
+        {
+            var size=(int)Math.Round(Edge);
+            return new(Math.Clamp((int)Math.Round(X),0,Width-size),Math.Clamp((int)Math.Round(Y),0,Height-size),size);
+        }
+    }
     public void MoveBy(double horizontal,double vertical){X+=horizontal;Y+=vertical;}
     public void ResizeBy(double amount)=>Edge+=amount;
     public event PropertyChangedEventHandler? PropertyChanged;

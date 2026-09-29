@@ -7,14 +7,14 @@ namespace CasaMiga.Infrastructure;
 /// <summary>Decodes the pinned, approved 1-bit PNG without resampling or redrawing.</summary>
 public static class OfficialReceiptLogo
 {
-    public const string AssetId = "Opcion07:06D4ADE3AE160967FCD21E958458C17113BEF3C4A8E03F15D63115530AE821C6";
-    public const string Sha256 = "06D4ADE3AE160967FCD21E958458C17113BEF3C4A8E03F15D63115530AE821C6";
-    public const int Width = 560, Height = 262, RowBytes = 70;
+    public const string Sha256 = "288A871404AFDEAE88A8FC9F1970BF4E6AE5D7AFBCA2E2774603EE65FD16A4DE";
+    public const string AssetId = "Variant04:" + Sha256;
+    public const int Width = 576, Height = 341, RowBytes = 72;
 
     public static byte[] ReadPng()
     {
-        using var source = typeof(OfficialReceiptLogo).Assembly.GetManifestResourceStream("CasaMiga.Opcion07.Ticket.png")
-            ?? throw new InvalidDataException("Falta el logo oficial Opcion07.");
+        using var source = typeof(OfficialReceiptLogo).Assembly.GetManifestResourceStream("CasaMiga.Variant04.Ticket.png")
+            ?? throw new InvalidDataException("Falta el logo oficial Variante 04.");
         using var buffer = new MemoryStream(); source.CopyTo(buffer); return buffer.ToArray();
     }
 
@@ -57,11 +57,10 @@ public static class OfficialReceiptLogo
 
     public static byte[] Command()
     {
-        // 576-dot canvas: one white byte on each side, original 560 dots unchanged.
+        // The approved 576-dot canvas already includes the centered white margins.
         using var output=new MemoryStream();
-        output.Write([0x1d,0x76,0x30,0,72,0,6,1]);
-        var raster=Raster();
-        for(var y=0;y<Height;y++){output.WriteByte(0);output.Write(raster,y*RowBytes,RowBytes);output.WriteByte(0);}
+        output.Write([0x1d,0x76,0x30,0,(byte)(RowBytes & 255),(byte)(RowBytes >> 8),(byte)(Height & 255),(byte)(Height >> 8)]);
+        output.Write(Raster());
         return output.ToArray();
     }
 

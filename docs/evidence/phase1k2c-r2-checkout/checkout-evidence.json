@@ -1,0 +1,38 @@
+{
+  "PhysicalPrints": 0,
+  "Transport": "file-only",
+  "Sales": 3,
+  "Payments": 3,
+  "History": 3,
+  "PrintRequests": 3,
+  "CommittedBeforeEverySubmission": true,
+  "Logo": "Variant04:288A871404AFDEAE88A8FC9F1970BF4E6AE5D7AFBCA2E2774603EE65FD16A4DE",
+  "LogoWidth": 576,
+  "LogoHeight": 341,
+  "Cases": [
+    {
+      "Mode": "sin-ticket",
+      "SaleId": "3f7226ca-9b12-47e0-bbcb-9d6d81244d48",
+      "Folio": "f432407f5df343bfa3684f70170cada0-00000001",
+      "HistoryMatches": 1,
+      "PrintState": null,
+      "PrintMessage": "Venta cobrada correctamente. Qued\u00F3 registrada en Historial sin imprimir ticket."
+    },
+    {
+      "Mode": "con-ticket",
+      "SaleId": "db377efe-6b55-44fd-9810-09cdada04f99",
+      "Folio": "f432407f5df343bfa3684f70170cada0-00000002",
+      "HistoryMatches": 1,
+      "PrintState": "Submitted",
+      "PrintMessage": "Ticket aceptado por la cola de impresi\u00F3n. Trabajo 1."
+    },
+    {
+      "Mode": "fallo-impresion",
+      "SaleId": "165ea23b-6ee7-45fd-a7a3-4e2c4b45cb04",
+      "Folio": "f432407f5df343bfa3684f70170cada0-00000003",
+      "HistoryMatches": 1,
+      "PrintState": "Failed",
+      "PrintMessage": "Venta cobrada correctamente. No fue posible imprimir el ticket. Puedes reimprimirlo desde Historial."
+    }
+  ]
+}

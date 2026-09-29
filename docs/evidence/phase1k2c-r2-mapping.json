@@ -1,0 +1,418 @@
+[
+  {
+    "Id": 1,
+    "Product": "Concha de vainilla",
+    "Source": "referencia_visual_catalogo.png",
+    "Crop": {
+      "X": 12,
+      "Y": 152,
+      "Width": 218,
+      "Height": 200
+    },
+    "Asset": "01.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "e4749ad8-0671-4a90-b616-f096a667af45",
+    "AssetSha256": "581989B02C0E605FF939D073626D70FDEC5C5157D1E56E06FCFAC37D50E66F34",
+    "SourceSha256": "4155E72D96FEABE80E1CBD9340ADE474D20125D235B7CD03C9301E3805C69877"
+  },
+  {
+    "Id": 2,
+    "Product": "Concha de chocolate",
+    "Source": "referencia_visual_catalogo.png",
+    "Crop": {
+      "X": 245,
+      "Y": 152,
+      "Width": 232,
+      "Height": 200
+    },
+    "Asset": "02.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "3ac35bb4-414c-4f90-ad47-65807101f556",
+    "AssetSha256": "93202AFC02EE4CCE132B14B07F8FF16EA123EFBE9FCA91F93CCA92FC30622A7B",
+    "SourceSha256": "4155E72D96FEABE80E1CBD9340ADE474D20125D235B7CD03C9301E3805C69877"
+  },
+  {
+    "Id": 3,
+    "Product": "Bolillo mantequilla",
+    "Source": "referencia_visual_catalogo.png",
+    "Crop": {
+      "X": 498,
+      "Y": 152,
+      "Width": 288,
+      "Height": 196
+    },
+    "Asset": "03.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "f9d8569d-765a-4152-bc61-36cc3f88ef24",
+    "AssetSha256": "D50CC48F5B4EEFD6708C119A0CDD9C8CB13A3F1BE3D6493424A799AEA2A70588",
+    "SourceSha256": "4155E72D96FEABE80E1CBD9340ADE474D20125D235B7CD03C9301E3805C69877"
+  },
+  {
+    "Id": 4,
+    "Product": "Cuernito de mantequilla",
+    "Source": "referencia_visual_catalogo.png",
+    "Crop": {
+      "X": 806,
+      "Y": 152,
+      "Width": 281,
+      "Height": 203
+    },
+    "Asset": "04.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "059d9f77-e474-4fc2-bb7a-762a0cb977f2",
+    "AssetSha256": "65A13CD04E51197DC177364A94AC52C42A861CB6FA3B2D4B4C3A46744C478C0D",
+    "SourceSha256": "4155E72D96FEABE80E1CBD9340ADE474D20125D235B7CD03C9301E3805C69877"
+  },
+  {
+    "Id": 5,
+    "Product": "Cuernito especial con almendra",
+    "Source": "referencia_visual_catalogo.png",
+    "Crop": {
+      "X": 1106,
+      "Y": 152,
+      "Width": 255,
+      "Height": 205
+    },
+    "Asset": "05.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "9d2f58bc-5e76-44c3-9e67-8c46048dd696",
+    "AssetSha256": "28CB5164AFE0FFB5C80065DF1A64945139F6E68DAF4D1A731D1DBFAD66CE75EB",
+    "SourceSha256": "4155E72D96FEABE80E1CBD9340ADE474D20125D235B7CD03C9301E3805C69877"
+  },
+  {
+    "Id": 6,
+    "Product": "Rol de canela",
+    "Source": "referencia_visual_catalogo.png",
+    "Crop": {
+      "X": 11,
+      "Y": 480,
+      "Width": 220,
+      "Height": 199
+    },
+    "Asset": "06.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "1fde7b16-c2bc-4f2e-ac37-cf7dd2e5404e",
+    "AssetSha256": "07300FAAB8D38572BBC3570D448DA16F7ADFABC03AC90F69FDC38CDD66856B3D",
+    "SourceSha256": "4155E72D96FEABE80E1CBD9340ADE474D20125D235B7CD03C9301E3805C69877"
+  },
+  {
+    "Id": 7,
+    "Product": "Dona de chocolate",
+    "Source": "referencia_visual_catalogo.png",
+    "Crop": {
+      "X": 251,
+      "Y": 480,
+      "Width": 206,
+      "Height": 196
+    },
+    "Asset": "07.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "a792f462-e335-4d8b-a215-37625c36777a",
+    "AssetSha256": "C6E5094FF4192E6A4C9D42EDD3E3813E0B5CCECA9A4CAFDD72252CA22134FB29",
+    "SourceSha256": "4155E72D96FEABE80E1CBD9340ADE474D20125D235B7CD03C9301E3805C69877"
+  },
+  {
+    "Id": 8,
+    "Product": "Dona de azúcar",
+    "Source": "referencia_visual_catalogo.png",
+    "Crop": {
+      "X": 477,
+      "Y": 480,
+      "Width": 201,
+      "Height": 196
+    },
+    "Asset": "08.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "77a5b8a8-53f9-42bb-a9ab-c607d0f1054b",
+    "AssetSha256": "294A230FC2C6B61E3111F78F3989CE4659CD9B2E8874BAD97D7677CDABE48C60",
+    "SourceSha256": "4155E72D96FEABE80E1CBD9340ADE474D20125D235B7CD03C9301E3805C69877"
+  },
+  {
+    "Id": 9,
+    "Product": "Dona especial",
+    "Source": "referencia_visual_catalogo.png",
+    "Crop": {
+      "X": 702,
+      "Y": 481,
+      "Width": 200,
+      "Height": 195
+    },
+    "Asset": "09.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "61dc450a-7887-41c7-b2f1-2fed64e40255",
+    "AssetSha256": "792042B09BC327BBBA5FA7CF5DC29366376594826C826872F7CCAB9419F1E84B",
+    "SourceSha256": "4155E72D96FEABE80E1CBD9340ADE474D20125D235B7CD03C9301E3805C69877"
+  },
+  {
+    "Id": 10,
+    "Product": "Polvorón",
+    "Source": "referencia_visual_catalogo.png",
+    "Crop": {
+      "X": 921,
+      "Y": 481,
+      "Width": 209,
+      "Height": 196
+    },
+    "Asset": "10.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "ac1d3c85-b798-4087-90bf-a751bec30f42",
+    "AssetSha256": "386DCA4457E3E197D5FFAC231290E93AF93B2FE561C62DE6474DD25B703AE59C",
+    "SourceSha256": "4155E72D96FEABE80E1CBD9340ADE474D20125D235B7CD03C9301E3805C69877"
+  },
+  {
+    "Id": 11,
+    "Product": "Polvorón de nuez",
+    "Source": "referencia_visual_catalogo.png",
+    "Crop": {
+      "X": 1148,
+      "Y": 480,
+      "Width": 212,
+      "Height": 197
+    },
+    "Asset": "11.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "8c72c1c6-c3a3-4f3d-bc87-c11a15f6fab3",
+    "AssetSha256": "826C205507AF0E79463A7C03DE5A7177E89532B1D4BDFFAA872206AAC9469398",
+    "SourceSha256": "4155E72D96FEABE80E1CBD9340ADE474D20125D235B7CD03C9301E3805C69877"
+  },
+  {
+    "Id": 12,
+    "Product": "Puerquito",
+    "Source": "referencia_visual_catalogo.png",
+    "Crop": {
+      "X": 12,
+      "Y": 790,
+      "Width": 209,
+      "Height": 201
+    },
+    "Asset": "12.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "b793c764-ee82-45bb-a041-fa01e477addd",
+    "AssetSha256": "91BDEB31B4F9DFEEDA662891831F2B668273883007A49688C1F9FF6BE7F61521",
+    "SourceSha256": "4155E72D96FEABE80E1CBD9340ADE474D20125D235B7CD03C9301E3805C69877"
+  },
+  {
+    "Id": 13,
+    "Product": "Pan de muerto",
+    "Source": "referencia_visual_catalogo.png",
+    "Crop": {
+      "X": 239,
+      "Y": 790,
+      "Width": 210,
+      "Height": 201
+    },
+    "Asset": "13.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "7119bef9-735a-4170-8f96-8d2962a1fc79",
+    "AssetSha256": "1F09928336D7D953117B4A34FDEE8A50076AFB2953D23C29F8A497F8703ACE58",
+    "SourceSha256": "4155E72D96FEABE80E1CBD9340ADE474D20125D235B7CD03C9301E3805C69877"
+  },
+  {
+    "Id": 14,
+    "Product": "Muffin",
+    "Source": "referencia_visual_catalogo.png",
+    "Crop": {
+      "X": 469,
+      "Y": 790,
+      "Width": 208,
+      "Height": 199
+    },
+    "Asset": "14.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "b8c445c4-6197-4d9b-be8b-1d7f07850bce",
+    "AssetSha256": "11C1D603E5A770D9A849EB9C917AAA18A750332776AF56BFE6488C4710704053",
+    "SourceSha256": "4155E72D96FEABE80E1CBD9340ADE474D20125D235B7CD03C9301E3805C69877"
+  },
+  {
+    "Id": 15,
+    "Product": "Muffin de nuez",
+    "Source": "referencia_visual_catalogo.png",
+    "Crop": {
+      "X": 698,
+      "Y": 790,
+      "Width": 204,
+      "Height": 199
+    },
+    "Asset": "15.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "8e8fedbe-a1b3-47e4-8709-cbc7f098d3ec",
+    "AssetSha256": "442E90ED4AC92B492333168EFF2E4B149C60B66DF655675E55E282529FDB4D4F",
+    "SourceSha256": "4155E72D96FEABE80E1CBD9340ADE474D20125D235B7CD03C9301E3805C69877"
+  },
+  {
+    "Id": 16,
+    "Product": "Danés con crema pastelera",
+    "Source": "referencia_visual_catalogo.png",
+    "Crop": {
+      "X": 923,
+      "Y": 790,
+      "Width": 211,
+      "Height": 201
+    },
+    "Asset": "16.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "6578f84a-8568-4772-94be-0dc03688af0a",
+    "AssetSha256": "CD4606C1BEC4EFBA88E5BDF27C9DF4C69A1670B714F10C33B03E2C4F8F556345",
+    "SourceSha256": "4155E72D96FEABE80E1CBD9340ADE474D20125D235B7CD03C9301E3805C69877"
+  },
+  {
+    "Id": 17,
+    "Product": "Bollo relleno de crema pastelera",
+    "Source": "referencia_visual_catalogo.png",
+    "Crop": {
+      "X": 1150,
+      "Y": 790,
+      "Width": 210,
+      "Height": 201
+    },
+    "Asset": "17.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "8b0711ef-b6e6-47dc-b7f2-01ace22149f2",
+    "AssetSha256": "627314819CDEAFB16765BB51E07D173560993479503B9861D362B79AD44CB901",
+    "SourceSha256": "4155E72D96FEABE80E1CBD9340ADE474D20125D235B7CD03C9301E3805C69877"
+  },
+  {
+    "Id": 18,
+    "Product": "Bollo relleno por la mitad de crema pastelera",
+    "Source": "referencia_visual_catalogo_con_bebidas.png",
+    "Crop": {
+      "X": 204,
+      "Y": 686,
+      "Width": 180,
+      "Height": 145
+    },
+    "Asset": "18.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "60ae6ccc-bd2e-47cb-aa51-f73d9fd68a05",
+    "AssetSha256": "06D87784083F2C67BBE66494D542822AF5D8CCAE60003F20F0D6C8ADED51FFB7",
+    "SourceSha256": "08BC3D781C79315D74B5E17DC8B5C0FEDBA1A741E989514BAB00955B69606CFF"
+  },
+  {
+    "Id": 19,
+    "Product": "Bollo relleno de zarzamora",
+    "Source": "referencia_visual_catalogo_con_bebidas.png",
+    "Crop": {
+      "X": 395,
+      "Y": 686,
+      "Width": 178,
+      "Height": 145
+    },
+    "Asset": "19.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "c6ba8dd7-8176-4f6f-80db-69971bb34923",
+    "AssetSha256": "B8BCFBC09BBFBBA1FE5091ED7497C0E22A67D63923A680493D379AC167708388",
+    "SourceSha256": "08BC3D781C79315D74B5E17DC8B5C0FEDBA1A741E989514BAB00955B69606CFF"
+  },
+  {
+    "Id": 20,
+    "Product": "Dona glaseada",
+    "Source": "referencia_visual_catalogo_con_bebidas.png",
+    "Crop": {
+      "X": 963,
+      "Y": 95,
+      "Width": 178,
+      "Height": 166
+    },
+    "Asset": "20.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "b19768a9-684c-4d46-878f-fb396194bf88",
+    "AssetSha256": "D67EA27B48B8EFA34CD617E80C3EDABC2FAE1FD049D7AC729D6B1C53C3C4FDB3",
+    "SourceSha256": "08BC3D781C79315D74B5E17DC8B5C0FEDBA1A741E989514BAB00955B69606CFF"
+  },
+  {
+    "Id": 21,
+    "Product": "Dona sencilla de chocolate blanco",
+    "Source": "referencia_visual_catalogo_con_bebidas.png",
+    "Crop": {
+      "X": 1341,
+      "Y": 95,
+      "Width": 181,
+      "Height": 166
+    },
+    "Asset": "21.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "a26997fb-46df-4fe9-bd30-173ae115c675",
+    "AssetSha256": "E44D92F5F8BD6506B25D673E0F348B6E956F51654058969E46D6200BBF11ABB3",
+    "SourceSha256": "08BC3D781C79315D74B5E17DC8B5C0FEDBA1A741E989514BAB00955B69606CFF"
+  },
+  {
+    "Id": 22,
+    "Product": "Galleta de nuez y coco",
+    "Source": "referencia_visual_catalogo_con_bebidas.png",
+    "Crop": {
+      "X": 584,
+      "Y": 686,
+      "Width": 178,
+      "Height": 145
+    },
+    "Asset": "22.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "4f0e16b4-2cb3-40e8-84fe-57094ce1cbe7",
+    "AssetSha256": "B24B5C20EC3B5CCEC9D9AEAE27CA140A5469FA8AFD0BEFA4AF3160C8B316CBF5",
+    "SourceSha256": "08BC3D781C79315D74B5E17DC8B5C0FEDBA1A741E989514BAB00955B69606CFF"
+  },
+  {
+    "Id": 23,
+    "Product": "Galleta con chispitas de colores",
+    "Source": "referencia_visual_catalogo_con_bebidas.png",
+    "Crop": {
+      "X": 773,
+      "Y": 686,
+      "Width": 180,
+      "Height": 145
+    },
+    "Asset": "23.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "644edb70-10c4-4858-bfa9-99c66401bbaa",
+    "AssetSha256": "4F95459ED68190428676EDE267E6AE0601374EDBA05ACE2EAE9E5AF77FDF6256",
+    "SourceSha256": "08BC3D781C79315D74B5E17DC8B5C0FEDBA1A741E989514BAB00955B69606CFF"
+  },
+  {
+    "Id": 24,
+    "Product": "Vaso de café",
+    "Source": "imagen_vaso_cafe_referencia.png",
+    "Crop": {
+      "X": 165,
+      "Y": 105,
+      "Width": 460,
+      "Height": 460
+    },
+    "Asset": "24.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "63198b97-7df4-4e00-82e6-063a772b5a44",
+    "AssetSha256": "0EB7C1BD592D7F33840C780455C19DB23D6E006E9FE939160D4B98D1873E0FA2",
+    "SourceSha256": "CAA51641220489D9C9B2F1F2C526A2EDC6DD42E2B6B951120B4331209C84E43D"
+  },
+  {
+    "Id": 25,
+    "Product": "Leche Kirkland entera",
+    "Source": "imagen_leche_kirkland_entera_referencia.png",
+    "Crop": {
+      "X": 190,
+      "Y": 110,
+      "Width": 430,
+      "Height": 430
+    },
+    "Asset": "25.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "6b11d309-148f-4103-97f8-cf4d2f02168c",
+    "AssetSha256": "9DB76A4D85B2979AF55363BA094C2FBB84C10B45DDDA0A1EB8BB2DA18AC44AAC",
+    "SourceSha256": "51C963CB28EE4E277C8FD5E45A2DF6576919ACD8EE7B3F5406071A1A3353FA37"
+  },
+  {
+    "Id": 26,
+    "Product": "Leche Kirkland deslactosada light",
+    "Source": "imagen_leche_kirkland_deslactosada_light_referencia.png",
+    "Crop": {
+      "X": 190,
+      "Y": 110,
+      "Width": 430,
+      "Height": 430
+    },
+    "Asset": "26.png",
+    "Provenance": "PROVISIONAL",
+    "ProductId": "c2c87410-7766-4551-87c6-32d205f54c9f",
+    "AssetSha256": "43DDC7EB685B0760135F1E79D40889EB939EECB62ACAF9AD3A1D2D634314132D",
+    "SourceSha256": "C157AA60C78872D80C968A3A67FB45034BA154AE5D3676165ABED7417C2FFD83"
+  }
+]

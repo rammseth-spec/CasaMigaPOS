@@ -49,9 +49,9 @@ public sealed class ReceiptTests : SalesFixture
     {
         var payload=new EscPosReceiptRenderer().Render(Document(),ReceiptCopyKind.Original,Settings());
         var text=Encoding.GetEncoding(1252).GetString(payload);
-        Assert.Contains("CASA MIGA",text);Assert.Contains("Cajero",text);Assert.AreEqual(1,Occurrences(payload,[0x1b,0x74,0x10]));
-        CollectionAssert.AreEqual(new byte[]{0x1b,0x74,0x10},payload[..3]);Assert.AreEqual(0,Occurrences(payload,[0x1b,0x70]));
-        Assert.AreEqual(1,Occurrences(payload,[0x1d,0x21,0x11]));Assert.AreEqual(1,Occurrences(payload,[0x1d,0x21,0x01]));
+        Assert.AreEqual(1,Occurrences(payload,OfficialReceiptLogo.Command()));Assert.Contains("Cajero",text);Assert.AreEqual(1,Occurrences(payload,[0x1b,0x74,0x10]));
+        CollectionAssert.AreEqual(new byte[]{0x1b,0x74,0x10},payload[..3]);Assert.AreEqual(0,OccurrencesOutsideLogo(payload,[0x1b,0x70]));
+        Assert.AreEqual(0,OccurrencesOutsideLogo(payload,[0x1d,0x21,0x11]));Assert.AreEqual(1,Occurrences(payload,[0x1d,0x21,0x01]));
         Assert.AreEqual(2,Occurrences(payload,[0x1d,0x21,0x00]));Assert.AreEqual(0,Occurrences(payload,[0x1d,0x56,0x01]));
     }
 
@@ -132,6 +132,28 @@ public sealed class ReceiptTests : SalesFixture
         Assert.Contains("REIMPRESIÓN",text);Assert.Contains("Concha",text);Assert.DoesNotContain("Producto cambiado",text);Assert.Contains("$38.00",text);
         Assert.AreEqual(1L,Sql("SELECT count(*) FROM sale"));Assert.AreEqual(1L,Sql("SELECT count(*) FROM payment"));
         Assert.AreEqual(3800L,work.Run(s=>s.CashSalesTotal(cash.Id)).Cents);
+    }
+
+    [TestMethod] public void RetiredLogoSnapshotRendersCurrentLogoWithoutChangingHistoryOrInventory()
+    {
+        var sale=Persist();
+        var legacy=Profile() with{MonochromeLogoPath="Opcion07:06D4ADE3AE160967FCD21E958458C17113BEF3C4A8E03F15D63115530AE821C6"};
+        var provider=new FixedSettings(new(Settings() with{Business=legacy,EncodingName="ibm850",CharacterTable=2,CutMode="Partial"},null));
+        var transport=new ProbeTransport(work,sale.OperationId);var service=Service(transport,provider);
+        var inventoryBefore=Sql("SELECT count(*) FROM inventory_movement");
+        Assert.AreEqual(ReceiptPrintState.Submitted,service.PrintOriginal(sale).State);
+        Assert.IsTrue(transport.DatabaseWasAvailable);
+        var original=transport.LastSubmission!.Payload;
+        var snapshot=Sql("SELECT content_json FROM receipt_snapshot");
+        var hash=Sql("SELECT content_sha256 FROM receipt_snapshot");
+        Assert.AreEqual(ReceiptPrintState.Submitted,service.Reprint(sale.Id).State);
+        Assert.AreEqual(1,Occurrences(original,OfficialReceiptLogo.Command()));
+        Assert.AreEqual(1,Occurrences(transport.LastSubmission!.Payload,OfficialReceiptLogo.Command()));
+        Assert.AreEqual(snapshot,Sql("SELECT content_json FROM receipt_snapshot"));
+        Assert.AreEqual(hash,Sql("SELECT content_sha256 FROM receipt_snapshot"));
+        Assert.AreEqual(inventoryBefore,Sql("SELECT count(*) FROM inventory_movement"));
+        Assert.AreEqual(1L,Sql("SELECT count(*) FROM sale"));Assert.AreEqual(1L,Sql("SELECT count(*) FROM payment"));
+        Assert.AreEqual(2L,Sql("SELECT count(*) FROM receipt_print_request"));
     }
 
     [TestMethod] public async Task ConcurrentReprintOfSameSaleIsRejectedBeforeSecondRequest()
@@ -237,10 +259,10 @@ public sealed class ReceiptTests : SalesFixture
         var payload=File.ReadAllBytes(result.PayloadPath);
         Assert.AreEqual(1,transport.Calls);Assert.AreEqual(1,Occurrences(payload,[0x1d,0x56,0x01]));
         CollectionAssert.AreEqual(new byte[]{0x1d,0x56,0x01},payload[^3..]);Assert.AreEqual(4,payload[^7..^3].Count(value=>value==0x0a));
-        Assert.AreEqual(1,Occurrences(payload,[0x1d,0x21,0x11]));Assert.AreEqual(1,Occurrences(payload,[0x1d,0x21,0x01]));
-        Assert.AreEqual(2,Occurrences(payload,[0x1d,0x21,0x00]));Assert.AreEqual(0,Occurrences(payload,[0x1b,0x70]));
+        Assert.AreEqual(0,OccurrencesOutsideLogo(payload,[0x1d,0x21,0x11]));Assert.AreEqual(1,Occurrences(payload,[0x1d,0x21,0x01]));
+        Assert.AreEqual(2,Occurrences(payload,[0x1d,0x21,0x00]));Assert.AreEqual(0,OccurrencesOutsideLogo(payload,[0x1b,0x70]));
         var printable=result.ReceiptText.Split("\r\n",StringSplitOptions.RemoveEmptyEntries);
-        Assert.IsTrue(printable[0].Length<=24);Assert.Contains("PRUEBA CASA MIGA",printable[0]);Assert.AreEqual(48,printable.Single(line=>line.StartsWith("TOTAL",StringComparison.Ordinal)).Length);
+        Assert.AreEqual(1,Occurrences(payload,OfficialReceiptLogo.Command()));Assert.Contains("PRUEBA TAMANO Y CORTE",result.ReceiptText);Assert.AreEqual(48,printable.Single(line=>line.StartsWith("TOTAL",StringComparison.Ordinal)).Length);
         Assert.AreEqual(beforeSales,Sql("SELECT count(*) FROM sale"));Assert.AreEqual(beforeCash,work.Run(s=>s.CashSalesTotal(cash.Id)));
         CollectionAssert.AreEqual(payload,new EscPosReceiptRenderer().Render(
             ReceiptDocumentCodec.Deserialize(ReceiptDocumentCodec.Serialize(TestDocument(settings.Business,result.RequestedAt))),ReceiptCopyKind.Original,settings));
@@ -252,10 +274,10 @@ public sealed class ReceiptTests : SalesFixture
         var document=new ReceiptDocument(original.Version,original.Folio,original.ConfirmedAt,original.UserId,original.CashierName,
             original.TerminalId,original.TerminalName,original.Items,original.Subtotal,original.Total,original.PaymentMethod,
             original.Applied,original.Received,original.Change,business);
-        var payload=new EscPosReceiptRenderer().Render(document,ReceiptCopyKind.Original,Settings());
+        var payload=new EscPosReceiptRenderer().Render(document,ReceiptCopyKind.Original,Settings() with{Columns=32});
         var start=IndexOf(payload,[0x1d,0x21,0x11])+3;var end=IndexOf(payload,[0x1d,0x21,0x00]);
         var lines=Encoding.GetEncoding(1252).GetString(payload[start..end]).Split("\r\n",StringSplitOptions.RemoveEmptyEntries);
-        Assert.IsTrue(lines.All(line=>line.Length<=24));Assert.AreEqual(name,string.Join(' ',lines.Select(line=>line.Trim())));
+        Assert.IsTrue(lines.All(line=>line.Length<=16));Assert.AreEqual(name,string.Join(' ',lines.Select(line=>line.Trim())));
     }
 
     [TestMethod] public void Pc850SelectionPrecedesSpanishAndPreservesSizeCutAndCommercialState()
@@ -274,9 +296,9 @@ public sealed class ReceiptTests : SalesFixture
         Assert.IsTrue(IndexOf(payload,encoding.GetBytes(lower))>=0);Assert.IsTrue(IndexOf(payload,encoding.GetBytes(upper))>=0);
         Assert.Contains("ü Ü",result.ReceiptText);Assert.Contains("ñ Ñ",result.ReceiptText);Assert.Contains("¿Como esta?",result.ReceiptText);
         Assert.Contains("¡Gracias!",result.ReceiptText);Assert.Contains("$19.00",result.ReceiptText);
-        Assert.AreEqual(1,Occurrences(payload,[0x1d,0x21,0x11]));Assert.AreEqual(1,Occurrences(payload,[0x1d,0x21,0x01]));
+        Assert.AreEqual(0,OccurrencesOutsideLogo(payload,[0x1d,0x21,0x11]));Assert.AreEqual(1,Occurrences(payload,[0x1d,0x21,0x01]));
         Assert.AreEqual(2,Occurrences(payload,[0x1d,0x21,0x00]));Assert.AreEqual(1,Occurrences(payload,[0x1d,0x56,0x01]));
-        Assert.AreEqual(0,Occurrences(payload,[0x1b,0x70]));Assert.AreEqual(1,transport.Calls);
+        Assert.AreEqual(0,OccurrencesOutsideLogo(payload,[0x1b,0x70]));Assert.AreEqual(1,transport.Calls);
         Assert.AreEqual(beforeSales,Sql("SELECT count(*) FROM sale"));Assert.AreEqual(beforeCash,work.Run(s=>s.CashSalesTotal(cash.Id)));
         CollectionAssert.AreEqual(payload,new EscPosReceiptRenderer().Render(TestDocument(business,result.RequestedAt),ReceiptCopyKind.Original,settings));
     }

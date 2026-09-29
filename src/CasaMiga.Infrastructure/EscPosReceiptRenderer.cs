@@ -35,9 +35,10 @@ public sealed class EscPosReceiptRenderer : IReceiptPayloadRenderer
         {
             if(index==headerIndex)
             {
-                if(document.Business.MonochromeLogoPath == OfficialReceiptLogo.AssetId)
+                // Current brand is a rendering policy, independent of immutable historical snapshots.
+                // All tickets on the approved 48-column / 576-dot printer use the current master.
+                if(settings.Columns==48)
                 {
-                    if(settings.Columns!=48)throw new ArgumentException("Opcion07 requiere 48 columnas.");
                     output.Write([0x1b,0x61,0]);
                     output.Write(OfficialReceiptLogo.Command());
                     output.Write(NormalSize);

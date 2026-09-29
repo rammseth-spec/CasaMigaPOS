@@ -1,3 +1,13 @@
+## Archivos 1K.2C-R2
+
+- `assets/brand/Variant04/CasaMiga_Ticket_Termico_576px_1bit.png`, `scripts/prepare-ticket-logo.py`: derivado térmico reproducible del maestro oficial.
+- `OfficialReceiptLogo.cs`, `EscPosReceiptRenderer.cs`, `ControlledReceiptPrintTest.cs`: identidad vigente, original/reprint y validación del raster delimitado.
+- `CatalogView`, `PhotoCropDialog`, `PhotoCropViewModel`: acceso evidente a fotos, preview y límite de crop redondeado.
+- `PosView`, `CheckoutDialog`, `CheckoutViewModel`: acciones separadas en carrito y exclusión compartida.
+- `tools/CasaMiga.Phase1K2CSmoke/R2CheckoutEvidence.cs`, `R2VisualEvidence.cs`: evidencia por servicios y render WPF sin impresión física.
+- `scripts/review-r2-evidence.py`: hashes, contact sheet y PNGs interpretados de payloads reales; `scripts/verify.ps1` admite OutputPath aislado.
+- `docs/PHASE_1K2C_R2_REPORT.md`, `printing-variant04.md`, `orders-future-requirements.md`, `evidence/phase1k2c-r2-*`: reporte, contratos y evidencia.
+
 ## Archivos 1K.2C
 
 - `src/CasaMiga.Presentation/ProductPhotoUi.cs`: ProductCard, gateway async y caché LRU 64 MiB.

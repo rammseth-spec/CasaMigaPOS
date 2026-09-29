@@ -14,6 +14,11 @@ public partial class CatalogView:UserControl
     private void EditCategoryClick(object s,RoutedEventArgs e){Model.EditCategory();if(Model.IsCategoryEditor){CategoryName.Focus();CategoryName.BringIntoView();}}
     private void NewProductClick(object s,RoutedEventArgs e){Model.NewProduct();ProductName.Focus();ProductName.BringIntoView();}
     private void EditProductClick(object s,RoutedEventArgs e){Model.EditProduct();if(Model.IsProductEditor){ProductName.Focus();ProductName.BringIntoView();}}
+    private void ManagePhotoClick(object s,RoutedEventArgs e)
+    {
+        Model.EditProduct();
+        if(Model.IsProductEditor)Dispatcher.BeginInvoke(()=>PhotoSection.BringIntoView());
+    }
     private async void SearchClick(object s,RoutedEventArgs e)=>await Model.SearchAsync();
     private async void SaveClick(object s,RoutedEventArgs e)=>await Model.SaveAsync();
     private async void CancelClick(object s,RoutedEventArgs e)=>await Model.CancelAsync();

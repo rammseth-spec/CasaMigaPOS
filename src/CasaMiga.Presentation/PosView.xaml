@@ -45,7 +45,7 @@
        </StackPanel></Border>
       </DataTemplate></ItemsControl.ItemTemplate></ItemsControl></ScrollViewer>
      </Grid>
-     <StackPanel Grid.Row="2" Margin="0,8,0,0"><DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Subtotal}"/><TextBlock Text="Subtotal"/></DockPanel><DockPanel Margin="0,6,0,10"><TextBlock DockPanel.Dock="Right" Text="{Binding Total}" FontSize="27" FontWeight="Bold"/><TextBlock Text="TOTAL preliminar" FontSize="18" FontWeight="SemiBold"/></DockPanel><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions><Button Content="Limpiar" Click="ClearClick" IsEnabled="{Binding CanCheckout}"/><Button Grid.Column="2" Content="Cobrar" Click="CheckoutClick" IsEnabled="{Binding CanCheckout}"/></Grid></StackPanel>
+     <StackPanel Grid.Row="2" Margin="0,8,0,0"><DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Subtotal}"/><TextBlock Text="Subtotal"/></DockPanel><DockPanel Margin="0,6,0,10"><TextBlock DockPanel.Dock="Right" Text="{Binding Total}" FontSize="27" FontWeight="Bold"/><TextBlock Text="TOTAL preliminar" FontSize="18" FontWeight="SemiBold"/></DockPanel><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions><Button Content="Limpiar" Click="ClearClick" IsEnabled="{Binding CanCheckout}"/><Button Grid.Column="2" Content="Cobrar" Click="CheckoutClick" IsEnabled="{Binding CanCheckout}" ToolTip="Confirmar venta sin imprimir ticket"/></Grid><Button Content="Cobrar + imprimir ticket" Click="CheckoutAndPrintClick" IsEnabled="{Binding CanCheckout}" Margin="0,8,0,0" AutomationProperties.Name="Cobrar e imprimir ticket"/></StackPanel>
     </Grid>
    </Border>
   </Grid>

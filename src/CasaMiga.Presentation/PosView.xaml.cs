@@ -28,11 +28,19 @@ public partial class PosView : UserControl
     private async void RemoveClick(object s,RoutedEventArgs e)=>await Model.RemoveAsync((Guid)((Button)s).Tag);
     private async void PreviousClick(object s,RoutedEventArgs e){await Model.PageAsync(-1);ProductCatalogScroll.ScrollToTop();}
     private async void NextClick(object s,RoutedEventArgs e){await Model.PageAsync(1);ProductCatalogScroll.ScrollToTop();}
-    private async void CheckoutClick(object s,RoutedEventArgs e)
+    private bool checkoutOpen;
+    private async void CheckoutClick(object s,RoutedEventArgs e)=>await OpenCheckoutAsync(false);
+    private async void CheckoutAndPrintClick(object s,RoutedEventArgs e)=>await OpenCheckoutAsync(true);
+    private async Task OpenCheckoutAsync(bool printSelected)
     {
-        if(!Model.Ready)return;
-        new CheckoutDialog(Window.GetWindow(this),Model.Checkout,Model.Receipts,Model.TotalMoney,Model.RecoveryRequired).ShowDialog();
-        await Model.AfterCheckoutAsync();
+        if(!Model.Ready || checkoutOpen)return;
+        checkoutOpen=true;
+        try
+        {
+            new CheckoutDialog(Window.GetWindow(this),Model.Checkout,Model.Receipts,Model.TotalMoney,Model.RecoveryRequired,printSelected).ShowDialog();
+            await Model.AfterCheckoutAsync();
+        }
+        finally{checkoutOpen=false;}
     }
     private void PosVisibilityChanged(object sender,DependencyPropertyChangedEventArgs e)
     {

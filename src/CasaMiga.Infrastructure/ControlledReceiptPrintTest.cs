@@ -98,10 +98,10 @@ public sealed class ControlledReceiptPrintTest(
         var cuts=0;var tableSelections=0;
         for(var index=0;index<payload.Length;index++)
         {
-            if(index==3 && settings.Business.MonochromeLogoPath==OfficialReceiptLogo.AssetId)
+            if(index==(settings.CharacterTable.HasValue?3:0) && settings.Columns==48)
             {
                 var graphic=OfficialReceiptLogo.Command();
-                if(settings.CharacterTable!=2 || !payload.AsSpan(index,3).SequenceEqual(new byte[]{0x1b,0x61,0})
+                if(!payload.AsSpan(index,3).SequenceEqual(new byte[]{0x1b,0x61,0})
                     || payload.Length<index+3+graphic.Length || !payload.AsSpan(index+3,graphic.Length).SequenceEqual(graphic))throw Unsafe();
                 index+=3+graphic.Length-1;continue;
             }

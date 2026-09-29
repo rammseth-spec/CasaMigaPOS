@@ -21,16 +21,19 @@ public sealed class CheckoutPresentationTests
     {
         var transport=new ProbeTransport();var vm=Create(transport);pos.Add(product.Id);vm=Create(transport);vm.Received="20.00";await vm.ConfirmAsync(false);
         Assert.IsNotNull(vm.Result);Assert.AreEqual(0,transport.Calls);Assert.AreEqual(1L,Count("sale"));StringAssert.Contains(vm.PrintMessage,"Historial");
+        Assert.AreEqual(0L,Count("receipt_print_request"));AssertHistory(vm.Result.Id);
     }
     [TestMethod]public async Task CobrarEImprimirPersistsThenUsesTransport()
     {
         pos.Add(product.Id);var transport=new ProbeTransport();var vm=Create(transport);vm.Received="20.00";await vm.ConfirmAsync(true);
         Assert.IsNotNull(vm.Result);Assert.AreEqual(1,transport.Calls);Assert.AreEqual(1L,Count("sale"));
+        Assert.AreEqual(1L,Count("receipt_print_request"));AssertHistory(vm.Result.Id);
     }
     [TestMethod]public async Task PrintFailureNeverRollsBackCheckout()
     {
         pos.Add(product.Id);var transport=new ProbeTransport{Failure=new("WRITE_PRINTER_5",false)};var vm=Create(transport);vm.Received="20.00";await vm.ConfirmAsync(true);
         Assert.IsNotNull(vm.Result);Assert.AreEqual(1L,Count("sale"));StringAssert.Contains(vm.PrintMessage,"reimprimirlo desde Historial");
+        AssertHistory(vm.Result.Id);Assert.IsTrue(await vm.LeaveAsync());Assert.IsTrue(session.Cart is null or {IsEmpty:true});
     }
     [TestMethod]public async Task BothActionsShareBusyDoubleSubmitProtection()
     {
@@ -40,6 +43,23 @@ public sealed class CheckoutPresentationTests
     [TestMethod]public void CropViewModelMovesAndResizesWithinImage()
     {
         var crop=new PhotoCropViewModel(1200,800);Assert.AreEqual(new PhotoCrop(200,0,800),crop.Crop);crop.ResizeBy(-300);crop.MoveBy(1000,1000);Assert.AreEqual(new PhotoCrop(700,300,500),crop.Crop);crop.ResizeBy(-1000);Assert.AreEqual(256,crop.Crop.Edge);
+    }
+    [TestMethod]public async Task CompletedCheckoutCannotBeSubmittedAgainWithOtherPrintChoice()
+    {
+        pos.Add(product.Id);var transport=new ProbeTransport();var vm=Create(transport);vm.Received="20.00";
+        await vm.ConfirmAsync(false);await vm.ConfirmAsync(true);
+        Assert.AreEqual(1L,Count("sale"));Assert.AreEqual(1L,Count("payment"));Assert.AreEqual(0,transport.Calls);
+        Assert.AreEqual(0L,Count("receipt_print_request"));
+    }
+    [TestMethod]public void FractionalCropAtBoundaryNeverExceedsDecodedImage()
+    {
+        var crop=new PhotoCropViewModel(769,769){Edge=257.5,X=511.5,Y=511.5};
+        Assert.AreEqual(new PhotoCrop(511,511,258),crop.Crop);
+    }
+    private void AssertHistory(Guid id)
+    {
+        var page=new SalesHistoryService(work,session,TimeZoneInfo.Utc).Search(new());
+        Assert.AreEqual(1,page.Total);Assert.AreEqual(id,page.Items.Single().SaleId);
     }
     private CheckoutViewModel Create(IReceiptPrintTransport transport)
     {

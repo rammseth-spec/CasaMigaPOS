@@ -1,4 +1,4 @@
-param([string]$Dotnet = 'dotnet', [string]$PackageSource)
+param([string]$Dotnet = 'dotnet', [string]$PackageSource, [string]$OutputPath)
 $ErrorActionPreference = 'Stop'
 Push-Location (Join-Path $PSScriptRoot '..')
 try {
@@ -6,8 +6,10 @@ try {
     if ($PackageSource) { $restoreArgs += @('--source', $PackageSource) }
     & $Dotnet @restoreArgs
     if ($LASTEXITCODE -ne 0) { throw 'Falló restore.' }
-    & $Dotnet build CasaMigaPOS.slnx -c Release --no-restore
+    $outputArgs = @()
+    if ($OutputPath) { $outputArgs += "-p:OutputPath=$OutputPath" }
+    & $Dotnet build CasaMigaPOS.slnx -c Release --no-restore @outputArgs
     if ($LASTEXITCODE -ne 0) { throw 'Falló compilación.' }
-    & $Dotnet test CasaMigaPOS.slnx -c Release --no-build --no-restore --logger 'trx;LogFilePrefix=foundation' --results-directory TestResults
+    & $Dotnet test CasaMigaPOS.slnx -c Release --no-build --no-restore @outputArgs --logger 'trx;LogFilePrefix=foundation' --results-directory TestResults
     if ($LASTEXITCODE -ne 0) { throw 'Fallaron pruebas.' }
 } finally { Pop-Location }

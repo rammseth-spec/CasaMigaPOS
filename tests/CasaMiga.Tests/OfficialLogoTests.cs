@@ -14,24 +14,25 @@ public sealed class OfficialLogoTests
         Assert.AreEqual(OfficialReceiptLogo.Sha256,Convert.ToHexString(SHA256.HashData(png)));
         Assert.AreEqual((byte)1,png[24]);Assert.AreEqual((byte)0,png[25]);
         var raster=OfficialReceiptLogo.Raster();
-        bool Black(int x,int y)=>(raster[y*70+x/8]&(128>>(x%8)))!=0;
-        for(var x=0;x<560;x++){Assert.IsFalse(Black(x,0));Assert.IsFalse(Black(x,261));}
-        for(var y=0;y<262;y++){Assert.IsFalse(Black(0,y));Assert.IsFalse(Black(559,y));}
-        // Both white incisions intersect row 95 inside the bread silhouette.
+        bool Black(int x,int y)=>(raster[y*OfficialReceiptLogo.RowBytes+x/8]&(128>>(x%8)))!=0;
+        for(var x=0;x<576;x++){Assert.IsFalse(Black(x,0));Assert.IsFalse(Black(x,340));}
+        for(var y=0;y<341;y++)for(var x=0;x<8;x++){Assert.IsFalse(Black(x,y));Assert.IsFalse(Black(575-x,y));}
+        // Both white incisions intersect row 110 inside the Variant 04 bread silhouette.
         var whiteRuns=0;var wasWhite=false;
-        for(var x=235;x<330;x++){var white=!Black(x,95);if(white&&!wasWhite)whiteRuns++;wasWhite=white;}
+        for(var x=230;x<340;x++){var white=!Black(x,110);if(white&&!wasWhite)whiteRuns++;wasWhite=white;}
         Assert.AreEqual(2,whiteRuns);
+        Assert.AreEqual("CasaMiga.Variant04.Ticket.png",typeof(OfficialReceiptLogo).Assembly.GetManifestResourceNames().Single(n=>n.EndsWith(".png",StringComparison.Ordinal)));
     }
 
     [TestMethod] public void RasterPreservesEveryPixelWithEightWhiteDotsPerSide()
     {
         var raster=OfficialReceiptLogo.Raster();var command=OfficialReceiptLogo.Command();
-        CollectionAssert.AreEqual(new byte[]{29,118,48,0,72,0,6,1},command[..8]);
-        Assert.AreEqual(8+72*262,command.Length);
-        for(var y=0;y<262;y++)
+        CollectionAssert.AreEqual(new byte[]{29,118,48,0,72,0,85,1},command[..8]);
+        Assert.AreEqual(8+72*341,command.Length);
+        for(var y=0;y<341;y++)
         {
             Assert.AreEqual((byte)0,command[8+y*72]);Assert.AreEqual((byte)0,command[8+y*72+71]);
-            CollectionAssert.AreEqual(raster[(y*70)..((y+1)*70)],command[(9+y*72)..(79+y*72)]);
+            CollectionAssert.AreEqual(raster[(y*72)..((y+1)*72)],command[(8+y*72)..(80+y*72)]);
         }
         CollectionAssert.AreEqual(command,OfficialReceiptLogo.Command());
     }

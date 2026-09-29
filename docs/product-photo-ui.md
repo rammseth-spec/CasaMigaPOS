@@ -1,5 +1,7 @@
 # UI de fotografía de producto — FASE 1K.2C
 
+R2: seleccionar Product y pulsar **Administrar foto** abre directamente la sección **IMAGEN DEL PRODUCTO**. Preview 240×240, estado actual, Agregar/Cambiar y Quitar con confirmación. El crop incluye preview separado en vivo sobre la imagen orientada; Cancelar retorna sin importar. Coordenadas redondeadas se limitan a los píxeles disponibles. Carrito: Cobrar y Cobrar + imprimir visibles, ambos con diálogo de efectivo y bloqueo compartido. No se ejecuta checkout al abrir el diálogo; Enter elige la opción seleccionada. Ver `PHASE_1K2C_R2_REPORT.md`.
+
 ## POS
 
 El POS presenta `ProductCard` completa y accionable por mouse, touch y teclado. Cada tarjeta obtiene nombre y precio desde `Product`; la imagen nunca aporta datos comerciales. Usa el thumbnail JPEG vigente de 1K.2B en aspecto 1:1. La categoría se elige arriba y no se repite en cada card. Sin foto o ante archivo faltante/corrupto muestra un placeholder neutral con nombre y precio. El cajero no ve `PROVISIONAL/REAL`.

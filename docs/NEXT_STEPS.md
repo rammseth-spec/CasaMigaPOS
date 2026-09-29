@@ -1,4 +1,12 @@
-# Próximo paso — aprobación humana de 1K.2C-R1
+# Próximo paso — smoke humano de 1K.2C-R2
+
+Revisar R2 en `work/phase1k2c-r2-smoke-20260928` con la compilación Release de `src/CasaMiga.Presentation/bin/R2`. Credenciales en conversación. Validar catálogo completo, cards, Administrar foto → agregar/cambiar/quitar, preview y Cancelar; Cobrar sin ticket → Historial. Luego, con Qian disponible, una venta sintética mediante Cobrar + imprimir y una reimpresión desde Historial: logo Variante 04, centrado, nitidez, mismo folio, marca REIMPRESIÓN y corte. No se realizaron impresiones físicas automáticas. No considerar R2 aprobado por las capturas automatizadas.
+
+La aplicación anterior ya está cerrada. R2 está preparada en salida separada y con su propio dataset para revisión. Leer `PHASE_1K2C_R2_REPORT.md`, `printing-variant04.md` y la evidencia de verificación.
+
+Pedidos: sólo requisitos, en `orders-future-requirements.md`. Diseñar Order persistente anterior al cobro, pedidos diarios/plantillas, vínculo a Sale y políticas pendientes. Preguntar si alguna tienda recibe pan y paga después. No implementar crédito, reservas, Pedidos, migración 017 o instalador. FASE 1K continúa abierta; detenerse después del reporte.
+
+## Registro anterior — R1
 
 Revisar el smoke aislado preparado con 26 fotos PROVISIONAL, cards de 184 x 276 DIP con nombre/precio completos, rail POS contraído sólo con iconos centrados, carrito, ambos botones de cobro, administración de imagen y crop visual. Confirmar especialmente que al entrar al POS el catálogo comienza arriba y que expandir/contraer navegación no deja textos ni scrollbar recortados. Leer `PHASE_1K2C_R1_REPORT.md`, `product-photo-ui.md` y `phase1k2c-provisional-map.md`. No declarar aprobación visual hasta recibir confirmación explícita del usuario. FASE 1K permanece abierta; no cargar la instalación comercial, iniciar instalador ni cambiar 1K.2B.
 
