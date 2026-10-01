@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
+if(args.Length==3&&args[0]=="inventory-detail-probe")return InventoryDetailProbe.Run(args[1],args[2]);
 if(args.Length==4&&args[0]=="checkout-evidence")return await R2CheckoutEvidence.Run(args[1],args[2],args[3]);
 if(args.Length==4&&args[0]=="render-ui")return R2VisualEvidence.Run(args[1],args[2],args[3]);
 

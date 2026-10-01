@@ -67,9 +67,12 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
     private Guid? pendingOperationId;
     private bool editingItem;
     private string operation = "";
+    private bool writeStarted;
+    private bool writeConfirmed;
 
     public bool Busy { get; private set; }
-    public bool Ready => !Busy;
+    public bool RecoveryRequired { get; private set; }
+    public bool Ready => !Busy && !RecoveryRequired;
     public bool IsList => screen == "list";
     public bool IsDetail => screen == "detail";
     public bool IsItemEditor => screen == "item";
@@ -90,7 +93,7 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
     public bool CanWaste { get; private set; }
     public bool CanAdjust { get; private set; }
     public bool CanOpenBalance => CanAdjust && Detail?.Balance is null;
-    public bool CanSubmitOperation => !Busy && pendingOperationId is not null;
+    public bool CanSubmitOperation => Ready && pendingOperationId is not null;
     public string PendingOperationId => pendingOperationId?.ToString("D") ?? "";
     public string Message { get; private set; } = "";
     public bool MessageIsSuccess { get; private set; }
@@ -191,7 +194,7 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
 
     public async Task LoadAsync()
     {
-        if (Busy) return;
+        if (!Ready) return;
         Busy = true; Message = ""; Notify();
         try
         {
@@ -207,7 +210,7 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
             await RefreshList();
         }
         catch (InventoryApplicationException error) { Message = ErrorMessage(error.Error); CanView = false; }
-        catch (Exception error) { Failed("inventory.ui.load.failed", error); }
+        catch (Exception error) { ReadFailed(error); }
         finally { Busy = false; Notify(); }
     }
 
@@ -223,7 +226,7 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
 
     public void Back()
     {
-        if (Busy) return;
+        if (!Ready) return;
         if (IsDetail) { screen = "list"; detailId = null; Detail = null; History = []; }
         else { screen = detailId is null ? "list" : "detail"; pendingOperationId = null; operation = ""; }
         Message = ""; Notify();
@@ -231,14 +234,14 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
 
     public void NewItem()
     {
-        if (Busy || !CanConfigure) return;
+        if (!Ready || !CanConfigure) return;
         editingItem = false; ItemCode = ""; ItemName = ""; SelectedItemKind = ItemKinds[0];
         SelectedDimension = Dimensions[0]; screen = "item"; Message = ""; Notify();
     }
 
     public void EditItem()
     {
-        if (Busy || !CanConfigure || Detail is null) return;
+        if (!Ready || !CanConfigure || Detail is null) return;
         editingItem = true; ItemCode = Detail.Item.Code; ItemName = Detail.Item.Name;
         SelectedItemKind = ItemKinds.Single(x => x.Value == Detail.Item.Kind);
         SelectedDimension = Dimensions.Single(x => x.Value == Detail.Item.Dimension);
@@ -247,12 +250,13 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
 
     public Task SaveItemAsync() => Run(async () =>
     {
+        if (!IsItemEditor) return;
         InventoryItem item;
         if (editingItem)
-            item = await Task.Run(() => service.UpdateInventoryItemMetadata(detailId!.Value, ItemName,
+            item = await Write(() => service.UpdateInventoryItemMetadata(detailId!.Value, ItemName,
                 SelectedItemKind.Value, SelectedDimension.Value));
         else
-            item = await Task.Run(() => service.CreateInventoryItem(ItemCode, ItemName,
+            item = await Write(() => service.CreateInventoryItem(ItemCode, ItemName,
                 SelectedItemKind.Value, SelectedDimension.Value));
         detailId = item.Id; screen = "detail"; MessageIsSuccess = true; Message = "Artículo guardado.";
         await RefreshList(preserveMessage: true); await RefreshDetail(preserveMessage: true);
@@ -261,16 +265,16 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
     public Task ToggleActiveAsync() => Run(async () =>
     {
         if (Detail is null) return;
-        try { await Task.Run(() => service.SetInventoryItemActive(Detail.Item.Id, !Detail.Item.IsActive)); }
+        try { await Write(() => service.SetInventoryItemActive(Detail.Item.Id, !Detail.Item.IsActive)); }
         catch (InventoryApplicationException error) when (error.Error == InventoryError.InsufficientStock)
-        { throw new ArgumentException("No se puede desactivar un artículo con existencia."); }
+        { writeStarted = false; throw new ArgumentException("No se puede desactivar un artículo con existencia."); }
         MessageIsSuccess = true; Message = Detail.Item.IsActive ? "Artículo desactivado." : "Artículo activado.";
         await RefreshList(preserveMessage: true); await RefreshDetail(preserveMessage: true);
     });
 
     public void BeginOperation(string kind)
     {
-        if (Busy || Detail is null) return;
+        if (!Ready || Detail is null) return;
         if ((kind == "opening" && !CanOpenBalance) || (kind == "receipt" && !CanReceive) ||
             (kind == "waste" && !CanWaste) || (kind == "count" && !CanAdjust)) return;
         operation = kind; pendingOperationId = Guid.NewGuid(); Quantity = kind == "opening" ? "0" : "";
@@ -286,15 +290,15 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
         var quantity = ParseDecimal(Quantity);
         var item = Detail.Item.Id; var location = Detail.MainLocation.Id; var unit = SelectedUnit.Code;
         if (operation == "opening")
-            await Task.Run(() => service.RegisterOpeningBalance(new(operationId, item, location, quantity, unit, Optional(Reference))));
+            await Write(() => service.RegisterOpeningBalance(new(operationId, item, location, quantity, unit, Optional(Reference))));
         else if (operation == "receipt")
-            await Task.Run(() => service.ReceiveInventory(new(operationId, item, location, quantity, unit, Optional(Reference), Optional(Note))));
+            await Write(() => service.ReceiveInventory(new(operationId, item, location, quantity, unit, Optional(Reference), Optional(Note))));
         else if (operation == "waste")
-            await Task.Run(() => service.RecordWaste(new(operationId, item, location, quantity, unit,
+            await Write(() => service.RecordWaste(new(operationId, item, location, quantity, unit,
                 SelectedWasteReason.Value, Optional(Note))));
         else
         {
-            var result = await Task.Run(() => service.AdjustToPhysicalCount(new(operationId, item, location,
+            var result = await Write(() => service.AdjustToPhysicalCount(new(operationId, item, location,
                 quantity, unit, SelectedAdjustmentReason.Value, Optional(Note))));
             if (!result.Changed) Message = "El conteo coincide con la existencia registrada. No se realizó ningún movimiento.";
         }
@@ -306,15 +310,15 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
 
     public void NewUnit()
     {
-        if (Busy || !CanConfigure || Detail is null) return;
+        if (!Ready || !CanConfigure || Detail is null) return;
         UnitCode = ""; UnitName = ""; UnitFactor = ""; screen = "unit"; Message = ""; Notify();
     }
 
     public Task SaveUnitAsync() => Run(async () =>
     {
-        if (detailId is null || Detail is null) return;
+        if (!IsUnitEditor || detailId is null || Detail is null) return;
         var factor = InventoryDisplay.ParseCapture(UnitFactor, Detail.Item.Dimension);
-        await Task.Run(() => service.AddInventoryItemUnit(detailId.Value, UnitCode, UnitName, factor));
+        await Write(() => service.AddInventoryItemUnit(detailId.Value, UnitCode, UnitName, factor));
         screen = "detail"; MessageIsSuccess = true; Message = "Presentación agregada.";
         await RefreshDetail(preserveMessage: true);
     });
@@ -334,7 +338,7 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
         if (detailId is null || Detail is null || SelectedProduct is null)
             throw new ArgumentException("Selecciona un producto.");
         var quantity = InventoryDisplay.ParseCapture(LinkQuantityAtomic, Detail.Item.Dimension);
-        await Task.Run(() => service.LinkProductToInventoryItem(SelectedProduct.Product.Id, detailId.Value, quantity));
+        await Write(() => service.LinkProductToInventoryItem(SelectedProduct.Product.Id, detailId.Value, quantity));
         screen = "detail"; MessageIsSuccess = true; Message = "Producto asociado. Descontará existencias al confirmar la venta cuando el consumo automático esté ACTIVO.";
         await RefreshList(preserveMessage: true); await RefreshDetail(preserveMessage: true);
     });
@@ -342,7 +346,7 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
     public Task UnlinkAsync() => Run(async () =>
     {
         if (SelectedLink is null) throw new ArgumentException("Selecciona una asociación.");
-        await Task.Run(() => service.UnlinkProductFromInventoryItem(SelectedLink.ProductId));
+        await Write(() => { service.UnlinkProductFromInventoryItem(SelectedLink.ProductId); return true; });
         MessageIsSuccess = true; Message = "Producto desvinculado.";
         await RefreshList(preserveMessage: true); await RefreshDetail(preserveMessage: true);
     });
@@ -355,7 +359,7 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
     public void Forget()
     {
         SearchChoices = []; Items = []; Detail = null; History = []; Products = []; SelectedItem = null; detailId = null;
-        pendingOperationId = null; screen = "list"; Message = ""; CanView = CanConfigure = CanReceive = CanWaste = CanAdjust = false;
+        pendingOperationId = null; screen = "list"; if (!RecoveryRequired) Message = ""; CanView = CanConfigure = CanReceive = CanWaste = CanAdjust = false;
         Notify();
     }
 
@@ -404,24 +408,69 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
 
     private async Task Run(Func<Task> action, bool refreshOnConcurrency = false)
     {
-        if (Busy) return;
+        if (!Ready) return;
+        writeStarted = writeConfirmed = false;
         Busy = true; Message = ""; MessageIsSuccess = false; Notify();
         try { await action(); log("inventory.ui.completed", null); }
+        catch (Exception error) when (writeConfirmed)
+        {
+            ClearFailedDetail();
+            Message = "Operación confirmada, pero no se pudo actualizar la consulta. No repitas el guardado; vuelve a buscar el artículo para revisar el resultado.";
+            log("inventory.ui.refresh.failed_after_commit", error.GetType().Name);
+        }
         catch (InventoryApplicationException error)
         {
+            if (writeStarted && error.Error == InventoryError.InconsistentBalance)
+            {
+                RequireRecovery(error);
+                return;
+            }
             Message = ErrorMessage(error.Error); log("inventory.ui.rejected", error.Error.ToString());
             if (refreshOnConcurrency && error.Error == InventoryError.ConcurrencyConflict)
-                await RefreshDetail(preserveMessage: true);
+            {
+                try { await RefreshDetail(preserveMessage: true); }
+                catch (Exception refreshError) { ReadFailed(refreshError); }
+            }
+            else if (!writeStarted) ClearFailedDetail();
         }
-        catch (ArgumentException error) { Message = error.Message; }
-        catch (OverflowException) { Message = "La cantidad ingresada excede el límite permitido."; }
-        catch (Exception error) { Failed("inventory.ui.failed", error); }
+        catch (ArgumentException error) when (!writeStarted) { Message = error.Message; }
+        catch (OverflowException) when (!writeStarted) { Message = "La cantidad ingresada excede el límite permitido."; }
+        catch (Exception error)
+        {
+            if (writeStarted) RequireRecovery(error);
+            else ReadFailed(error);
+        }
         finally { Busy = false; Notify(); }
     }
 
-    private void Failed(string eventName, Exception error)
+    private async Task<T> Write<T>(Func<T> action)
     {
-        Message = "No se pudo completar la operación de inventario."; log(eventName, error.GetType().Name);
+        // A service return confirms completion; any unexpected exception before that return
+        // cannot safely be interpreted as rollback from Presentation.
+        writeStarted = true;
+        var result = await Task.Run(action);
+        writeConfirmed = true;
+        return result;
+    }
+
+    private void ClearFailedDetail()
+    {
+        screen = "list"; Detail = null; detailId = null; History = []; SelectedLink = null;
+        pendingOperationId = null; operation = ""; MessageIsSuccess = false;
+    }
+
+    private void ReadFailed(Exception error)
+    {
+        ClearFailedDetail();
+        Message = "No se pudo cargar la consulta de inventario. Vuelve a buscar el artículo e intenta abrir su detalle.";
+        log("inventory.ui.read.failed", error.GetType().Name);
+    }
+
+    private void RequireRecovery(Exception error)
+    {
+        RecoveryRequired = true; MessageIsSuccess = false;
+        Message = "No se pudo verificar si la operación de inventario quedó confirmada. No la repitas. Reinicia la aplicación y revisa el artículo y su historial antes de continuar.";
+        log("inventory.ui.write.uncertain", error.GetType().Name);
     }
 
     private static IReadOnlyList<InventoryUnitChoice> BuildUnits(InventoryItemDetail detail) =>

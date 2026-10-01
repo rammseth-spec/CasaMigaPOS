@@ -53,6 +53,48 @@ public sealed class InventoryViewModelTests
         public IReadOnlyList<InventoryReconciliationStatus> QueryReconciliation() => inner.QueryReconciliation();
     }
 
+    private sealed class FaultingStore(IInventoryStore inner) : IInventoryStore
+    {
+        public const string PrivateDiagnostic = "private database path and captured customer note";
+        public bool FailDetail { get; set; }
+        public bool FailDetailAfterAdd { get; set; }
+        public bool FailAddBeforeCommit { get; set; }
+        public bool FailAddAfterCommit { get; set; }
+        public int AddCalls { get; private set; }
+        public int DetailCalls { get; private set; }
+        public int QueryCalls { get; private set; }
+        public InventoryItem? FindItem(Guid id) => inner.FindItem(id);
+        public InventoryItemUnit? FindItemUnit(Guid itemId, string code) => inner.FindItemUnit(itemId, code);
+        public InventoryLocationView? FindLocation(Guid id) => inner.FindLocation(id);
+        public InventoryBalanceRecord? FindBalance(Guid itemId, Guid locationId) => inner.FindBalance(itemId, locationId);
+        public PersistedInventoryOperation Apply(InventoryOperationRequest request, InventoryBalanceExpectation? expectation = null) => inner.Apply(request, expectation);
+        public PersistedInventoryOperation? FindOperation(Guid operationId) => inner.FindOperation(operationId);
+        public PersistedInventoryOperation? Recover(InventoryOperationRequest request) => inner.Recover(request);
+        public IReadOnlyList<InventoryReconciliationDifference> Reconcile() => inner.Reconcile();
+        public void CreateItem(InventoryItem item, AuditEntry audit) => inner.CreateItem(item, audit);
+        public void UpdateItem(InventoryItem item, AuditEntry audit) => inner.UpdateItem(item, audit);
+        public void AddItemUnit(InventoryItemUnit unit, AuditEntry audit)
+        {
+            AddCalls++;
+            if (FailAddBeforeCommit) throw new IOException(PrivateDiagnostic);
+            inner.AddItemUnit(unit, audit);
+            if (FailDetailAfterAdd) FailDetail = true;
+            if (FailAddAfterCommit) throw new IOException(PrivateDiagnostic);
+        }
+        public InventoryProductLinkView? FindActiveProductLink(Guid productId) => inner.FindActiveProductLink(productId);
+        public void LinkProduct(ProductInventoryLink link, AuditEntry audit) => inner.LinkProduct(link, audit);
+        public void UnlinkProduct(Guid productId, AuditEntry audit) => inner.UnlinkProduct(productId, audit);
+        public InventoryListPage QueryItems(InventoryListQuery query) { QueryCalls++; return inner.QueryItems(query); }
+        public InventoryItemDetail? FindItemDetail(Guid id)
+        {
+            DetailCalls++;
+            if (FailDetail) throw new IOException(PrivateDiagnostic);
+            return inner.FindItemDetail(id);
+        }
+        public InventoryMovementPage QueryMovements(InventoryMovementQuery query) => inner.QueryMovements(query);
+        public IReadOnlyList<InventoryReconciliationStatus> QueryReconciliation() => inner.QueryReconciliation();
+    }
+
     [TestInitialize]
     public void Setup()
     {
@@ -84,6 +126,205 @@ public sealed class InventoryViewModelTests
     private static void Select(InventoryViewModel vm, InventoryItem item)
     {
         vm.SelectedItem = vm.Items.Single(x => x.Id == item.Id);
+    }
+
+    private InventoryViewModel FaultingViewModel(FaultingStore inventory, List<(string Event, string? Detail)> log) =>
+        new(new InventoryService(inventory, work, session, clock, terminal.Id), catalog,
+            (eventName, detail) => log.Add((eventName, detail)));
+
+    private static void FillFlourUnit(InventoryViewModel vm)
+    {
+        vm.NewUnit(); vm.UnitCode = "HAR-BULTO-25KG"; vm.UnitName = "Bulto 25 kg"; vm.UnitFactor = "25000";
+    }
+
+    private string CashAndSalesSnapshot()
+    {
+        using var connection = database.Open();
+        var result = new System.Text.StringBuilder();
+        foreach (var table in new[] { "cash_session", "sale", "payment" })
+        {
+            using var command = new SqliteCommand($"SELECT * FROM {table} ORDER BY id", connection);
+            using var rows = command.ExecuteReader();
+            result.Append(table).Append(':');
+            while (rows.Read())
+                for (var column = 0; column < rows.FieldCount; column++)
+                    result.Append(rows.GetName(column)).Append('=').Append(rows.GetValue(column)).Append('|');
+        }
+        return result.ToString();
+    }
+
+    private static void AssertSafeDiagnostic(List<(string Event, string? Detail)> log, string eventName)
+    {
+        Assert.IsTrue(log.Any(x => x.Event == eventName && x.Detail == nameof(IOException)));
+        Assert.IsFalse(log.Any(x => x.Event.Contains(FaultingStore.PrivateDiagnostic, StringComparison.Ordinal)
+            || (x.Detail?.Contains(FaultingStore.PrivateDiagnostic, StringComparison.Ordinal) ?? false)));
+    }
+
+    [TestMethod]
+    public async Task FlourPresentationPersistsAcrossRestartAndRepeatedDetailWithoutInitializingInventoryOrChangingCash()
+    {
+        new CashService(work, session, clock).Open(terminal.Id, new Money(50000));
+        var financialBefore = CashAndSalesSnapshot();
+        var vm = ViewModel(); await vm.LoadAsync(); vm.NewItem();
+        vm.ItemCode = "MP-HAR-001"; vm.ItemName = "Harina";
+        vm.SelectedItemKind = vm.ItemKinds.Single(x => x.Value == InventoryItemKind.RawMaterial);
+        vm.SelectedDimension = vm.Dimensions.Single(x => x.Value == InventoryDimension.Mass);
+        await vm.SaveItemAsync();
+        var item = vm.Detail!.Item;
+        FillFlourUnit(vm); await vm.SaveUnitAsync();
+        Assert.IsTrue(vm.MessageIsSuccess, vm.Message);
+        Assert.AreEqual("25 kg", vm.Units.Single().Quantity);
+        Assert.IsTrue(vm.Units.Single().IsActive);
+        Assert.IsNull(vm.Detail.Balance); Assert.AreEqual(0, vm.ProductLinks.Count); Assert.AreEqual(0, vm.History.Count);
+
+        var reopenedDatabase = new Database(Path.Combine(root, "casamiga.db"));
+        var reopenedService = new InventoryService(new SqliteInventoryStore(reopenedDatabase, clock),
+            new SqliteLocalUnitOfWork(reopenedDatabase), session, clock, terminal.Id);
+        var reopened = ViewModel(reopenedService); await reopened.LoadAsync();
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            Select(reopened, item); await reopened.OpenDetailAsync();
+            Assert.IsTrue(reopened.IsDetail); Assert.IsTrue(reopened.Ready);
+            Assert.IsFalse(reopened.RecoveryRequired);
+            Assert.AreEqual("HAR-BULTO-25KG", reopened.Units.Single().Code);
+            Assert.AreEqual("Bulto 25 kg", reopened.Units.Single().Name);
+            Assert.AreEqual(25_000_000L, reopened.Units.Single().Unit.AtomicUnitsPerWholeUnit);
+            Assert.IsTrue(reopened.Units.Single().IsActive); Assert.IsNull(reopened.Detail!.Balance);
+            Assert.AreEqual(0, reopened.ProductLinks.Count); Assert.AreEqual(0, reopened.History.Count);
+            reopened.Back(); Assert.IsTrue(reopened.IsList);
+        }
+        Assert.AreEqual(1L, Sql("SELECT count(*) FROM inventory_item WHERE code='MP-HAR-001'"));
+        Assert.AreEqual(1L, Sql("SELECT count(*) FROM inventory_item_unit WHERE code='HAR-BULTO-25KG'"));
+        Assert.AreEqual(0L, Sql("SELECT count(*) FROM inventory_item_unit u LEFT JOIN inventory_item i ON i.id=u.item_id WHERE i.id IS NULL"));
+        Assert.AreEqual(0L, Sql("SELECT count(*) FROM inventory_balance"));
+        Assert.AreEqual(0L, Sql("SELECT count(*) FROM inventory_operation"));
+        Assert.AreEqual(0L, Sql("SELECT count(*) FROM inventory_movement"));
+        Assert.AreEqual(financialBefore, CashAndSalesSnapshot());
+    }
+
+    [TestMethod]
+    [DataRow(true)]
+    [DataRow(false)]
+    public async Task PresentationActiveStateComesFromPersistedValue(bool active)
+    {
+        var item = Item(); service.AddInventoryItemUnit(item.Id, "SACK25", "Saco 25 kg", 25_000_000);
+        if (!active) Sql("UPDATE inventory_item_unit SET active=0 WHERE code='SACK25'");
+        var vm = ViewModel(); await vm.LoadAsync(); Select(vm, item); await vm.OpenDetailAsync();
+        Assert.AreEqual(active, vm.Units.Single().IsActive);
+        Assert.AreEqual(active, vm.Units.Single().Unit.IsActive);
+        Assert.IsNull(vm.Detail!.Balance);
+    }
+
+    [TestMethod]
+    public async Task DetailReadFailureClearsStaleStateAndAllowsExplicitRetryWithoutWriting()
+    {
+        var item = Item(); service.AddInventoryItemUnit(item.Id, "SACK25", "Saco 25 kg", 25_000_000);
+        var faults = new FaultingStore(store); var log = new List<(string Event, string? Detail)>();
+        var vm = FaultingViewModel(faults, log); await vm.LoadAsync(); Select(vm, item);
+        faults.FailDetail = true; await vm.OpenDetailAsync();
+        StringAssert.Contains(vm.Message, "No se pudo cargar");
+        Assert.IsTrue(vm.IsList); Assert.IsNull(vm.Detail); Assert.AreEqual(0, vm.History.Count);
+        Assert.IsFalse(vm.MessageIsSuccess); Assert.IsFalse(vm.RecoveryRequired); Assert.IsTrue(vm.Ready);
+        Assert.AreEqual(0, faults.AddCalls); AssertSafeDiagnostic(log, "inventory.ui.read.failed");
+        faults.FailDetail = false; await vm.LoadAsync(); Select(vm, item); await vm.OpenDetailAsync();
+        Assert.IsTrue(vm.IsDetail); Assert.AreEqual("SACK25", vm.Units.Single().Code);
+        Assert.AreEqual(1L, Sql("SELECT count(*) FROM inventory_item_unit"));
+        Assert.AreEqual(0L, Sql("SELECT count(*) FROM inventory_operation"));
+    }
+
+    [TestMethod]
+    public async Task ConfirmedPresentationWithRefreshFailureCannotBeSavedTwiceAndCanBeReadAgain()
+    {
+        new CashService(work, session, clock).Open(terminal.Id, new Money(50000));
+        var financialBefore = CashAndSalesSnapshot(); var item = Item("MP-HAR-001", "Harina");
+        var faults = new FaultingStore(store) { FailDetailAfterAdd = true };
+        var log = new List<(string Event, string? Detail)>();
+        var vm = FaultingViewModel(faults, log); await vm.LoadAsync(); Select(vm, item); await vm.OpenDetailAsync();
+        FillFlourUnit(vm); await vm.SaveUnitAsync();
+        StringAssert.Contains(vm.Message, "Operación confirmada"); StringAssert.Contains(vm.Message, "No repitas");
+        Assert.IsFalse(vm.MessageIsSuccess); Assert.IsFalse(vm.RecoveryRequired); Assert.IsTrue(vm.Ready);
+        Assert.IsTrue(vm.IsList); Assert.IsNull(vm.Detail); Assert.AreEqual(0, vm.History.Count);
+        Assert.AreEqual(1, faults.AddCalls);
+        AssertSafeDiagnostic(log, "inventory.ui.refresh.failed_after_commit");
+        await vm.SaveUnitAsync(); Assert.AreEqual(1, faults.AddCalls);
+        faults.FailDetail = false; faults.FailDetailAfterAdd = false;
+        await vm.LoadAsync(); Select(vm, item); await vm.OpenDetailAsync();
+        Assert.AreEqual("HAR-BULTO-25KG", vm.Units.Single().Code); Assert.IsTrue(vm.Units.Single().IsActive);
+        await vm.SaveUnitAsync(); Assert.AreEqual(1, faults.AddCalls);
+        Assert.AreEqual(1L, Sql("SELECT count(*) FROM inventory_item_unit"));
+        Assert.AreEqual(1L, Sql("SELECT count(*) FROM audit_entry WHERE action='inventory.unit.added'"));
+        Assert.IsNull(vm.Detail!.Balance); Assert.AreEqual(0L, Sql("SELECT count(*) FROM inventory_operation"));
+        Assert.AreEqual(financialBefore, CashAndSalesSnapshot());
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task UncertainPresentationWriteBlocksFurtherActionsUntilNewViewModel(bool committed)
+    {
+        new CashService(work, session, clock).Open(terminal.Id, new Money(50000));
+        var financialBefore = CashAndSalesSnapshot(); var item = Item("MP-HAR-001", "Harina");
+        var faults = new FaultingStore(store) { FailAddBeforeCommit = !committed, FailAddAfterCommit = committed };
+        var log = new List<(string Event, string? Detail)>();
+        var vm = FaultingViewModel(faults, log); await vm.LoadAsync(); Select(vm, item); await vm.OpenDetailAsync();
+        FillFlourUnit(vm); await vm.SaveUnitAsync();
+        Assert.IsTrue(vm.RecoveryRequired); Assert.IsFalse(vm.Ready); Assert.IsFalse(vm.Busy);
+        Assert.IsFalse(vm.MessageIsSuccess); StringAssert.Contains(vm.Message, "No se pudo verificar");
+        AssertSafeDiagnostic(log, "inventory.ui.write.uncertain");
+        var warning = vm.Message; var queries = faults.QueryCalls; var detailReads = faults.DetailCalls;
+        await vm.SaveUnitAsync(); await vm.LoadAsync(); vm.NewUnit(); vm.NewItem(); vm.Back();
+        await vm.SearchAsync(); await vm.OpenDetailAsync();
+        Assert.AreEqual(warning, vm.Message); Assert.IsTrue(vm.RecoveryRequired);
+        Assert.AreEqual(1, faults.AddCalls); Assert.AreEqual(queries, faults.QueryCalls); Assert.AreEqual(detailReads, faults.DetailCalls);
+        Assert.AreEqual(committed ? 1L : 0L, Sql("SELECT count(*) FROM inventory_item_unit"));
+        Assert.AreEqual(committed ? 1L : 0L, Sql("SELECT count(*) FROM audit_entry WHERE action='inventory.unit.added'"));
+        Assert.AreEqual(0L, Sql("SELECT count(*) FROM inventory_operation"));
+        Assert.AreEqual(financialBefore, CashAndSalesSnapshot());
+
+        var restarted = ViewModel(); await restarted.LoadAsync(); Select(restarted, item); await restarted.OpenDetailAsync();
+        Assert.IsTrue(restarted.Ready); Assert.IsFalse(restarted.RecoveryRequired);
+        Assert.AreEqual(committed ? 1 : 0, restarted.Units.Count); Assert.IsNull(restarted.Detail!.Balance);
+    }
+
+    [TestMethod]
+    public async Task RejectedPresentationValidationAndDuplicateCodeAllowCorrectionWithoutRecoveryLock()
+    {
+        var item = Item(); var faults = new FaultingStore(store);
+        var vm = FaultingViewModel(faults, []); await vm.LoadAsync(); Select(vm, item); await vm.OpenDetailAsync();
+        FillFlourUnit(vm); vm.UnitFactor = "0"; await vm.SaveUnitAsync();
+        Assert.IsFalse(vm.RecoveryRequired); Assert.IsTrue(vm.Ready); Assert.IsTrue(vm.IsUnitEditor);
+        Assert.IsFalse(vm.MessageIsSuccess); Assert.AreEqual(0, faults.AddCalls);
+        vm.UnitFactor = "25000"; await vm.SaveUnitAsync(); Assert.IsTrue(vm.MessageIsSuccess);
+        FillFlourUnit(vm); await vm.SaveUnitAsync();
+        Assert.IsFalse(vm.RecoveryRequired); Assert.IsTrue(vm.Ready); Assert.IsTrue(vm.IsUnitEditor);
+        Assert.IsFalse(vm.MessageIsSuccess); Assert.AreEqual(1L, Sql("SELECT count(*) FROM inventory_item_unit"));
+        vm.UnitCode = "SACK50"; vm.UnitName = "Saco 50 kg"; vm.UnitFactor = "50000";
+        await vm.SaveUnitAsync(); Assert.IsTrue(vm.MessageIsSuccess); Assert.AreEqual(2, vm.Units.Count);
+        Assert.IsNull(vm.Detail!.Balance); Assert.AreEqual(0L, Sql("SELECT count(*) FROM inventory_operation"));
+    }
+
+    [TestMethod]
+    public async Task ConcurrencyRefreshFailureDoesNotEscapeOrRetryTheRejectedCount()
+    {
+        var item = Item(); Open(item, 10m); FaultingStore? faults = null;
+        faults = new(new InterleavingStore(store, () =>
+        {
+            service.ReceiveInventory(new(Guid.NewGuid(), item.Id, InventoryLocationIds.Main, 1m, "g"));
+            faults!.FailDetail = true;
+        }));
+        var log = new List<(string Event, string? Detail)>(); var vm = FaultingViewModel(faults, log);
+        await vm.LoadAsync(); Select(vm, item); await vm.OpenDetailAsync();
+        vm.BeginOperation("count"); var rejectedOperation = Guid.Parse(vm.PendingOperationId);
+        vm.Quantity = "12"; vm.SelectedUnit = vm.UnitChoices.Single(x => x.Code == "g");
+        await vm.SubmitOperationAsync();
+        StringAssert.Contains(vm.Message, "No se pudo cargar");
+        Assert.IsTrue(vm.Ready); Assert.IsFalse(vm.RecoveryRequired); Assert.IsTrue(vm.IsList); Assert.IsNull(vm.Detail);
+        Assert.IsFalse(vm.MessageIsSuccess); Assert.AreEqual("", vm.PendingOperationId);
+        Assert.AreEqual(11_000L, store.FindBalance(item.Id, InventoryLocationIds.Main)!.QuantityAtomic);
+        Assert.IsNull(store.FindOperation(rejectedOperation)); Assert.AreEqual(2L, Sql("SELECT count(*) FROM inventory_operation"));
+        AssertSafeDiagnostic(log, "inventory.ui.read.failed");
+        faults.FailDetail = false; await vm.LoadAsync(); Select(vm, item); await vm.OpenDetailAsync();
+        Assert.AreEqual(11_000L, vm.Detail!.Balance!.QuantityAtomic);
     }
 
     [TestMethod]

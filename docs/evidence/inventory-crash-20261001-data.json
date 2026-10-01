@@ -1,0 +1,443 @@
+{
+  "audit_date_local": "2026-10-01",
+  "method": "Only an isolated byte-identical database copy and databases extracted to isolated files from existing backups were opened. Every SQLite connection used mode=ro and query_only=ON. No original database was opened.",
+  "original_copy_sha256_at_capture": "BC58A1D3CA30B266657B42C236D8802BA05FA6B2DE74B77356BD771B9A44125F",
+  "snapshot_audit": {
+    "isolated_database": "work/inventory-crash-20261001/casamiga.db",
+    "database_sha256": "BC58A1D3CA30B266657B42C236D8802BA05FA6B2DE74B77356BD771B9A44125F",
+    "open_mode": "SQLite URI mode=ro; PRAGMA query_only=ON",
+    "schema_user_version": 0,
+    "migration_tables": [
+      "schema_migration"
+    ],
+    "item_count_exact_code": 1,
+    "items": [
+      {
+        "id": "31e0d651-1fa3-4314-a9a3-886f618a8750",
+        "code": "MP-HAR-001",
+        "name": "Harina",
+        "kind": "RAW_MATERIAL",
+        "dimension": "MASS",
+        "active": 1,
+        "created_utc": "2026-10-01T05:45:34.2155097+00:00",
+        "modified_utc": "2026-10-01T05:45:34.2155097+00:00"
+      }
+    ],
+    "presentation_count_exact_code": 1,
+    "presentations": [
+      {
+        "id": "3796dab2-9068-4602-bc70-bf3c3b90f059",
+        "item_id": "31e0d651-1fa3-4314-a9a3-886f618a8750",
+        "code": "HAR-BULTO-25KG",
+        "name": "Bulto 25 kg",
+        "dimension": "MASS",
+        "atomic_units_per_whole_unit": 25000000,
+        "active": 1
+      }
+    ],
+    "mass_units": [
+      {
+        "code": "mg",
+        "dimension": "MASS",
+        "symbol": "mg",
+        "atomic_units_per_unit": 1
+      },
+      {
+        "code": "g",
+        "dimension": "MASS",
+        "symbol": "g",
+        "atomic_units_per_unit": 1000
+      },
+      {
+        "code": "kg",
+        "dimension": "MASS",
+        "symbol": "kg",
+        "atomic_units_per_unit": 1000000
+      }
+    ],
+    "item_balances": [],
+    "item_movements": [],
+    "item_links": [],
+    "orphan_presentation_count": 0,
+    "foreign_key_violations": [],
+    "inventory_config": [
+      {
+        "id": 1,
+        "state": "DISABLED",
+        "version": 1,
+        "updated_utc": "2026-09-28T23:25:13.866Z",
+        "updated_by": null
+      }
+    ],
+    "item_and_presentation_audit": [
+      {
+        "action": "inventory.item.created",
+        "entity_id": "31e0d651-1fa3-4314-a9a3-886f618a8750",
+        "occurred_utc": "2026-10-01T05:45:34.2155097+00:00",
+        "details_json": "{\"before\":null,\"after\":{\"Code\":\"MP-HAR-001\",\"Name\":\"Harina\",\"Kind\":0,\"Dimension\":0,\"IsActive\":true}}"
+      },
+      {
+        "action": "inventory.unit.added",
+        "entity_id": "3796dab2-9068-4602-bc70-bf3c3b90f059",
+        "occurred_utc": "2026-10-01T06:11:58.0932328+00:00",
+        "details_json": "{\"before\":null,\"after\":{\"InventoryItemId\":\"31e0d651-1fa3-4314-a9a3-886f618a8750\",\"Code\":\"HAR-BULTO-25KG\",\"Name\":\"Bulto 25 kg\",\"Dimension\":0,\"AtomicUnitsPerWholeUnit\":25000000}}"
+      }
+    ],
+    "audit_since_crash_date": [
+      {
+        "action": "inventory.item.created",
+        "entity_id": "31e0d651-1fa3-4314-a9a3-886f618a8750",
+        "occurred_utc": "2026-10-01T05:45:34.2155097+00:00"
+      },
+      {
+        "action": "inventory.unit.added",
+        "entity_id": "3796dab2-9068-4602-bc70-bf3c3b90f059",
+        "occurred_utc": "2026-10-01T06:11:58.0932328+00:00"
+      }
+    ],
+    "protected_table_fingerprints": {
+      "cash_session": {
+        "rows": 2,
+        "sha256": "FF960621E1707E724BFAE616FF298F6D5BF20087327F51ECEC1B54F0D5C8725B"
+      },
+      "cash_count": {
+        "rows": 1,
+        "sha256": "E148661FE61783ADB4AA584192F45B0071EAC2D2A6FA281661F0D32560FCE1FB"
+      },
+      "sale": {
+        "rows": 15,
+        "sha256": "ED7177D2EF895E118EECB28D0026CED43975326FBED2F709A7555C1F09CAB206"
+      },
+      "sale_item": {
+        "rows": 35,
+        "sha256": "383EADCCED5E9F10DEE921840D0EDA2585EB4B3284E36CA3FF1825D89CC4AA3A"
+      },
+      "payment": {
+        "rows": 15,
+        "sha256": "7E1E7AE9A5AFDD447B11B7BCC3FC4ECC8E6682284C961353EB45E05D53E75955"
+      },
+      "sale_sequence": {
+        "rows": 1,
+        "sha256": "9DB77AA19168EBC810B087EECB5980A57EEF89E021E808154596E4EFDA413FAB"
+      },
+      "receipt_snapshot": {
+        "rows": 14,
+        "sha256": "13D56971873612168D05A0F8E630CABEF7CAA90E67973604B08B5013E7DC0E82"
+      },
+      "receipt_print_request": {
+        "rows": 16,
+        "sha256": "AB12AFCE7C5D8D08576D2ECC9972A261261C2D68A8824679E08436B6E5E8B0E2"
+      },
+      "receipt_print_event": {
+        "rows": 32,
+        "sha256": "6DA83930D115AD41A1FFDE88A09BF7148411246813D3B68C14F6761F37D330C4"
+      },
+      "inventory_operation": {
+        "rows": 0,
+        "sha256": "4F53CDA18C2BAA0C0354BB5F9A3ECBE5ED12AB4D8E11BA873C2F11161202B945"
+      },
+      "inventory_movement": {
+        "rows": 0,
+        "sha256": "4F53CDA18C2BAA0C0354BB5F9A3ECBE5ED12AB4D8E11BA873C2F11161202B945"
+      },
+      "inventory_balance": {
+        "rows": 0,
+        "sha256": "4F53CDA18C2BAA0C0354BB5F9A3ECBE5ED12AB4D8E11BA873C2F11161202B945"
+      },
+      "product_inventory_link": {
+        "rows": 0,
+        "sha256": "4F53CDA18C2BAA0C0354BB5F9A3ECBE5ED12AB4D8E11BA873C2F11161202B945"
+      }
+    },
+    "cash_sessions": [
+      {
+        "id": "2fe2d2c3-b64d-4a1a-be76-f02ec0ee7150",
+        "state": "CLOSED",
+        "opened_utc": "2026-09-28T23:25:14.9228435+00:00",
+        "opening_cents": 0,
+        "closed_utc": "2026-09-29T20:39:02.4897147+00:00",
+        "expected_cents": 15700,
+        "counted_cents": 5200,
+        "difference_cents": -10500
+      },
+      {
+        "id": "07346e34-27e9-48f1-ae8e-97174e8ea315",
+        "state": "OPEN",
+        "opened_utc": "2026-09-29T20:39:06.0161581+00:00",
+        "opening_cents": 50000,
+        "closed_utc": null,
+        "expected_cents": null,
+        "counted_cents": null,
+        "difference_cents": null
+      }
+    ],
+    "latest_sale_times": [
+      {
+        "confirmed_utc": "2026-09-30T22:23:52.6706249+00:00"
+      },
+      {
+        "confirmed_utc": "2026-09-30T21:56:47.9791626+00:00"
+      },
+      {
+        "confirmed_utc": "2026-09-30T21:54:00.3939195+00:00"
+      }
+    ],
+    "schema_migration": [
+      {
+        "version": 1,
+        "sha256": "67FE636BC15056DB439D15A0CDD73FFD84DA98F5F383FAEF21910F53E191CAD7",
+        "applied_utc": "2026-09-28T23:25:13.8448146+00:00"
+      },
+      {
+        "version": 2,
+        "sha256": "B8C29E34BFFFDC6EE313756EF4869644A495070C4B096BCDEDAD6C8A8BF7C9E5",
+        "applied_utc": "2026-09-28T23:25:13.8473868+00:00"
+      },
+      {
+        "version": 3,
+        "sha256": "4A5FD419D95C19CBE7669FCB0C0C825567FA4DDD97478BD9946DDB1E9E13E7E1",
+        "applied_utc": "2026-09-28T23:25:13.8479850+00:00"
+      },
+      {
+        "version": 4,
+        "sha256": "7E7F81303AB6FD9DB3E96A3F878AD4FE4B4B94B79FF4C893AF9F9527DAEA1968",
+        "applied_utc": "2026-09-28T23:25:13.8501534+00:00"
+      },
+      {
+        "version": 5,
+        "sha256": "A335A25AA1F2CC94CED3670FDD4C5E2FCC9AA344141EEA74B06287F357CA167B",
+        "applied_utc": "2026-09-28T23:25:13.8503271+00:00"
+      },
+      {
+        "version": 6,
+        "sha256": "7EA9A2981B02C7D2A93CC550E5E18D0FA60C63A79C9D1052458E0769DFAE2E0C",
+        "applied_utc": "2026-09-28T23:25:13.8514752+00:00"
+      },
+      {
+        "version": 7,
+        "sha256": "439632CB3B0612DEA8651FA52FE3202F2ADF2D6876AEB68F0E1948985632AB5E",
+        "applied_utc": "2026-09-28T23:25:13.8516293+00:00"
+      },
+      {
+        "version": 8,
+        "sha256": "B2B395673ACC14493841F001E6E76B248D6AC136632F7F94C190ECB0BB33A6C5",
+        "applied_utc": "2026-09-28T23:25:13.8526659+00:00"
+      },
+      {
+        "version": 9,
+        "sha256": "8679B3154D4EEC966D3E63E8E48610C924597EF5121CA648E34047BC34A37589",
+        "applied_utc": "2026-09-28T23:25:13.8555814+00:00"
+      },
+      {
+        "version": 10,
+        "sha256": "6FA06DCD826893576B61AD4F4910CF1753D9640D544FDECF641040802EAC598E",
+        "applied_utc": "2026-09-28T23:25:13.8602130+00:00"
+      },
+      {
+        "version": 11,
+        "sha256": "3B47838DC73CF1EE625CE0A1A0CEDC1373F1CF6E8B28AAEE54E1527419AF9EB1",
+        "applied_utc": "2026-09-28T23:25:13.8679508+00:00"
+      },
+      {
+        "version": 12,
+        "sha256": "06952781D2960BB511D8180B860257E2150762CAD717B9A8CB2909EEE8A539F6",
+        "applied_utc": "2026-09-28T23:25:13.8715243+00:00"
+      },
+      {
+        "version": 13,
+        "sha256": "CAC38A250CAF503A88E79FA07B77A2E2E22A20C3664F7254996323677AB555F1",
+        "applied_utc": "2026-09-28T23:25:13.8797171+00:00"
+      },
+      {
+        "version": 14,
+        "sha256": "0CCA38796AB9070B4DE4AE5310226221E5D6C76E9BA2ABB871B63F6E3ACE0928",
+        "applied_utc": "2026-09-28T23:25:13.8893155+00:00"
+      },
+      {
+        "version": 15,
+        "sha256": "447E655117D12CF58D70F38BCE89B462B3C8CD2A80895EEFD8BF97741461AA9F",
+        "applied_utc": "2026-09-28T23:25:13.8894238+00:00"
+      },
+      {
+        "version": 16,
+        "sha256": "9223CAA06CD02FA32E874CC1516EE0C6DB798CB76E2FBE1BF267BAB9B695ED76",
+        "applied_utc": "2026-09-28T23:25:13.8901206+00:00"
+      }
+    ],
+    "schema_version": 16
+  },
+  "backup_comparisons": [
+    {
+      "label": "before_first_crash",
+      "backup": "casamiga-20261001T002048181Z-fe0085dd1dd046ee8747e53bbc8b8793.cmbackup",
+      "backup_database_sha256": "9076B7C68FAD2E581896DE9B60F72FFB0D087087124C65A417222398691D5E63",
+      "schema_version": 16,
+      "item_count": 0,
+      "presentation_count": 0,
+      "same_protected_tables_as_current": true,
+      "protected_table_fingerprints": {
+        "cash_session": {
+          "rows": 2,
+          "sha256": "FF960621E1707E724BFAE616FF298F6D5BF20087327F51ECEC1B54F0D5C8725B"
+        },
+        "cash_count": {
+          "rows": 1,
+          "sha256": "E148661FE61783ADB4AA584192F45B0071EAC2D2A6FA281661F0D32560FCE1FB"
+        },
+        "sale": {
+          "rows": 15,
+          "sha256": "ED7177D2EF895E118EECB28D0026CED43975326FBED2F709A7555C1F09CAB206"
+        },
+        "sale_item": {
+          "rows": 35,
+          "sha256": "383EADCCED5E9F10DEE921840D0EDA2585EB4B3284E36CA3FF1825D89CC4AA3A"
+        },
+        "payment": {
+          "rows": 15,
+          "sha256": "7E1E7AE9A5AFDD447B11B7BCC3FC4ECC8E6682284C961353EB45E05D53E75955"
+        },
+        "sale_sequence": {
+          "rows": 1,
+          "sha256": "9DB77AA19168EBC810B087EECB5980A57EEF89E021E808154596E4EFDA413FAB"
+        },
+        "receipt_snapshot": {
+          "rows": 14,
+          "sha256": "13D56971873612168D05A0F8E630CABEF7CAA90E67973604B08B5013E7DC0E82"
+        },
+        "receipt_print_request": {
+          "rows": 16,
+          "sha256": "AB12AFCE7C5D8D08576D2ECC9972A261261C2D68A8824679E08436B6E5E8B0E2"
+        },
+        "receipt_print_event": {
+          "rows": 32,
+          "sha256": "6DA83930D115AD41A1FFDE88A09BF7148411246813D3B68C14F6761F37D330C4"
+        },
+        "inventory_operation": {
+          "rows": 0,
+          "sha256": "4F53CDA18C2BAA0C0354BB5F9A3ECBE5ED12AB4D8E11BA873C2F11161202B945"
+        },
+        "inventory_movement": {
+          "rows": 0,
+          "sha256": "4F53CDA18C2BAA0C0354BB5F9A3ECBE5ED12AB4D8E11BA873C2F11161202B945"
+        },
+        "inventory_balance": {
+          "rows": 0,
+          "sha256": "4F53CDA18C2BAA0C0354BB5F9A3ECBE5ED12AB4D8E11BA873C2F11161202B945"
+        },
+        "product_inventory_link": {
+          "rows": 0,
+          "sha256": "4F53CDA18C2BAA0C0354BB5F9A3ECBE5ED12AB4D8E11BA873C2F11161202B945"
+        }
+      }
+    },
+    {
+      "label": "between_crashes",
+      "backup": "casamiga-20261001T061537672Z-2c67b2c3bcf1474da5349831c1b2ae69.cmbackup",
+      "backup_database_sha256": "1E135B246B942210959B938C53BAEC4520583861BFFAB96DB1A000EB8FF6661D",
+      "schema_version": 16,
+      "item_count": 1,
+      "presentation_count": 1,
+      "same_protected_tables_as_current": true,
+      "protected_table_fingerprints": {
+        "cash_session": {
+          "rows": 2,
+          "sha256": "FF960621E1707E724BFAE616FF298F6D5BF20087327F51ECEC1B54F0D5C8725B"
+        },
+        "cash_count": {
+          "rows": 1,
+          "sha256": "E148661FE61783ADB4AA584192F45B0071EAC2D2A6FA281661F0D32560FCE1FB"
+        },
+        "sale": {
+          "rows": 15,
+          "sha256": "ED7177D2EF895E118EECB28D0026CED43975326FBED2F709A7555C1F09CAB206"
+        },
+        "sale_item": {
+          "rows": 35,
+          "sha256": "383EADCCED5E9F10DEE921840D0EDA2585EB4B3284E36CA3FF1825D89CC4AA3A"
+        },
+        "payment": {
+          "rows": 15,
+          "sha256": "7E1E7AE9A5AFDD447B11B7BCC3FC4ECC8E6682284C961353EB45E05D53E75955"
+        },
+        "sale_sequence": {
+          "rows": 1,
+          "sha256": "9DB77AA19168EBC810B087EECB5980A57EEF89E021E808154596E4EFDA413FAB"
+        },
+        "receipt_snapshot": {
+          "rows": 14,
+          "sha256": "13D56971873612168D05A0F8E630CABEF7CAA90E67973604B08B5013E7DC0E82"
+        },
+        "receipt_print_request": {
+          "rows": 16,
+          "sha256": "AB12AFCE7C5D8D08576D2ECC9972A261261C2D68A8824679E08436B6E5E8B0E2"
+        },
+        "receipt_print_event": {
+          "rows": 32,
+          "sha256": "6DA83930D115AD41A1FFDE88A09BF7148411246813D3B68C14F6761F37D330C4"
+        },
+        "inventory_operation": {
+          "rows": 0,
+          "sha256": "4F53CDA18C2BAA0C0354BB5F9A3ECBE5ED12AB4D8E11BA873C2F11161202B945"
+        },
+        "inventory_movement": {
+          "rows": 0,
+          "sha256": "4F53CDA18C2BAA0C0354BB5F9A3ECBE5ED12AB4D8E11BA873C2F11161202B945"
+        },
+        "inventory_balance": {
+          "rows": 0,
+          "sha256": "4F53CDA18C2BAA0C0354BB5F9A3ECBE5ED12AB4D8E11BA873C2F11161202B945"
+        },
+        "product_inventory_link": {
+          "rows": 0,
+          "sha256": "4F53CDA18C2BAA0C0354BB5F9A3ECBE5ED12AB4D8E11BA873C2F11161202B945"
+        }
+      }
+    }
+  ],
+  "crash_timeline_utc": [
+    {
+      "event": "inventory.unit.added committed audit",
+      "timestamp": "2026-10-01T06:11:58.0932328+00:00"
+    },
+    {
+      "event": "inventory.ui.completed",
+      "timestamp": "2026-10-01T06:11:58.1665686+00:00"
+    },
+    {
+      "event": "fatal WPF CheckReadOnly",
+      "reference": "6f7cd578043e483cbc8bbcb033a0de3c",
+      "timestamp": "2026-10-01T06:11:58.2001037+00:00"
+    },
+    {
+      "event": "restart backup",
+      "timestamp": "2026-10-01T06:15:37.672Z"
+    },
+    {
+      "event": "inventory.ui.completed",
+      "timestamp": "2026-10-01T06:17:31.6785366+00:00"
+    },
+    {
+      "event": "fatal WPF CheckReadOnly",
+      "reference": "c51af0e89fc342c3971dab013731feb6",
+      "timestamp": "2026-10-01T06:17:31.6938625+00:00"
+    }
+  ],
+  "conclusions": {
+    "item_persisted_once": true,
+    "presentation_persisted_once": true,
+    "presentation_active": true,
+    "quantity": "25000000 atomic mg = 25000 g = 25 kg",
+    "stock": "UNINITIALIZED: no balance row, no opening movement; not an initialized zero balance",
+    "no_unexpected_movements": true,
+    "no_unexpected_links": true,
+    "no_orphan_presentations": true,
+    "no_fk_violations": true,
+    "cash_sales_inventory_and_receipts_unchanged_from_precrash_backup": true
+  },
+  "limits": [
+    "The latest pre-first-crash backup predates item creation by several hours; exact protected-table equality establishes those tables stayed unchanged across the interval, not a continuous event trace.",
+    "Protected-table equality uses every persisted column and row, sorted canonically; no password hashes or credentials are emitted.",
+    "Foreign-key validation was executed. Full integrity_check is left to the application connection with its exact custom collation/function registration.",
+    "WPF visual state and recovery behavior require separate reproduction; this data audit alone does not validate them."
+  ]
+}

@@ -67,7 +67,7 @@
    </WrapPanel>
    <TextBlock Text="Presentaciones" FontSize="21" FontWeight="SemiBold"/>
    <DataGrid ItemsSource="{Binding Units}" Height="155" Margin="0,6,0,8" AutomationProperties.Name="Presentaciones del artículo">
-    <DataGrid.Columns><DataGridTextColumn Header="Código" Binding="{Binding Code}" Width="150"/><DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="Contenido" Binding="{Binding Quantity}" Width="170"/><DataGridCheckBoxColumn Header="Activa" Binding="{Binding IsActive}" Width="80"/></DataGrid.Columns>
+    <DataGrid.Columns><DataGridTextColumn Header="Código" Binding="{Binding Code}" Width="150"/><DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="Contenido" Binding="{Binding Quantity}" Width="170"/><DataGridCheckBoxColumn Header="Activa" Binding="{Binding IsActive,Mode=OneWay}" IsReadOnly="True" Width="80"/></DataGrid.Columns>
    </DataGrid>
    <Button Content="Agregar presentación" Click="NewUnitClick" Visibility="{Binding CanConfigure,Converter={StaticResource VisibleWhen}}" HorizontalAlignment="Left" Margin="0,0,0,14"/>
    <TextBlock Text="Asociaciones con productos" FontSize="21" FontWeight="SemiBold"/>

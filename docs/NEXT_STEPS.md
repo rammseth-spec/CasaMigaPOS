@@ -1,4 +1,16 @@
-# Próximo paso — smoke humano de 1K.2C-R2
+# Checkpoint de Inventario — reanudar revisión manual en Saldo inicial
+
+El usuario autorizó el 01/10/2026 un único commit del bugfix ya verificado y validado manualmente. El checkpoint incluye código, regresión, reproducción, evidencia y documentación asociada; sin cambios funcionales posteriores, migraciones ni push. Revisión manual siguiente: Inventario → `MP-HAR-001` → Ver detalle → «Saldo inicial», en la copia R2 corregida. La revisión y eventual captura corresponden al usuario; este checkpoint no ejecuta ni inicializa inventario. Detenerse después del reporte. FASE 1K sigue abierta y las mejoras UX continúan pendientes.
+
+## Registro previo al checkpoint Git
+
+El 01/10/2026 el usuario confirmó «todo correcto» tras revisar la corrección y solicitó el reporte. Se registra esa aceptación para este defecto de Inventario; FASE 1K, el smoke global R2 y el checkpoint físico Qian no se cierran con ella. Entregar reporte y detenerse. No realizar commit/push ni iniciar mejoras pendientes automáticamente.
+
+Referencia operativa: leer `INVENTORY_CRASH_FIX_20261001.md` y su evidencia. La compilación corregida es `src/CasaMiga.Presentation/bin/R2/CasaMiga.Presentation.exe`, actualizada y verificada (653/653). El detalle se consulta en Inventario → buscar `MP-HAR-001` → Ver detalle: `HAR-BULTO-25KG`, 25 kg, Activa marcada y sin saldo inicial. No recrear Harina/presentación ni inicializar stock para comprobar la corrección. Ante «Operación confirmada» con fallo de consulta, buscar nuevamente sin repetir guardado. Ante resultado incierto, no repetir: reiniciar y revisar artículo/historial antes de continuar.
+
+Pendientes UX sólo documentados: búsqueda en vivo, X, ayuda ?, renombrar Saldo MAIN, etiquetas, estados vacíos y rediseño. No empezar esas mejoras, Recetas/Producción, fase siguiente o instalador. FASE 1K continúa abierta. Modelo recomendado Astra para revisión del cierre; detenerse tras reporte.
+
+## Próximo paso anterior — smoke humano de 1K.2C-R2
 
 Revisar R2 en `work/phase1k2c-r2-smoke-20260928` con la compilación Release de `src/CasaMiga.Presentation/bin/R2`. Credenciales en conversación. Validar catálogo completo, cards, Administrar foto → agregar/cambiar/quitar, preview y Cancelar; Cobrar sin ticket → Historial. Luego, con Qian disponible, una venta sintética mediante Cobrar + imprimir y una reimpresión desde Historial: logo Variante 04, centrado, nitidez, mismo folio, marca REIMPRESIÓN y corte. No se realizaron impresiones físicas automáticas. No considerar R2 aprobado por las capturas automatizadas.
 

@@ -1,3 +1,12 @@
+## Corrección de Inventario — 01/10/2026
+
+- `src/CasaMiga.Presentation/InventoryView.xaml`: Activa OneWay y columna de sólo lectura.
+- `src/CasaMiga.Presentation/InventoryViewModel.cs`: confirmación de escritura separada de refresco, errores de consulta recuperables y bloqueo ante resultado incierto.
+- `tests/CasaMiga.PhotoTests/InventoryPresentationTests.cs`: materialización WPF real, alta/reapertura/reinicio y estado activo/inactivo.
+- `tests/CasaMiga.Tests/InventoryViewModelTests.cs`: persistencia, duplicados, fallos inyectados, caja intacta y recuperación sin repetición.
+- `tools/CasaMiga.Phase1K2CSmoke/InventoryDetailProbe.cs` y dispatch en `Program.cs`: reproducción sobre copia aislada `inventory-crash-*`, sin FoundationRuntime ni impresión.
+- `docs/INVENTORY_CRASH_FIX_20261001.md`, `docs/evidence/inventory-crash-20261001-*`: diagnóstico, auditoría comparada con respaldos y pruebas.
+
 ## Archivos 1K.2C-R2
 
 - `assets/brand/Variant04/CasaMiga_Ticket_Termico_576px_1bit.png`, `scripts/prepare-ticket-logo.py`: derivado térmico reproducible del maestro oficial.
