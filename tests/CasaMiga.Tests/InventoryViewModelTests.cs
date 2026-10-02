@@ -461,7 +461,7 @@ public sealed class InventoryViewModelTests
         Sql($"UPDATE inventory_balance SET quantity_atomic=42 WHERE item_id='{item.Id:D}' AND location_id='{InventoryLocationIds.Main:D}'");
         vm.Back(); Select(vm, item); await vm.OpenDetailAsync();
         Assert.IsTrue(vm.ReconciliationWarning);
-        Assert.AreEqual("ADVERTENCIA: El saldo materializado no coincide con el ledger. No se realizó ninguna reparación.", vm.ReconciliationMessage);
+        Assert.AreEqual("ADVERTENCIA: La existencia registrada no coincide con el historial de movimientos. No se realizó ninguna reparación.", vm.ReconciliationMessage);
         Assert.AreEqual(42L, vm.Detail!.Balance!.QuantityAtomic);
     }
 
@@ -484,11 +484,11 @@ public sealed class InventoryViewModelTests
         Assert.AreEqual(expected, InventoryViewModel.ErrorMessage(error));
 
     [TestMethod]
-    public void ReadOnlyOperationIdBindingIsExplicitlyOneWay()
+    public void OperationIdentityIsNotExposedInOperationalXaml()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Presentation", "InventoryView.xaml");
         var xaml = File.ReadAllText(path);
-        StringAssert.Contains(xaml, "Text=\"{Binding PendingOperationId,Mode=OneWay}\"");
+        Assert.IsFalse(xaml.Contains("OperationId", StringComparison.Ordinal));
     }
 
     [TestMethod]

@@ -9,7 +9,13 @@ public sealed record ProductionProfileChoice(Guid VersionId,Guid ProductId,strin
 {
     public override string ToString()=>$"{ProductName} · {ProfileName}";
 }
-public sealed class ProductionPlanEdit { public ProductionProfileChoice? Profile{get;set;} public string Planned{get;set;}="1"; }
+public sealed class ProductionPlanEdit : INotifyPropertyChanged
+{
+    private ProductionProfileChoice? profile; private string planned="1";
+    public ProductionProfileChoice? Profile{get=>profile;set{if(profile==value)return;profile=value;PropertyChanged?.Invoke(this,new(nameof(Profile)));}}
+    public string Planned{get=>planned;set{if(planned==value)return;planned=value;PropertyChanged?.Invoke(this,new(nameof(Planned)));}}
+    public event PropertyChangedEventHandler? PropertyChanged;
+}
 public sealed record ProductionRequirementRow(string Name,string Required,string Available,string State);
 public sealed record ProductionFormulaRow(string Name,string Required);
 public sealed record ProductionHistoryRow(Guid Id,string Date,string State,string Creator,string Terminal,string Products,string Result,bool ZeroOutput);
@@ -21,10 +27,12 @@ public sealed class ProductionActualEdit:INotifyPropertyChanged
     public string Difference=>long.TryParse(Actual,out var value)?value>Planned?"Mayor que lo planeado":value<Planned?"Menor que lo planeado":"Igual a lo planeado":"Escribe un entero";
     public event PropertyChangedEventHandler? PropertyChanged;
 }
-public sealed class ProductionAlternativeEdit
+public sealed class ProductionAlternativeEdit : INotifyPropertyChanged
 {
     public Guid FormulaVersionId{get;init;} public Guid GroupId{get;init;} public string Label{get;init;}="";
-    public IReadOnlyList<ProductionAlternativeOption> Options{get;init;}=[]; public ProductionAlternativeOption? Selected{get;set;}
+    private ProductionAlternativeOption? selected;
+    public IReadOnlyList<ProductionAlternativeOption> Options{get;init;}=[]; public ProductionAlternativeOption? Selected{get=>selected;set{if(selected==value)return;selected=value;PropertyChanged?.Invoke(this,new(nameof(Selected)));}}
+    public event PropertyChangedEventHandler? PropertyChanged;
 }
 public sealed record ProductionAlternativeOption(Guid Id,string Label,bool Eligible)
 {
@@ -43,11 +51,20 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
     public string ConfirmationRestriction=>!DetailIsDraft?"Consulta histórica de solo lectura.":CanConfirmDetail?"Este plan está bloqueado. Captura el resultado real para confirmarlo.":"Sólo el usuario y terminal que crearon este borrador pueden confirmarlo.";
     public string Message{get;private set;}="";public bool MessageIsSuccess{get;private set;}
     public IReadOnlyList<ProductionProfileChoice> Profiles{get;private set;}=[];
-    public ObservableCollection<ProductionPlanEdit> Plan{get;}=[];public ProductionPlanEdit? SelectedPlan{get;set;}
+    private ProductionPlanEdit? selectedPlan; private ProductionHistoryRow? selectedRow;
+    private bool trackingPlan; private readonly HashSet<ProductionPlanEdit> trackedPlan=[];
+    public ObservableCollection<ProductionPlanEdit> Plan{get;}=[];public ProductionPlanEdit? SelectedPlan{get=>selectedPlan;set{if(selectedPlan==value)return;selectedPlan=value;Notify();}}
+    public bool HasProfiles=>Profiles.Count>0;
+    private bool ValidPlan=>Plan.Count>0&&Plan.All(x=>x.Profile is not null&&Profiles.Contains(x.Profile)&&long.TryParse(x.Planned,out var count)&&count>0)&&Plan.Select(x=>x.Profile!.VersionId).Distinct().Count()==Plan.Count;
+    public bool CanCalculate=>Ready&&CanCreate&&IsBuilder&&ValidPlan;
+    public bool CanCreateDraft=>CanCalculate&&PreviewReady&&PreviewConfirmable;
+    public bool CanRemoveOutput=>Ready&&IsBuilder&&Plan.Count>1&&SelectedPlan is not null&&Plan.Contains(SelectedPlan);
+    public bool CanOpenDetail=>Ready&&SelectedRow is not null;
+    public string EmptyRowsMessage=>IsDrafts?"No hay producciones en borrador.":"Aún no hay producciones confirmadas.";
     public ObservableCollection<ProductionAlternativeEdit> Alternatives{get;}=[];
     public IReadOnlyList<ProductionFormulaRow> FormulaRows{get;private set;}=[];public IReadOnlyList<ProductionRequirementRow> RequirementRows{get;private set;}=[];
     public bool PreviewReady{get;private set;} public bool PreviewConfirmable{get;private set;} public string PreviewState{get;private set;}="";
-    public IReadOnlyList<ProductionHistoryRow> Rows{get;private set;}=[];public ProductionHistoryRow? SelectedRow{get;set;}
+    public IReadOnlyList<ProductionHistoryRow> Rows{get;private set;}=[];public ProductionHistoryRow? SelectedRow{get=>selectedRow;set{if(selectedRow==value)return;selectedRow=value;Notify();}}
     public ObservableCollection<ProductionActualEdit> Actuals{get;}=[];
     public string DetailHeader=>batch is null?"":$"Producción · {(batch.Status=="DRAFT"?"Borrador":"Confirmada")}";
     public string DetailContext=>batch is null?"":$"Creada: {batch.CreatedAt.ToLocalTime():dd/MM/yyyy HH:mm}\nCreada por: {batch.CreatedByName}\nTerminal: {batch.TerminalName}";
@@ -71,9 +88,21 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
         foreach(var p in await Task.Run(()=>recipes.ListProfiles(200)))if(p.ActiveVersionId is {} id&&await Task.Run(()=>recipes.GetProfileVersion(id)) is { } v)list.Add(new(id,p.ProductId,names.GetValueOrDefault(p.ProductId,"Producto"),v.Value.Name));
         Profiles=list;
     }
-    public void NewProduction(){if(!CanCreate)return;Plan.Clear();Plan.Add(new());Alternatives.Clear();FormulaRows=[];RequirementRows=[];PreviewReady=false;PreviewConfirmable=false;createBatchId=Guid.NewGuid();createOperationId=Guid.NewGuid();screen="builder";Message="";Notify();}
-    public void AddOutput()=>Plan.Add(new());public void RemoveOutput(){if(SelectedPlan is {} row&&Plan.Count>1)Plan.Remove(row);InvalidatePreview();}
-    private void InvalidatePreview(){PreviewReady=false;PreviewConfirmable=false;FormulaRows=[];RequirementRows=[];Notify();}
+    public void NewProduction(){if(!Ready||!CanCreate)return;TrackPlan();Plan.Clear();SelectedPlan=null;Plan.Add(new());Alternatives.Clear();FormulaRows=[];RequirementRows=[];PreviewReady=false;PreviewConfirmable=false;createBatchId=Guid.NewGuid();createOperationId=Guid.NewGuid();screen="builder";Message="";Notify();}
+    public void AddOutput(){if(Ready&&CanCreate&&IsBuilder&&HasProfiles)Plan.Add(new());}
+    public void RemoveOutput(){if(!CanRemoveOutput)return;Plan.Remove(SelectedPlan!);SelectedPlan=null;}
+    private void TrackPlan()
+    {
+        if(trackingPlan)return;trackingPlan=true;
+        Plan.CollectionChanged+=(_,_)=>
+        {
+            foreach(var row in trackedPlan)row.PropertyChanged-=PlanChanged;
+            trackedPlan.Clear();foreach(var row in Plan){trackedPlan.Add(row);row.PropertyChanged+=PlanChanged;}
+            InvalidatePreview();
+        };
+    }
+    private void PlanChanged(object? sender,PropertyChangedEventArgs args)=>InvalidatePreview();
+    private void InvalidatePreview(){PreviewReady=false;PreviewConfirmable=false;PreviewState="";FormulaRows=[];RequirementRows=[];Notify();}
     private PrepareProductionCommand Command()
     {
         var lines=Plan.Select(x=>{if(x.Profile is null)throw new ArgumentException("Selecciona un perfil en cada producto.");if(!long.TryParse(x.Planned,out var count)||count<=0)throw new ArgumentException("La cantidad planeada debe ser un entero mayor que cero.");return new RequestedProductionOutput(x.Profile.VersionId,count);}).ToArray();
@@ -86,6 +115,7 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
         FormulaRows=result.Planning.RequiredFormulas.Select(x=>{var f=recipes.GetFormulaVersion(x.FormulaVersionId)!.Value;return new ProductionFormulaRow(f.Name,InventoryDisplay.Format(x.Required.AtomicUnits,x.Required.Dimension));}).ToArray();
         RequirementRows=(result.Planning.Plan?.Ingredients??[]).Select(x=>{var item=items[x.InventoryItemId];var stock=result.Stock.Single(s=>s.ItemId==x.InventoryItemId);var shortage=result.Shortages.FirstOrDefault(s=>s.ItemId==x.InventoryItemId);return new ProductionRequirementRow(item.Name,InventoryDisplay.Format(x.Quantity.AtomicUnits,x.Quantity.Dimension),stock.Available is {} a?InventoryDisplay.Format(a,stock.Dimension):"Sin inicializar",!stock.Active?"Inactivo":shortage is null?"Disponible":$"Faltan {InventoryDisplay.Format(shortage.Required-(shortage.Available??0),stock.Dimension)}");}).ToArray();
         Alternatives.Clear();int n=0;foreach(var formula in result.Planning.Plan?.Formulas??[]){foreach(var group in formula.Version.Alternatives){n++;var ineligible=result.Planning.IneligibleOptions.Where(x=>x.GroupId==group.Id).Select(x=>x.OptionId).ToHashSet();var options=group.PreferenceOrder.Concat(group.Options.Select(x=>x.Id)).Distinct().Select(id=>{var o=group.Options.Single(x=>x.Id==id);return new ProductionAlternativeOption(id,items[o.Ingredient.InventoryItemId].Name,!ineligible.Contains(id));}).ToArray();var selected=formula.Ingredients.FirstOrDefault(x=>x.GroupId==group.Id)?.OptionId;Alternatives.Add(new(){FormulaVersionId=formula.Version.Id,GroupId=group.Id,Label=$"Grupo {n} · {formula.Version.Name}",Options=options,Selected=options.FirstOrDefault(x=>x.Id==selected)});}}
+        foreach(var choice in Alternatives)choice.PropertyChanged+=PlanChanged;
         PreviewReady=true;PreviewConfirmable=result.CanConfirm;PreviewState=result.CanConfirm?"Plan calculado. El stock mostrado es informativo y se validará de nuevo al confirmar.":HumanProblems(result);Notify();
     });
     private static string HumanProblems(ProductionPreview value)

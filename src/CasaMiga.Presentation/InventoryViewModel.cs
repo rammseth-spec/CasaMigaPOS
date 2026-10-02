@@ -50,7 +50,7 @@ public sealed record InventoryHistoryRowView(InventoryMovementRow Row)
     public string Before => InventoryDisplay.Format(Row.BalanceBeforeAtomic, Dimension);
     public string After => InventoryDisplay.Format(Row.BalanceAfterAtomic, Dimension);
     public string User => Row.ActorName;
-    public string Reason => Row.ReasonCode ?? "—";
+    public string Reason => UiLabels.MovementReason(Row.ReasonCode);
     public string Reference => Row.ExternalReference ?? "—";
     public string OperationId => Row.OperationId.ToString("D");
 }
@@ -131,7 +131,9 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
         SelectedItem = Items.FirstOrDefault(x => x.Id == choice.Id);
     });
     public IReadOnlyList<InventoryRowView> Items { get; private set; } = [];
-    public InventoryRowView? SelectedItem { get; set; }
+    private InventoryRowView? selectedItem;
+    public InventoryRowView? SelectedItem { get => selectedItem; set { if (selectedItem == value) return; selectedItem = value; Notify(); } }
+    public bool CanOpenDetail => Ready && CanView && SelectedItem is not null;
     public string PageLabel { get; private set; } = "";
     public bool HasPrevious => page > 0;
     public bool HasNext { get; private set; }
@@ -149,7 +151,9 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
     public IReadOnlyList<InventoryUnitView> Units => Detail?.Units.Select(x => new InventoryUnitView(x)).ToArray() ?? [];
     public IReadOnlyList<InventoryLinkView> ProductLinks =>
         Detail?.ProductLinks.Where(x => x.Active).Select(x => new InventoryLinkView(x)).ToArray() ?? [];
-    public InventoryLinkView? SelectedLink { get; set; }
+    private InventoryLinkView? selectedLink;
+    public InventoryLinkView? SelectedLink { get => selectedLink; set { if (selectedLink == value) return; selectedLink = value; Notify(); } }
+    public bool CanUnlink => Ready && CanConfigure && SelectedLink is not null;
     public string UnitFactorLabel => $"Cantidad por presentación completa ({InventoryDisplay.CaptureUnit(Detail?.Item.Dimension ?? InventoryDimension.Count)})";
     public string LinkQuantityLabel => $"Cantidad por unidad vendida ({InventoryDisplay.CaptureUnit(Detail?.Item.Dimension ?? InventoryDimension.Count)})";
     public IReadOnlyList<InventoryHistoryRowView> History { get; private set; } = [];
@@ -181,7 +185,9 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
 
     public string ProductSearch { get; set; } = "";
     public IReadOnlyList<ProductRow> Products { get; private set; } = [];
-    public ProductRow? SelectedProduct { get; set; }
+    private ProductRow? selectedProduct;
+    public ProductRow? SelectedProduct { get => selectedProduct; set { if (selectedProduct == value) return; selectedProduct = value; Notify(); } }
+    public bool CanLinkSelected => Ready && CanConfigure && SelectedProduct is not null;
     public string LinkQuantityAtomic { get; set; } = "";
     public string ProductPageLabel { get; private set; } = "";
     public bool HasProductPrevious => productPage > 0;
@@ -384,7 +390,7 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
             .FirstOrDefault(x => x.InventoryItemId == detailId.Value && x.InventoryLocationId == Detail.MainLocation.Id);
         ReconciliationWarning = status is { Consistent: false };
         ReconciliationMessage = ReconciliationWarning
-            ? "ADVERTENCIA: El saldo materializado no coincide con el ledger. No se realizó ninguna reparación."
+            ? "ADVERTENCIA: La existencia registrada no coincide con el historial de movimientos. No se realizó ninguna reparación."
             : "Inventario consistente.";
         if (!preserveMessage) Message = "";
     }
@@ -491,12 +497,13 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
     public static string KindLabel(InventoryItemKind value) => value switch
         { InventoryItemKind.RawMaterial => "Materia prima", InventoryItemKind.FinishedGood => "Producto terminado",
           InventoryItemKind.Packaging => "Empaque", InventoryItemKind.Supply => "Insumo", _ => value.ToString() };
-    public static string DimensionLabel(InventoryDimension value) => value switch
-        { InventoryDimension.Mass => "Masa", InventoryDimension.Volume => "Volumen", InventoryDimension.Count => "Conteo", _ => value.ToString() };
+    public static string DimensionLabel(InventoryDimension value) => UiLabels.Dimension(value);
     public static string MovementLabel(InventoryMovementKind value) => value switch
         { InventoryMovementKind.OpeningBalance => "Saldo inicial", InventoryMovementKind.Receipt => "Entrada",
           InventoryMovementKind.AdjustmentGain => "Ajuste positivo", InventoryMovementKind.AdjustmentLoss => "Ajuste negativo",
-          InventoryMovementKind.Waste => "Merma", InventoryMovementKind.SaleConsumption => "Venta", _ => value.ToString() };
+          InventoryMovementKind.Waste => "Merma", InventoryMovementKind.SaleConsumption => "Venta",
+          InventoryMovementKind.ProductionConsumption => "Consumo de producción", InventoryMovementKind.ProductionOutput => "Salida de producción",
+          InventoryMovementKind.Return => "Devolución", InventoryMovementKind.Transfer => "Transferencia", _ => "Movimiento no disponible" };
     public static string ErrorMessage(InventoryError error) => error switch
     {
         InventoryError.Unauthorized => "No tienes permiso para realizar esta operación.",

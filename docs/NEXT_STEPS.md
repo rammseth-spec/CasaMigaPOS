@@ -1,4 +1,12 @@
-# Checkpoint de Inventario — reanudar revisión manual en Saldo inicial
+# Próximo paso — smoke manual de 1K.3A
+
+1K.3A implementada y verificada: 672/672, Release 0/0, schema 16 intacto. Leer `PHASE_1K3A_REPORT.md`, que conserva completo el backlog observado y el checklist. Abrir `work/Abrir-Casa-Miga-1K3A.cmd` para revisar la build equivalente a R2. Comprobar rueda sobre página/tablas vacías/tablas con filas, ComboBox cerrado y abierto, teclado/barras/touchpad, etiquetas españolas, ausencia de OperationId, estados vacíos y botones deshabilitados. No guardar ni confirmar operaciones durante esta revisión.
+
+**Harina ya tiene 50 kg. No repetir Saldo inicial.** HAR-BULTO-25KG sigue activa y equivale a 25 kg. El saldo real fue capturado por el usuario antes de 1K.3A; el trabajo de esta subfase no modificó la base original.
+
+Después del smoke y de una nueva autorización: FASE 1K.3B, usabilidad específica de Inventario (búsqueda/limpieza, cantidades/equivalencias, vista previa y ayudas), conservando idempotencia y datos existentes. Modelo recomendado GPT-6 Astra, Ultra. 1K.3C y 1K.3D permanecen posteriores; no cargar ingredientes/recetas/perfiles reales, crear producciones o activar consumo automático. FASE 1K continúa abierta. Detenerse después del reporte y commit único autorizado de 1K.3A; no push.
+
+## Registro anterior — checkpoint de Inventario
 
 El usuario autorizó el 01/10/2026 un único commit del bugfix ya verificado y validado manualmente. El checkpoint incluye código, regresión, reproducción, evidencia y documentación asociada; sin cambios funcionales posteriores, migraciones ni push. Revisión manual siguiente: Inventario → `MP-HAR-001` → Ver detalle → «Saldo inicial», en la copia R2 corregida. La revisión y eventual captura corresponden al usuario; este checkpoint no ejecuta ni inicializa inventario. Detenerse después del reporte. FASE 1K sigue abierta y las mejoras UX continúan pendientes.
 

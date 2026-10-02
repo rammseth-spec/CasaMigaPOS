@@ -1,4 +1,14 @@
-# FASE 1K ABIERTA — corrección bloqueante de Inventario, 01/10/2026
+# FASE 1K ABIERTA — 1K.3A implementada y verificada, 01/10/2026
+
+Baseline limpio `6942c061bf6a68a65d42f57db5b00fbe567d1548`. Base transversal de usabilidad limitada a Presentation: Masa/Volumen/Piezas y motivos/movimientos localizados, scroll anidado opt-in en Inventario/Recetas/Producción, OperationId oculto pero conservado internamente, estados vacíos, acciones inválidas deshabilitadas y componente ContextHelp reutilizable. No rediseño completo ni ayudas específicas. Ver `PHASE_1K3A_REPORT.md` y evidencia `phase1k3a-*`.
+
+Focales 52/52 + 11/11; `scripts/verify.ps1` completo 672/672 (556 + 116), 0 fallidas/omitidas; Release 0 errores/advertencias; diff check correcto. Domain/Application/Infrastructure/migraciones intactos; schema 16. Un único commit autorizado `feat: improve global usability for phase 1K.3A`; SHA final en conversación. Sin push.
+
+**Estado real actualizado por el usuario antes de 1K.3A:** Harina MP-HAR-001 tiene 50 kg, con HAR-BULTO-25KG de 25 kg activa. Los registros históricos siguientes que dicen «sin saldo inicial» corresponden al checkpoint anterior y ya no describen el saldo actual. Copia aislada de sólo lectura confirma los 50 kg; hash de la base original idéntico al inicio/final. Ninguna operación comercial, carga real o impresión ejecutada en esta subfase.
+
+Build de revisión preparada en `src/CasaMiga.Presentation/bin/Phase1K3A`, con configuración local equivalente a R2 y lanzador `work/Abrir-Casa-Miga-1K3A.cmd`. No se inició contra la base original. Smoke humano, touchpad físico y revisión visual pendientes. Mantener backlog 1K.3B Inventario / 1K.3C Recetas / 1K.3D Producción y carga real. Detenerse tras reporte; no iniciar la siguiente subfase.
+
+## Registro anterior — corrección bloqueante de Inventario
 
 Checkpoint Git autorizado el 01/10/2026: un único commit `fix: prevent inventory detail crash after presentation load`, cuyo padre es `353c7e271dfbdfe66b2e2dc8bc6c28e46914a971`. Esta actualización documental queda incluida en ese checkpoint; su SHA final se entrega en conversación. Revisión completa de alcance y hashes de los seis archivos de código/pruebas/probe coincidentes con los verificados: se reutiliza la suite 653/653 y Release 0/0. Migraciones intactas, schema 16, sin push ni operaciones sobre datos. El usuario confirmó detalle sin crash, presentación 25 kg persistida/Activa y Harina sin saldo inicial; puede reanudar la revisión manual en «Saldo inicial». FASE 1K permanece abierta. Los párrafos siguientes registran el estado anterior al checkpoint.
 

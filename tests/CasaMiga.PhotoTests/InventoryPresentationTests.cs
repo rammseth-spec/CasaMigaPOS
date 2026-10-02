@@ -16,7 +16,7 @@ namespace CasaMiga.PhotoTests;
 [DoNotParallelize]
 public sealed class InventoryPresentationTests
 {
-    private static readonly Lazy<Task<Dispatcher>> Ui = new(StartUi);
+
 
     [TestMethod]
     [DataRow(true)]
@@ -135,34 +135,7 @@ public sealed class InventoryPresentationTests
         }
     }
 
-    private static Task<Dispatcher> StartUi()
-    {
-        var ready = new TaskCompletionSource<Dispatcher>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var thread = new Thread(() =>
-        {
-            try
-            {
-                SynchronizationContext.SetSynchronizationContext(new DispatcherSynchronizationContext());
-                var application = new System.Windows.Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-                application.Resources.MergedDictionaries.Add(new ResourceDictionary
-                {
-                    Source = new Uri("/CasaMiga.Presentation;component/Resources/Theme.xaml", UriKind.Relative)
-                });
-                ready.SetResult(application.Dispatcher);
-                Dispatcher.Run();
-            }
-            catch (Exception error) { ready.TrySetException(error); }
-        }) { IsBackground = true, Name = "Inventory WPF regression tests" };
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
-        return ready.Task;
-    }
-
-    private static async Task OnUi(Func<Task> action)
-    {
-        var dispatcher = await Ui.Value;
-        await dispatcher.InvokeAsync(action).Task.Unwrap();
-    }
+    private static Task OnUi(Func<Task> action) => WpfTestHost.OnUi(action);
 
     private sealed class InventoryFixture : IDisposable
     {

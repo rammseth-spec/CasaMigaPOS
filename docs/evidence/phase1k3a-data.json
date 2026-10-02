@@ -1,0 +1,124 @@
+{
+  "date": "2026-10-01",
+  "method": "Byte-identical isolated copy; SQLite mode=ro and query_only=ON. Original database never opened by SQLite. Persisted timestamp strings preserved verbatim.",
+  "original_database_sha256_at_start": "CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D",
+  "original_database_sha256_at_end": "CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D",
+  "original_database_unchanged": true,
+  "copy_database_sha256": "CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D",
+  "schema": 16,
+  "items": [
+    {
+      "id": "31e0d651-1fa3-4314-a9a3-886f618a8750",
+      "code": "MP-HAR-001",
+      "name": "Harina",
+      "kind": "RAW_MATERIAL",
+      "dimension": "MASS",
+      "active": 1,
+      "created_utc": "2026-10-01T05:45:34.2155097+00:00",
+      "modified_utc": "2026-10-01T05:45:34.2155097+00:00"
+    }
+  ],
+  "presentations": [
+    {
+      "id": "3796dab2-9068-4602-bc70-bf3c3b90f059",
+      "item_id": "31e0d651-1fa3-4314-a9a3-886f618a8750",
+      "code": "HAR-BULTO-25KG",
+      "name": "Bulto 25 kg",
+      "dimension": "MASS",
+      "atomic_units_per_whole_unit": 25000000,
+      "active": 1
+    }
+  ],
+  "balances": [
+    {
+      "item_id": "31e0d651-1fa3-4314-a9a3-886f618a8750",
+      "location_id": "10000000-0000-0000-0000-000000000001",
+      "dimension": "MASS",
+      "quantity_atomic": 50000000,
+      "version": 1,
+      "updated_utc": "2026-10-01T17:51:26.3818186+00:00"
+    }
+  ],
+  "movements_already_present": [
+    {
+      "id": "a64c47e1-3bb3-4150-b1e0-7d7bf42c53d9",
+      "operation_id": "3621f14a-9d3d-4427-b721-58f4762f813b",
+      "sequence": 1,
+      "item_id": "31e0d651-1fa3-4314-a9a3-886f618a8750",
+      "location_id": "10000000-0000-0000-0000-000000000001",
+      "dimension": "MASS",
+      "is_opening": 1,
+      "delta_atomic": 50000000,
+      "balance_before_atomic": 0,
+      "balance_after_atomic": 50000000,
+      "capture_unit_code": "HAR-BULTO-25KG",
+      "captured_quantity": "2",
+      "capture_atomic_factor": 25000000
+    }
+  ],
+  "links": [],
+  "inventory_config": [
+    {
+      "id": 1,
+      "state": "DISABLED",
+      "version": 1,
+      "updated_utc": "2026-09-28T23:25:13.866Z",
+      "updated_by": null
+    }
+  ],
+  "foreign_key_violations": [],
+  "protected_table_fingerprints": {
+    "cash_session": {
+      "rows": 2,
+      "sha256": "FF960621E1707E724BFAE616FF298F6D5BF20087327F51ECEC1B54F0D5C8725B"
+    },
+    "cash_count": {
+      "rows": 1,
+      "sha256": "E148661FE61783ADB4AA584192F45B0071EAC2D2A6FA281661F0D32560FCE1FB"
+    },
+    "sale": {
+      "rows": 16,
+      "sha256": "27734D11404A0CA62096BDD74332B2213B0A6A158AE6A98D453C10548F8B9DE5"
+    },
+    "sale_item": {
+      "rows": 36,
+      "sha256": "407F547668F242B3DB4FBAAD4E74F39EAC8C4F7DFEB4ECF3ED7CE43450E6B565"
+    },
+    "payment": {
+      "rows": 16,
+      "sha256": "D6C61C5A0905CDC99B8EB629D43A78719994A50A10E8467D9CB264BC2A25A2C8"
+    },
+    "sale_sequence": {
+      "rows": 1,
+      "sha256": "831151B1835073AD43823202CDA1D0BED1D62C51FB114CE737D40628C5E64AF6"
+    },
+    "receipt_snapshot": {
+      "rows": 15,
+      "sha256": "3BA0419A201F7ACCF73C2E76E1C7E79487AA393A710714C31BEB4E5003736C6C"
+    },
+    "receipt_print_request": {
+      "rows": 17,
+      "sha256": "595599BDB479550A03597993B5E8ADB25D4F43E474389FBAB673B50AF9EC78EF"
+    },
+    "receipt_print_event": {
+      "rows": 34,
+      "sha256": "3762404D8E1C766D4E9BBCC670C2BA2B8771789054875D99CCA87E36EDA40395"
+    },
+    "inventory_operation": {
+      "rows": 1,
+      "sha256": "C73556C5A5A22A4F57CF694B095039C09F5A7EE4ED6EBBD6C451C9ACC1B80546"
+    },
+    "inventory_movement": {
+      "rows": 1,
+      "sha256": "41FF96175DABD444E1459A072EDABA33B555318C5ED88178F5FD05973345B27B"
+    },
+    "inventory_balance": {
+      "rows": 1,
+      "sha256": "B20DDF502E074DC0EB7709A50C14EA118B4CC0A98006DF70F0FBA9C3A89D0816"
+    },
+    "product_inventory_link": {
+      "rows": 0,
+      "sha256": "4F53CDA18C2BAA0C0354BB5F9A3ECBE5ED12AB4D8E11BA873C2F11161202B945"
+    }
+  }
+}
