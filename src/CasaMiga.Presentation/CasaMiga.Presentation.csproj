@@ -2,4 +2,7 @@
   <PropertyGroup><TargetFramework>net10.0-windows</TargetFramework><UseWPF>true</UseWPF><OutputType>WinExe</OutputType><ApplicationIcon>Assets\CasaMiga.ico</ApplicationIcon></PropertyGroup>
   <ItemGroup><ProjectReference Include="../CasaMiga.Infrastructure/CasaMiga.Infrastructure.csproj" /></ItemGroup>
   <ItemGroup><Resource Include="Assets/CasaMigaLogo.png" /><Resource Include="Assets/CasaMiga.ico" /></ItemGroup>
+  <ItemGroup Condition="'$(CasaMigaReviewBuild)' != ''">
+    <AssemblyMetadata Include="CasaMiga.ReviewBuild" Value="$(CasaMigaReviewBuild)" />
+  </ItemGroup>
 </Project>

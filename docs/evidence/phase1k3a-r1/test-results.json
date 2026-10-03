@@ -1,0 +1,47 @@
+[
+  {
+    "Path": "TestResults/phase1k3a-r1-focal.trx",
+    "Sha256": "6DBC27A3F3C3EC9E006E71BF1D34645AED8DBAAAFCEDC10EF1033BA5D91E560F",
+    "Total": 18,
+    "Passed": 18,
+    "Failed": 0,
+    "NotExecuted": 0,
+    "Outcome": "Completed"
+  },
+  {
+    "Path": "TestResults/phase1k3a-r1-baseline-probe.trx",
+    "Sha256": "F25F518CE10604BF52D5B6B82753AA86D7202BDDFC9E69E92322DDB2E17A2BEE",
+    "Total": 6,
+    "Passed": 3,
+    "Failed": 3,
+    "NotExecuted": 0,
+    "Outcome": "Failed"
+  },
+  {
+    "Path": "TestResults/phase1k3a-r1-r2-probe.trx",
+    "Sha256": "F55150D94BC1DB3C3A9B9FB74EE4E2713A1C7D4DF687CFDA2F4BEC6630CEDFBB",
+    "Total": 3,
+    "Passed": 0,
+    "Failed": 3,
+    "NotExecuted": 0,
+    "Outcome": "Failed"
+  },
+  {
+    "Path": "TestResults/foundation_net10.0_20261003114812.trx",
+    "Sha256": "86720B270C6BFEAE27F51225DF9E79FF64B8F14A5EE3CF8C02634007A5EB100E",
+    "Total": 123,
+    "Passed": 123,
+    "Failed": 0,
+    "NotExecuted": 0,
+    "Outcome": "Completed"
+  },
+  {
+    "Path": "TestResults/foundation_net10.0_20261003115216.trx",
+    "Sha256": "361DCB31C2CCAD0187936D2D64E2E681E54743942FC5708EDEFC63A1B89DE809",
+    "Total": 556,
+    "Passed": 556,
+    "Failed": 0,
+    "NotExecuted": 0,
+    "Outcome": "Completed"
+  }
+]

@@ -52,7 +52,7 @@ public partial class App : System.Windows.Application
             var model = new MainViewModel(); var window = new MainWindow { DataContext = model };
             if (options.IsDevelopment)
             {
-                window.Title += " · DESARROLLO";
+                window.Title = DevelopmentBuildIdentity.WindowTitle(window.Title, options.IsDevelopment);
                 if (options.PreviewWidth is >= 1024 and <= 1920 && options.PreviewHeight is >= 720 and <= 1080)
                 { window.Width = options.PreviewWidth; window.Height = options.PreviewHeight; }
             }

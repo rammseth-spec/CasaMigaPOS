@@ -1,4 +1,19 @@
-# Próximo paso — smoke manual de 1K.3A
+# Próximo paso — smoke manual de 1K.3A-R1
+
+**Corrección técnica completada; smoke manual R1 pendiente.** Usar la instancia que Codex deja abierta al terminar, identificada `Casa Miga POS · Caja · DESARROLLO · 1K.3A-R1`. No depender del acceso anclado. Launcher específico: `work/Abrir-Casa-Miga-1K3A-R1.cmd`; DataDirectory aislado: `work/phase1k3a-r1-smoke-20261003`. La base R2 original debe permanecer byte-idéntica.
+
+Repetir únicamente las partes fallidas, sin guardar operaciones:
+
+1. Inventario → Harina → Editar → Tipo abierto → Esc cierra sólo el desplegable, sin abandonar editor ni salir de fullscreen. Después comprobar Esc normal y F11. Volver sin guardar.
+2. Recetas → texto «Puedes crear y editar recetas y perfiles», estado vacío y Ver detalle deshabilitado sin selección.
+3. Nueva receta → Dimensión muestra Masa/Volumen/Piezas. Cancelar.
+4. Producción → Nueva producción → estado vacío sin perfiles; Agregar/Quitar/Calcular/Crear deshabilitados, incluso Quitar con la única fila seleccionada. Cancelar.
+
+Harina sigue con **50 kg** y presentación HAR-BULTO-25KG de 25 kg activa. No repetir Saldo inicial, cargar recetas/perfiles, crear producción, vender ni imprimir. Suite 679/679, focales 18/18, Release 0/0. Leer `PHASE_1K3A_R1_REPORT.md`, `evidence/phase1k3a-r1-verification.md` y la nueva regla permanente `review-builds.md`. La comparación de binarios no identifica con certeza qué versión abrió el usuario anteriormente.
+
+Detenerse tras entrega R1. No iniciar 1K.3B ni declarar aprobación humana hasta confirmación explícita. Para una siguiente subfase se requiere nueva autorización.
+
+## Registro anterior — smoke de 1K.3A
 
 1K.3A implementada y verificada: 672/672, Release 0/0, schema 16 intacto. Leer `PHASE_1K3A_REPORT.md`, que conserva completo el backlog observado y el checklist. Abrir `work/Abrir-Casa-Miga-1K3A.cmd` para revisar la build equivalente a R2. Comprobar rueda sobre página/tablas vacías/tablas con filas, ComboBox cerrado y abierto, teclado/barras/touchpad, etiquetas españolas, ausencia de OperationId, estados vacíos y botones deshabilitados. No guardar ni confirmar operaciones durante esta revisión.
 

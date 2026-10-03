@@ -52,6 +52,7 @@ public partial class InventoryView : UserControl
     private void BackClick(object sender, RoutedEventArgs e) => Model.Back();
     private async void InventoryKeyDown(object sender, KeyEventArgs e)
     {
+        if (PopupEscape.TryHandle(e)) return;
         if (e.Key == Key.Escape && !Model.IsList) { e.Handled = true; Model.Back(); }
         else if (e.Key == Key.Enter && Keyboard.FocusedElement == SearchBox)
             { e.Handled = true; await Model.SearchAsync(); }

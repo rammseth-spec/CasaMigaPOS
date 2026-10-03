@@ -10,4 +10,10 @@ No borrar ventas completadas ni movimientos; usar reversos trazables.
 Actualizar estado, próximos pasos y evidencia después de cada etapa. No declarar pruebas no ejecutadas.
 Antes de cerrar una modificación de producto: scripts/verify.ps1, revisión del diff y documentación actualizada. Para cierres exclusivamente documentales, verificar diff y que src/tests/migrations permanezcan intactos; no repetir suites costosas sin causa.
 
+## Builds de revisión manual — regla permanente
+
+Todo build destinado a revisión manual debe tener identificador inequívoco de desarrollo, carpeta de salida y launcher específicos. Verificar launcher → ejecutable/DLL, DataDirectory, hashes y título visible antes de entregarlo. No depender del acceso anclado de Windows.
+Después de terminar pruebas, documentación y checkpoint autorizado, ejecutar automáticamente ese launcher exacto y dejar la aplicación abierta para el usuario, sin iniciar sesión ni realizar operaciones o imprimir. Esta apertura no equivale a aprobación humana del smoke.
+La seguridad de datos tiene prioridad: usar copia aislada cuando la base original deba permanecer inmutable; comprobar procesos/DirectoryLease y no matar instancias ni abrir concurrencia insegura. Si no puede abrirse con seguridad, detener la apertura y reportarlo. No cambiar configuración física de impresión. Consultar docs/review-builds.md.
+
 

@@ -1,4 +1,14 @@
-# FASE 1K ABIERTA — 1K.3A implementada y verificada, 01/10/2026
+# FASE 1K ABIERTA — 1K.3A-R1, 03/10/2026
+
+**Corrección técnica completada; smoke manual R1 pendiente.** Baseline limpio `6bf3b5256290bc053003b8b5f67e2a4a6d1148bc`. Esc con ComboBox abierto se atiende antes de fullscreen/navegación, conservando editor, selección y F11. Los hallazgos 2–7 ya se renderizan correctamente en la DLL Phase1K3A conservada; nuevas pruebas sobre MainWindow real lo demuestran. R2 falla esas pruebas, pero no existe evidencia suficiente para identificar qué proceso se usó en el smoke histórico. Se corrigió también el launcher de desarrollo que ocultaba IsDevelopment al establecer CASAMIGA_DATA_DIR.
+
+Focales **18/18**; suite completa scripts/verify.ps1 **679/679** (556 + 123), 0 fallidas/omitidas; Release 0 errores/advertencias. Nuevas pruebas de popup Esc, fullscreen/F11, texto/estado vacío/botones y dimensiones visibles con SelectedValue enum. Scroll/rueda aprobados conservados y regresados. Ver `PHASE_1K3A_R1_REPORT.md` y `evidence/phase1k3a-r1-verification.md`.
+
+Entrega separada en `src/CasaMiga.Presentation/bin/Phase1K3A-R1/`, launcher `work/Abrir-Casa-Miga-1K3A-R1.cmd`, título `DESARROLLO · 1K.3A-R1`. DataDirectory aislado `work/phase1k3a-r1-smoke-20261003`, copiado coherentemente de la base protegida. La original mantiene SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`, Harina 50 kg y Bulto 25 kg activo. Schema 16 intacto, sin 017; Domain/Application/Infrastructure intactos; impresión física/configuración sin cambios.
+
+Regla permanente registrada en AGENTS.md y `review-builds.md`: verificar y abrir automáticamente el launcher exacto al terminar el checkpoint; dejar la aplicación en acceso, sin login automatizado ni depender del anclado de Windows. La observación final de apertura se informa en conversación/reporte local posterior al commit único autorizado `fix: reconcile phase 1K.3A manual smoke`. No push. No operaciones sobre datos reales. No iniciar 1K.3B; esperar el smoke manual.
+
+## Registro anterior — 1K.3A, 01/10/2026
 
 Baseline limpio `6942c061bf6a68a65d42f57db5b00fbe567d1548`. Base transversal de usabilidad limitada a Presentation: Masa/Volumen/Piezas y motivos/movimientos localizados, scroll anidado opt-in en Inventario/Recetas/Producción, OperationId oculto pero conservado internamente, estados vacíos, acciones inválidas deshabilitadas y componente ContextHelp reutilizable. No rediseño completo ni ayudas específicas. Ver `PHASE_1K3A_REPORT.md` y evidencia `phase1k3a-*`.
 

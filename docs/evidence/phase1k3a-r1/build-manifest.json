@@ -1,0 +1,93 @@
+{
+  "Date": "2026-10-03",
+  "InitialHead": "6bf3b5256290bc053003b8b5f67e2a4a6d1148bc",
+  "ReviewBuild": "1K.3A-R1",
+  "Configuration": "Release",
+  "OutputPath": "bin/Phase1K3A-R1/",
+  "DataDirectory": "C:\\Users\\ramms\\Documents\\ChatGPT\\Casa Miga POS V1\\work\\phase1k3a-r1-smoke-20261003",
+  "ProtectedDatabase": "C:\\Users\\ramms\\Documents\\ChatGPT\\Casa Miga POS V1\\work\\phase1k2c-r2-smoke-20260928\\casamiga.db",
+  "ProtectedDatabaseSha256": "CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D",
+  "ProtectedPrintingSha256": "88843EAF9F452FD94C7CDEA77A71657923DD3E123D082DB9EEEDEB9277464461",
+  "Sources": [
+    {
+      "Path": "src/CasaMiga.Presentation/App.xaml.cs",
+      "Sha256": "1AD3359F75BEE6DDA92A0EE3126FD764222095DFD0B6DE427544207C2E177539"
+    },
+    {
+      "Path": "src/CasaMiga.Presentation/CasaMiga.Presentation.csproj",
+      "Sha256": "D29B4AF252839623620BA25E7C2E08FC0A6535F159850E34866F356490507125"
+    },
+    {
+      "Path": "src/CasaMiga.Presentation/DevelopmentBuildIdentity.cs",
+      "Sha256": "977DBC875EF3015D7A6D0E3CBE7200DDE74E3B50A57EC438C53B4C668959D57B"
+    },
+    {
+      "Path": "src/CasaMiga.Presentation/InventoryView.xaml.cs",
+      "Sha256": "97085C8AC207E8939C2CA11BE43B318BAE4C6AFAC541C226DCAE7FA7E53B8191"
+    },
+    {
+      "Path": "src/CasaMiga.Presentation/MainWindow.xaml.cs",
+      "Sha256": "4399DE1B70426472EF167F5AB2B6BF1A646730017E6432036E8882C2E7590A81"
+    },
+    {
+      "Path": "src/CasaMiga.Presentation/PopupEscape.cs",
+      "Sha256": "C69E4AF447C934C63838EF7860D970BCB6729EB895672D10BD9BF16ECAD88B8C"
+    },
+    {
+      "Path": "tests/CasaMiga.PhotoTests/DevelopmentBuildIdentityTests.cs",
+      "Sha256": "ADF08EB3927F532024763BED0F234026BA4536FED52CA26FF3886154548F9016"
+    },
+    {
+      "Path": "tests/CasaMiga.PhotoTests/ManualSmokeReconciliationTests.cs",
+      "Sha256": "E7B7AD05A231D6A4C58E99812E9DD4525CBFD9E70556F47A7D356068C5CC2E44"
+    },
+    {
+      "Path": "tests/CasaMiga.PhotoTests/PopupEscapePresentationTests.cs",
+      "Sha256": "04601BFA6BC104418C913B57918870E6AE55A67A67B8BBCC4E5680698364929B"
+    }
+  ],
+  "Artifacts": [
+    {
+      "Path": "src/CasaMiga.Presentation/bin/Phase1K3A-R1/CasaMiga.Presentation.exe",
+      "Sha256": "BD95F88D9518AF4C2E88AAA99AF1DBF2FB92CDDE93FEB5FD8EDBDBA421B5A1FC",
+      "Length": 217088,
+      "LastWriteTimeUtc": "2026-10-03T07:55:13.0604852Z",
+      "ProductVersion": "1.0.0+6bf3b5256290bc053003b8b5f67e2a4a6d1148bc"
+    },
+    {
+      "Path": "src/CasaMiga.Presentation/bin/Phase1K3A-R1/CasaMiga.Presentation.dll",
+      "Sha256": "F00349E76F6B4F65261AFBCC464F7F44F30C18C0C574FA061B371B660A949BAC",
+      "Length": 675840,
+      "LastWriteTimeUtc": "2026-10-03T07:55:13.0030145Z",
+      "ProductVersion": "1.0.0+6bf3b5256290bc053003b8b5f67e2a4a6d1148bc"
+    },
+    {
+      "Path": "tests/CasaMiga.PhotoTests/bin/Phase1K3A-R1/CasaMiga.PhotoTests.dll",
+      "Sha256": "10C7802A612AFD4141F867D684EBA1DCD57A96ECB03C0D3AB9FBF597B10CA0AB",
+      "Length": 136704,
+      "LastWriteTimeUtc": "2026-10-03T07:55:14.557782Z",
+      "ProductVersion": "1.0.0+6bf3b5256290bc053003b8b5f67e2a4a6d1148bc"
+    },
+    {
+      "Path": "tests/CasaMiga.Tests/bin/Phase1K3A-R1/CasaMiga.Tests.dll",
+      "Sha256": "D0B9A553016E88D1A1E35566341B22E84E058064AFDF413BFC36BE4D21ED38F7",
+      "Length": 713216,
+      "LastWriteTimeUtc": "2026-10-03T17:46:34.9190476Z",
+      "ProductVersion": "1.0.0+6bf3b5256290bc053003b8b5f67e2a4a6d1148bc"
+    },
+    {
+      "Path": "work/Abrir-Casa-Miga-1K3A-R1.cmd",
+      "Sha256": "866B76DC961D7B53DDD5AA670FEDF2D709123162A9438B731C13A90F214D329D",
+      "Length": 208,
+      "LastWriteTimeUtc": "2026-10-03T17:47:48.5032485Z",
+      "ProductVersion": null
+    },
+    {
+      "Path": "src/CasaMiga.Presentation/bin/Phase1K3A-R1/development.settings.json",
+      "Sha256": "F8398CFBC550AC65E3861F8EC9E28DFA369FC368D5081ACCDC77FA39D24474F0",
+      "Length": 194,
+      "LastWriteTimeUtc": "2026-10-03T17:47:48.4998539Z",
+      "ProductVersion": null
+    }
+  ]
+}

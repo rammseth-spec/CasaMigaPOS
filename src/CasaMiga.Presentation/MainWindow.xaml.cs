@@ -57,6 +57,7 @@ public partial class MainWindow : Window
     private async void ConfirmCloseClick(object sender, RoutedEventArgs e) => await Model.ConfirmCloseAsync();
     private void WindowKeyDown(object sender, KeyEventArgs e)
     {
+        if (PopupEscape.TryHandle(e)) return;
         if(e.Key==Key.F11)
         { e.Handled=true; ToggleFullScreen(); }
         else if(e.Key==Key.Escape && isFullScreen)
