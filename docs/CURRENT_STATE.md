@@ -1,4 +1,12 @@
-# FASE 1K ABIERTA — 1K.3C, 05/10/2026
+# FASE 1K ABIERTA — 1K.3C-R1, 05/10/2026
+
+**FASE 1K.3C-R1 técnicamente completada; smoke manual R1 pendiente.** El filtro de ingredientes mantiene una colección estable por fila y actualiza candidatos en sitio; así los `ComboBox` materializados conservan el ingrediente asignado, su ID, cantidad, unidad y política durante `SIN-RESULTADOS-999`, `SMOKE-MASA-001` y × Limpiar. Cancelar y reabrir recupera el borrador original. El catálogo filtrado sigue separado y buscar no crea filas automáticamente.
+
+La columna visible ahora se llama «Política de cantidad». ContextHelp admite hasta 520 DIP, se contrae al contenedor, conserva Wrap y Esc, y ofrece instrucciones operativas sintéticas para Rendimiento, política, ingredientes directos, alternativas, preparaciones y versiones. Focales definitivas: **142/142** Recetas/reglas y **41/41** WPF, 0 fallidas/omitidas. Suite completa `scripts/verify.ps1`: **711/711** (558 generales + 153 WPF), Release y build `Phase1K3C-R1` con 0 errores/advertencias; diff check correcto.
+
+Revisión R1: `work/phase1k3c-r1-smoke-20261005`, build `src/CasaMiga.Presentation/bin/Phase1K3C-R1/`, launcher `work/Abrir-Casa-Miga-1K3C-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.3C-R1`. La copia contiene fixtures sintéticas de receta, tres dimensiones, alternativas, preparación y perfil; schema 16, integridad correcta y cero saldos/movimientos `SMOKE-*`. Base protegida SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Domain/Application/Infrastructure/SQLite/migraciones intactos; sin 017, datos reales, operaciones o impresión. Ver `PHASE_1K3C_R1_REPORT.md`. No iniciar 1K.3D.
+
+## Registro anterior — 1K.3C
 
 **FASE 1K.3C técnicamente completada; smoke manual pendiente.** El usuario aprobó manualmente 1K.3B antes de autorizar esta subfase. La entrega mejora exclusivamente Recetas y perfiles productivos en Presentation: búsqueda incremental de ingredientes por código/nombre con 250 ms y × Limpiar; selección válida preservada; unidades guiadas por Masa/Volumen/Piezas; políticas de piezas; versión automática; estados Borrador/Publicada/Activa; grupos y opciones de alternativas separados; preparaciones e ingredientes directos diferenciados; ayudas ContextHelp y botones inválidos deshabilitados. La persistencia y las reglas existentes permanecen intactas.
 

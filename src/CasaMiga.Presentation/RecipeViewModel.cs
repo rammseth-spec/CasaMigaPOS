@@ -33,7 +33,7 @@ public sealed class IngredientEdit:INotifyPropertyChanged
 {
     private RecipeItemChoice? item; private string quantity="1"; private string unit="g";
     private IngredientCountPolicy policy=IngredientCountPolicy.NotApplicable; private int group; private int preference;
-    private IReadOnlyList<RecipeItemChoice> availableItems=[];
+    private readonly ObservableCollection<RecipeItemChoice> availableItems=[];
     public Action? Changed {get;set;}
     public Guid Id {get;set;}=Guid.NewGuid();
     public RecipeItemChoice? Item {get=>item;set{if(Equals(item,value))return;item=value;if(value is not null){var units=InventoryDisplay.Units(value.Dimension);if(!units.Contains(unit))unit=units[0];policy=value.Dimension==InventoryDimension.Count?IngredientCountPolicy.ExactWholeCount:IngredientCountPolicy.NotApplicable;}Raise();}}
@@ -48,7 +48,21 @@ public sealed class IngredientEdit:INotifyPropertyChanged
     public IReadOnlyList<IngredientPolicyChoice> AvailablePolicies=>Item?.Dimension==InventoryDimension.Count
         ? [new(IngredientCountPolicy.ExactWholeCount,"Sólo piezas completas"),new(IngredientCountPolicy.CeilingWholeCount,"Redondear hacia arriba")]
         : [new(IngredientCountPolicy.NotApplicable,"Cantidad exacta")];
-    public IReadOnlyList<RecipeItemChoice> AvailableItems {get=>availableItems;set{availableItems=value;Raise();}}
+    public ObservableCollection<RecipeItemChoice> AvailableItems=>availableItems;
+    public void UpdateAvailableItems(IEnumerable<RecipeItemChoice> candidates)
+    {
+        var desired=candidates.DistinctBy(x=>x.Id).ToArray();
+        if(Item is {} selected&&!desired.Any(x=>x.Id==selected.Id))desired=[selected,..desired];
+        for(var index=0;index<desired.Length;index++)
+        {
+            var currentIndex=-1;
+            for(var position=0;position<availableItems.Count;position++)
+                if(availableItems[position].Id==desired[index].Id){currentIndex=position;break;}
+            if(currentIndex<0)availableItems.Insert(index,desired[index]);
+            else if(currentIndex!=index)availableItems.Move(currentIndex,index);
+        }
+        while(availableItems.Count>desired.Length)availableItems.RemoveAt(availableItems.Count-1);
+    }
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Raise(){PropertyChanged?.Invoke(this,new(null));Changed?.Invoke();}
 }
@@ -118,11 +132,12 @@ public sealed class RecipeViewModel(RecipeService service,InventoryService inven
         new(IngredientCountPolicy.ExactWholeCount,"Sólo piezas completas"),
         new(IngredientCountPolicy.CeilingWholeCount,"Redondear hacia arriba a pieza completa")
     ];
-    public string YieldHelpText=>"Cantidad total que produce esta versión. Se usa como base para calcular proporcionalmente sus ingredientes cuando otra preparación requiere una cantidad distinta.";
-    public string PolicyHelpText=>"En Masa y Volumen la cantidad se usa exactamente. En Piezas puedes exigir un número entero exacto o permitir que el cálculo redondee hacia arriba a la siguiente pieza completa.";
-    public string AlternativesHelpText=>"Cada grupo reúne ingredientes que pueden sustituirse entre sí. La opción 1 se intenta primero; cada grupo necesita al menos dos opciones antes de guardar.";
-    public string PreparationsHelpText=>"Una preparación es otra receta publicada que este perfil necesita por cada pieza del producto terminado. Su cantidad y unidad deben corresponder al rendimiento de esa receta.";
-    public string PublishedNotice=>"Las versiones publicadas forman parte del historial y no se editan. Para hacer cambios crea una nueva versión.";
+    public string YieldHelpText=>"Qué es: la cantidad total que produce esta versión.\n\nCómo se usa: escribe la cantidad, elige su dimensión y después una unidad compatible. El sistema usa este rendimiento como base para calcular proporcionalmente los ingredientes cuando otra preparación necesita una cantidad distinta.\n\nEjemplos sintéticos: si produce 1 kg, captura Rendimiento = 1, Dimensión = Masa y Unidad = kg. Si produce 20 piezas, captura 20, Piezas y pieza.\n\nImportante: usa una cantidad mayor que cero y no mezcles una dimensión con una unidad diferente.";
+    public string PolicyHelpText=>"Qué es: indica cómo tratar la cantidad calculada de cada ingrediente.\n\nCómo se usa: para Masa y Volumen se conserva la cantidad exacta. Para Piezas, «Sólo piezas completas» exige que el cálculo ya produzca un número entero; si da 2.4, esa opción no es válida. «Redondear hacia arriba» convierte una necesidad de 2.4 piezas en 3 piezas.\n\nImportante: elige una política de piezas sólo para artículos cuya unidad es pieza.";
+    public string DirectIngredientsHelpText=>"Qué es: un ingrediente que la fórmula o el perfil utiliza directamente.\n\nCómo se usa: busca por código o nombre, agrega una fila, selecciona el ingrediente, captura una cantidad y elige una unidad compatible. Usa Política de cantidad cuando el ingrediente se mide en piezas.\n\nEjemplo sintético: Ingrediente masa sintético, Cantidad = 500, Unidad = g significa que la fórmula utiliza 500 g de ese ingrediente.\n\nImportante: el buscador limita los candidatos disponibles; no cambia los ingredientes ya asignados.";
+    public string AlternativesHelpText=>"Qué es: un grupo reúne ingredientes que pueden sustituirse entre sí. Opción 1 tiene la primera preferencia, después Opción 2 y las siguientes. Cada opción puede usar una cantidad y unidad distintas.\n\nCómo se usa: «Nuevo grupo de alternativas» crea un conjunto independiente. Selecciona una fila y usa «Agregar opción al grupo» para añadir otra opción al grupo actual. Cada grupo necesita al menos dos opciones válidas antes de guardar.\n\nEjemplo sintético: Grupo 1 puede contener Opción A = 10 g y Opción B = 12 g. Agregar opción crea Opción C dentro de Grupo 1; Nuevo grupo crea Grupo 2.\n\nImportante: el orden expresa preferencia. No agrupes ingredientes que deban utilizarse al mismo tiempo.";
+    public string PreparationsHelpText=>"Qué es: una preparación es otra receta publicada y reutilizable que forma parte del producto; un ingrediente directo se agrega sin pasar por otra receta.\n\nCómo se usa: selecciona la preparación publicada, captura la cantidad necesaria por pieza y elige una unidad compatible con su rendimiento. Usa «Agregar preparación» para incluir otro componente.\n\nEjemplo sintético: un perfil puede requerir 25 g de Preparación sintética de revisión por cada pieza terminada.\n\nImportante: una preparación debe estar publicada para poder seleccionarse. Si cambia, crea y publica una nueva versión.";
+    public string PublishedNotice=>"BORRADOR: se puede editar y guardar. PUBLICADA: queda cerrada e inmutable para conservar el historial. ACTIVA: es la versión vigente para los usos correspondientes.\n\nPara cambiar versiones publicadas, usa «Crear nueva versión» y publica el nuevo borrador cuando esté revisado; no se modifica silenciosamente el historial.";
     public event PropertyChangedEventHandler? PropertyChanged; private void Notify()=>PropertyChanged?.Invoke(this,new(null));
     private void Set<T>(ref T field,T value){if(EqualityComparer<T>.Default.Equals(field,value))return;field=value;Notify();}
 
@@ -161,7 +176,7 @@ public sealed class RecipeViewModel(RecipeService service,InventoryService inven
         screen="formulaEditor";
     });
     private IngredientEdit Edit(FormulaIngredient value)=>Prepare(new IngredientEdit{Item=Items.SingleOrDefault(x=>x.Id==value.InventoryItemId),Quantity=InventoryDisplay.Number(value.Quantity.AtomicUnits,value.Quantity.Dimension),Unit=InventoryDisplay.Unit(value.Quantity.AtomicUnits,value.Quantity.Dimension),Policy=value.CountPolicy});
-    private IngredientEdit Prepare(IngredientEdit row){row.Changed=Notify;row.AvailableItems=ChoicesFor(row.Item);return row;}
+    private IngredientEdit Prepare(IngredientEdit row){row.Changed=Notify;row.UpdateAvailableItems(IngredientMatches);return row;}
     private FormulaRequirementEdit Prepare(FormulaRequirementEdit row){row.Changed=Notify;return row;}
     public void AddIngredient(bool alternative){var row=Prepare(new IngredientEdit());if(alternative){row.Group=Alternatives.Select(x=>x.Group).DefaultIfEmpty(0).Max()+1;row.Preference=1;Alternatives.Add(row);SelectedAlternative=row;}else{Ingredients.Add(row);SelectedIngredient=row;}Notify();}
     public void AddAlternativeOption(){if(SelectedAlternative is not {} selected)return;var group=selected.Group;var row=Prepare(new IngredientEdit{Group=group,Preference=Alternatives.Where(x=>x.Group==group).Select(x=>x.Preference).DefaultIfEmpty(0).Max()+1});Alternatives.Add(row);SelectedAlternative=row;Notify();}
@@ -231,10 +246,9 @@ public sealed class RecipeViewModel(RecipeService service,InventoryService inven
     private void ApplyIngredientFilter()
     {
         var search=IngredientSearch.Trim();IngredientMatches=string.IsNullOrEmpty(search)?Items:Items.Where(x=>x.Code.Contains(search,StringComparison.OrdinalIgnoreCase)||x.DisplayName.Contains(search,StringComparison.OrdinalIgnoreCase)).ToArray();
-        foreach(var row in Ingredients.Concat(Alternatives).Concat(DirectIngredients))row.AvailableItems=ChoicesFor(row.Item);
+        foreach(var row in Ingredients.Concat(Alternatives).Concat(DirectIngredients))row.UpdateAvailableItems(IngredientMatches);
         Notify();
     }
-    private IReadOnlyList<RecipeItemChoice> ChoicesFor(RecipeItemChoice? selected)=>selected is null||IngredientMatches.Any(x=>x.Id==selected.Id)?IngredientMatches:[selected,..IngredientMatches];
     private static bool ValidQuantity(string text,InventoryDimension dimension,string unit)
     {
         try{InventoryDisplay.ParseOperational(text,dimension,unit);return true;}catch{return false;}

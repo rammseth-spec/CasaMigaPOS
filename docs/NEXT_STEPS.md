@@ -1,4 +1,18 @@
-# Próximo paso — smoke manual de 1K.3C
+# Próximo paso — smoke manual de 1K.3C-R1
+
+Usar únicamente la instancia `Casa Miga POS · Caja · DESARROLLO · 1K.3C-R1`, abierta desde `work/Abrir-Casa-Miga-1K3C-R1.cmd`, con DataDirectory aislado `work/phase1k3c-r1-smoke-20261005`. No usar el acceso anclado ni el build 1K.3C anterior.
+
+1. Login → Recetas → `SMOKE-REC-001` → Versión 2 → Editar borrador; confirmar COUNT/VOLUME/MASS visibles.
+2. Buscar `SIN-RESULTADOS-999`; confirmar el mensaje y, sin limpiar, que las tres filas, cantidades, unidades y políticas siguen visibles.
+3. Buscar `SMOKE-MASA-001`; confirmar que MASS es candidato y COUNT/VOLUME siguen visibles. Pulsar × Limpiar y confirmar todo intacto.
+4. Confirmar el encabezado «Política de cantidad».
+5. Abrir las ayudas de Rendimiento, Política de cantidad, Ingredientes directos y Grupos de alternativas; revisar ancho compacto, instrucciones y ejemplo sintético.
+6. En Perfiles de producto, abrir la ayuda de Preparaciones y revisar el mismo criterio.
+7. Cancelar, reabrir Versión 2 y confirmar contenido original intacto. Continuar después con el smoke pendiente de Perfiles de producto.
+
+No guardar cambios, crear datos reales, operar ventas/inventario/caja/producción ni imprimir. No iniciar 1K.3D, Pedidos, carga real, migración 017 o instalador. FASE 1K.3C-R1 queda técnicamente completada, no aprobada ni cerrada, hasta recibir el smoke del usuario.
+
+## Registro anterior — smoke manual de 1K.3C
 
 1K.3B fue aprobada manualmente por el usuario. **1K.3C está técnicamente completada; su smoke manual sigue pendiente.** Usar únicamente la instancia `Casa Miga POS · Caja · DESARROLLO · 1K.3C`, abierta desde `work/Abrir-Casa-Miga-1K3C.cmd`, con DataDirectory `work/phase1k3c-smoke-20261005`. No depender del acceso anclado.
 
