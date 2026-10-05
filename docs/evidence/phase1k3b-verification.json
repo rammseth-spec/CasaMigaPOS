@@ -1,0 +1,351 @@
+{
+  "date": "2026-10-04",
+  "baseline_head": "4f20e520d74c6cace8d13b2ad3b04f436fc6eb71",
+  "initial_git": "clean at phase start",
+  "review_build": "1K.3B",
+  "manual_smoke": "pending",
+  "protected_database_initial_sha256": "CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D",
+  "protected_database_prelaunch_sha256": "CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D",
+  "schema": 16,
+  "migration017": false,
+  "harina_kg": 50,
+  "bulto_kg": 25,
+  "bulto_active": true,
+  "consumption": "DISABLED",
+  "printing_sha256": "88843EAF9F452FD94C7CDEA77A71657923DD3E123D082DB9EEEDEB9277464461",
+  "copy_file_count": 59,
+  "copied_locks": false,
+  "launcher": "C:\\Users\\ramms\\Documents\\ChatGPT\\Casa Miga POS V1\\work\\Abrir-Casa-Miga-1K3B.cmd",
+  "executable": "C:\\Users\\ramms\\Documents\\ChatGPT\\Casa Miga POS V1\\src\\CasaMiga.Presentation\\bin\\Phase1K3B\\CasaMiga.Presentation.exe",
+  "settings": {
+    "DataDirectory": "C:\\Users\\ramms\\Documents\\ChatGPT\\Casa Miga POS V1\\work\\phase1k3b-smoke-20261004",
+    "IsDevelopment": true,
+    "PreviewWidth": 1280,
+    "PreviewHeight": 820
+  },
+  "launcher_sha256": "3209F57D87AED032F77CC917E11B52635BB661BFE0D37C3FC4306A926987EBD6",
+  "settings_sha256": "8DEC98560E7227BBC7C9835A8230E92130CA4D15D2A7A38BC258849F23DDEC75",
+  "review_account_active": true,
+  "credentials_checked_offline_without_login": true,
+  "release_warnings": 0,
+  "release_errors": 0,
+  "focal_total": 142,
+  "full_total": 702,
+  "failed": 0,
+  "skipped": 0,
+  "suite_command": "$env:CasaMigaReviewBuild='1K.3B'; ./scripts/verify.ps1 -Dotnet (Resolve-Path ./work/.dotnet/dotnet.exe) -OutputPath bin/Phase1K3B/",
+  "test_results": [
+    {
+      "group": "focal",
+      "file": "TestResults/phase1k3b-focal-verified_net10.0_20261004122206.trx",
+      "sha256": "1491358A3F475E20C93A0EE2C502667CA08A112682EE7A8033CA0BF0D507781D",
+      "counters": {
+        "total": "35",
+        "executed": "35",
+        "passed": "35",
+        "failed": "0",
+        "error": "0",
+        "timeout": "0",
+        "aborted": "0",
+        "inconclusive": "0",
+        "passedButRunAborted": "0",
+        "notRunnable": "0",
+        "notExecuted": "0",
+        "disconnected": "0",
+        "warning": "0",
+        "completed": "0",
+        "inProgress": "0",
+        "pending": "0"
+      }
+    },
+    {
+      "group": "focal",
+      "file": "TestResults/phase1k3b-focal-verified_net10.0_20261004122213.trx",
+      "sha256": "0C55C9E141B25EBFE5A4492DA2E64E459F05DB6EECABFFC6B3E413C876C0015D",
+      "counters": {
+        "total": "107",
+        "executed": "107",
+        "passed": "107",
+        "failed": "0",
+        "error": "0",
+        "timeout": "0",
+        "aborted": "0",
+        "inconclusive": "0",
+        "passedButRunAborted": "0",
+        "notRunnable": "0",
+        "notExecuted": "0",
+        "disconnected": "0",
+        "warning": "0",
+        "completed": "0",
+        "inProgress": "0",
+        "pending": "0"
+      }
+    },
+    {
+      "group": "full",
+      "file": "TestResults/foundation_net10.0_20261004122523.trx",
+      "sha256": "57499942D5B04CED3B1290236A154C47AAAC8D2CBCADB4A2B4DD4417BB85DE21",
+      "counters": {
+        "total": "144",
+        "executed": "144",
+        "passed": "144",
+        "failed": "0",
+        "error": "0",
+        "timeout": "0",
+        "aborted": "0",
+        "inconclusive": "0",
+        "passedButRunAborted": "0",
+        "notRunnable": "0",
+        "notExecuted": "0",
+        "disconnected": "0",
+        "warning": "0",
+        "completed": "0",
+        "inProgress": "0",
+        "pending": "0"
+      }
+    },
+    {
+      "group": "full",
+      "file": "TestResults/foundation_net10.0_20261004122841.trx",
+      "sha256": "5C061E14EA0B86ECF8F2404E763AB04EB02757D2ABAC0E08A4871363824965D1",
+      "counters": {
+        "total": "558",
+        "executed": "558",
+        "passed": "558",
+        "failed": "0",
+        "error": "0",
+        "timeout": "0",
+        "aborted": "0",
+        "inconclusive": "0",
+        "passedButRunAborted": "0",
+        "notRunnable": "0",
+        "notExecuted": "0",
+        "disconnected": "0",
+        "warning": "0",
+        "completed": "0",
+        "inProgress": "0",
+        "pending": "0"
+      }
+    }
+  ],
+  "sources": [
+    {
+      "Path": "src/CasaMiga.Presentation/InventoryViewModel.cs",
+      "Sha256": "81FD4BEEFB9AD31E4D6E113C6DF936D61DBF8BCA712102B615BE605B58C2CF77"
+    },
+    {
+      "Path": "src/CasaMiga.Presentation/InventoryView.xaml",
+      "Sha256": "3665DFE2F2F53503D6B108888C8B71464A88573E6550B55D4FDD463F0F00002C"
+    },
+    {
+      "Path": "src/CasaMiga.Presentation/InventoryView.xaml.cs",
+      "Sha256": "1E7A97BFF21F75A92DADBFFE78D0916E8719FFABE9338B6C10E4BA7A5031B570"
+    },
+    {
+      "Path": "src/CasaMiga.Presentation/InventoryOperationPreview.cs",
+      "Sha256": "BBA0EBE7A2706B1D1D3B397E2F4CE68F39F667A34936DDE7176BC28BC811AE8F"
+    },
+    {
+      "Path": "tests/CasaMiga.PhotoTests/InventoryUsabilityPresentationTests.cs",
+      "Sha256": "7822E38F6BB1442965AA77872DCA4AC00D7ED68D9F8C9C3283D1A1C689506EE1"
+    },
+    {
+      "Path": "tests/CasaMiga.PhotoTests/UsabilityPresentationTests.cs",
+      "Sha256": "396FA8C96F1F3684E5748F16D422304B9D71B4CEED9241FC944180BA9E881682"
+    },
+    {
+      "Path": "tests/CasaMiga.Tests/InventoryViewModelTests.cs",
+      "Sha256": "5A2F5AF1F0A47252DFA73FEE1B59040DA69464348DA0B9B8A53C5EA1A7F95DCC"
+    },
+    {
+      "Path": "tests/CasaMiga.Tests/CasaMiga.Tests.csproj",
+      "Sha256": "A2A8A684AD6D9EB4B3FF9B3D37849C94DA3EC00011A80362E62F34DD60273570"
+    }
+  ],
+  "verified_binary_reconciliation": [
+    {
+      "Path": "src/CasaMiga.Presentation/bin/Phase1K3B/CasaMiga.Presentation.dll",
+      "Before": "4A8EC68EF9DE559F81F65945C5E574175B039AFE057D081D54BCDA1B7A2FD3F8",
+      "After": "4A8EC68EF9DE559F81F65945C5E574175B039AFE057D081D54BCDA1B7A2FD3F8",
+      "Equal": true
+    },
+    {
+      "Path": "src/CasaMiga.Presentation/bin/Phase1K3B/CasaMiga.Presentation.pdb",
+      "Before": "E5CFCBD7EAD57B221223A5D0ED9F5AB06F79FD2DC42F40412753B14C61217905",
+      "After": "E5CFCBD7EAD57B221223A5D0ED9F5AB06F79FD2DC42F40412753B14C61217905",
+      "Equal": true
+    },
+    {
+      "Path": "tests/CasaMiga.PhotoTests/bin/Phase1K3B/CasaMiga.PhotoTests.dll",
+      "Before": "84AB5EE9A4E0EB6733FC6BF2AD5DA91A2EEB5AABE6752B88DB0A3BCB41169437",
+      "After": "84AB5EE9A4E0EB6733FC6BF2AD5DA91A2EEB5AABE6752B88DB0A3BCB41169437",
+      "Equal": true
+    },
+    {
+      "Path": "tests/CasaMiga.PhotoTests/bin/Phase1K3B/CasaMiga.PhotoTests.pdb",
+      "Before": "B99891916F235D7FF0087DE2892BEED2F5554F2FB4637BC2895447A255C074F0",
+      "After": "B99891916F235D7FF0087DE2892BEED2F5554F2FB4637BC2895447A255C074F0",
+      "Equal": true
+    },
+    {
+      "Path": "tests/CasaMiga.Tests/bin/Phase1K3B/CasaMiga.Tests.dll",
+      "Before": "B4413DD298A4BFD8D2BFB7AAB826B7DA37C81CF5CD2E14EEF91C76877B4B7DD5",
+      "After": "B4413DD298A4BFD8D2BFB7AAB826B7DA37C81CF5CD2E14EEF91C76877B4B7DD5",
+      "Equal": true
+    },
+    {
+      "Path": "tests/CasaMiga.Tests/bin/Phase1K3B/CasaMiga.Tests.pdb",
+      "Before": "D5DCC182395B266905097218DF049172DCDBF263BA4F8249D6D25C39F7128562",
+      "After": "D5DCC182395B266905097218DF049172DCDBF263BA4F8249D6D25C39F7128562",
+      "Equal": true
+    }
+  ],
+  "binaries": [
+    {
+      "file": "src/CasaMiga.Presentation/bin/Phase1K3B/CasaMiga.Application.dll",
+      "sha256": "7E1916B6430453C3E4E7F3A7211D225E1635522E9A5613585AD1068614FD5C38"
+    },
+    {
+      "file": "src/CasaMiga.Presentation/bin/Phase1K3B/CasaMiga.Application.pdb",
+      "sha256": "2DEC95CA11DBA1BE2D9F22AA36CA4F3769DB214CD523664E2947E0EA0DBDE700"
+    },
+    {
+      "file": "src/CasaMiga.Presentation/bin/Phase1K3B/CasaMiga.Domain.dll",
+      "sha256": "BFB24762E11E4452CBEB3C6404D5F1CA1450FE060A240F64BD30D22761C40ADA"
+    },
+    {
+      "file": "src/CasaMiga.Presentation/bin/Phase1K3B/CasaMiga.Domain.pdb",
+      "sha256": "8DB39611023909E696F92403088D612324D676FAD561AE2156E5D0B1681E37FE"
+    },
+    {
+      "file": "src/CasaMiga.Presentation/bin/Phase1K3B/CasaMiga.Infrastructure.dll",
+      "sha256": "817190E6BB7E68B2F0FEF23342C3217214F0C17DB9F975A42F1FE3A154E4A613"
+    },
+    {
+      "file": "src/CasaMiga.Presentation/bin/Phase1K3B/CasaMiga.Infrastructure.pdb",
+      "sha256": "B66FAC41EFB5A1E81F542738D4B2AA78D9FB468DF3272C11B072F458A32F4BA6"
+    },
+    {
+      "file": "src/CasaMiga.Presentation/bin/Phase1K3B/CasaMiga.Presentation.deps.json",
+      "sha256": "18A967E157CE546CD8982DB015652889B013B7BC6A9324274960A793B642C418"
+    },
+    {
+      "file": "src/CasaMiga.Presentation/bin/Phase1K3B/CasaMiga.Presentation.dll",
+      "sha256": "4A8EC68EF9DE559F81F65945C5E574175B039AFE057D081D54BCDA1B7A2FD3F8"
+    },
+    {
+      "file": "src/CasaMiga.Presentation/bin/Phase1K3B/CasaMiga.Presentation.exe",
+      "sha256": "E6EB31E282F1FD74D28D4BC343F86B0E529FC495DBA8EDB3BCCEDA8A9226CDF0"
+    },
+    {
+      "file": "src/CasaMiga.Presentation/bin/Phase1K3B/CasaMiga.Presentation.pdb",
+      "sha256": "E5CFCBD7EAD57B221223A5D0ED9F5AB06F79FD2DC42F40412753B14C61217905"
+    },
+    {
+      "file": "src/CasaMiga.Presentation/bin/Phase1K3B/CasaMiga.Presentation.runtimeconfig.json",
+      "sha256": "96BC2946DFF8790400D652EC7F8DE7BB043E954980D59470C112788B68A1FBD3"
+    }
+  ],
+  "migrations": [
+    {
+      "file": "migrations/001_foundation.sql",
+      "sha256": "67FE636BC15056DB439D15A0CDD73FFD84DA98F5F383FAEF21910F53E191CAD7"
+    },
+    {
+      "file": "migrations/002_identity_cash.sql",
+      "sha256": "B8C29E34BFFFDC6EE313756EF4869644A495070C4B096BCDEDAD6C8A8BF7C9E5"
+    },
+    {
+      "file": "migrations/003_cash_closing.sql",
+      "sha256": "4A5FD419D95C19CBE7669FCB0C0C825567FA4DDD97478BD9946DDB1E9E13E7E1"
+    },
+    {
+      "file": "migrations/004_catalog.sql",
+      "sha256": "7E7F81303AB6FD9DB3E96A3F878AD4FE4B4B94B79FF4C893AF9F9527DAEA1968"
+    },
+    {
+      "file": "migrations/005_pos_permission.sql",
+      "sha256": "A335A25AA1F2CC94CED3670FDD4C5E2FCC9AA344141EEA74B06287F357CA167B"
+    },
+    {
+      "file": "migrations/006_cash_sales.sql",
+      "sha256": "7EA9A2981B02C7D2A93CC550E5E18D0FA60C63A79C9D1052458E0769DFAE2E0C"
+    },
+    {
+      "file": "migrations/007_sales_history.sql",
+      "sha256": "439632CB3B0612DEA8651FA52FE3202F2ADF2D6876AEB68F0E1948985632AB5E"
+    },
+    {
+      "file": "migrations/008_receipt_printing.sql",
+      "sha256": "B2B395673ACC14493841F001E6E76B248D6AC136632F7F94C190ECB0BB33A6C5"
+    },
+    {
+      "file": "migrations/009_inventory_foundation.sql",
+      "sha256": "8679B3154D4EEC966D3E63E8E48610C924597EF5121CA648E34047BC34A37589"
+    },
+    {
+      "file": "migrations/010_inventory_receipt_note_fix.sql",
+      "sha256": "6FA06DCD826893576B61AD4F4910CF1753D9640D544FDECF641040802EAC598E"
+    },
+    {
+      "file": "migrations/011_sale_inventory_consumption.sql",
+      "sha256": "3B47838DC73CF1EE625CE0A1A0CEDC1373F1CF6E8B28AAEE54E1527419AF9EB1"
+    },
+    {
+      "file": "migrations/012_sale_inventory_evaluation_contract.sql",
+      "sha256": "06952781D2960BB511D8180B860257E2150762CAD717B9A8CB2909EEE8A539F6"
+    },
+    {
+      "file": "migrations/013_recipes_and_production.sql",
+      "sha256": "CAC38A250CAF503A88E79FA07B77A2E2E22A20C3664F7254996323677AB555F1"
+    },
+    {
+      "file": "migrations/014_allow_zero_output_production_batches.sql",
+      "sha256": "0CCA38796AB9070B4DE4AE5310226221E5D6C76E9BA2ABB871B63F6E3ACE0928"
+    },
+    {
+      "file": "migrations/015_recipe_and_production_permissions.sql",
+      "sha256": "447E655117D12CF58D70F38BCE89B462B3C8CD2A80895EEFD8BF97741461AA9F"
+    },
+    {
+      "file": "migrations/016_product_photos.sql",
+      "sha256": "9223CAA06CD02FA32E874CC1516EE0C6DB798CB76E2FBE1BF267BAB9B695ED76"
+    }
+  ],
+  "images": [
+    {
+      "file": "docs/evidence/phase1k3b-detail-1280.png",
+      "width": 1280,
+      "height": 820,
+      "sha256": "3F326AF46F30FC6C4E74A5AF1A39A2B83AF674F41669EEFF6E81FFFFB46EAAD0"
+    },
+    {
+      "file": "docs/evidence/phase1k3b-history-1920.png",
+      "width": 1554,
+      "height": 882,
+      "sha256": "8230B1160976191253DA315BAF01D3C65345641C31F8E1CAA3857A3D8D1CB6BF"
+    },
+    {
+      "file": "docs/evidence/phase1k3b-search-empty-1280.png",
+      "width": 1280,
+      "height": 820,
+      "sha256": "A44E1632318A58DC8E951C54CF5A8B4934D254913E9397D060084D7DF2BB5833"
+    },
+    {
+      "file": "docs/evidence/phase1k3b-preview-receipt.png",
+      "width": 1280,
+      "height": 820,
+      "sha256": "0FAC79D8FDEF5EA581FFDA9E711193CA6E1714211D1ED1C3A550472B017CA98A"
+    },
+    {
+      "file": "docs/evidence/phase1k3b-preview-count.png",
+      "width": 1280,
+      "height": 820,
+      "sha256": "005E101B64E375DE6F1B8B300CC5F0C9523820D96CB25C8C360C3B2F827023A7"
+    }
+  ],
+  "visual_limit": "Real WPF MainWindow; large requested window constrained by desktop/DPI. Does not certify every physical DPI/resolution.",
+  "real_business_operations": 0,
+  "physical_print_jobs": 0,
+  "postcommit_observation": "Recorded separately in work/phase1k3b-evidence/final-delivery.json and final conversation report after automatic launch."
+}

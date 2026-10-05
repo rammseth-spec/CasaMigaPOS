@@ -22,6 +22,11 @@ public partial class InventoryView : UserControl
         await Model.Consumption!.ChangeAsync(action,confirmed);
     }
     private async void SearchClick(object sender, RoutedEventArgs e) => await Model.SearchAsync();
+    private async void ClearSearchClick(object sender, RoutedEventArgs e)
+    {
+        await Model.ClearSearchAsync();
+        SearchBox.Focus();
+    }
     private async void SearchChoiceChanged(object sender, SelectionChangedEventArgs e)
     {
         if (((ComboBox)sender).SelectedItem is InventorySearchChoice choice && Model.Ready)

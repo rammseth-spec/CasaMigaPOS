@@ -1,4 +1,14 @@
-# FASE 1K ABIERTA — 1K.3A-R1, 03/10/2026
+# FASE 1K ABIERTA — 1K.3B, 04/10/2026
+
+**FASE 1K.3B técnicamente completada; smoke manual pendiente.** El usuario aprobó manualmente 1K.3A y R1 antes de autorizar 1K.3B. Baseline limpio `4f20e520d74c6cace8d13b2ad3b04f436fc6eb71`. Esta aprobación no equivale al smoke de 1K.3B, que queda pendiente.
+
+Sólo Presentation, pruebas y documentación: búsqueda código/nombre con debounce de 250 ms, cancelación/versionado y selección válida; × Limpiar con foco; equivalencias reales; preview exacto de saldo inicial/entrada/merma/conteo usando los tipos Domain existentes; confirmación basada en el resultado persistido. Etiquetas humanas, fecha local, producto/SKU en asociaciones y ContextHelp. Conservados permisos, recuperación, scroll y prioridad Esc/ComboBox. Sin cambios en Domain/Application/Infrastructure ni migraciones.
+
+Focales definitivas **142/142** (107 generales + 35 WPF/Presentation); suite completa `scripts/verify.ps1` **702/702** (558 + 144), 0 fallidas/omitidas; Release 0 errores/advertencias. Recompilación de reconciliación: Presentation y ambos proyectos de pruebas conservan DLL/PDB byte-idénticos a los verificados. Diff check correcto. Ver `evidence/phase1k3b-verification.md` y manifiesto de hashes. Copia aislada `work/phase1k3b-smoke-20261004`, build `src/CasaMiga.Presentation/bin/Phase1K3B/`, launcher `work/Abrir-Casa-Miga-1K3B.cmd`, título de revisión `Casa Miga POS · Caja · DESARROLLO · 1K.3B`. Apertura al terminar pruebas, documentación y commit; dejar login sin autenticar. Commit único autorizado `feat: improve inventory usability for phase 1K.3B`; HEAD final y observación del arranque en el reporte de conversación. Sin push.
+
+Base original SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D` conservada. Harina MP-HAR-001 50 kg; Bulto 25 kg activo. Consumo automático DISABLED; Qian POS-80/48/ibm850/tabla 2/Partial/sin cajón intacta. Schema 16, sin 017, sin operaciones reales ni trabajos de impresión. Ver `PHASE_1K3B_REPORT.md`. No iniciar 1K.3C/1K.3D ni cerrar globalmente FASE 1K.
+
+## Registro anterior — 1K.3A-R1, 03/10/2026
 
 **Corrección técnica completada; smoke manual R1 pendiente.** Baseline limpio `6bf3b5256290bc053003b8b5f67e2a4a6d1148bc`. Esc con ComboBox abierto se atiende antes de fullscreen/navegación, conservando editor, selección y F11. Los hallazgos 2–7 ya se renderizan correctamente en la DLL Phase1K3A conservada; nuevas pruebas sobre MainWindow real lo demuestran. R2 falla esas pruebas, pero no existe evidencia suficiente para identificar qué proceso se usó en el smoke histórico. Se corrigió también el launcher de desarrollo que ocultaba IsDevelopment al establecer CASAMIGA_DATA_DIR.
 

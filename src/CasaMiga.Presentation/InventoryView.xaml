@@ -21,21 +21,26 @@
      <ScrollViewer MaxHeight="160" VerticalScrollBarVisibility="Auto"><ItemsControl ItemsSource="{Binding Problems}"><ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,3"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></ScrollViewer>
     </StackPanel>
    </Border>
+   <TextBlock Text="Buscar por código o nombre" FontSize="16"/>
+   <Grid Margin="0,4,0,8">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+    <TextBox x:Name="SearchBox" Text="{Binding Search,UpdateSourceTrigger=PropertyChanged}" MaxLength="160" AutomationProperties.Name="Buscar inventario"/>
+    <Button x:Name="ClearSearchButton" Grid.Column="1" Content="× Limpiar" Click="ClearSearchClick" Style="{StaticResource SecondaryButton}" Visibility="{Binding HasSearch,Converter={StaticResource VisibleWhen}}" Margin="8,0,0,0" AutomationProperties.Name="Limpiar búsqueda de inventario"/>
+   </Grid>
    <Grid Margin="0,0,0,12">
-    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="180"/><ColumnDefinition Width="150"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-    <StackPanel Margin="0,0,8,0"><TextBlock Text="Buscar por código o nombre" FontSize="16"/><TextBox x:Name="SearchBox" Text="{Binding Search,UpdateSourceTrigger=PropertyChanged}" MaxLength="160" AutomationProperties.Name="Buscar inventario"/></StackPanel>
-    <StackPanel Grid.Column="1" Margin="8,0"><TextBlock Text="Tipo" FontSize="16"/><ComboBox ItemsSource="{Binding KindFilters}" SelectedItem="{Binding SelectedKindFilter}" DisplayMemberPath="Label" AutomationProperties.Name="Tipo de artículo"/></StackPanel>
-    <StackPanel Grid.Column="2" Margin="8,0"><TextBlock Text="Estado" FontSize="16"/><ComboBox ItemsSource="{Binding ActiveFilters}" SelectedItem="{Binding SelectedActiveFilter}" DisplayMemberPath="Label" AutomationProperties.Name="Estado del artículo"/></StackPanel>
-    <Button Grid.Column="3" Content="Buscar" Click="SearchClick" Margin="8,23,0,0"/>
+    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+    <StackPanel Margin="0,0,8,0"><TextBlock Text="Tipo" FontSize="16"/><ComboBox ItemsSource="{Binding KindFilters}" SelectedItem="{Binding SelectedKindFilter}" DisplayMemberPath="Label" AutomationProperties.Name="Tipo de artículo"/></StackPanel>
+    <StackPanel Grid.Column="1" Margin="0,0,8,0"><TextBlock Text="Estado" FontSize="16"/><ComboBox ItemsSource="{Binding ActiveFilters}" SelectedItem="{Binding SelectedActiveFilter}" DisplayMemberPath="Label" AutomationProperties.Name="Estado del artículo"/></StackPanel>
+    <Button Grid.Column="2" Content="Buscar" Click="SearchClick" Style="{StaticResource SecondaryButton}" Margin="0,23,0,0"/>
    </Grid>
    <TextBlock Text="O selecciona un artículo de la lista" FontSize="16"/>
    <ComboBox ItemsSource="{Binding SearchChoices}" DisplayMemberPath="Label" SelectionChanged="SearchChoiceChanged" MaxDropDownHeight="320" Margin="0,0,0,12" AutomationProperties.Name="Seleccionar artículo de inventario"/>
-   <TextBlock Style="{StaticResource EmptyStateText}" Tag="{Binding Items.Count}" Text="No hay artículos que coincidan con la búsqueda."/><DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" Height="310" AutomationProperties.Name="Artículos de inventario" HorizontalScrollBarVisibility="Auto">
+   <TextBlock Style="{StaticResource EmptyStateText}" Tag="{Binding Items.Count}" Text="{Binding InventoryEmptyMessage}" AutomationProperties.LiveSetting="Polite"/><DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}" Height="310" AutomationProperties.Name="Artículos de inventario" HorizontalScrollBarVisibility="Auto">
     <DataGrid.Columns>
      <DataGridTextColumn Header="Código" Binding="{Binding Code}" Width="130"/>
      <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*" MinWidth="180"/>
      <DataGridTextColumn Header="Tipo" Binding="{Binding Kind}" Width="150"/>
-     <DataGridTextColumn Header="Saldo MAIN" Binding="{Binding Balance}" Width="130"/>
+     <DataGridTextColumn Header="Existencia actual" Binding="{Binding Balance}" Width="150"/>
      <DataGridTextColumn Header="Unidad" Binding="{Binding Unit}" Width="80"/>
      <DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="90"/>
      <DataGridTextColumn Header="Producto" Binding="{Binding Product}" Width="95"/>
@@ -49,8 +54,8 @@
   </StackPanel>
 
   <StackPanel Visibility="{Binding IsDetail,Converter={StaticResource VisibleWhen}}">
-   <TextBlock Text="{Binding DetailTitle}" FontSize="25" FontWeight="SemiBold"/>
-   <TextBlock Text="{Binding DetailMetadata}" Margin="0,8,0,8"/>
+   <TextBlock Text="{Binding DetailTitle}" FontSize="25" FontWeight="SemiBold" TextWrapping="Wrap"/>
+   <TextBlock Text="{Binding DetailMetadata}" TextWrapping="Wrap" Margin="0,8,0,8"/>
    <TextBlock Text="{Binding DetailBalance}" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,8"/>
    <Border Padding="12" Margin="0,0,0,12" CornerRadius="6" BorderThickness="1">
     <Border.Style><Style TargetType="Border"><Setter Property="BorderBrush" Value="{DynamicResource SuccessBrush}"/><Style.Triggers><DataTrigger Binding="{Binding ReconciliationWarning}" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource ErrorBrush}"/></DataTrigger></Style.Triggers></Style></Border.Style>
@@ -58,27 +63,28 @@
    </Border>
    <WrapPanel Margin="0,0,0,12">
     <Button Content="Volver" Click="BackClick" Margin="0,0,8,8"/>
-    <Button Content="Editar" Click="EditItemClick" Visibility="{Binding CanConfigure,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,8"/>
-    <Button Content="{Binding ToggleActiveLabel}" Click="ToggleClick" Visibility="{Binding CanConfigure,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,8"/>
-    <Button Content="Saldo inicial" Click="OpeningClick" Visibility="{Binding CanOpenBalance,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,8"/>
-    <Button Content="Entrada" Click="ReceiptClick" Visibility="{Binding CanReceive,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,8"/>
-    <Button Content="Merma" Click="WasteClick" Visibility="{Binding CanWaste,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,8"/>
-    <Button Content="Conteo físico" Click="CountClick" Visibility="{Binding CanAdjust,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,8"/>
+    <Button Content="Editar" Click="EditItemClick" IsEnabled="{Binding CanEditDetail}" Visibility="{Binding CanConfigure,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,8"/>
+    <Button Content="{Binding ToggleActiveLabel}" Click="ToggleClick" IsEnabled="{Binding CanToggleActive}" Visibility="{Binding CanConfigure,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,8"/>
+    <Button Content="Saldo inicial" Click="OpeningClick" IsEnabled="{Binding CanOpenBalance}" Visibility="{Binding CanOpenBalance,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,8"/>
+    <Button Content="Entrada" Click="ReceiptClick" IsEnabled="{Binding CanReceiveDetail}" Visibility="{Binding CanReceive,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,8"/>
+    <Button Content="Merma" Click="WasteClick" IsEnabled="{Binding CanWasteDetail}" Visibility="{Binding CanWaste,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,8"/>
+    <Button Content="Conteo físico" Click="CountClick" IsEnabled="{Binding CanAdjustDetail}" Visibility="{Binding CanAdjust,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,8"/>
    </WrapPanel>
    <TextBlock Text="Presentaciones" FontSize="21" FontWeight="SemiBold"/>
    <TextBlock Style="{StaticResource EmptyStateText}" Tag="{Binding Units.Count}" Text="No hay presentaciones registradas."/><DataGrid ItemsSource="{Binding Units}" Height="155" Margin="0,6,0,8" AutomationProperties.Name="Presentaciones del artículo">
-    <DataGrid.Columns><DataGridTextColumn Header="Código" Binding="{Binding Code}" Width="150"/><DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="Contenido" Binding="{Binding Quantity}" Width="170"/><DataGridCheckBoxColumn Header="Activa" Binding="{Binding IsActive,Mode=OneWay}" IsReadOnly="True" Width="80"/></DataGrid.Columns>
+    <DataGrid.Columns><DataGridTextColumn Header="Código" Binding="{Binding Code}" Width="150"/><DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*" MinWidth="160"/><DataGridTextColumn Header="Equivalencia" Binding="{Binding Equivalence}" Width="250"/><DataGridCheckBoxColumn Header="Activa" Binding="{Binding IsActive,Mode=OneWay}" IsReadOnly="True" Width="80"/></DataGrid.Columns>
    </DataGrid>
-   <Button Content="Agregar presentación" Click="NewUnitClick" Visibility="{Binding CanConfigure,Converter={StaticResource VisibleWhen}}" HorizontalAlignment="Left" Margin="0,0,0,14"/>
+   <Button Content="Agregar presentación" Click="NewUnitClick" IsEnabled="{Binding CanAddUnit}" Visibility="{Binding CanConfigure,Converter={StaticResource VisibleWhen}}" HorizontalAlignment="Left" Margin="0,0,0,14"/>
    <TextBlock Text="Asociaciones con productos" FontSize="21" FontWeight="SemiBold"/>
-   <TextBlock Text="La asociación descuenta existencias al confirmar la venta cuando el consumo automático está ACTIVO." TextWrapping="Wrap" Margin="0,4,0,6"/>
+   <TextBlock Text="{Binding AssociationExplanation}" TextWrapping="Wrap" Margin="0,4,0,6"/>
+   <local:ContextHelp HelpText="Asociar un producto define qué cantidad de este artículo corresponde a cada unidad vendida. Crear la asociación no activa el consumo automático ni registra un movimiento." Margin="0,0,0,8"/>
    <TextBlock Style="{StaticResource EmptyStateText}" Tag="{Binding ProductLinks.Count}" Text="No hay productos asociados."/><DataGrid ItemsSource="{Binding ProductLinks}" SelectedItem="{Binding SelectedLink}" Height="155" AutomationProperties.Name="Asociaciones de productos">
-    <DataGrid.Columns><DataGridTextColumn Header="ProductId" Binding="{Binding ProductId}" Width="300"/><DataGridTextColumn Header="Cantidad por venta" Binding="{Binding Quantity}" Width="220"/></DataGrid.Columns>
+    <DataGrid.Columns><DataGridTextColumn Header="Producto" Binding="{Binding ProductName}" Width="*" MinWidth="190"/><DataGridTextColumn Header="SKU" Binding="{Binding ProductSku}" Width="150"/><DataGridTextColumn Header="Cantidad por venta" Binding="{Binding Quantity}" Width="190"/></DataGrid.Columns>
    </DataGrid>
-   <WrapPanel Margin="0,8,0,14"><Button Content="Asociar producto" Click="ShowLinkClick" Visibility="{Binding CanConfigure,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,0"/><Button Content="Desvincular seleccionado" Click="UnlinkClick" IsEnabled="{Binding CanUnlink}" Visibility="{Binding CanConfigure,Converter={StaticResource VisibleWhen}}"/></WrapPanel>
+   <WrapPanel Margin="0,8,0,14"><Button Content="Asociar producto" Click="ShowLinkClick" IsEnabled="{Binding CanAssociate}" Visibility="{Binding CanConfigure,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,0"/><Button Content="Desvincular seleccionado" Click="UnlinkClick" IsEnabled="{Binding CanUnlink}" Visibility="{Binding CanConfigure,Converter={StaticResource VisibleWhen}}"/></WrapPanel>
    <TextBlock Text="Historial de movimientos" FontSize="21" FontWeight="SemiBold"/>
    <TextBlock Style="{StaticResource EmptyStateText}" Tag="{Binding History.Count}" Text="Aún no hay movimientos registrados."/><DataGrid ItemsSource="{Binding History}" Height="240" Margin="0,6,0,0" AutomationProperties.Name="Historial de inventario" HorizontalScrollBarVisibility="Auto">
-    <DataGrid.Columns><DataGridTextColumn Header="Fecha" Binding="{Binding Date}" Width="180"/><DataGridTextColumn Header="Movimiento" Binding="{Binding Kind}" Width="150"/><DataGridTextColumn Header="Delta" Binding="{Binding Delta}" Width="100"/><DataGridTextColumn Header="Antes" Binding="{Binding Before}" Width="100"/><DataGridTextColumn Header="Después" Binding="{Binding After}" Width="100"/><DataGridTextColumn Header="Usuario" Binding="{Binding User}" Width="150"/><DataGridTextColumn Header="Motivo" Binding="{Binding Reason}" Width="170"/><DataGridTextColumn Header="Referencia" Binding="{Binding Reference}" Width="160"/></DataGrid.Columns>
+    <DataGrid.Columns><DataGridTextColumn Header="Fecha local" Binding="{Binding Date}" Width="200"/><DataGridTextColumn Header="Operación" Binding="{Binding Kind}" Width="150"/><DataGridTextColumn Header="Movimiento" Binding="{Binding Delta}" Width="130"/><DataGridTextColumn Header="Existencia anterior" Binding="{Binding Before}" Width="160"/><DataGridTextColumn Header="Existencia resultante" Binding="{Binding After}" Width="175"/><DataGridTextColumn Header="Usuario" Binding="{Binding User}" Width="150"/><DataGridTextColumn Header="Motivo" Binding="{Binding Reason}" Width="170"/><DataGridTextColumn Header="Referencia" Binding="{Binding Reference}" Width="160"/></DataGrid.Columns>
    </DataGrid>
    <DockPanel Margin="0,8,0,0"><WrapPanel DockPanel.Dock="Right"><Button Content="Anterior" Click="HistoryPreviousClick" IsEnabled="{Binding HasHistoryPrevious}" Margin="0,0,8,0"/><Button Content="Siguiente" Click="HistoryNextClick" IsEnabled="{Binding HasHistoryNext}"/></WrapPanel><TextBlock Text="{Binding HistoryPageLabel}" FontSize="15" VerticalAlignment="Center"/></DockPanel>
   </StackPanel>
@@ -93,15 +99,35 @@
   </StackPanel>
 
   <StackPanel Visibility="{Binding IsOperationEditor,Converter={StaticResource VisibleWhen}}">
-   <TextBlock Text="{Binding OperationTitle}" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="{Binding CurrentBalanceLabel}" Margin="0,6,0,6"/>
-
-   <TextBlock Text="Cantidad absoluta"/><TextBox Text="{Binding Quantity,UpdateSourceTrigger=PropertyChanged}" MaxLength="40" Margin="0,4,0,12"/>
-   <TextBlock Text="Unidad o presentación"/><ComboBox ItemsSource="{Binding UnitChoices}" SelectedItem="{Binding SelectedUnit}" DisplayMemberPath="Label" Margin="0,4,0,12"/>
-   <StackPanel Visibility="{Binding ShowsReference,Converter={StaticResource VisibleWhen}}"><TextBlock Text="Referencia externa opcional"/><TextBox Text="{Binding Reference,UpdateSourceTrigger=PropertyChanged}" MaxLength="160" Margin="0,4,0,12"/></StackPanel>
+   <TextBlock Text="{Binding OperationTitle}" FontSize="24" FontWeight="SemiBold" TextWrapping="Wrap"/>
+   <TextBlock Text="{Binding DetailTitle}" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,6,0,0"/>
+   <TextBlock Text="{Binding CurrentBalanceLabel}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,6,0,6"/>
+   <local:ContextHelp x:Name="OperationHelp" HelpText="{Binding OperationHelpText}" Margin="0,0,0,12"/>
+   <Grid>
+    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+    <StackPanel Margin="0,0,12,0"><TextBlock Text="{Binding QuantityLabel}" TextWrapping="Wrap"/><TextBox x:Name="OperationQuantityBox" Text="{Binding Quantity,UpdateSourceTrigger=PropertyChanged}" MaxLength="40" Margin="0,4,0,12" AutomationProperties.Name="{Binding QuantityLabel}"/></StackPanel>
+    <StackPanel Grid.Column="1"><TextBlock Text="Unidad o presentación"/><ComboBox x:Name="OperationUnitBox" ItemsSource="{Binding UnitChoices}" SelectedItem="{Binding SelectedUnit}" DisplayMemberPath="Label" Margin="0,4,0,12" AutomationProperties.Name="Unidad o presentación del movimiento"/></StackPanel>
+   </Grid>
+   <TextBlock Text="{Binding SelectedUnitEquivalence}" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,10"/>
+   <Border x:Name="OperationPreview" Visibility="{Binding HasOperationPreview,Converter={StaticResource VisibleWhen}}" Background="{DynamicResource SurfaceSecondaryBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,14" AutomationProperties.Name="Vista previa del movimiento">
+    <StackPanel>
+     <TextBlock Text="Vista previa" FontWeight="SemiBold" Margin="0,0,0,12"/>
+     <Grid>
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+      <StackPanel Margin="0,0,12,0"><TextBlock Text="{Binding PreviewCurrentLabel}" FontSize="14" TextWrapping="Wrap"/><TextBlock Text="{Binding PreviewCurrent}" FontSize="23" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,4,0,0"/></StackPanel>
+      <StackPanel Grid.Column="1" Margin="0,0,12,0"><TextBlock Text="{Binding PreviewMovementLabel}" FontSize="14" TextWrapping="Wrap"/><TextBlock Text="{Binding PreviewMovement}" FontSize="23" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,4,0,0"/></StackPanel>
+      <StackPanel Grid.Column="2"><TextBlock Text="Existencia resultante" FontSize="14" TextWrapping="Wrap"/><TextBlock Text="{Binding PreviewResult}" FontSize="23" FontWeight="Bold" TextWrapping="Wrap" Margin="0,4,0,0"/></StackPanel>
+     </Grid>
+     <StackPanel Visibility="{Binding IsCount,Converter={StaticResource VisibleWhen}}" Margin="0,12,0,0"><TextBlock Text="Diferencia con la existencia registrada" FontSize="14" TextWrapping="Wrap"/><TextBlock Text="{Binding PreviewDifference}" FontSize="21" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,4,0,0"/></StackPanel>
+     <TextBlock Text="Revisa los valores antes de confirmar." FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,12,0,0"/>
+    </StackPanel>
+   </Border>
+   <TextBlock Text="{Binding PreviewError}" Foreground="{DynamicResource ErrorBrush}" TextWrapping="Wrap" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite"/>
+   <StackPanel Visibility="{Binding ShowsReference,Converter={StaticResource VisibleWhen}}"><TextBlock Text="Referencia / factura / nota (opcional)"/><TextBox Text="{Binding Reference,UpdateSourceTrigger=PropertyChanged}" MaxLength="160" Margin="0,4,0,12" ToolTip="Por ejemplo: número de factura, nota o documento. Puedes dejarlo vacío." AutomationProperties.Name="Referencia, factura o nota opcional"/></StackPanel>
    <StackPanel Visibility="{Binding IsWaste,Converter={StaticResource VisibleWhen}}"><TextBlock Text="Motivo de merma"/><ComboBox ItemsSource="{Binding WasteReasons}" SelectedItem="{Binding SelectedWasteReason}" DisplayMemberPath="Label" Margin="0,4,0,12"/></StackPanel>
    <StackPanel Visibility="{Binding IsCount,Converter={StaticResource VisibleWhen}}"><TextBlock Text="Motivo de ajuste"/><ComboBox ItemsSource="{Binding AdjustmentReasons}" SelectedItem="{Binding SelectedAdjustmentReason}" DisplayMemberPath="Label" Margin="0,4,0,12"/></StackPanel>
    <StackPanel Visibility="{Binding ShowsNote,Converter={StaticResource VisibleWhen}}"><TextBlock Text="Observación opcional · obligatoria cuando el motivo es Otro"/><TextBox Text="{Binding Note,UpdateSourceTrigger=PropertyChanged}" MaxLength="500" AcceptsReturn="True" Height="90" Margin="0,4,0,18"/></StackPanel>
-   <WrapPanel><Button Content="Cancelar" Click="BackClick" Margin="0,0,12,0"/><Button Content="Confirmar" Click="SubmitOperationClick" IsEnabled="{Binding CanSubmitOperation}"/></WrapPanel>
+   <WrapPanel><Button Content="Cancelar" Click="BackClick" Style="{StaticResource SecondaryButton}" Margin="0,0,12,0"/><Button Content="Confirmar" Click="SubmitOperationClick" IsEnabled="{Binding CanSubmitOperation}"/></WrapPanel>
   </StackPanel>
 
   <StackPanel Visibility="{Binding IsUnitEditor,Converter={StaticResource VisibleWhen}}">
@@ -113,7 +139,8 @@
   </StackPanel>
 
   <StackPanel Visibility="{Binding IsLinkEditor,Converter={StaticResource VisibleWhen}}">
-   <TextBlock Text="Asociar producto" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="La asociación descuenta existencias al confirmar la venta cuando el consumo automático está ACTIVO." TextWrapping="Wrap" Margin="0,6,0,12"/>
+   <TextBlock Text="Asociar producto" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="{Binding AssociationExplanation}" TextWrapping="Wrap" Margin="0,6,0,8"/>
+   <local:ContextHelp HelpText="La cantidad por unidad vendida se descuenta únicamente si el consumo automático está activo y se cumplen sus reglas. Guardar una asociación no cambia ese estado ni descuenta existencias." Margin="0,0,0,12"/>
    <Grid Margin="0,0,0,10"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBox Text="{Binding ProductSearch,UpdateSourceTrigger=PropertyChanged}" MaxLength="160"/><Button Grid.Column="1" Content="Buscar" Click="SearchProductsClick" Margin="10,0,0,0"/></Grid>
    <TextBlock Style="{StaticResource EmptyStateText}" Tag="{Binding Products.Count}" Text="No hay productos que coincidan con la búsqueda."/><DataGrid ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProduct}" Height="260" AutomationProperties.Name="Productos para asociar"><DataGrid.Columns><DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="140"/><DataGridTextColumn Header="Categoría" Binding="{Binding CategoryName}" Width="180"/><DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="90"/></DataGrid.Columns></DataGrid>
    <DockPanel Margin="0,8,0,12"><WrapPanel DockPanel.Dock="Right"><Button Content="Anterior" Click="ProductPreviousClick" IsEnabled="{Binding HasProductPrevious}" Margin="0,0,8,0"/><Button Content="Siguiente" Click="ProductNextClick" IsEnabled="{Binding HasProductNext}"/></WrapPanel><TextBlock Text="{Binding ProductPageLabel}" FontSize="15" VerticalAlignment="Center"/></DockPanel>
@@ -121,7 +148,7 @@
    <WrapPanel><Button Content="Cancelar" Click="BackClick" Margin="0,0,12,0"/><Button Content="Asociar" Click="SaveLinkClick" IsEnabled="{Binding CanLinkSelected}"/></WrapPanel>
   </StackPanel>
 
-  <TextBlock Text="{Binding Message}" AutomationProperties.LiveSetting="Polite" Margin="0,14,0,0"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+  <TextBlock Text="{Binding Message}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" Margin="0,14,0,0"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
   <TextBlock Text="Procesando…" Margin="0,10,0,0" Visibility="{Binding Busy,Converter={StaticResource VisibleWhen}}"/>
  </StackPanel>
 </UserControl>

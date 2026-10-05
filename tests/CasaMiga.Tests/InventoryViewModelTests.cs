@@ -63,6 +63,7 @@ public sealed class InventoryViewModelTests
         public int AddCalls { get; private set; }
         public int DetailCalls { get; private set; }
         public int QueryCalls { get; private set; }
+        public Action<InventoryListQuery>? BeforeQuery { get; set; }
         public InventoryItem? FindItem(Guid id) => inner.FindItem(id);
         public InventoryItemUnit? FindItemUnit(Guid itemId, string code) => inner.FindItemUnit(itemId, code);
         public InventoryLocationView? FindLocation(Guid id) => inner.FindLocation(id);
@@ -84,7 +85,7 @@ public sealed class InventoryViewModelTests
         public InventoryProductLinkView? FindActiveProductLink(Guid productId) => inner.FindActiveProductLink(productId);
         public void LinkProduct(ProductInventoryLink link, AuditEntry audit) => inner.LinkProduct(link, audit);
         public void UnlinkProduct(Guid productId, AuditEntry audit) => inner.UnlinkProduct(productId, audit);
-        public InventoryListPage QueryItems(InventoryListQuery query) { QueryCalls++; return inner.QueryItems(query); }
+        public InventoryListPage QueryItems(InventoryListQuery query) { QueryCalls++; BeforeQuery?.Invoke(query); return inner.QueryItems(query); }
         public InventoryItemDetail? FindItemDetail(Guid id)
         {
             DetailCalls++;
@@ -158,6 +159,52 @@ public sealed class InventoryViewModelTests
         Assert.IsTrue(log.Any(x => x.Event == eventName && x.Detail == nameof(IOException)));
         Assert.IsFalse(log.Any(x => x.Event.Contains(FaultingStore.PrivateDiagnostic, StringComparison.Ordinal)
             || (x.Detail?.Contains(FaultingStore.PrivateDiagnostic, StringComparison.Ordinal) ?? false)));
+    }
+
+    [TestMethod]
+    public async Task NewSearchWinsWhenPreviousDatabaseReadFinishesLater()
+    {
+        var flour = Item();
+        var faults = new FaultingStore(store);
+        var vm = FaultingViewModel(faults, []); await vm.LoadAsync();
+        using var release = new ManualResetEventSlim(false);
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        faults.BeforeQuery = query =>
+        {
+            if (query.Search != "slow") return;
+            entered.TrySetResult();
+            if (!release.Wait(TimeSpan.FromSeconds(10))) throw new TimeoutException("Old read was not released.");
+        };
+        vm.Search = "slow"; var oldSearch = vm.SearchAsync();
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            Assert.IsTrue(vm.Ready, "Search does not block typing through Busy.");
+            vm.Search = "Harina"; await vm.SearchAsync();
+            Assert.AreEqual(flour.Id, vm.Items.Single().Id);
+            release.Set(); await oldSearch;
+            Assert.AreEqual("Harina", vm.Search);
+            Assert.AreEqual(flour.Id, vm.Items.Single().Id, "An old query must not overwrite current results.");
+            Assert.IsFalse(vm.IsSearching);
+        }
+        finally { release.Set(); await oldSearch; vm.Forget(); }
+    }
+
+    [TestMethod]
+    public async Task ConfirmationUsesCommittedResultWhenBalanceChangesAfterPreview()
+    {
+        var flour = Item(); Open(flour, 50_000m);
+        var vm = ViewModel(); await vm.LoadAsync(); Select(vm, flour); await vm.OpenDetailAsync();
+        vm.BeginOperation("receipt"); vm.SelectedUnit = vm.UnitChoices.Single(x => x.Code == "kg");
+        vm.Quantity = "25"; vm.Reference = "Factura de prueba";
+        Assert.AreEqual(75_000_000L, vm.OperationPreview!.AfterAtomic);
+        service.ReceiveInventory(new(Guid.NewGuid(), flour.Id, InventoryLocationIds.Main, 1m, "kg"));
+        await vm.SubmitOperationAsync();
+        Assert.IsTrue(vm.MessageIsSuccess, vm.Message);
+        StringAssert.Contains(vm.Message, "+25 kg");
+        StringAssert.Contains(vm.Message, "Existencia resultante: 76 kg");
+        StringAssert.Contains(vm.Message, "Factura de prueba");
+        Assert.AreEqual(76_000_000L, vm.Detail!.Balance!.QuantityAtomic);
     }
 
     [TestMethod]
@@ -495,7 +542,9 @@ public sealed class InventoryViewModelTests
     public void InventoryAssociationHelpExplainsConditionalConsumption()
     {
         var xaml = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Presentation", "InventoryView.xaml"));
-        StringAssert.Contains(xaml, "al confirmar la venta cuando el consumo automático está ACTIVO.");
+        StringAssert.Contains(xaml, "{Binding AssociationExplanation}");
+        StringAssert.Contains(ViewModel().AssociationExplanation, "el producto controla inventario");
+        StringAssert.Contains(ViewModel().AssociationExplanation, "Asociar no activa el consumo automático");
         Assert.IsFalse(xaml.Contains("todavía no descuenta", StringComparison.Ordinal));
     }
 
@@ -504,8 +553,9 @@ public sealed class InventoryViewModelTests
     {
         var item = Item(); Open(item, 1500m); Role("Manager");
         var vm = ViewModel(); await vm.LoadAsync(); Select(vm, item); await vm.OpenDetailAsync();
-        vm.BeginOperation("receipt"); Assert.IsTrue(vm.CanSubmitOperation);
+        vm.BeginOperation("receipt"); Assert.IsFalse(vm.CanSubmitOperation, "Una cantidad vacía ya no permite confirmar.");
         vm.Quantity = "100"; vm.SelectedUnit = vm.UnitChoices.Single(x => x.Code == "g");
+        Assert.IsTrue(vm.CanSubmitOperation);
         await vm.SubmitOperationAsync(); Assert.IsTrue(vm.MessageIsSuccess, vm.Message);
         Assert.AreEqual(1_600_000L, vm.Detail!.Balance!.QuantityAtomic);
         vm.BeginOperation("waste"); vm.Quantity = "100";

@@ -1,4 +1,22 @@
-# Próximo paso — smoke manual de 1K.3A-R1
+# Próximo paso — smoke manual de 1K.3B
+
+1K.3A y R1 aprobadas por el usuario. **1K.3B técnicamente completada; smoke manual pendiente.** Focales 142/142, suite completa 702/702, Release 0 errores/advertencias. No declarar aprobación humana de esta nueva entrega. Ver `PHASE_1K3B_REPORT.md` para resultados, limitaciones y checklist completo.
+
+Usar únicamente la nueva instancia identificada `Casa Miga POS · Caja · DESARROLLO · 1K.3B`, abierta automáticamente desde `work/Abrir-Casa-Miga-1K3B.cmd` al terminar la entrega. Carpeta aislada: `work/phase1k3b-smoke-20261004`. No depender del acceso anclado; las credenciales se entregan en conversación.
+
+Revisión segura, sin guardar ni confirmar:
+
+1. Escribir Harina o MP-HAR-001 y comprobar búsqueda automática; × Limpiar restaura lista/foco. Probar texto sin coincidencias.
+2. Abrir Harina: 50 kg, Bulto 25 kg activo y equivalencia 1 Bulto 25 kg = 25 kg. No repetir Saldo inicial.
+3. Entrada: 1 Bulto 25 kg → +25 kg → 75 kg. Abrir/cerrar ayuda y cancelar.
+4. Merma: 2 kg → −2 kg → 48 kg. Cancelar.
+5. Conteo físico: 48 kg → diferencia −2 kg → 48 kg. Cancelar. Una cantidad vacía/incorrecta no permite confirmar.
+6. Revisar etiquetas, fechas locales sin zona, historial con signos y columnas humanas. Asociaciones muestran Producto/SKU, nunca ProductId; si Harina no tiene asociaciones, conservarla así.
+7. Comprobar botones, desplazamiento, ComboBox cerrado/rueda, Esc con desplegable abierto y F11, sin registrar operaciones.
+
+Después del smoke, esperar autorización. No 1K.3C/1K.3D, Pedidos, recetas/perfiles reales, producción, ventas, impresión, activación de consumo ni migración 017. FASE 1K sigue abierta.
+
+## Registro anterior — smoke manual de 1K.3A-R1
 
 **Corrección técnica completada; smoke manual R1 pendiente.** Usar la instancia que Codex deja abierta al terminar, identificada `Casa Miga POS · Caja · DESARROLLO · 1K.3A-R1`. No depender del acceso anclado. Launcher específico: `work/Abrir-Casa-Miga-1K3A-R1.cmd`; DataDirectory aislado: `work/phase1k3a-r1-smoke-20261003`. La base R2 original debe permanecer byte-idéntica.
 

@@ -16,4 +16,6 @@ Todo build destinado a revisión manual debe tener identificador inequívoco de 
 Después de terminar pruebas, documentación y checkpoint autorizado, ejecutar automáticamente ese launcher exacto y dejar la aplicación abierta para el usuario, sin iniciar sesión ni realizar operaciones o imprimir. Esta apertura no equivale a aprobación humana del smoke.
 La seguridad de datos tiene prioridad: usar copia aislada cuando la base original deba permanecer inmutable; comprobar procesos/DirectoryLease y no matar instancias ni abrir concurrencia insegura. Si no puede abrirse con seguridad, detener la apertura y reportarlo. No cambiar configuración física de impresión. Consultar docs/review-builds.md.
 
+Preferencia permanente del usuario: después de cada modificación entregar en la conversación el usuario y la contraseña de revisión correspondientes a la copia preparada. Verificar que correspondan a esa copia; no inventar ni restablecer credenciales y no almacenarlas en documentación versionada.
+
 

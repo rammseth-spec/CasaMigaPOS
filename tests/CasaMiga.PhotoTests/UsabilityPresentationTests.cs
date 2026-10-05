@@ -94,7 +94,7 @@ public sealed class UsabilityPresentationTests
     {
         using var fixture=new Fixture();
         var inventory=fixture.Inventory();await inventory.LoadAsync();var inventoryView=new InventoryView{DataContext=inventory};WpfTestHost.Layout(inventoryView);
-        AssertVisible(inventoryView,"No hay artículos que coincidan con la búsqueda.");Assert.IsFalse(Button(inventoryView,"Ver detalle").IsEnabled);
+        AssertVisible(inventoryView,"No hay artículos con los filtros seleccionados.");Assert.IsFalse(Button(inventoryView,"Ver detalle").IsEnabled);
         var recipes=fixture.Recipes();await recipes.LoadAsync();var recipeView=new RecipeView{DataContext=recipes};WpfTestHost.Layout(recipeView);
         AssertVisible(recipeView,"No hay recetas registradas.");Assert.IsFalse(Button(recipeView,"Ver detalle").IsEnabled);
         recipes.NewFormula();WpfTestHost.Layout(recipeView);Assert.IsFalse(Button(recipeView,"Agregar ingrediente").IsEnabled);Assert.IsFalse(Button(recipeView,"Agregar grupo/opción").IsEnabled);
