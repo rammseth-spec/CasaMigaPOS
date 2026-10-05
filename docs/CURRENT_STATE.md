@@ -1,6 +1,14 @@
-# FASE 1K ABIERTA — 1K.3B, 04/10/2026
+# FASE 1K ABIERTA — 1K.3C, 05/10/2026
 
-**FASE 1K.3B técnicamente completada; smoke manual pendiente.** El usuario aprobó manualmente 1K.3A y R1 antes de autorizar 1K.3B. Baseline limpio `4f20e520d74c6cace8d13b2ad3b04f436fc6eb71`. Esta aprobación no equivale al smoke de 1K.3B, que queda pendiente.
+**FASE 1K.3C técnicamente completada; smoke manual pendiente.** El usuario aprobó manualmente 1K.3B antes de autorizar esta subfase. La entrega mejora exclusivamente Recetas y perfiles productivos en Presentation: búsqueda incremental de ingredientes por código/nombre con 250 ms y × Limpiar; selección válida preservada; unidades guiadas por Masa/Volumen/Piezas; políticas de piezas; versión automática; estados Borrador/Publicada/Activa; grupos y opciones de alternativas separados; preparaciones e ingredientes directos diferenciados; ayudas ContextHelp y botones inválidos deshabilitados. La persistencia y las reglas existentes permanecen intactas.
+
+Focales: **109/109** Recetas/persistencia y **38/38** WPF compartidas, más **6/6** WPF nuevas de Recetas; suite completa `scripts/verify.ps1`: **708/708** (558 generales + 150 WPF), 0 fallidas/omitidas. Release y build `Phase1K3C`: 0 errores/advertencias. Sólo Presentation, pruebas y documentación; Domain/Application/Infrastructure y migraciones intactos. Schema 16, sin 017. Ver `PHASE_1K3C_REPORT.md` y `evidence/phase1k3c-verification.md`.
+
+Revisión aislada: `work/phase1k3c-smoke-20261005`, build `src/CasaMiga.Presentation/bin/Phase1K3C/`, launcher `work/Abrir-Casa-Miga-1K3C.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.3C`. Base protegida SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`; Qian POS-80/48/ibm850/tabla 2/Partial/sin cajón conservada, sin impresión. La copia inicia sin recetas, versiones ni perfiles. No se cargaron datos comerciales. FASE 1K permanece abierta; no iniciar 1K.3D.
+
+## Registro anterior — 1K.3B, aprobado por el usuario
+
+**FASE 1K.3B aprobada manualmente por el usuario antes de autorizar 1K.3C.** El registro técnico original partió del baseline limpio `4f20e520d74c6cace8d13b2ad3b04f436fc6eb71`.
 
 Sólo Presentation, pruebas y documentación: búsqueda código/nombre con debounce de 250 ms, cancelación/versionado y selección válida; × Limpiar con foco; equivalencias reales; preview exacto de saldo inicial/entrada/merma/conteo usando los tipos Domain existentes; confirmación basada en el resultado persistido. Etiquetas humanas, fecha local, producto/SKU en asociaciones y ContextHelp. Conservados permisos, recuperación, scroll y prioridad Esc/ComboBox. Sin cambios en Domain/Application/Infrastructure ni migraciones.
 

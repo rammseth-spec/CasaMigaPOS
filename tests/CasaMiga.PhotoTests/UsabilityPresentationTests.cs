@@ -97,10 +97,10 @@ public sealed class UsabilityPresentationTests
         AssertVisible(inventoryView,"No hay artículos con los filtros seleccionados.");Assert.IsFalse(Button(inventoryView,"Ver detalle").IsEnabled);
         var recipes=fixture.Recipes();await recipes.LoadAsync();var recipeView=new RecipeView{DataContext=recipes};WpfTestHost.Layout(recipeView);
         AssertVisible(recipeView,"No hay recetas registradas.");Assert.IsFalse(Button(recipeView,"Ver detalle").IsEnabled);
-        recipes.NewFormula();WpfTestHost.Layout(recipeView);Assert.IsFalse(Button(recipeView,"Agregar ingrediente").IsEnabled);Assert.IsFalse(Button(recipeView,"Agregar grupo/opción").IsEnabled);
+        recipes.NewFormula();WpfTestHost.Layout(recipeView);Assert.IsFalse(Button(recipeView,"Crear receta").IsEnabled);
         await recipes.ShowProfilesAsync();WpfTestHost.Layout(recipeView);AssertVisible(recipeView,"No hay perfiles de producto registrados.");
         recipes.NewProfile();WpfTestHost.Layout(recipeView);AssertVisible(recipeView,"No hay artículos terminados disponibles. Crea primero un artículo de tipo Producto terminado en Inventario.");Assert.IsFalse(Button(recipeView,"Crear perfil").IsEnabled);
-        Assert.IsFalse(Button(recipeView,"Agregar ingrediente").IsEnabled);Assert.IsFalse(Button(recipeView,"Agregar preparación").IsEnabled);
+        Assert.IsFalse(Button(recipeView,"Crear perfil").IsEnabled);
         var production=fixture.Production();await production.LoadAsync();var productionView=new ProductionView{DataContext=production};production.NewProduction();WpfTestHost.Layout(productionView);
         AssertVisible(productionView,"No hay perfiles productivos activos.");Assert.IsFalse(Button(productionView,"Calcular necesidades").IsEnabled);Assert.IsFalse(Button(productionView,"Crear producción").IsEnabled);Assert.IsFalse(Button(productionView,"Quitar seleccionado").IsEnabled);
         await production.ShowDraftsAsync();WpfTestHost.Layout(productionView);AssertVisible(productionView,"No hay producciones en borrador.");Assert.IsFalse(Button(productionView,"Ver detalle").IsEnabled);

@@ -48,6 +48,8 @@ public sealed class ManualSmokeReconciliationTests
         fixture.Layout();
         var view = fixture.VisibleView<RecipeView>();
         VisibleButton(view, "Nueva receta").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        fixture.Model.Recipes!.Code="DIMENSION-UX";fixture.Model.Recipes.Name="Receta sintética de dimensiones";
+        await fixture.Model.Recipes.CreateFormulaAsync();fixture.Model.Recipes.NewFormulaVersion();
         fixture.Layout();
         Assert.IsTrue(fixture.Model.Recipes!.IsFormulaEditor);
         var combo = Descendants<ComboBox>(view).Single(x => x.IsVisible && AutomationProperties.GetName(x) == "Dimensión del rendimiento");

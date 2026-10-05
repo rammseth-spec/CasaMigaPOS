@@ -1,6 +1,22 @@
-# Próximo paso — smoke manual de 1K.3B
+# Próximo paso — smoke manual de 1K.3C
 
-1K.3A y R1 aprobadas por el usuario. **1K.3B técnicamente completada; smoke manual pendiente.** Focales 142/142, suite completa 702/702, Release 0 errores/advertencias. No declarar aprobación humana de esta nueva entrega. Ver `PHASE_1K3B_REPORT.md` para resultados, limitaciones y checklist completo.
+1K.3B fue aprobada manualmente por el usuario. **1K.3C está técnicamente completada; su smoke manual sigue pendiente.** Usar únicamente la instancia `Casa Miga POS · Caja · DESARROLLO · 1K.3C`, abierta desde `work/Abrir-Casa-Miga-1K3C.cmd`, con DataDirectory `work/phase1k3c-smoke-20261005`. No depender del acceso anclado.
+
+Revisión segura, sin guardar:
+
+1. Recetas: comprobar lista vacía, Ver detalle deshabilitado y Nueva receta.
+2. Crear el formulario de nueva receta sólo para revisar campos y botón deshabilitado; no confirmar la creación. Cancelar.
+3. En una versión ya disponible en un fixture futuro, buscar `Harina` o `MP-HAR-001` sin Enter; comprobar × Limpiar y el mensaje sin coincidencias. En esta copia no existen recetas: no crear una para forzar el recorrido.
+4. Comprobar Masa/Volumen/Piezas y que sus unidades sean g/kg, ml/L o pieza sin cruces.
+5. Revisar ayudas de Rendimiento, Política, Alternativas, Preparaciones y publicación.
+6. Revisar que Nuevo grupo de alternativas y Agregar opción al grupo sean acciones distintas, y que Quitar/Guardar/Publicar/Activar dependan de selección/validez.
+7. Comprobar scroll a 1280×820, rueda sobre tablas/selectores, Esc con ComboBox abierto y F11/Esc normal.
+
+No guardar recetas, versiones, perfiles, asociaciones ni operaciones. No cargar Masa dulce, Donas, Polvorón u otros datos reales. No 1K.3D, producción real, ventas, impresión, migración 017 o instalador. Tras el smoke, esperar confirmación explícita del usuario.
+
+## Registro anterior — smoke manual de 1K.3B
+
+1K.3A, R1 y 1K.3B fueron aprobadas por el usuario antes de 1K.3C. Focales 142/142, suite completa 702/702, Release 0 errores/advertencias. Ver `PHASE_1K3B_REPORT.md` para resultados y limitaciones.
 
 Usar únicamente la nueva instancia identificada `Casa Miga POS · Caja · DESARROLLO · 1K.3B`, abierta automáticamente desde `work/Abrir-Casa-Miga-1K3B.cmd` al terminar la entrega. Carpeta aislada: `work/phase1k3b-smoke-20261004`. No depender del acceso anclado; las credenciales se entregan en conversación.
 

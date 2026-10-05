@@ -6,12 +6,18 @@ using CasaMiga.Domain;
 
 namespace CasaMiga.Presentation;
 
-public sealed record RecipeVersionRow(Guid Id,int Number,string State,string Name,long Revision,bool Active);
+public sealed record RecipeVersionRow(Guid Id,int Number,string State,string Name,long Revision,bool Active)
+{
+    public string VersionLabel=>$"Versión {Number}";
+    public string DisplayState=>Active?"Activa · Publicada":State;
+}
 public sealed record RecipeFormulaRow(FormulaSummary Summary,string ActiveVersion,string Draft)
 { public string Code=>Summary.Code;public string Name=>Summary.Name; }
 public sealed record RecipeProfileRow(ProfileSummary Summary,string Product,string FinishedItem,string ActiveVersion,string Draft);
-public sealed record RecipeItemChoice(Guid Id,string Name,InventoryDimension Dimension)
+public sealed record RecipeItemChoice(Guid Id,string Code,string DisplayName,InventoryDimension Dimension)
 {
+    public RecipeItemChoice(Guid id,string name,InventoryDimension dimension):this(id,"",name,dimension){}
+    public string Name=>string.IsNullOrWhiteSpace(Code)?DisplayName:$"{Code} · {DisplayName}";
     public override string ToString()=>Name;
 }
 public sealed record RecipeFormulaChoice(Guid Id,string Name,InventoryDimension Dimension)
@@ -23,22 +29,39 @@ public sealed record RecipeProductChoice(Guid Id,string Name)
     public override string ToString()=>Name;
 }
 public sealed record IngredientPolicyChoice(IngredientCountPolicy Value,string Label);
-public sealed class IngredientEdit
+public sealed class IngredientEdit:INotifyPropertyChanged
 {
+    private RecipeItemChoice? item; private string quantity="1"; private string unit="g";
+    private IngredientCountPolicy policy=IngredientCountPolicy.NotApplicable; private int group; private int preference;
+    private IReadOnlyList<RecipeItemChoice> availableItems=[];
+    public Action? Changed {get;set;}
     public Guid Id {get;set;}=Guid.NewGuid();
-    public RecipeItemChoice? Item {get;set;}
-    public string Quantity {get;set;}="1";
-    public string Unit {get;set;}="g";
-    public IngredientCountPolicy Policy {get;set;}=IngredientCountPolicy.NotApplicable;
-    public int Group {get;set;}
-    public int Preference {get;set;}
+    public RecipeItemChoice? Item {get=>item;set{if(Equals(item,value))return;item=value;if(value is not null){var units=InventoryDisplay.Units(value.Dimension);if(!units.Contains(unit))unit=units[0];policy=value.Dimension==InventoryDimension.Count?IngredientCountPolicy.ExactWholeCount:IngredientCountPolicy.NotApplicable;}Raise();}}
+    public string Quantity {get=>quantity;set{if(quantity==value)return;quantity=value;Raise();}}
+    public string Unit {get=>unit;set{var next=Item is {} selected&&!InventoryDisplay.Units(selected.Dimension).Contains(value)?InventoryDisplay.Units(selected.Dimension)[0]:value;if(unit==next)return;unit=next;Raise();}}
+    public IngredientCountPolicy Policy {get=>policy;set{if(policy==value)return;policy=value;Raise();}}
+    public int Group {get=>group;set{if(group==value)return;group=value;Raise();}}
+    public int Preference {get=>preference;set{if(preference==value)return;preference=value;Raise();}}
     public string GroupLabel=>Group==0?"Ingrediente normal":$"Grupo {Group}";
+    public string OptionLabel=>Preference>0?$"Opción {Preference}":"Opción";
+    public IReadOnlyList<string> UnitChoices=>Item is null?[]:InventoryDisplay.Units(Item.Dimension);
+    public IReadOnlyList<IngredientPolicyChoice> AvailablePolicies=>Item?.Dimension==InventoryDimension.Count
+        ? [new(IngredientCountPolicy.ExactWholeCount,"Sólo piezas completas"),new(IngredientCountPolicy.CeilingWholeCount,"Redondear hacia arriba")]
+        : [new(IngredientCountPolicy.NotApplicable,"Cantidad exacta")];
+    public IReadOnlyList<RecipeItemChoice> AvailableItems {get=>availableItems;set{availableItems=value;Raise();}}
+    public event PropertyChangedEventHandler? PropertyChanged;
+    private void Raise(){PropertyChanged?.Invoke(this,new(null));Changed?.Invoke();}
 }
-public sealed class FormulaRequirementEdit
+public sealed class FormulaRequirementEdit:INotifyPropertyChanged
 {
-    public RecipeFormulaChoice? Formula {get;set;}
-    public string Quantity {get;set;}="1";
-    public string Unit {get;set;}="g";
+    private RecipeFormulaChoice? formula; private string quantity="1"; private string unit="g";
+    public Action? Changed {get;set;}
+    public RecipeFormulaChoice? Formula {get=>formula;set{if(Equals(formula,value))return;formula=value;if(value is not null&&!UnitChoices.Contains(unit))unit=UnitChoices[0];Raise();}}
+    public string Quantity {get=>quantity;set{if(quantity==value)return;quantity=value;Raise();}}
+    public string Unit {get=>unit;set{var next=Formula is {} selected&&!InventoryDisplay.Units(selected.Dimension).Contains(value)?InventoryDisplay.Units(selected.Dimension)[0]:value;if(unit==next)return;unit=next;Raise();}}
+    public IReadOnlyList<string> UnitChoices=>Formula is null?[]:InventoryDisplay.Units(Formula.Dimension);
+    public event PropertyChangedEventHandler? PropertyChanged;
+    private void Raise(){PropertyChanged?.Invoke(this,new(null));Changed?.Invoke();}
 }
 public sealed class RecipeViewModel(RecipeService service,InventoryService inventory,CatalogService catalog,Action<string,string?> log):INotifyPropertyChanged
 {
@@ -48,7 +71,10 @@ public sealed class RecipeViewModel(RecipeService service,InventoryService inven
     public bool IsProfiles=>screen=="profiles"; public bool IsProfile=>screen=="profile"; public bool IsProfileEditor=>screen=="profileEditor";
     public bool ReadOnly=>!CanConfigure; public string ModeLabel=>ReadOnly?"Consulta · sólo lectura":"Puedes crear y editar recetas y perfiles";
     public bool IsNewFormulaOwner=>IsFormulaEditor&&formulaId is null; public bool CanSaveFormulaVersion=>IsFormulaEditor&&formulaId is not null;
+    public bool CanCreateFormula=>Ready&&CanConfigure&&IsNewFormulaOwner&&!string.IsNullOrWhiteSpace(Code)&&!string.IsNullOrWhiteSpace(Name);
+    public bool CanSaveFormulaDraft=>Ready&&CanConfigure&&CanSaveFormulaVersion&&FormulaDraftIsComplete();
     public bool IsNewProfileOwner=>IsProfileEditor&&profileId is null; public bool CanSaveProfileVersion=>IsProfileEditor&&profileId is not null;
+    public bool CanSaveProfileDraft=>Ready&&CanConfigure&&CanSaveProfileVersion&&ProfileDraftIsComplete();
     public string Message{get;private set;}=""; public bool MessageIsSuccess{get;private set;}
     private RecipeFormulaRow? selectedFormula; private RecipeProfileRow? selectedProfile;
     public IReadOnlyList<RecipeFormulaRow> Formulas{get;private set;}=[]; public RecipeFormulaRow? SelectedFormula{get=>selectedFormula;set=>Set(ref selectedFormula,value);}
@@ -60,13 +86,29 @@ public sealed class RecipeViewModel(RecipeService service,InventoryService inven
     public IReadOnlyList<RecipeItemChoice> Items{get;private set;}=[]; public IReadOnlyList<RecipeFormulaChoice> PublishedFormulas{get;private set;}=[];
     public bool CanAddIngredient=>Ready&&CanConfigure&&Items.Count>0;
     public bool CanAddPreparation=>Ready&&CanConfigure&&PublishedFormulas.Count>0;
+    public bool CanRemoveIngredient=>Ready&&CanConfigure&&SelectedIngredient is not null;
+    public bool CanRemoveAlternative=>Ready&&CanConfigure&&SelectedAlternative is not null;
+    public bool CanAddAlternativeOption=>CanRemoveAlternative;
+    public bool CanRemovePreparation=>Ready&&CanConfigure&&SelectedFormulaRequirement is not null;
+    public bool CanRemoveDirect=>Ready&&CanConfigure&&SelectedDirect is not null;
     public IReadOnlyList<RecipeProductChoice> Products{get;private set;}=[]; public IReadOnlyList<RecipeItemChoice> FinishedItems{get;private set;}=[];
     public ObservableCollection<IngredientEdit> Ingredients{get;}=[]; public ObservableCollection<IngredientEdit> Alternatives{get;}=[];
     public ObservableCollection<FormulaRequirementEdit> FormulaRequirements{get;}=[]; public ObservableCollection<IngredientEdit> DirectIngredients{get;}=[];
     private IngredientEdit? selectedIngredient,selectedAlternative,selectedDirect; private FormulaRequirementEdit? selectedFormulaRequirement;
     public IngredientEdit? SelectedIngredient{get=>selectedIngredient;set=>Set(ref selectedIngredient,value);} public IngredientEdit? SelectedAlternative{get=>selectedAlternative;set=>Set(ref selectedAlternative,value);} public FormulaRequirementEdit? SelectedFormulaRequirement{get=>selectedFormulaRequirement;set=>Set(ref selectedFormulaRequirement,value);} public IngredientEdit? SelectedDirect{get=>selectedDirect;set=>Set(ref selectedDirect,value);}
-    public string Code{get;set;}=""; public string Name{get;set;}=""; public string Notes{get;set;}=""; public string VersionNumber{get;set;}="1";
-    public string Yield{get;set;}="1"; public InventoryDimension YieldDimension{get;set;}=InventoryDimension.Mass; public string YieldUnit{get;set;}="g";
+    private string code="",name="",notes="",versionNumber="1",yield="1",yieldUnit="g",ingredientSearch="";
+    private InventoryDimension yieldDimension=InventoryDimension.Mass; private CancellationTokenSource? ingredientSearchCancellation;
+    private IReadOnlyList<RecipeItemChoice> ingredientMatches=[];
+    public string Code{get=>code;set=>Set(ref code,value);} public string Name{get=>name;set=>Set(ref name,value);} public string Notes{get=>notes;set=>Set(ref notes,value);} public string VersionNumber{get=>versionNumber;set=>Set(ref versionNumber,value);}
+    public string Yield{get=>yield;set=>Set(ref yield,value);}
+    public InventoryDimension YieldDimension{get=>yieldDimension;set{if(yieldDimension==value)return;yieldDimension=value;YieldUnit=InventoryDisplay.Units(value)[0];Notify();}}
+    public string YieldUnit{get=>yieldUnit;set{var next=InventoryDisplay.Units(YieldDimension).Contains(value)?value:InventoryDisplay.Units(YieldDimension)[0];Set(ref yieldUnit,next);}}
+    public IReadOnlyList<string> YieldUnitChoices=>InventoryDisplay.Units(YieldDimension);
+    public string IngredientSearch{get=>ingredientSearch;set{if(ingredientSearch==value)return;ingredientSearch=value;Notify();ScheduleIngredientFilter();}}
+    public IReadOnlyList<RecipeItemChoice> IngredientMatches{get=>ingredientMatches;private set{ingredientMatches=value;Notify();}}
+    public bool HasIngredientMatches=>IngredientMatches.Count>0;
+    public bool HasIngredientSearch=>!string.IsNullOrWhiteSpace(IngredientSearch);
+    public string IngredientEmptyMessage=>"No encontramos ingredientes con esa búsqueda.";
     private RecipeProductChoice? profileProduct; private RecipeItemChoice? profileFinishedItem;
     public RecipeProductChoice? ProfileProduct{get=>profileProduct;set=>Set(ref profileProduct,value);} public RecipeItemChoice? ProfileFinishedItem{get=>profileFinishedItem;set=>Set(ref profileFinishedItem,value);}
     public IReadOnlyList<InventoryDimensionChoice> Dimensions{get;}=Enum.GetValues<InventoryDimension>().Select(x=>new InventoryDimensionChoice(x,UiLabels.Dimension(x))).ToArray();
@@ -76,6 +118,10 @@ public sealed class RecipeViewModel(RecipeService service,InventoryService inven
         new(IngredientCountPolicy.ExactWholeCount,"Sólo piezas completas"),
         new(IngredientCountPolicy.CeilingWholeCount,"Redondear hacia arriba a pieza completa")
     ];
+    public string YieldHelpText=>"Cantidad total que produce esta versión. Se usa como base para calcular proporcionalmente sus ingredientes cuando otra preparación requiere una cantidad distinta.";
+    public string PolicyHelpText=>"En Masa y Volumen la cantidad se usa exactamente. En Piezas puedes exigir un número entero exacto o permitir que el cálculo redondee hacia arriba a la siguiente pieza completa.";
+    public string AlternativesHelpText=>"Cada grupo reúne ingredientes que pueden sustituirse entre sí. La opción 1 se intenta primero; cada grupo necesita al menos dos opciones antes de guardar.";
+    public string PreparationsHelpText=>"Una preparación es otra receta publicada que este perfil necesita por cada pieza del producto terminado. Su cantidad y unidad deben corresponder al rendimiento de esa receta.";
     public string PublishedNotice=>"Las versiones publicadas forman parte del historial y no se editan. Para hacer cambios crea una nueva versión.";
     public event PropertyChangedEventHandler? PropertyChanged; private void Notify()=>PropertyChanged?.Invoke(this,new(null));
     private void Set<T>(ref T field,T value){if(EqualityComparer<T>.Default.Equals(field,value))return;field=value;Notify();}
@@ -88,7 +134,8 @@ public sealed class RecipeViewModel(RecipeService service,InventoryService inven
     private async Task LoadChoices()
     {
         var rows=new List<InventoryListRow>();for(int page=0;;page++){var result=await Task.Run(()=>inventory.List(new(Page:page,PageSize:100)));rows.AddRange(result.Items);if(rows.Count>=result.Total)break;}
-        Items=rows.Where(x=>x.Active).Select(x=>new RecipeItemChoice(x.InventoryItemId,$"{x.Code} · {x.Name}",x.Dimension)).ToArray();
+        Items=rows.Where(x=>x.Active).Select(x=>new RecipeItemChoice(x.InventoryItemId,x.Code,x.Name,x.Dimension)).ToArray();
+        ApplyIngredientFilter();
         var finishedIds=rows.Where(x=>x.Active&&x.Kind==InventoryItemKind.FinishedGood&&x.Dimension==InventoryDimension.Count).Select(x=>x.InventoryItemId).ToHashSet();
         FinishedItems=Items.Where(x=>finishedIds.Contains(x.Id)).ToArray();
         var products=new List<ProductRow>();for(int page=0;;page++){var result=await Task.Run(()=>catalog.Products(new(IncludeInactive:false,Page:page)));products.AddRange(result.Items);if(products.Count>=result.Total)break;}
@@ -100,22 +147,25 @@ public sealed class RecipeViewModel(RecipeService service,InventoryService inven
     private async Task RefreshProfiles(){var summaries=await Task.Run(()=>service.ListProfiles(200));Profiles=summaries.Select(p=>{var versions=service.ListProfileVersions(p.Id);return new RecipeProfileRow(p,Products.SingleOrDefault(x=>x.Id==p.ProductId)?.Name??"Producto",Items.SingleOrDefault(x=>x.Id==p.FinishedItemId)?.Name??"Artículo terminado",p.ActiveVersionId is {} active?$"Versión {versions.Single(x=>x.Value.Id==active).Value.Version}":"Sin activar",versions.Any(x=>x.Value.State==ProductionVersionState.Draft)?"Sí":"No");}).ToArray();SelectedProfile=null;}
     public Task ShowFormulasAsync()=>Run(async()=>{await RefreshFormulas();screen="list";});
     public Task ShowProfilesAsync()=>Run(async()=>{await RefreshProfiles();screen="profiles";});
-    public void NewFormula(){if(!CanConfigure)return;formulaId=null;Code="";Name="";screen="formulaEditor";Ingredients.Clear();Alternatives.Clear();Message="";Notify();}
+    public void NewFormula(){if(!CanConfigure)return;formulaId=null;Code="";Name="";IngredientSearch="";screen="formulaEditor";Ingredients.Clear();Alternatives.Clear();Message="";Notify();}
     public Task CreateFormulaAsync()=>Run(async()=>{var id=Guid.NewGuid();await Task.Run(()=>service.CreateFormula(new(id,Code),Name));formulaId=id;await LoadFormula(id);MessageIsSuccess=true;Message="Receta creada. Agrega su primera versión borrador.";});
     public Task OpenFormulaAsync()=>Run(async()=>{var row=SelectedFormula??throw new ArgumentException("Selecciona una receta.");await LoadFormula(row.Summary.Id);});
     private async Task LoadFormula(Guid id){await RefreshFormulas();formulaId=id;var f=await Task.Run(()=>service.GetFormula(id))??throw new ArgumentException("La receta ya no existe.");Name=f.Name;Code=f.Code;Versions=(await Task.Run(()=>service.ListFormulaVersions(id))).Select(v=>new RecipeVersionRow(v.Value.Id,v.Value.Version,v.Value.State==ProductionVersionState.Published?"Publicada":"Borrador",v.Value.Name,v.Revision,f.ActiveVersionId==v.Value.Id)).ToArray();selectedVersion=null;screen="formula";}
-    public void NewFormulaVersion(){if(!CanConfigure||formulaId is null)return;selectedVersion=null;VersionNumber=(Versions.Select(x=>x.Number).DefaultIfEmpty(0).Max()+1).ToString();Name="";Notes="";Yield="1";YieldDimension=InventoryDimension.Mass;YieldUnit="g";Ingredients.Clear();Alternatives.Clear();screen="formulaEditor";Notify();}
+    public void NewFormulaVersion(){if(!CanConfigure||formulaId is null)return;selectedVersion=null;VersionNumber=(Versions.Select(x=>x.Number).DefaultIfEmpty(0).Max()+1).ToString();Name="";Notes="";Yield="1";YieldDimension=InventoryDimension.Mass;YieldUnit="g";IngredientSearch="";Ingredients.Clear();Alternatives.Clear();screen="formulaEditor";Notify();}
     public Task EditFormulaVersionAsync()=>Run(async()=>
     {
         var row=selectedVersion??throw new ArgumentException("Selecciona una versión.");if(row.State!="Borrador")throw new ArgumentException(PublishedNotice);
         var stored=await Task.Run(()=>service.GetFormulaVersion(row.Id))??throw new ArgumentException("La versión ya no existe.");var v=stored.Value;
         VersionNumber=v.Version.ToString();Name=v.Name;Notes=v.Notes??"";YieldDimension=v.BaseYield.Dimension;Yield=InventoryDisplay.Number(v.BaseYield.AtomicUnits,v.BaseYield.Dimension);YieldUnit=InventoryDisplay.Unit(v.BaseYield.AtomicUnits,v.BaseYield.Dimension);Ingredients.Clear();Alternatives.Clear();
-        foreach(var i in v.Ingredients)Ingredients.Add(Edit(i));int group=0;foreach(var g in v.Alternatives){group++;var order=g.PreferenceOrder.ToArray();foreach(var o in g.Options){var e=Edit(o.Ingredient);e.Id=o.Id;e.Group=group;e.Preference=Array.IndexOf(order,o.Id)+1;Alternatives.Add(e);}}
+        IngredientSearch="";foreach(var i in v.Ingredients)Ingredients.Add(Edit(i));int group=0;foreach(var g in v.Alternatives){group++;var order=g.PreferenceOrder.ToArray();foreach(var o in g.Options){var e=Edit(o.Ingredient);e.Id=o.Id;e.Group=group;e.Preference=Array.IndexOf(order,o.Id)+1;Alternatives.Add(e);}}
         screen="formulaEditor";
     });
-    private IngredientEdit Edit(FormulaIngredient value)=>new(){Item=Items.SingleOrDefault(x=>x.Id==value.InventoryItemId),Quantity=InventoryDisplay.Number(value.Quantity.AtomicUnits,value.Quantity.Dimension),Unit=InventoryDisplay.Unit(value.Quantity.AtomicUnits,value.Quantity.Dimension),Policy=value.CountPolicy};
-    public void AddIngredient(bool alternative){var row=new IngredientEdit();if(alternative){row.Group=Alternatives.Select(x=>x.Group).DefaultIfEmpty(0).Max()+1;row.Preference=1;Alternatives.Add(row);}else Ingredients.Add(row);Notify();}
-    public void RemoveIngredient(bool alternative){if(alternative&&SelectedAlternative is {} a){Alternatives.Remove(a);SelectedAlternative=null;}else if(!alternative&&SelectedIngredient is {} i){Ingredients.Remove(i);SelectedIngredient=null;}Notify();}
+    private IngredientEdit Edit(FormulaIngredient value)=>Prepare(new IngredientEdit{Item=Items.SingleOrDefault(x=>x.Id==value.InventoryItemId),Quantity=InventoryDisplay.Number(value.Quantity.AtomicUnits,value.Quantity.Dimension),Unit=InventoryDisplay.Unit(value.Quantity.AtomicUnits,value.Quantity.Dimension),Policy=value.CountPolicy});
+    private IngredientEdit Prepare(IngredientEdit row){row.Changed=Notify;row.AvailableItems=ChoicesFor(row.Item);return row;}
+    private FormulaRequirementEdit Prepare(FormulaRequirementEdit row){row.Changed=Notify;return row;}
+    public void AddIngredient(bool alternative){var row=Prepare(new IngredientEdit());if(alternative){row.Group=Alternatives.Select(x=>x.Group).DefaultIfEmpty(0).Max()+1;row.Preference=1;Alternatives.Add(row);SelectedAlternative=row;}else{Ingredients.Add(row);SelectedIngredient=row;}Notify();}
+    public void AddAlternativeOption(){if(SelectedAlternative is not {} selected)return;var group=selected.Group;var row=Prepare(new IngredientEdit{Group=group,Preference=Alternatives.Where(x=>x.Group==group).Select(x=>x.Preference).DefaultIfEmpty(0).Max()+1});Alternatives.Add(row);SelectedAlternative=row;Notify();}
+    public void RemoveIngredient(bool alternative){if(alternative&&SelectedAlternative is {} a){var group=a.Group;Alternatives.Remove(a);var preference=0;foreach(var row in Alternatives.Where(x=>x.Group==group).OrderBy(x=>x.Preference))row.Preference=++preference;SelectedAlternative=null;}else if(!alternative&&SelectedIngredient is {} i){Ingredients.Remove(i);SelectedIngredient=null;}Notify();}
     public Task SaveFormulaVersionAsync()=>Run(async()=>
     {
         if(formulaId is null)throw new ArgumentException("Primero crea la receta.");if(!int.TryParse(VersionNumber,out var number)||number<1)throw new ArgumentException("La versión debe ser un entero positivo.");
@@ -131,20 +181,20 @@ public sealed class RecipeViewModel(RecipeService service,InventoryService inven
     public Task PublishAsync()=>Run(async()=>{var row=selectedVersion??throw new ArgumentException("Selecciona una versión.");await Task.Run(()=>service.PublishFormula(row.Id,row.Revision));await LoadFormula(formulaId!.Value);await RefreshPublishedFormulaChoices();MessageIsSuccess=true;Message="Versión publicada. Ya es histórica e inmutable.";});
     public Task ActivateAsync()=>Run(async()=>{var row=selectedVersion??throw new ArgumentException("Selecciona una versión publicada.");if(row.State!="Publicada")throw new ArgumentException("Publica la versión antes de activarla.");var summary=service.GetFormula(formulaId!.Value)!;await Task.Run(()=>service.ActivateFormula(formulaId.Value,row.Id,summary.Revision));await LoadFormula(formulaId.Value);MessageIsSuccess=true;Message="Versión activa actualizada.";});
 
-    public void NewProfile(){if(!CanConfigure)return;profileId=null;ProfileProduct=null;ProfileFinishedItem=null;Name="";FormulaRequirements.Clear();DirectIngredients.Clear();screen="profileEditor";Notify();}
+    public void NewProfile(){if(!CanConfigure)return;profileId=null;ProfileProduct=null;ProfileFinishedItem=null;Name="";IngredientSearch="";FormulaRequirements.Clear();DirectIngredients.Clear();screen="profileEditor";Notify();}
     public Task CreateProfileAsync()=>Run(async()=>{var product=ProfileProduct??throw new ArgumentException("Selecciona un producto.");var item=ProfileFinishedItem??throw new ArgumentException("Selecciona el artículo terminado.");var id=Guid.NewGuid();await Task.Run(()=>service.CreateProfile(new(id,product.Id,item.Id)));profileId=id;await LoadProfile(id);MessageIsSuccess=true;Message="Perfil creado. Agrega su primera versión borrador.";});
     public Task OpenProfileAsync()=>Run(async()=>{var row=SelectedProfile??throw new ArgumentException("Selecciona un perfil.");await LoadProfile(row.Summary.Id);});
     private async Task LoadProfile(Guid id){await RefreshProfiles();profileId=id;var p=await Task.Run(()=>service.GetProfile(id))??throw new ArgumentException("El perfil ya no existe.");ProfileProduct=Products.SingleOrDefault(x=>x.Id==p.ProductId);ProfileFinishedItem=Items.SingleOrDefault(x=>x.Id==p.FinishedItemId);Versions=(await Task.Run(()=>service.ListProfileVersions(id))).Select(v=>new RecipeVersionRow(v.Value.Id,v.Value.Version,v.Value.State==ProductionVersionState.Published?"Publicada":"Borrador",v.Value.Name,v.Revision,p.ActiveVersionId==v.Value.Id)).ToArray();selectedVersion=null;screen="profile";}
-    public void NewProfileVersion(){if(!CanConfigure||profileId is null)return;selectedVersion=null;VersionNumber=(Versions.Select(x=>x.Number).DefaultIfEmpty(0).Max()+1).ToString();Name="";FormulaRequirements.Clear();DirectIngredients.Clear();screen="profileEditor";Notify();}
+    public void NewProfileVersion(){if(!CanConfigure||profileId is null)return;selectedVersion=null;VersionNumber=(Versions.Select(x=>x.Number).DefaultIfEmpty(0).Max()+1).ToString();Name="";IngredientSearch="";FormulaRequirements.Clear();DirectIngredients.Clear();screen="profileEditor";Notify();}
     public Task EditProfileVersionAsync()=>Run(async()=>
     {
         var row=selectedVersion??throw new ArgumentException("Selecciona una versión.");if(row.State!="Borrador")throw new ArgumentException(PublishedNotice);
         var stored=await Task.Run(()=>service.GetProfileVersion(row.Id))??throw new ArgumentException("La versión ya no existe.");var v=stored.Value;
-        VersionNumber=v.Version.ToString();Name=v.Name;FormulaRequirements.Clear();DirectIngredients.Clear();
-        foreach(var f in v.Formulas){var choice=PublishedFormulas.SingleOrDefault(x=>x.Id==f.FormulaVersionId);FormulaRequirements.Add(new(){Formula=choice,Quantity=InventoryDisplay.Number(f.QuantityPerPiece.AtomicUnits,f.QuantityPerPiece.Dimension),Unit=InventoryDisplay.Unit(f.QuantityPerPiece.AtomicUnits,f.QuantityPerPiece.Dimension)});}
+        VersionNumber=v.Version.ToString();Name=v.Name;IngredientSearch="";FormulaRequirements.Clear();DirectIngredients.Clear();
+        foreach(var f in v.Formulas){var choice=PublishedFormulas.SingleOrDefault(x=>x.Id==f.FormulaVersionId);FormulaRequirements.Add(Prepare(new FormulaRequirementEdit{Formula=choice,Quantity=InventoryDisplay.Number(f.QuantityPerPiece.AtomicUnits,f.QuantityPerPiece.Dimension),Unit=InventoryDisplay.Unit(f.QuantityPerPiece.AtomicUnits,f.QuantityPerPiece.Dimension)}));}
         foreach(var d in v.DirectIngredients)DirectIngredients.Add(Edit(d.Ingredient));screen="profileEditor";
     });
-    public void AddFormulaRequirement()=>FormulaRequirements.Add(new()); public void AddDirectIngredient()=>DirectIngredients.Add(new());
+    public void AddFormulaRequirement(){var row=Prepare(new FormulaRequirementEdit());FormulaRequirements.Add(row);SelectedFormulaRequirement=row;Notify();} public void AddDirectIngredient(){var row=Prepare(new IngredientEdit());DirectIngredients.Add(row);SelectedDirect=row;Notify();}
     public void RemoveFormulaRequirement(){if(SelectedFormulaRequirement is {} r)FormulaRequirements.Remove(r);SelectedFormulaRequirement=null;} public void RemoveDirectIngredient(){if(SelectedDirect is {} r)DirectIngredients.Remove(r);SelectedDirect=null;}
     public Task SaveProfileVersionAsync()=>Run(async()=>
     {
@@ -171,5 +221,28 @@ public sealed class RecipeViewModel(RecipeService service,InventoryService inven
         ProductionError.Overflow=>"Una cantidad excede el límite permitido.",
         _=>"Revisa cantidades, unidades, duplicados y alternativas de la receta."
     };
+    public void ClearIngredientSearch(){IngredientSearch="";}
+    private async void ScheduleIngredientFilter()
+    {
+        ingredientSearchCancellation?.Cancel();var cancellation=new CancellationTokenSource();ingredientSearchCancellation=cancellation;
+        try{await Task.Delay(250,cancellation.Token);if(cancellation.IsCancellationRequested)return;ApplyIngredientFilter();}
+        catch(OperationCanceledException){}
+    }
+    private void ApplyIngredientFilter()
+    {
+        var search=IngredientSearch.Trim();IngredientMatches=string.IsNullOrEmpty(search)?Items:Items.Where(x=>x.Code.Contains(search,StringComparison.OrdinalIgnoreCase)||x.DisplayName.Contains(search,StringComparison.OrdinalIgnoreCase)).ToArray();
+        foreach(var row in Ingredients.Concat(Alternatives).Concat(DirectIngredients))row.AvailableItems=ChoicesFor(row.Item);
+        Notify();
+    }
+    private IReadOnlyList<RecipeItemChoice> ChoicesFor(RecipeItemChoice? selected)=>selected is null||IngredientMatches.Any(x=>x.Id==selected.Id)?IngredientMatches:[selected,..IngredientMatches];
+    private static bool ValidQuantity(string text,InventoryDimension dimension,string unit)
+    {
+        try{InventoryDisplay.ParseOperational(text,dimension,unit);return true;}catch{return false;}
+    }
+    private static bool ValidIngredient(IngredientEdit row)=>row.Item is {} item&&row.UnitChoices.Contains(row.Unit)&&row.AvailablePolicies.Any(x=>x.Value==row.Policy)&&ValidQuantity(row.Quantity,item.Dimension,row.Unit);
+    private bool FormulaDraftIsComplete()=>!string.IsNullOrWhiteSpace(Name)&&int.TryParse(VersionNumber,out var version)&&version>0&&ValidQuantity(Yield,YieldDimension,YieldUnit)&&
+        Ingredients.Concat(Alternatives).Any()&&Ingredients.All(ValidIngredient)&&Alternatives.All(ValidIngredient)&&Alternatives.GroupBy(x=>x.Group).All(x=>x.Key>0&&x.Count()>=2&&x.Select(r=>r.Preference).Distinct().Count()==x.Count());
+    private bool ProfileDraftIsComplete()=>!string.IsNullOrWhiteSpace(Name)&&int.TryParse(VersionNumber,out var version)&&version>0&&FormulaRequirements.Count+DirectIngredients.Count>0&&
+        FormulaRequirements.All(x=>x.Formula is {} formula&&x.UnitChoices.Contains(x.Unit)&&ValidQuantity(x.Quantity,formula.Dimension,x.Unit))&&DirectIngredients.All(ValidIngredient);
     private async Task Run(Func<Task> action){if(Busy)return;Busy=true;Message="";MessageIsSuccess=false;Notify();try{await action();}catch(AccessDeniedException){Message="No tienes permiso para esta operación de recetas.";log("recipe.authorization.denied",null);}catch(ProductionDomainException e){Message=ErrorMessage(e);}catch(RecipeConcurrencyException){Message="La receta cambió. Actualiza la información antes de continuar.";}catch(ArgumentException e){Message=e.Message;}catch(Exception e){Message="No se completó la operación de recetas.";log("recipe.operation.failed",e.GetType().Name);}finally{Busy=false;Notify();}}
 }
