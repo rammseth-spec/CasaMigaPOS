@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CasaMiga.Application/CasaMiga.Application.csproj" />
+    <Project Path="src/CasaMiga.Domain/CasaMiga.Domain.csproj" />
+    <Project Path="src/CasaMiga.Infrastructure/CasaMiga.Infrastructure.csproj" />
+    <Project Path="src/CasaMiga.Maintenance/CasaMiga.Maintenance.csproj" />
+    <Project Path="src/CasaMiga.Presentation/CasaMiga.Presentation.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CasaMiga.PhotoTests/CasaMiga.PhotoTests.csproj" />
+    <Project Path="tests/CasaMiga.Tests/CasaMiga.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/CasaMiga.Phase1K2CSmoke/CasaMiga.Phase1K2CSmoke.csproj" />
+  </Folder>
+</Solution>
