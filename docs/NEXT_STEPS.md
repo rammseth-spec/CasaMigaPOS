@@ -1,4 +1,16 @@
-# Próximo paso — smoke manual de 1K.3C-R1
+# Próximo paso — smoke manual de 1K.3C-R2
+
+Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.3C-R2`, abierta desde `work/Abrir-Casa-Miga-1K3C-R2.cmd`, con DataDirectory `work/phase1k3c-r2-smoke-20261005`. No usar el acceso anclado ni builds anteriores.
+
+1. Login → Recetas → `SMOKE-REC-001` → Versión 2 → Editar borrador.
+2. Abrir Rendimiento: confirmar que flota, no mueve campos y es compacto; pulsar Esc y confirmar que cierra sin salir del editor.
+3. Abrir Alternativas: confirmar que la tabla no se desplaza.
+4. Abrir Ingredientes directos y Política de cantidad: confirmar que cada `?` está junto a su concepto; cancelar.
+5. Perfiles de producto → Versión 2: revisar Preparaciones por pieza y después Ingredientes directos/Política; confirmar popover, Esc y colocación; cancelar.
+
+Si todo pasa, 1K.3C puede cerrarse formalmente. No guardar cambios, crear datos reales, operar ventas/inventario/caja/producción ni imprimir. No iniciar 1K.3D, Pedidos, migración 017 o instalador.
+
+## Registro anterior — smoke manual de 1K.3C-R1
 
 Usar únicamente la instancia `Casa Miga POS · Caja · DESARROLLO · 1K.3C-R1`, abierta desde `work/Abrir-Casa-Miga-1K3C-R1.cmd`, con DataDirectory aislado `work/phase1k3c-r1-smoke-20261005`. No usar el acceso anclado ni el build 1K.3C anterior.
 

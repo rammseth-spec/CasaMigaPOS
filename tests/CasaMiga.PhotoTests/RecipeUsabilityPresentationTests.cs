@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -141,7 +142,9 @@ public sealed class RecipeUsabilityPresentationTests
     });
 
     [TestMethod]
-    public Task ContextHelpIsOperationalCompactResponsiveAndClosesWithEscape()=>WpfTestHost.OnUi(async()=>
+    [DataRow(1280,820)]
+    [DataRow(1920,1080)]
+    public Task ContextHelpFloatsInsideViewportWithoutLayoutShiftAndClosesFromRealFocus(int width,int height)=>WpfTestHost.OnUi(async()=>
     {
         using var fixture=new Fixture();var(vm,view)=await fixture.EditorAsync();WpfTestHost.Layout(view,1060,1800);
         foreach(var text in new[]{vm.YieldHelpText,vm.PolicyHelpText,vm.DirectIngredientsHelpText,vm.AlternativesHelpText,vm.PreparationsHelpText,vm.PublishedNotice})
@@ -151,22 +154,47 @@ public sealed class RecipeUsabilityPresentationTests
         }
         Assert.IsTrue(vm.PolicyHelpText.Contains("2.4",StringComparison.Ordinal));Assert.IsTrue(vm.PolicyHelpText.Contains("3 piezas",StringComparison.Ordinal));
         Assert.IsTrue(Descendants<ContextHelp>(view).Any(x=>x.HelpText==vm.DirectIngredientsHelpText));
+        var directHelps=Descendants<ContextHelp>(view).Where(x=>x.Label=="Ayuda de ingredientes directos").ToArray();
+        Assert.AreEqual(2,directHelps.Length,"Cada editor conserva una sola ayuda junto a su título de ingredientes.");
+        var policyHeaders=Descendants<DataGrid>(view).SelectMany(grid=>grid.Columns).Select(column=>column.Header).OfType<WrapPanel>()
+            .Where(header=>header.Children.OfType<TextBlock>().Any(x=>x.Text=="Política de cantidad")).ToArray();
+        Assert.AreEqual(3,policyHeaders.Length,"Receta, alternativas y perfil asocian la ayuda a la columna correspondiente.");
+        Assert.IsTrue(policyHeaders.All(header=>header.Children.OfType<ContextHelp>().Single().Label=="Ayuda de política de cantidad"));
 
-        var help=new ContextHelp{HelpText=vm.AlternativesHelpText};var window=new Window{Content=help,Width=1100,Height=820,Left=-10000,Top=-10000,ShowInTaskbar=false,ShowActivated=false,WindowStartupLocation=WindowStartupLocation.Manual};
+        var editorWindow=new Window{Content=new ScrollViewer{Content=view,VerticalScrollBarVisibility=ScrollBarVisibility.Auto},Width=width,Height=height,Left=-10000,Top=-10000,ShowInTaskbar=false,ShowActivated=false,WindowStartupLocation=WindowStartupLocation.Manual};
         try
         {
-            window.Show();var panel=Descendants<Expander>(help).Single();panel.IsExpanded=true;WpfTestHost.Layout(help,1060,800);
-            Assert.IsGreaterThanOrEqualTo(420d,panel.ActualWidth);Assert.IsLessThanOrEqualTo(520d,panel.ActualWidth);Assert.IsLessThan(400d,panel.ActualHeight);
+            editorWindow.Show();WpfTestHost.Layout(editorWindow,width,height);vm.Yield="1";
+            var yieldHelp=Descendants<ContextHelp>(view).Single(x=>x.IsVisible&&x.Label=="Ayuda de rendimiento");
+            var yieldButton=(Button)yieldHelp.FindName("HelpButton");var yieldPopup=(Popup)yieldHelp.FindName("HelpPopup");
+            var yieldInput=Descendants<TextBox>(view).Single(x=>BindingOperations.GetBinding(x,TextBox.TextProperty)?.Path.Path=="Yield");var originalName=vm.Name;
+            yieldButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));WpfTestHost.Layout(editorWindow,width,height);Assert.IsTrue(yieldPopup.IsOpen);
+            yieldInput.Focus();Keyboard.Focus(yieldInput);SendKey(yieldInput,editorWindow,Key.Escape);WpfTestHost.Layout(editorWindow,width,height);
+            Assert.IsFalse(yieldPopup.IsOpen);Assert.IsTrue(vm.IsFormulaEditor);Assert.AreEqual("1",vm.Yield);Assert.AreEqual(originalName,vm.Name);Assert.IsTrue(editorWindow.IsVisible);
+        }
+        finally{editorWindow.Close();}
+
+        var nearby=new TextBox{Text="Borrador sin cambios",Margin=new Thickness(12)};
+        var neighbor=new Border{Height=72,Margin=new Thickness(12),Background=Brushes.Transparent};
+        var help=new ContextHelp{HelpText=vm.AlternativesHelpText,Label="Ayuda de grupos de alternativas",HorizontalAlignment=HorizontalAlignment.Right,VerticalAlignment=VerticalAlignment.Bottom,Margin=new Thickness(12)};
+        var host=new Grid();host.RowDefinitions.Add(new RowDefinition{Height=GridLength.Auto});host.RowDefinitions.Add(new RowDefinition());host.Children.Add(nearby);Grid.SetRow(neighbor,1);host.Children.Add(neighbor);Grid.SetRow(help,1);host.Children.Add(help);
+        var window=new Window{Content=host,Width=width,Height=height,Left=-10000,Top=-10000,ShowInTaskbar=false,ShowActivated=false,WindowStartupLocation=WindowStartupLocation.Manual};
+        try
+        {
+            window.Show();WpfTestHost.Layout(window,width,height);
+            var popup=(Popup)help.FindName("HelpPopup");var button=(Button)help.FindName("HelpButton");var card=(Border)help.FindName("PopupCard");
+            var beforeY=neighbor.TranslatePoint(new Point(),host).Y;var beforeHeight=host.ActualHeight;var original=nearby.Text;
+            button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));WpfTestHost.Layout(window,width,height);
+            Assert.IsTrue(popup.IsOpen);Assert.AreEqual(beforeY,neighbor.TranslatePoint(new Point(),host).Y,0.1,"El popover no debe desplazar controles vecinos.");Assert.AreEqual(beforeHeight,host.ActualHeight,0.1,"El popover no debe aumentar el layout base.");
+            Assert.IsGreaterThanOrEqualTo(420d,card.ActualWidth);Assert.IsLessThanOrEqualTo(520d,card.ActualWidth);Assert.AreEqual(TextWrapping.Wrap,Descendants<TextBlock>(card).Single(x=>x.Text==vm.AlternativesHelpText).TextWrapping);
+            var target=button.TransformToAncestor(window).Transform(new Point());var topLeft=new Point(target.X+popup.HorizontalOffset,target.Y+popup.VerticalOffset);var bottomRight=new Point(topLeft.X+card.ActualWidth,topLeft.Y+card.ActualHeight);
+            Assert.IsGreaterThanOrEqualTo(0d,topLeft.X);Assert.IsGreaterThanOrEqualTo(0d,topLeft.Y);Assert.IsLessThanOrEqualTo(window.ActualWidth,bottomRight.X+1);Assert.IsLessThanOrEqualTo(window.ActualHeight,bottomRight.Y+1);
+            button.Focus();Keyboard.Focus(button);SendKey(button,window,Key.Escape);WpfTestHost.Layout(window,width,height);Assert.IsFalse(popup.IsOpen);Assert.IsTrue(window.IsVisible);
+            button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));nearby.Focus();Keyboard.Focus(nearby);SendKey(nearby,window,Key.Escape);WpfTestHost.Layout(window,width,height);Assert.IsFalse(popup.IsOpen);Assert.AreEqual(original,nearby.Text);Assert.IsTrue(window.IsVisible);
+            button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));card.Focus();Keyboard.Focus(card);SendKey(card,window,Key.Escape);WpfTestHost.Layout(window,width,height);Assert.IsFalse(popup.IsOpen);Assert.IsTrue(window.IsVisible);
+            button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));Assert.IsTrue(popup.IsOpen);button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));Assert.IsFalse(popup.IsOpen);
         }
         finally{window.Close();}
-        var narrowHelp=new ContextHelp{HelpText=vm.AlternativesHelpText,Width=340};var narrowWindow=new Window{Content=narrowHelp,Width=380,Height=820,Left=-10000,Top=-10000,ShowInTaskbar=false,ShowActivated=false,WindowStartupLocation=WindowStartupLocation.Manual};
-        try
-        {
-            narrowWindow.Show();var panel=Descendants<Expander>(narrowHelp).Single();panel.IsExpanded=true;WpfTestHost.Layout(narrowHelp,340,800);
-            Assert.IsLessThanOrEqualTo(340d,panel.ActualWidth);Assert.AreEqual(TextWrapping.Wrap,Descendants<TextBlock>(narrowHelp).Single(x=>x.Text==vm.AlternativesHelpText).TextWrapping);
-            narrowHelp.Focus();Keyboard.Focus(narrowHelp);SendKey(narrowHelp,narrowWindow,Key.Escape);WpfTestHost.Layout(narrowHelp,340,800);Assert.IsFalse(panel.IsExpanded);
-        }
-        finally{narrowWindow.Close();}
         fixture.AssertNoEffects();await Task.CompletedTask;
     });
 

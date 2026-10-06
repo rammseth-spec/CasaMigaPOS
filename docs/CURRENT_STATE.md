@@ -1,4 +1,12 @@
-# FASE 1K ABIERTA — 1K.3C-R1, 05/10/2026
+# FASE 1K ABIERTA — 1K.3C-R2, 05/10/2026
+
+**FASE 1K.3C-R2 técnicamente completada; smoke visual/manual pendiente.** `ContextHelp` usa ahora un `Popup` flotante anclado al botón: abrirlo no participa en la medición del formulario ni desplaza campos o tablas. El ancho se limita entre el espacio disponible y 520 DIP, el texto conserva Wrap, el eje horizontal se ajusta al borde derecho y el panel cambia arriba cuando no cabe debajo. Escape se atiende desde la ventana real y desde el árbol separado del Popup; cierra primero la ayuda más reciente, conserva editor/borrador y mantiene la prioridad antes de ComboBox, fullscreen y navegación.
+
+La prueba R1 era un falso positivo porque elevaba Escape directamente sobre la raíz `ContextHelp`; no reproducía el foco real en botón/campo ni la interceptación previa de `MainWindow`. R2 materializa Window/RecipeView/MainWindow, abre mediante el botón, prueba foco en botón, editor y Popup, verifica F11 y compara geometría antes/después. Las ayudas de ingredientes quedan junto al título y las de Política de cantidad junto al encabezado de esa columna en Recetas, alternativas y perfiles. Contenido aprobado y reglas funcionales intactos.
+
+Focales definitivas: **46/46** compartidas y **3/3** de teclado/layout final, 0 fallidas/omitidas. Suite completa `scripts/verify.ps1`: **713/713** (558 generales + 155 WPF), Release y build `Phase1K3C-R2` con 0 errores/advertencias; diff check correcto. Revisión: `work/phase1k3c-r2-smoke-20261005`, build `src/CasaMiga.Presentation/bin/Phase1K3C-R2/`, launcher `work/Abrir-Casa-Miga-1K3C-R2.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.3C-R2`. Schema 16, sin 017; base protegida SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`; capas protegidas, operaciones e impresión intactas. Ver `PHASE_1K3C_R2_REPORT.md`. No iniciar 1K.3D.
+
+## Registro anterior — 1K.3C-R1
 
 **FASE 1K.3C-R1 técnicamente completada; smoke manual R1 pendiente.** El filtro de ingredientes mantiene una colección estable por fila y actualiza candidatos en sitio; así los `ComboBox` materializados conservan el ingrediente asignado, su ID, cantidad, unidad y política durante `SIN-RESULTADOS-999`, `SMOKE-MASA-001` y × Limpiar. Cancelar y reabrir recupera el borrador original. El catálogo filtrado sigue separado y buscar no crea filas automáticamente.
 

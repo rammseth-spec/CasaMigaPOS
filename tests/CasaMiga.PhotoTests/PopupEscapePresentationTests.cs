@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -87,6 +88,27 @@ public sealed class PopupEscapePresentationTests
             Assert.IsFalse(combo.IsDropDownOpen);
             Assert.IsTrue(fixture.Model.Inventory!.IsItemEditor);
             Assert.AreSame(selected,combo.SelectedItem);
+            fixture.AssertNoOperations();
+        }
+        finally{window.Close();}
+    });
+
+    [TestMethod]
+    public Task ShellEscapeClosesContextHelpBeforeFullscreenOrEditorFromNearbyFocus()=>WpfTestHost.OnUi(async()=>
+    {
+        using var fixture=new Fixture();await fixture.InitializeAsync();
+        var window=OffscreenWindow(new MainWindow{DataContext=fixture.Model});
+        try
+        {
+            window.Show();WpfTestHost.Layout(window,1280,820);
+            var root=(Grid)window.Content;var help=new ContextHelp{HelpText="Ayuda flotante de prueba",Label="Ayuda de prueba",HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center};
+            Panel.SetZIndex(help,100);root.Children.Add(help);WpfTestHost.Layout(window,1280,820);
+            var trigger=(Button)help.FindName("HelpButton");var popup=(Popup)help.FindName("HelpPopup");var editor=Descendants<InventoryView>(window).Single();var nearby=TypeCombo(editor);
+            SendKey(nearby,window,Key.F11);Assert.AreEqual(WindowStyle.None,window.WindowStyle);
+            trigger.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));Assert.IsTrue(popup.IsOpen);
+            nearby.Focus();Keyboard.Focus(nearby);SendKey(nearby,window,Key.Escape);WpfTestHost.Layout(window,1280,820);
+            Assert.IsFalse(popup.IsOpen);Assert.AreEqual(WindowStyle.None,window.WindowStyle,"Escape must close help before leaving fullscreen.");Assert.IsTrue(fixture.Model.Inventory!.IsItemEditor);
+            SendKey(nearby,window,Key.Escape);Assert.AreEqual(WindowStyle.SingleBorderWindow,window.WindowStyle);Assert.IsTrue(fixture.Model.Inventory.IsItemEditor);
             fixture.AssertNoOperations();
         }
         finally{window.Close();}

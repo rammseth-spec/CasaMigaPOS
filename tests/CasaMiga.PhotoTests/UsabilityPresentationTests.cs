@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using CasaMiga.Application;
@@ -144,9 +145,9 @@ public sealed class UsabilityPresentationTests
         var button=new Button{Content="Ver detalle",IsEnabled=false};WpfTestHost.Layout(button,200,60);
         Assert.AreEqual(((SolidColorBrush)System.Windows.Application.Current.FindResource("TextPrimaryBrush")).Color,((SolidColorBrush)button.Foreground).Color);
         var border=(Border)button.Template.FindName("Surface",button);Assert.AreEqual(1d,border.Opacity);
-        var help=new ContextHelp{HelpText="Texto de prueba de ayuda."};WpfTestHost.Layout(help,360,200);
-        var expander=Descendants<Expander>(help).Single();Assert.IsFalse(expander.IsExpanded);expander.IsExpanded=true;WpfTestHost.Layout(help,360,200);
-        AssertVisible(help,"Texto de prueba de ayuda.");expander.IsExpanded=false;
+        var help=new ContextHelp{HelpText="Texto de prueba de ayuda."};var window=new Window{Content=help,Width=420,Height=240,Left=-10000,Top=-10000,ShowInTaskbar=false,ShowActivated=false};
+        try{window.Show();WpfTestHost.Layout(window,420,240);var popup=(Popup)help.FindName("HelpPopup");var card=(Border)help.FindName("PopupCard");var trigger=(Button)help.FindName("HelpButton");Assert.IsFalse(popup.IsOpen);trigger.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));WpfTestHost.Layout(window,420,240);Assert.IsTrue(popup.IsOpen);AssertVisible(card,"Texto de prueba de ayuda.");trigger.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));Assert.IsFalse(popup.IsOpen);}
+        finally{window.Close();}
     });
 
     private static (ScrollViewer Page,UserControl Module) Page(UIElement child)
