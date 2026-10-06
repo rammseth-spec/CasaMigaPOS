@@ -161,7 +161,36 @@
   </ControlTemplate></Setter.Value></Setter>
  </Style>
  <!-- Selector de fecha: campo blanco con el mismo borde; el texto interno sin marco propio. -->
- <Style TargetType="DatePicker"><Setter Property="MinHeight" Value="46"/><Setter Property="FontSize" Value="17"/><Setter Property="Padding" Value="10,6"/><Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="VerticalContentAlignment" Value="Center"/><Setter Property="IsTodayHighlighted" Value="True"/></Style>
+ <Style TargetType="DatePicker"><Setter Property="Height" Value="46"/><Setter Property="FontSize" Value="17"/><Setter Property="Padding" Value="12,0,6,0"/><Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/><Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/><Setter Property="BorderThickness" Value="1"/><Setter Property="IsTodayHighlighted" Value="True"/><Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+  <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="DatePicker">
+   <Grid>
+    <Border x:Name="Frame" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+     <Grid x:Name="PART_Root" VerticalAlignment="Center">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <DatePickerTextBox x:Name="PART_TextBox" VerticalAlignment="Center"/>
+      <Button x:Name="PART_Button" Grid.Column="1" Style="{x:Null}" Focusable="False" Width="34" Height="34" MinWidth="0" MinHeight="0" Margin="6,0,0,0" Cursor="Hand" ToolTip="Abrir calendario">
+       <Button.Template><ControlTemplate TargetType="Button">
+        <Border x:Name="Chip" Background="Transparent" CornerRadius="6">
+         <Path Width="18" Height="18" Stretch="Uniform" Data="M2,4 L18,4 L18,18 L2,18 Z M2,8 L18,8 M6,1.5 L6,6 M14,1.5 L14,6 M6,12 L8,12 M11,12 L13,12 M6,15 L8,15" Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+        </Border>
+        <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Chip" Property="Background" Value="{DynamicResource PrimarySoftBrush}"/></Trigger></ControlTemplate.Triggers>
+       </ControlTemplate></Button.Template>
+      </Button>
+      <Popup x:Name="PART_Popup" Placement="Bottom" PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}" StaysOpen="False" AllowsTransparency="True"/>
+     </Grid>
+    </Border>
+    <Border x:Name="Ring" CornerRadius="8" BorderThickness="2" BorderBrush="{DynamicResource PrimaryBrush}" IsHitTestVisible="False" Visibility="Collapsed">
+     <Border.Effect><DropShadowEffect BlurRadius="12" ShadowDepth="0" Opacity="0.55" Color="{StaticResource PrimaryHoverColor}"/></Border.Effect>
+    </Border>
+   </Grid>
+   <ControlTemplate.Triggers>
+    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Frame" Property="BorderBrush" Value="{DynamicResource PrimaryHoverBrush}"/></Trigger>
+    <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="Ring" Property="Visibility" Value="Visible"/></Trigger>
+    <Trigger Property="IsDropDownOpen" Value="True"><Setter TargetName="Ring" Property="Visibility" Value="Visible"/></Trigger>
+    <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.56"/></Trigger>
+   </ControlTemplate.Triggers>
+  </ControlTemplate></Setter.Value></Setter>
+ </Style>
  <Style TargetType="DatePickerTextBox"><Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/><Setter Property="VerticalContentAlignment" Value="Center"/><Setter Property="CaretBrush" Value="{DynamicResource PrimaryBrush}"/>
   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="DatePickerTextBox"><Grid><ContentControl x:Name="PART_Watermark" Opacity="0" Focusable="False" IsHitTestVisible="False" VerticalAlignment="Center"/><ScrollViewer x:Name="PART_ContentHost" Focusable="False" VerticalAlignment="Center" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/></Grid></ControlTemplate></Setter.Value></Setter>
  </Style>

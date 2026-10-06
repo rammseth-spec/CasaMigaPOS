@@ -4,19 +4,24 @@
   <Style x:Key="KpiLabel" TargetType="TextBlock"><Setter Property="FontSize" Value="13"/><Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/></Style>
   <Style x:Key="KpiValue" TargetType="TextBlock"><Setter Property="FontSize" Value="26"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/><Setter Property="Margin" Value="0,4,0,0"/></Style>
   <Style x:Key="Section" TargetType="TextBlock" BasedOn="{StaticResource SectionTitleText}"><Setter Property="Margin" Value="0,18,0,8"/></Style>
+  <Style x:Key="Chip" TargetType="Button" BasedOn="{StaticResource SecondaryButton}"><Setter Property="MinHeight" Value="36"/><Setter Property="Padding" Value="14,6"/><Setter Property="FontSize" Value="14"/><Setter Property="Margin" Value="0,0,8,8"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
   <Style x:Key="Empty" TargetType="TextBlock"><Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/><Setter Property="FontSize" Value="15"/><Setter Property="Margin" Value="0,4,0,4"/></Style>
  </UserControl.Resources>
  <StackPanel IsEnabled="{Binding Ready}">
   <!-- Periodo -->
-  <WrapPanel VerticalAlignment="Bottom">
-   <StackPanel Margin="0,0,12,8"><TextBlock Text="Desde" Style="{StaticResource KpiLabel}"/><DatePicker SelectedDate="{Binding FromSelected}" Width="190" Margin="0,4,0,0" AutomationProperties.Name="Fecha desde"/></StackPanel>
-   <StackPanel Margin="0,0,12,8"><TextBlock Text="Hasta" Style="{StaticResource KpiLabel}"/><DatePicker SelectedDate="{Binding ThroughSelected}" Width="190" Margin="0,4,0,0" AutomationProperties.Name="Fecha hasta"/></StackPanel>
-   <Button Content="Generar" Click="GenerateClick" Margin="0,22,20,8" MinWidth="120"/>
-   <Button Content="Hoy" Click="TodayClick" Style="{StaticResource SecondaryButton}" Margin="0,22,8,8"/>
-   <Button Content="Ayer" Click="YesterdayClick" Style="{StaticResource SecondaryButton}" Margin="0,22,8,8"/>
-   <Button Content="Últimos 7 días" Click="LastSevenDaysClick" Style="{StaticResource SecondaryButton}" Margin="0,22,8,8"/>
-   <Button Content="Este mes" Click="MonthClick" Style="{StaticResource SecondaryButton}" Margin="0,22,20,8"/>
-   <Button Content="Exportar CSV" Click="ExportClick" IsEnabled="{Binding HasReport}" Style="{StaticResource GhostButton}" Margin="0,22,0,8" AutomationProperties.Name="Exportar reporte a CSV"/>
+  <Grid>
+   <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <StackPanel Margin="0,0,12,0"><TextBlock Text="Desde" Style="{StaticResource KpiLabel}"/><DatePicker SelectedDate="{Binding FromSelected}" Width="200" Margin="0,4,0,0" AutomationProperties.Name="Fecha desde"/></StackPanel>
+   <StackPanel Grid.Column="1" Margin="0,0,12,0"><TextBlock Text="Hasta" Style="{StaticResource KpiLabel}"/><DatePicker SelectedDate="{Binding ThroughSelected}" Width="200" Margin="0,4,0,0" AutomationProperties.Name="Fecha hasta"/></StackPanel>
+   <Button Grid.Column="2" Content="Generar" Click="GenerateClick" VerticalAlignment="Bottom" MinWidth="120"/>
+   <Button Grid.Column="4" Content="Exportar CSV" Click="ExportClick" IsEnabled="{Binding HasReport}" Style="{StaticResource SecondaryButton}" VerticalAlignment="Bottom" AutomationProperties.Name="Exportar reporte a CSV"/>
+  </Grid>
+  <WrapPanel Margin="0,12,0,0">
+   <TextBlock Text="Rápido:" Style="{StaticResource KpiLabel}" VerticalAlignment="Center" Margin="0,0,10,8"/>
+   <Button Content="Hoy" Click="TodayClick" Style="{StaticResource Chip}"/>
+   <Button Content="Ayer" Click="YesterdayClick" Style="{StaticResource Chip}"/>
+   <Button Content="Últimos 7 días" Click="LastSevenDaysClick" Style="{StaticResource Chip}"/>
+   <Button Content="Este mes" Click="MonthClick" Style="{StaticResource Chip}"/>
   </WrapPanel>
   <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Foreground="{DynamicResource ErrorBrush}" AutomationProperties.LiveSetting="Polite" Margin="0,4,0,0"/>
 
