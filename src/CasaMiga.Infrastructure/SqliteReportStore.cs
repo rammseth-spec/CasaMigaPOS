@@ -82,5 +82,39 @@ public sealed partial class SqliteLocalUnitOfWork
                 .OrderByDescending(p => p.Net.Cents).ThenBy(p => p.ProductName, StringComparer.CurrentCulture).ToList();
             return new(saleCount, new(gross), new(refunded), productRows, cashiers, sessionRows, paymentRows);
         }
+
+        private string NotCancelled(string sale) => HasRefunds() ? $" AND NOT EXISTS(SELECT 1 FROM sale_refund f WHERE f.sale_id={sale}.id AND f.kind='CANCELLATION')" : "";
+
+        // Sólo productos activos: el pronóstico es para lo que hoy se sigue horneando.
+        public IReadOnlyList<SaleLineFact> QuerySaleLines(DateTimeOffset fromUtc, DateTimeOffset untilUtc)
+        {
+            using var query = Command("SELECT s.confirmed_utc,i.product_id,p.name,i.quantity FROM sale_item i JOIN sale s ON s.id=i.sale_id JOIN product p ON p.id=i.product_id"
+                + " WHERE s.confirmed_utc>=$from AND s.confirmed_utc<$until AND p.active=1" + NotCancelled("s"), ("$from", At(fromUtc)), ("$until", At(untilUtc)));
+            using var r = query.ExecuteReader();
+            var lines = new List<SaleLineFact>();
+            while (r.Read()) lines.Add(new(Date(r, 0)!.Value, Guid.Parse(r.GetString(1)), r.GetString(2), r.GetInt32(3)));
+            return lines;
+        }
+
+        public IReadOnlyList<SaleFact> QuerySaleFacts(DateTimeOffset fromUtc, DateTimeOffset untilUtc)
+        {
+            using var query = Command("SELECT s.confirmed_utc,s.total_cents FROM sale s WHERE s.confirmed_utc>=$from AND s.confirmed_utc<$until" + NotCancelled("s"),
+                ("$from", At(fromUtc)), ("$until", At(untilUtc)));
+            using var r = query.ExecuteReader();
+            var sales = new List<SaleFact>();
+            while (r.Read()) sales.Add(new(Date(r, 0)!.Value, r.GetInt64(1)));
+            return sales;
+        }
+
+        public IReadOnlyList<RefundFact> QueryRefundFacts(DateTimeOffset fromUtc, DateTimeOffset untilUtc)
+        {
+            if (!HasRefunds()) return [];
+            using var query = Command("SELECT f.reason,f.total_cents,u.display_name FROM sale_refund f JOIN sale s ON s.id=f.sale_id JOIN app_user u ON u.id=s.user_id"
+                + " WHERE f.refunded_utc>=$from AND f.refunded_utc<$until ORDER BY f.refunded_utc", ("$from", At(fromUtc)), ("$until", At(untilUtc)));
+            using var r = query.ExecuteReader();
+            var refunds = new List<RefundFact>();
+            while (r.Read()) refunds.Add(new(r.GetString(0), r.GetInt64(1), r.GetString(2)));
+            return refunds;
+        }
     }
 }

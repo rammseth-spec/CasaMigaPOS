@@ -15,6 +15,12 @@ public partial class ReportsView : UserControl
     private async void MonthClick(object sender, RoutedEventArgs e) => await Model.MonthAsync();
     private async void YesterdayClick(object sender, RoutedEventArgs e) => await Model.YesterdayAsync();
     private async void LastSevenDaysClick(object sender, RoutedEventArgs e) => await Model.LastSevenDaysAsync();
+    private async void SummaryClick(object sender, RoutedEventArgs e) => await Model.ShowAsync(ReportTab.Summary);
+    private async void ComparisonClick(object sender, RoutedEventArgs e) => await Model.ShowAsync(ReportTab.Comparison);
+    private async void HeatmapClick(object sender, RoutedEventArgs e) => await Model.ShowAsync(ReportTab.Heatmap);
+    private async void CashControlClick(object sender, RoutedEventArgs e) => await Model.ShowAsync(ReportTab.CashControl);
+    private async void ForecastClick(object sender, RoutedEventArgs e) => await Model.ShowAsync(ReportTab.Forecast);
+    private async void CalculateForecastClick(object sender, RoutedEventArgs e) => await Model.ForecastAsync();
     private void ExportClick(object sender, RoutedEventArgs e)
     {
         if (Model.Csv() is not { } csv) return;

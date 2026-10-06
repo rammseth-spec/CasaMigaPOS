@@ -6,98 +6,285 @@
   <Style x:Key="Section" TargetType="TextBlock" BasedOn="{StaticResource SectionTitleText}"><Setter Property="Margin" Value="0,18,0,8"/></Style>
   <Style x:Key="Chip" TargetType="Button" BasedOn="{StaticResource SecondaryButton}"><Setter Property="MinHeight" Value="36"/><Setter Property="Padding" Value="14,6"/><Setter Property="FontSize" Value="14"/><Setter Property="Margin" Value="0,0,8,8"/><Setter Property="VerticalAlignment" Value="Center"/></Style>
   <Style x:Key="Empty" TargetType="TextBlock"><Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/><Setter Property="FontSize" Value="15"/><Setter Property="Margin" Value="0,4,0,4"/></Style>
+  <Style x:Key="Tab" TargetType="Button" BasedOn="{StaticResource SectionTabButton}"><Setter Property="Margin" Value="0,0,8,8"/><Setter Property="Padding" Value="16,8"/></Style>
+  <!-- Cambios: verde si sube, rojo si baja. -->
+  <Style x:Key="QuantityTrendCell" TargetType="TextBlock" BasedOn="{StaticResource NumericCellText}"><Setter Property="FontWeight" Value="SemiBold"/><Style.Triggers>
+   <DataTrigger Binding="{Binding QuantityTrend}" Value="1"><Setter Property="Foreground" Value="{DynamicResource ValidBrush}"/></DataTrigger>
+   <DataTrigger Binding="{Binding QuantityTrend}" Value="-1"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/></DataTrigger></Style.Triggers></Style>
+  <Style x:Key="NetTrendCell" TargetType="TextBlock" BasedOn="{StaticResource NumericCellText}"><Setter Property="FontWeight" Value="SemiBold"/><Style.Triggers>
+   <DataTrigger Binding="{Binding NetTrend}" Value="1"><Setter Property="Foreground" Value="{DynamicResource ValidBrush}"/></DataTrigger>
+   <DataTrigger Binding="{Binding NetTrend}" Value="-1"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/></DataTrigger></Style.Triggers></Style>
+  <!-- En caja cualquier diferencia es alerta: faltante en rojo, sobrante en trigo. -->
+  <Style x:Key="CashNetCell" TargetType="TextBlock" BasedOn="{StaticResource NumericCellText}"><Setter Property="FontWeight" Value="SemiBold"/><Style.Triggers>
+   <DataTrigger Binding="{Binding NetTrend}" Value="1"><Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/></DataTrigger>
+   <DataTrigger Binding="{Binding NetTrend}" Value="-1"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/></DataTrigger></Style.Triggers></Style>
+  <Style x:Key="HeatText" TargetType="TextBlock"><Setter Property="FontSize" Value="13"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="TextWrapping" Value="NoWrap"/><Setter Property="HorizontalAlignment" Value="Center"/><Setter Property="VerticalAlignment" Value="Center"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
+   <Style.Triggers><DataTrigger Binding="{Binding Hot}" Value="True"><Setter Property="Foreground" Value="White"/></DataTrigger></Style.Triggers></Style>
+  <DataTemplate x:Key="HeatCellTemplate">
+   <Grid Height="38" Margin="2" ToolTip="{Binding Tip}" Background="Transparent" AutomationProperties.Name="{Binding Tip}">
+    <Border CornerRadius="6" Background="{DynamicResource SurfaceSecondaryBrush}"/>
+    <Border CornerRadius="6" Background="{DynamicResource PrimaryBrush}" Opacity="{Binding Intensity}"/>
+    <TextBlock Text="{Binding Text}" Style="{StaticResource HeatText}"/>
+   </Grid>
+  </DataTemplate>
+  <ItemsPanelTemplate x:Key="OneRow"><UniformGrid Rows="1"/></ItemsPanelTemplate>
  </UserControl.Resources>
  <StackPanel IsEnabled="{Binding Ready}">
-  <!-- Periodo -->
-  <Grid>
-   <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-   <StackPanel Margin="0,0,12,0"><TextBlock Text="Desde" Style="{StaticResource KpiLabel}"/><DatePicker SelectedDate="{Binding FromSelected}" Width="200" Margin="0,4,0,0" AutomationProperties.Name="Fecha desde"/></StackPanel>
-   <StackPanel Grid.Column="1" Margin="0,0,12,0"><TextBlock Text="Hasta" Style="{StaticResource KpiLabel}"/><DatePicker SelectedDate="{Binding ThroughSelected}" Width="200" Margin="0,4,0,0" AutomationProperties.Name="Fecha hasta"/></StackPanel>
-   <Button Grid.Column="2" Content="Generar" Click="GenerateClick" VerticalAlignment="Bottom" MinWidth="120"/>
-   <Button Grid.Column="4" Content="Exportar CSV" Click="ExportClick" IsEnabled="{Binding HasReport}" Style="{StaticResource SecondaryButton}" VerticalAlignment="Bottom" AutomationProperties.Name="Exportar reporte a CSV"/>
-  </Grid>
-  <WrapPanel Margin="0,12,0,0">
-   <TextBlock Text="Rápido:" Style="{StaticResource KpiLabel}" VerticalAlignment="Center" Margin="0,0,10,8"/>
-   <Button Content="Hoy" Click="TodayClick" Style="{StaticResource Chip}"/>
-   <Button Content="Ayer" Click="YesterdayClick" Style="{StaticResource Chip}"/>
-   <Button Content="Últimos 7 días" Click="LastSevenDaysClick" Style="{StaticResource Chip}"/>
-   <Button Content="Este mes" Click="MonthClick" Style="{StaticResource Chip}"/>
+  <!-- Pestañas -->
+  <WrapPanel Margin="0,0,0,10">
+   <Button Content="Resumen" Style="{StaticResource Tab}" Tag="{Binding IsSummary}" Click="SummaryClick"/>
+   <Button Content="Comparativo" Style="{StaticResource Tab}" Tag="{Binding IsComparison}" Click="ComparisonClick"/>
+   <Button Content="Ventas por hora" Style="{StaticResource Tab}" Tag="{Binding IsHeatmap}" Click="HeatmapClick"/>
+   <Button Content="Control de caja" Style="{StaticResource Tab}" Tag="{Binding IsCashControl}" Click="CashControlClick"/>
+   <Button Content="Producción" Style="{StaticResource Tab}" Tag="{Binding IsForecast}" Click="ForecastClick" AutomationProperties.Name="Pronóstico de producción"/>
   </WrapPanel>
+
+  <!-- Periodo: lo comparten todas las pestañas menos Producción -->
+  <StackPanel Visibility="{Binding IsPeriodTab,Converter={StaticResource VisibleWhen}}">
+   <Grid>
+    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+    <StackPanel Margin="0,0,12,0"><TextBlock Text="Desde" Style="{StaticResource KpiLabel}"/><DatePicker SelectedDate="{Binding FromSelected}" Width="200" Margin="0,4,0,0" AutomationProperties.Name="Fecha desde"/></StackPanel>
+    <StackPanel Grid.Column="1" Margin="0,0,12,0"><TextBlock Text="Hasta" Style="{StaticResource KpiLabel}"/><DatePicker SelectedDate="{Binding ThroughSelected}" Width="200" Margin="0,4,0,0" AutomationProperties.Name="Fecha hasta"/></StackPanel>
+    <Button Grid.Column="2" Content="Generar" Click="GenerateClick" VerticalAlignment="Bottom" MinWidth="120"/>
+    <Button Grid.Column="4" Content="Exportar CSV" Click="ExportClick" IsEnabled="{Binding CanExport}" Style="{StaticResource SecondaryButton}" VerticalAlignment="Bottom" AutomationProperties.Name="Exportar reporte a CSV"/>
+   </Grid>
+   <WrapPanel Margin="0,12,0,0">
+    <TextBlock Text="Rápido:" Style="{StaticResource KpiLabel}" VerticalAlignment="Center" Margin="0,0,10,8"/>
+    <Button Content="Hoy" Click="TodayClick" Style="{StaticResource Chip}"/>
+    <Button Content="Ayer" Click="YesterdayClick" Style="{StaticResource Chip}"/>
+    <Button Content="Últimos 7 días" Click="LastSevenDaysClick" Style="{StaticResource Chip}"/>
+    <Button Content="Este mes" Click="MonthClick" Style="{StaticResource Chip}"/>
+   </WrapPanel>
+  </StackPanel>
+
+  <!-- Día a planear -->
+  <Grid Visibility="{Binding IsForecast,Converter={StaticResource VisibleWhen}}">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <StackPanel Margin="0,0,12,0"><TextBlock Text="Día a planear" Style="{StaticResource KpiLabel}"/><DatePicker SelectedDate="{Binding ForecastSelected}" Width="200" Margin="0,4,0,0" AutomationProperties.Name="Día a planear"/></StackPanel>
+   <Button Grid.Column="1" Content="Calcular" Click="CalculateForecastClick" VerticalAlignment="Bottom" MinWidth="120"/>
+   <Button Grid.Column="3" Content="Exportar CSV" Click="ExportClick" IsEnabled="{Binding CanExport}" Style="{StaticResource SecondaryButton}" VerticalAlignment="Bottom" AutomationProperties.Name="Exportar pronóstico a CSV"/>
+  </Grid>
+
   <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Foreground="{DynamicResource ErrorBrush}" AutomationProperties.LiveSetting="Polite" Margin="0,4,0,0"/>
 
-  <StackPanel Visibility="{Binding HasReport,Converter={StaticResource VisibleWhen}}">
-   <TextBlock Text="{Binding PeriodLabel}" FontSize="15" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,10,0,10"/>
-   <!-- Indicadores -->
-   <UniformGrid Columns="5" Margin="0,0,-12,0">
-    <Border Style="{StaticResource Kpi}"><StackPanel><TextBlock Text="Ventas" Style="{StaticResource KpiLabel}"/><TextBlock Text="{Binding SaleCount}" Style="{StaticResource KpiValue}"/></StackPanel></Border>
-    <Border Style="{StaticResource Kpi}"><StackPanel><TextBlock Text="Vendido" Style="{StaticResource KpiLabel}"/><TextBlock Text="{Binding Gross}" Style="{StaticResource KpiValue}"/></StackPanel></Border>
-    <Border Style="{StaticResource Kpi}"><StackPanel><TextBlock Text="Devuelto" Style="{StaticResource KpiLabel}"/><TextBlock Text="{Binding Refunded}" Style="{StaticResource KpiValue}"/></StackPanel></Border>
-    <Border Style="{StaticResource Kpi}"><StackPanel><TextBlock Text="Neto" Style="{StaticResource KpiLabel}"/><TextBlock Text="{Binding Net}" Style="{StaticResource KpiValue}"/></StackPanel></Border>
-    <Border Style="{StaticResource Kpi}"><StackPanel><TextBlock Text="Ticket promedio" Style="{StaticResource KpiLabel}"/><TextBlock Text="{Binding AverageTicket}" Style="{StaticResource KpiValue}"/></StackPanel></Border>
-   </UniformGrid>
+  <!-- ===== Resumen ===== -->
+  <StackPanel Visibility="{Binding IsSummary,Converter={StaticResource VisibleWhen}}">
+   <StackPanel Visibility="{Binding HasReport,Converter={StaticResource VisibleWhen}}">
+    <TextBlock Text="{Binding PeriodLabel}" FontSize="15" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,10,0,10"/>
+    <UniformGrid Columns="5" Margin="0,0,-12,0">
+     <Border Style="{StaticResource Kpi}"><StackPanel><TextBlock Text="Ventas" Style="{StaticResource KpiLabel}"/><TextBlock Text="{Binding SaleCount}" Style="{StaticResource KpiValue}"/></StackPanel></Border>
+     <Border Style="{StaticResource Kpi}"><StackPanel><TextBlock Text="Vendido" Style="{StaticResource KpiLabel}"/><TextBlock Text="{Binding Gross}" Style="{StaticResource KpiValue}"/></StackPanel></Border>
+     <Border Style="{StaticResource Kpi}"><StackPanel><TextBlock Text="Devuelto" Style="{StaticResource KpiLabel}"/><TextBlock Text="{Binding Refunded}" Style="{StaticResource KpiValue}"/></StackPanel></Border>
+     <Border Style="{StaticResource Kpi}"><StackPanel><TextBlock Text="Neto" Style="{StaticResource KpiLabel}"/><TextBlock Text="{Binding Net}" Style="{StaticResource KpiValue}"/></StackPanel></Border>
+     <Border Style="{StaticResource Kpi}"><StackPanel><TextBlock Text="Ticket promedio" Style="{StaticResource KpiLabel}"/><TextBlock Text="{Binding AverageTicket}" Style="{StaticResource KpiValue}"/></StackPanel></Border>
+    </UniformGrid>
 
-   <!-- Productos -->
-   <TextBlock Text="Productos" Style="{StaticResource Section}"/>
-   <TextBlock Text="Sin ventas ni devoluciones en este periodo." Style="{StaticResource Empty}" Visibility="{Binding NoProducts,Converter={StaticResource VisibleWhen}}"/>
-   <DataGrid ItemsSource="{Binding Products}" MaxHeight="460" Visibility="{Binding HasProducts,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Ventas por producto">
-    <DataGrid.Columns>
-     <DataGridTextColumn Header="#" Binding="{Binding Rank}" Width="Auto" MinWidth="48" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-     <DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*" MinWidth="220"/>
-     <DataGridTextColumn Header="Vendidas" Binding="{Binding Sold}" Width="Auto" MinWidth="100" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-     <DataGridTextColumn Header="Vendido" Binding="{Binding SoldAmount}" Width="Auto" MinWidth="120" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-     <DataGridTextColumn Header="Devueltas" Binding="{Binding Refunded}" Width="Auto" MinWidth="100" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-     <DataGridTextColumn Header="Devuelto" Binding="{Binding RefundedAmount}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-     <DataGridTextColumn Header="Neto" Binding="{Binding Net}" Width="Auto" MinWidth="120" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-     <DataGridTextColumn Header="% neto" Binding="{Binding Share}" Width="Auto" MinWidth="90" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-    </DataGrid.Columns>
-   </DataGrid>
+    <TextBlock Text="Productos" Style="{StaticResource Section}"/>
+    <TextBlock Text="Sin ventas ni devoluciones en este periodo." Style="{StaticResource Empty}" Visibility="{Binding NoProducts,Converter={StaticResource VisibleWhen}}"/>
+    <DataGrid ItemsSource="{Binding Products}" MaxHeight="460" Visibility="{Binding HasProducts,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Ventas por producto">
+     <DataGrid.Columns>
+      <DataGridTextColumn Header="#" Binding="{Binding Rank}" Width="Auto" MinWidth="48" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*" MinWidth="220"/>
+      <DataGridTextColumn Header="Vendidas" Binding="{Binding Sold}" Width="Auto" MinWidth="100" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Vendido" Binding="{Binding SoldAmount}" Width="Auto" MinWidth="120" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Devueltas" Binding="{Binding Refunded}" Width="Auto" MinWidth="100" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Devuelto" Binding="{Binding RefundedAmount}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Neto" Binding="{Binding Net}" Width="Auto" MinWidth="120" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="% neto" Binding="{Binding Share}" Width="Auto" MinWidth="90" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+     </DataGrid.Columns>
+    </DataGrid>
 
-   <!-- Formas de pago y cajeros -->
-   <Grid>
-    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-    <StackPanel>
-     <TextBlock Text="Formas de pago" Style="{StaticResource Section}"/>
-     <TextBlock Text="Sin cobros en este periodo." Style="{StaticResource Empty}" Visibility="{Binding NoPayments,Converter={StaticResource VisibleWhen}}"/>
-     <DataGrid ItemsSource="{Binding Payments}" Visibility="{Binding HasPayments,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Ventas por forma de pago">
-      <DataGrid.Columns>
-       <DataGridTextColumn Header="Forma" Binding="{Binding Method}" Width="*" MinWidth="120"/>
-       <DataGridTextColumn Header="Ventas" Binding="{Binding Sales}" Width="Auto" MinWidth="80" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-       <DataGridTextColumn Header="Neto" Binding="{Binding Net}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-       <DataGridTextColumn Header="Devuelto" Binding="{Binding Refunded}" Width="Auto" MinWidth="100" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-      </DataGrid.Columns>
-     </DataGrid>
+    <Grid>
+     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+     <StackPanel>
+      <TextBlock Text="Formas de pago" Style="{StaticResource Section}"/>
+      <TextBlock Text="Sin cobros en este periodo." Style="{StaticResource Empty}" Visibility="{Binding NoPayments,Converter={StaticResource VisibleWhen}}"/>
+      <DataGrid ItemsSource="{Binding Payments}" Visibility="{Binding HasPayments,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Ventas por forma de pago">
+       <DataGrid.Columns>
+        <DataGridTextColumn Header="Forma" Binding="{Binding Method}" Width="*" MinWidth="120"/>
+        <DataGridTextColumn Header="Ventas" Binding="{Binding Sales}" Width="Auto" MinWidth="80" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+        <DataGridTextColumn Header="Neto" Binding="{Binding Net}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+        <DataGridTextColumn Header="Devuelto" Binding="{Binding Refunded}" Width="Auto" MinWidth="100" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+       </DataGrid.Columns>
+      </DataGrid>
+     </StackPanel>
+     <StackPanel Grid.Column="2">
+      <TextBlock Text="Cajeros" Style="{StaticResource Section}"/>
+      <TextBlock Text="Sin ventas en este periodo." Style="{StaticResource Empty}" Visibility="{Binding NoCashiers,Converter={StaticResource VisibleWhen}}"/>
+      <DataGrid ItemsSource="{Binding Cashiers}" Visibility="{Binding HasCashiers,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Ventas por cajero">
+       <DataGrid.Columns>
+        <DataGridTextColumn Header="Cajero" Binding="{Binding Name}" Width="*" MinWidth="140"/>
+        <DataGridTextColumn Header="Ventas" Binding="{Binding Sales}" Width="Auto" MinWidth="80" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+        <DataGridTextColumn Header="Vendido" Binding="{Binding Sold}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+        <DataGridTextColumn Header="Promedio" Binding="{Binding Average}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+       </DataGrid.Columns>
+      </DataGrid>
+     </StackPanel>
+    </Grid>
+
+    <TextBlock Text="Cortes de caja" Style="{StaticResource Section}"/>
+    <TextBlock Text="Turnos que se abrieron dentro del periodo." Style="{StaticResource CaptionText}" Margin="0,-4,0,8"/>
+    <TextBlock Text="No se abrió ninguna caja en este periodo." Style="{StaticResource Empty}" Visibility="{Binding NoSessions,Converter={StaticResource VisibleWhen}}"/>
+    <DataGrid ItemsSource="{Binding Sessions}" MaxHeight="360" HorizontalScrollBarVisibility="Auto" Visibility="{Binding HasSessions,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Cortes de caja">
+     <DataGrid.Columns>
+      <DataGridTextColumn Header="Apertura" Binding="{Binding Opened}" Width="Auto" MinWidth="110"/>
+      <DataGridTextColumn Header="Cierre" Binding="{Binding Closed}" Width="Auto" MinWidth="110"/>
+      <DataGridTextColumn Header="Abrió" Binding="{Binding OpenedBy}" Width="*" MinWidth="130"/>
+      <DataGridTextColumn Header="Fondo" Binding="{Binding Opening}" Width="Auto" MinWidth="100" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Efectivo" Binding="{Binding CashSales}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Devol." Binding="{Binding Refunds}" Width="Auto" MinWidth="90" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Esperado" Binding="{Binding Expected}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Contado" Binding="{Binding Counted}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Diferencia" Binding="{Binding Difference}" Width="Auto" MinWidth="130"/>
+     </DataGrid.Columns>
+    </DataGrid>
+   </StackPanel>
+  </StackPanel>
+
+  <!-- ===== Comparativo ===== -->
+  <StackPanel Visibility="{Binding IsComparison,Converter={StaticResource VisibleWhen}}">
+   <StackPanel Visibility="{Binding HasReport,Converter={StaticResource VisibleWhen}}">
+    <TextBlock Text="{Binding ComparisonLabel}" FontSize="15" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,10,0,10"/>
+    <TextBlock Text="El periodo anterior no tiene ventas: los productos aparecen como «Nuevo»." Style="{StaticResource Empty}" Visibility="{Binding NoPreviousData,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,8"/>
+    <ItemsControl ItemsSource="{Binding ComparisonKpis}" Margin="0,0,-12,0" AutomationProperties.Name="Indicadores contra el periodo anterior">
+     <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+     <ItemsControl.ItemTemplate><DataTemplate>
+      <Border Style="{StaticResource Kpi}">
+       <StackPanel>
+        <TextBlock Text="{Binding Label}" Style="{StaticResource KpiLabel}"/>
+        <TextBlock Text="{Binding Value}" Style="{StaticResource KpiValue}"/>
+        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+         <TextBlock Text="{Binding Change}" FontSize="15" FontWeight="SemiBold" Margin="0,0,10,0"><TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/><Style.Triggers>
+          <DataTrigger Binding="{Binding Trend}" Value="1"><Setter Property="Foreground" Value="{DynamicResource ValidBrush}"/></DataTrigger>
+          <DataTrigger Binding="{Binding Trend}" Value="-1"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+         <TextBlock Style="{StaticResource KpiLabel}" VerticalAlignment="Center"><Run Text="antes"/> <Run Text="{Binding Previous,Mode=OneWay}"/></TextBlock>
+        </StackPanel>
+       </StackPanel>
+      </Border>
+     </DataTemplate></ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <TextBlock Text="Productos" Style="{StaticResource Section}"/>
+    <TextBlock Text="Sin ventas en ninguno de los dos periodos." Style="{StaticResource Empty}" Visibility="{Binding NoComparisonProducts,Converter={StaticResource VisibleWhen}}"/>
+    <DataGrid ItemsSource="{Binding ComparisonProducts}" MaxHeight="520" Visibility="{Binding HasComparisonProducts,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Comparativo por producto">
+     <DataGrid.Columns>
+      <DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*" MinWidth="220"/>
+      <DataGridTextColumn Header="Piezas" Binding="{Binding Quantity}" Width="Auto" MinWidth="86" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Antes" Binding="{Binding PreviousQuantity}" Width="Auto" MinWidth="80" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Cambio" Binding="{Binding QuantityChange}" Width="Auto" MinWidth="104" ElementStyle="{StaticResource QuantityTrendCell}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Neto" Binding="{Binding Net}" Width="Auto" MinWidth="112" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Antes" Binding="{Binding PreviousNet}" Width="Auto" MinWidth="112" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Cambio" Binding="{Binding NetChange}" Width="Auto" MinWidth="104" ElementStyle="{StaticResource NetTrendCell}" HeaderStyle="{StaticResource NumericHeader}"/>
+     </DataGrid.Columns>
+    </DataGrid>
+   </StackPanel>
+  </StackPanel>
+
+  <!-- ===== Ventas por hora ===== -->
+  <StackPanel Visibility="{Binding IsHeatmap,Converter={StaticResource VisibleWhen}}">
+   <StackPanel Visibility="{Binding HasReport,Converter={StaticResource VisibleWhen}}">
+    <TextBlock Text="{Binding PeriodLabel}" FontSize="15" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,10,0,4"/>
+    <TextBlock Text="Para ver el patrón de toda la semana elige «Últimos 7 días» o «Este mes»." Style="{StaticResource CaptionText}" Visibility="{Binding HeatNeedsWeek,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,6"/>
+    <TextBlock Text="Sin ventas en este periodo." Style="{StaticResource Empty}" Visibility="{Binding NoHeatmap,Converter={StaticResource VisibleWhen}}"/>
+    <StackPanel Visibility="{Binding HasHeatmap,Converter={StaticResource VisibleWhen}}">
+     <Border Style="{StaticResource Kpi}" HorizontalAlignment="Left" Margin="0,6,0,12"><TextBlock Text="{Binding HeatPeak}" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}"/></Border>
+     <DockPanel Margin="0,0,0,2">
+      <Border DockPanel.Dock="Left" Width="58"/>
+      <TextBlock DockPanel.Dock="Right" Width="132" Text="Ventas del día" Style="{StaticResource KpiLabel}" TextAlignment="Right" VerticalAlignment="Bottom"/>
+      <ItemsControl ItemsSource="{Binding HeatHours}" ItemsPanel="{StaticResource OneRow}" Focusable="False">
+       <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Style="{StaticResource KpiLabel}" TextAlignment="Center"/></DataTemplate></ItemsControl.ItemTemplate>
+      </ItemsControl>
+     </DockPanel>
+     <ItemsControl ItemsSource="{Binding HeatRows}" Focusable="False" AutomationProperties.Name="Ventas por día y hora">
+      <ItemsControl.ItemTemplate><DataTemplate>
+       <DockPanel>
+        <TextBlock DockPanel.Dock="Left" Width="58" Text="{Binding Day}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+        <StackPanel DockPanel.Dock="Right" Width="132" VerticalAlignment="Center">
+         <TextBlock Text="{Binding Sales}" FontSize="15" FontWeight="SemiBold" TextAlignment="Right"/>
+         <TextBlock Text="{Binding Amount}" Style="{StaticResource KpiLabel}" TextAlignment="Right"/>
+        </StackPanel>
+        <ItemsControl ItemsSource="{Binding Cells}" ItemsPanel="{StaticResource OneRow}" ItemTemplate="{StaticResource HeatCellTemplate}" Focusable="False"/>
+       </DockPanel>
+      </DataTemplate></ItemsControl.ItemTemplate>
+     </ItemsControl>
+     <DockPanel Margin="0,8,0,0">
+      <TextBlock DockPanel.Dock="Left" Width="58" Text="Total" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+      <Border DockPanel.Dock="Right" Width="132"/>
+      <ItemsControl ItemsSource="{Binding HeatTotals}" ItemsPanel="{StaticResource OneRow}" ItemTemplate="{StaticResource HeatCellTemplate}" Focusable="False" AutomationProperties.Name="Ventas por hora, todos los días"/>
+     </DockPanel>
+     <StackPanel Orientation="Horizontal" Margin="58,12,0,0">
+      <TextBlock Text="Menos" Style="{StaticResource KpiLabel}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource SurfaceSecondaryBrush}"/>
+      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource PrimaryBrush}" Opacity="0.12"/>
+      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource PrimaryBrush}" Opacity="0.34"/>
+      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource PrimaryBrush}" Opacity="0.56"/>
+      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource PrimaryBrush}" Opacity="0.78"/>
+      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource PrimaryBrush}"/>
+      <TextBlock Text="Más" Style="{StaticResource KpiLabel}" VerticalAlignment="Center" Margin="8,0,20,0"/>
+      <TextBlock Text="El número es la cantidad de ventas en esa hora; pasa el cursor para ver el monto. No incluye ventas canceladas." Style="{StaticResource KpiLabel}" VerticalAlignment="Center"/>
+     </StackPanel>
     </StackPanel>
-    <StackPanel Grid.Column="2">
-     <TextBlock Text="Cajeros" Style="{StaticResource Section}"/>
-     <TextBlock Text="Sin ventas en este periodo." Style="{StaticResource Empty}" Visibility="{Binding NoCashiers,Converter={StaticResource VisibleWhen}}"/>
-     <DataGrid ItemsSource="{Binding Cashiers}" Visibility="{Binding HasCashiers,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Ventas por cajero">
-      <DataGrid.Columns>
-       <DataGridTextColumn Header="Cajero" Binding="{Binding Name}" Width="*" MinWidth="140"/>
-       <DataGridTextColumn Header="Ventas" Binding="{Binding Sales}" Width="Auto" MinWidth="80" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-       <DataGridTextColumn Header="Vendido" Binding="{Binding Sold}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-       <DataGridTextColumn Header="Promedio" Binding="{Binding Average}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-      </DataGrid.Columns>
-     </DataGrid>
-    </StackPanel>
-   </Grid>
+   </StackPanel>
+  </StackPanel>
 
-   <!-- Cortes de caja -->
-   <TextBlock Text="Cortes de caja" Style="{StaticResource Section}"/>
-   <TextBlock Text="Turnos que se abrieron dentro del periodo." Style="{StaticResource CaptionText}" Margin="0,-4,0,8"/>
-   <TextBlock Text="No se abrió ninguna caja en este periodo." Style="{StaticResource Empty}" Visibility="{Binding NoSessions,Converter={StaticResource VisibleWhen}}"/>
-   <DataGrid ItemsSource="{Binding Sessions}" MaxHeight="360" HorizontalScrollBarVisibility="Auto" Visibility="{Binding HasSessions,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Cortes de caja">
-    <DataGrid.Columns>
-     <DataGridTextColumn Header="Apertura" Binding="{Binding Opened}" Width="Auto" MinWidth="110"/>
-     <DataGridTextColumn Header="Cierre" Binding="{Binding Closed}" Width="Auto" MinWidth="110"/>
-     <DataGridTextColumn Header="Abrió" Binding="{Binding OpenedBy}" Width="*" MinWidth="130"/>
-     <DataGridTextColumn Header="Fondo" Binding="{Binding Opening}" Width="Auto" MinWidth="100" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-     <DataGridTextColumn Header="Efectivo" Binding="{Binding CashSales}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-     <DataGridTextColumn Header="Devol." Binding="{Binding Refunds}" Width="Auto" MinWidth="90" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-     <DataGridTextColumn Header="Esperado" Binding="{Binding Expected}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-     <DataGridTextColumn Header="Contado" Binding="{Binding Counted}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
-     <DataGridTextColumn Header="Diferencia" Binding="{Binding Difference}" Width="Auto" MinWidth="130"/>
-    </DataGrid.Columns>
-   </DataGrid>
+  <!-- ===== Control de caja ===== -->
+  <StackPanel Visibility="{Binding IsCashControl,Converter={StaticResource VisibleWhen}}">
+   <StackPanel Visibility="{Binding HasReport,Converter={StaticResource VisibleWhen}}">
+    <TextBlock Text="{Binding PeriodLabel}" FontSize="15" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,10,0,10"/>
+    <UniformGrid Columns="4" Margin="0,0,-12,0">
+     <Border Style="{StaticResource Kpi}"><StackPanel><TextBlock Text="Faltantes" Style="{StaticResource KpiLabel}"/><TextBlock Text="{Binding ShortageTotal}" Style="{StaticResource KpiValue}" Foreground="{DynamicResource ErrorBrush}"/></StackPanel></Border>
+     <Border Style="{StaticResource Kpi}"><StackPanel><TextBlock Text="Sobrantes" Style="{StaticResource KpiLabel}"/><TextBlock Text="{Binding OverageTotal}" Style="{StaticResource KpiValue}" Foreground="{DynamicResource WarningBrush}"/></StackPanel></Border>
+     <Border Style="{StaticResource Kpi}"><StackPanel><TextBlock Text="Devoluciones" Style="{StaticResource KpiLabel}"/><TextBlock Text="{Binding RefundCount}" Style="{StaticResource KpiValue}"/></StackPanel></Border>
+     <Border Style="{StaticResource Kpi}"><StackPanel><TextBlock Text="Monto devuelto" Style="{StaticResource KpiLabel}"/><TextBlock Text="{Binding RefundTotal}" Style="{StaticResource KpiValue}"/></StackPanel></Border>
+    </UniformGrid>
+
+    <TextBlock Text="Por cajero" Style="{StaticResource Section}"/>
+    <TextBlock Text="Faltantes y sobrantes de los cortes que abrió cada quien. Las devoluciones se cuentan a quien cobró la venta original." Style="{StaticResource CaptionText}" Margin="0,-4,0,8"/>
+    <TextBlock Text="Sin turnos ni devoluciones en este periodo." Style="{StaticResource Empty}" Visibility="{Binding NoCashierControl,Converter={StaticResource VisibleWhen}}"/>
+    <DataGrid ItemsSource="{Binding CashierControl}" MaxHeight="420" HorizontalScrollBarVisibility="Auto" Visibility="{Binding HasCashierControl,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Control de caja por cajero">
+     <DataGrid.Columns>
+      <DataGridTextColumn Header="Cajero" Binding="{Binding Name}" Width="*" MinWidth="160"/>
+      <DataGridTextColumn Header="Turnos" Binding="{Binding Shifts}" Width="Auto" MinWidth="86" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Con diferencia" Binding="{Binding WithDifference}" Width="Auto" MinWidth="130" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Faltantes" Binding="{Binding Shortages}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Sobrantes" Binding="{Binding Overages}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Neto" Binding="{Binding Net}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource CashNetCell}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Devol." Binding="{Binding Refunds}" Width="Auto" MinWidth="80" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Devuelto" Binding="{Binding Refunded}" Width="Auto" MinWidth="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+     </DataGrid.Columns>
+    </DataGrid>
+
+    <TextBlock Text="Motivos de devolución" Style="{StaticResource Section}"/>
+    <TextBlock Text="Sin devoluciones en este periodo." Style="{StaticResource Empty}" Visibility="{Binding NoRefundReasons,Converter={StaticResource VisibleWhen}}"/>
+    <DataGrid ItemsSource="{Binding RefundReasons}" MaxHeight="320" Visibility="{Binding HasRefundReasons,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Motivos de devolución">
+     <DataGrid.Columns>
+      <DataGridTextColumn Header="Motivo" Binding="{Binding Reason}" Width="*" MinWidth="220"/>
+      <DataGridTextColumn Header="Veces" Binding="{Binding Count}" Width="Auto" MinWidth="86" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Monto" Binding="{Binding Amount}" Width="Auto" MinWidth="120" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+     </DataGrid.Columns>
+    </DataGrid>
+   </StackPanel>
+  </StackPanel>
+
+  <!-- ===== Producción ===== -->
+  <StackPanel Visibility="{Binding IsForecast,Converter={StaticResource VisibleWhen}}">
+   <StackPanel Visibility="{Binding HasForecast,Converter={StaticResource VisibleWhen}}">
+    <TextBlock Text="{Binding ForecastTitle}" FontSize="21" FontWeight="SemiBold" Margin="0,12,0,2"/>
+    <TextBlock Text="{Binding ForecastBasis}" Style="{StaticResource CaptionText}" Margin="0,0,0,10"/>
+    <Border Style="{StaticResource Kpi}" HorizontalAlignment="Left"><StackPanel><TextBlock Text="Piezas sugeridas" Style="{StaticResource KpiLabel}"/><TextBlock Text="{Binding ForecastTotal}" Style="{StaticResource KpiValue}"/></StackPanel></Border>
+    <DataGrid ItemsSource="{Binding ForecastRows}" MaxHeight="560" AutomationProperties.Name="Piezas sugeridas por producto">
+     <DataGrid.Columns>
+      <DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*" MinWidth="220"/>
+      <DataGridTextColumn Header="Semana pasada" Binding="{Binding Last}" Width="Auto" MinWidth="140" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Promedio" Binding="{Binding Average}" Width="Auto" MinWidth="104" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Sugerido" Binding="{Binding Suggested}" Width="Auto" MinWidth="104" HeaderStyle="{StaticResource NumericHeader}">
+       <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock" BasedOn="{StaticResource NumericCellText}"><Setter Property="FontWeight" Value="Bold"/><Setter Property="FontSize" Value="18"/><Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/></Style></DataGridTextColumn.ElementStyle>
+      </DataGridTextColumn>
+      <DataGridTextColumn Header="Días con venta" Binding="{Binding Basis}" Width="Auto" MinWidth="136" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+     </DataGrid.Columns>
+    </DataGrid>
+   </StackPanel>
+   <TextBlock Text="No hay ventas de ese día de la semana en las últimas semanas. Elige otro día o espera a tener más historial." Style="{StaticResource Empty}" Visibility="{Binding NoForecast,Converter={StaticResource VisibleWhen}}" Margin="0,12,0,0"/>
   </StackPanel>
  </StackPanel>
 </UserControl>

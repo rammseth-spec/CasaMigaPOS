@@ -1,3 +1,11 @@
+# Reportes analíticos — 06/10/2026
+
+**Implementado; smoke manual pendiente.** Reportes ahora tiene pestañas: Resumen (lo anterior), **Comparativo** contra el periodo anterior de igual duración, **Ventas por hora** (mapa de calor día × hora con hora pico), **Control de caja** (faltantes/sobrantes por quien abrió la caja, devoluciones por quien cobró, motivos) y **Producción** (piezas sugeridas: promedio del mismo día de la semana en 4 semanas + 10 %). Cada pestaña exporta su CSV. Sin migración. Reglas en [REPORTS.md](REPORTS.md). Suite **811/811** (644 + 167), Release 0/0.
+
+# Fotos provisionales y ventas de prueba — 06/10/2026
+
+`seed-review` acepta `--photos assets\catalog-provisional-ia` (26 ilustraciones generadas con IA, procedencia `PROVISIONAL`, a reemplazar por fotos reales) y `--demo-days N` (ventas deterministas con los servicios reales: turnos diarios, efectivo/tarjeta/transferencia, una cancelación, devoluciones y cortes con faltante/sobrante; cajeros `ana` y `luis`). Ver [docs/catalog/README.md](catalog/README.md).
+
 # Copia de revisión con catálogo autorizado — 06/10/2026
 
 Copia aislada `C:\Users\jalex\CasaMiga-Revision\catalogo-QAv1-ad4d70c` (fuera de AppData: Claude Code desktop virtualiza AppData, ver docs/review-builds.md) preparada con `seed-review` desde `docs/catalog/catalogo-autorizado-v2.csv`: esquema 20, `admin` y `cajero1` (temporal), 4 categorías, 26 productos, sin caja abierta ni fotos, con `dev-autologin.json` (entra sola como admin; verificado: evento `development.autologin`). Build `src/CasaMiga.Presentation/bin/Review-QAv1-ad4d70c`, launcher `work/Abrir-Casa-Miga-QAv1-ad4d70c.cmd`, título `Casa Miga POS · Caja · DESARROLLO · QAv1-ad4d70c`. La copia previa en `%LOCALAPPDATA%\CasaMigaPOS-Review-Catalogo` quedó sólo en el almacenamiento virtualizado del agente: no es válida. Credenciales entregadas en la conversación; no se versionan. Smoke manual pendiente.
