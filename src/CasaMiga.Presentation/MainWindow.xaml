@@ -25,14 +25,14 @@
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
         <StackPanel><TextBlock Text="Usuario administrador"/><TextBox x:Name="BootstrapUser" AutomationProperties.Name="Usuario administrador" MaxLength="80" Margin="0,6,0,14"/></StackPanel>
         <StackPanel Grid.Column="2"><TextBlock Text="Nombre para mostrar"/><TextBox x:Name="BootstrapName" AutomationProperties.Name="Nombre para mostrar" MaxLength="100" Margin="0,6,0,14"/></StackPanel>
-        <StackPanel Grid.Row="1"><TextBlock Text="Contraseña"/><PasswordBox x:Name="BootstrapPassword" AutomationProperties.Name="Contraseña inicial" MaxLength="16" Margin="0,6,0,8"/></StackPanel>
-        <StackPanel Grid.Row="1" Grid.Column="2"><TextBlock Text="Confirmar contraseña"/><PasswordBox x:Name="BootstrapConfirmation" AutomationProperties.Name="Confirmar contraseña" MaxLength="16" Margin="0,6,0,8"/></StackPanel>
-        <TextBlock Grid.Row="2" Grid.ColumnSpan="3" Text="{Binding PasswordRules,StringFormat={}{0} Escríbela igual en ambos campos.}" TextWrapping="Wrap" Style="{StaticResource CaptionText}" Margin="0,0,0,16"/>
-        <Button Grid.Row="3" Grid.ColumnSpan="3" Content="Crear administrador" Click="BootstrapClick"/>
+        <StackPanel Grid.Row="1"><TextBlock Text="Contraseña"/><local:PasswordInput x:Name="BootstrapPassword" AutomationProperties.Name="Contraseña inicial" MaxLength="16" Margin="0,6,0,8" PasswordChanged="BootstrapPasswordChanged" KeyDown="BootstrapKeyDown"/></StackPanel>
+        <StackPanel Grid.Row="1" Grid.Column="2"><TextBlock Text="Confirmar contraseña"/><local:PasswordInput x:Name="BootstrapConfirmation" AutomationProperties.Name="Confirmar contraseña" MaxLength="16" Margin="0,6,0,8" PasswordChanged="BootstrapPasswordChanged" KeyDown="BootstrapKeyDown"/></StackPanel>
+        <local:PasswordChecklist x:Name="BootstrapChecklist" Grid.Row="2" Grid.ColumnSpan="3" Margin="0,2,0,16"/>
+        <Button x:Name="BootstrapButton" Grid.Row="3" Grid.ColumnSpan="3" Content="Crear administrador" Click="BootstrapClick" IsEnabled="False"/>
        </Grid>
        <StackPanel Visibility="{Binding IsLogin,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
         <TextBlock Text="Usuario"/><TextBox x:Name="LoginUser" AutomationProperties.Name="Usuario" MaxLength="80" Margin="0,6,0,16"/>
-        <TextBlock Text="Contraseña"/><PasswordBox x:Name="LoginPassword" AutomationProperties.Name="Contraseña" MaxLength="128" Margin="0,6,0,24" KeyDown="LoginPasswordKeyDown"/>
+        <TextBlock Text="Contraseña"/><local:PasswordInput x:Name="LoginPassword" AutomationProperties.Name="Contraseña" MaxLength="128" Margin="0,6,0,24" KeyDown="LoginPasswordKeyDown"/>
         <Button Content="Entrar" Click="LoginClick"/>
         <WrapPanel HorizontalAlignment="Center" Margin="0,12,0,0">
          <Button Content="¿Olvidaste tu contraseña?" Click="ForgotPasswordClick" Style="{StaticResource GhostButton}" Margin="0,0,8,0" AutomationProperties.Name="Olvidé mi contraseña"/>
@@ -41,14 +41,14 @@
        </StackPanel>
        <StackPanel Visibility="{Binding IsChangePassword,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
         <TextBlock Text="Usuario"/><TextBox x:Name="ChangeUser" Text="{Binding ChangePasswordUser,UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Usuario" MaxLength="80" Margin="0,6,0,14"/>
-        <TextBlock Text="Contraseña actual o temporal"/><PasswordBox x:Name="ChangeCurrent" AutomationProperties.Name="Contraseña actual o temporal" MaxLength="128" Margin="0,6,0,14"/>
+        <TextBlock Text="Contraseña actual o temporal"/><local:PasswordInput x:Name="ChangeCurrent" AutomationProperties.Name="Contraseña actual o temporal" MaxLength="128" Margin="0,6,0,14"/>
         <Grid>
          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="16"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-         <StackPanel><TextBlock Text="Contraseña nueva"/><PasswordBox x:Name="ChangeNew" AutomationProperties.Name="Contraseña nueva" MaxLength="16" Margin="0,6,0,8"/></StackPanel>
-         <StackPanel Grid.Column="2"><TextBlock Text="Confirmar contraseña nueva"/><PasswordBox x:Name="ChangeConfirmation" AutomationProperties.Name="Confirmar contraseña nueva" MaxLength="16" Margin="0,6,0,8"/></StackPanel>
+         <StackPanel><TextBlock Text="Contraseña nueva"/><local:PasswordInput x:Name="ChangeNew" AutomationProperties.Name="Contraseña nueva" MaxLength="16" Margin="0,6,0,8" PasswordChanged="ChangePasswordChanged" KeyDown="ChangeKeyDown"/></StackPanel>
+         <StackPanel Grid.Column="2"><TextBlock Text="Confirmar contraseña nueva"/><local:PasswordInput x:Name="ChangeConfirmation" AutomationProperties.Name="Confirmar contraseña nueva" MaxLength="16" Margin="0,6,0,8" PasswordChanged="ChangePasswordChanged" KeyDown="ChangeKeyDown"/></StackPanel>
         </Grid>
-        <TextBlock Text="{Binding PasswordRules}" Style="{StaticResource CaptionText}" TextWrapping="Wrap" Margin="0,0,0,16"/>
-        <WrapPanel><Button Content="Cancelar" Click="CancelChangePasswordClick" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8"/><Button Content="Guardar contraseña" Click="ChangePasswordClick" Margin="0,0,0,8"/></WrapPanel>
+        <local:PasswordChecklist x:Name="ChangeChecklist" Margin="0,2,0,16"/>
+        <WrapPanel><Button Content="Cancelar" Click="CancelChangePasswordClick" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8"/><Button x:Name="ChangeSaveButton" Content="Guardar contraseña" Click="ChangePasswordClick" IsEnabled="False" Margin="0,0,0,8"/></WrapPanel>
        </StackPanel>
        <TextBlock Text="{Binding Message}" Margin="0,10,0,0" AutomationProperties.LiveSetting="Polite"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
        <TextBlock Text="Procesando…" Margin="0,10,0,0" Foreground="{DynamicResource TextSecondaryBrush}" Visibility="{Binding Busy,Converter={StaticResource VisibleWhen}}"/>
@@ -127,7 +127,7 @@
          <StackPanel IsEnabled="{Binding Ready}">
           <TextBlock Text="Dirección del servidor"/><TextBox Text="{Binding ApiUrl,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" AutomationProperties.Name="Dirección del servidor" Margin="0,6,0,12"/>
           <TextBlock Text="Nombre de esta sucursal"/><TextBox Text="{Binding BranchName,UpdateSourceTrigger=PropertyChanged}" MaxLength="100" AutomationProperties.Name="Nombre de la sucursal" Margin="0,6,0,12"/>
-          <TextBlock Text="Secreto de alta (lo tiene el administrador)"/><PasswordBox x:Name="EnrollmentSecret" MaxLength="200" AutomationProperties.Name="Secreto de alta" Margin="0,6,0,12"/>
+          <TextBlock Text="Secreto de alta (lo tiene el administrador)"/><local:PasswordInput x:Name="EnrollmentSecret" MaxLength="200" AutomationProperties.Name="Secreto de alta" Margin="0,6,0,12"/>
           <WrapPanel><Button Content="Registrar terminal" Click="RegisterTerminalClick" Margin="0,0,12,8"/><Button Content="Sincronizar ahora" Click="SyncNowClick" Style="{StaticResource SecondaryButton}" Margin="0,0,0,8"/></WrapPanel>
           <TextBlock Text="Volver a registrar genera una llave nueva y desactiva la anterior. Una terminal no puede cambiar de sucursal." Style="{StaticResource CaptionText}" TextWrapping="Wrap"/>
          </StackPanel>

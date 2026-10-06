@@ -21,6 +21,29 @@ public partial class MainWindow : Window
             LoginPassword.Focus();
         }
     }
+    // Requisitos en vivo: verde lo cumplido, rojo lo pendiente; el botón se habilita sólo con todo cumplido y confirmado.
+    private void BootstrapPasswordChanged(object sender, RoutedEventArgs e)
+    {
+        (BootstrapPassword.State, BootstrapConfirmation.State) = BootstrapChecklist.Update(BootstrapPassword.Password, BootstrapConfirmation.Password);
+        BootstrapButton.IsEnabled = BootstrapChecklist.IsSatisfied;
+    }
+    private void BootstrapKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        e.Handled = true;
+        if (BootstrapButton.IsEnabled) BootstrapClick(sender, e);
+    }
+    private void ChangePasswordChanged(object sender, RoutedEventArgs e)
+    {
+        (ChangeNew.State, ChangeConfirmation.State) = ChangeChecklist.Update(ChangeNew.Password, ChangeConfirmation.Password);
+        ChangeSaveButton.IsEnabled = ChangeChecklist.IsSatisfied;
+    }
+    private void ChangeKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter) return;
+        e.Handled = true;
+        if (ChangeSaveButton.IsEnabled) ChangePasswordClick(sender, e);
+    }
     private async void LoginClick(object sender, RoutedEventArgs e)
     {
         var password = LoginPassword.Password; LoginPassword.Clear();

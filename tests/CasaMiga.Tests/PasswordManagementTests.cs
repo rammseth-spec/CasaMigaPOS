@@ -49,6 +49,27 @@ public sealed class PasswordManagementTests
     }
 
     [TestMethod]
+    [DataRow("")]
+    [DataRow("panaderia")]
+    [DataRow("PANADERIA#1")]
+    [DataRow("Panaderia2026")]
+    [DataRow("Panaderia#2026")]
+    [DataRow("Pa#1")]
+    [DataRow("Panaderia#2026xyz")]
+    [DataRow("Ñandú#2026ok")]
+    public void LiveChecklistAndValidationNeverDisagree(string password)
+    {
+        var allMet = PasswordPolicy.Evaluate(password).All(r => r.Met);
+        Assert.AreEqual(allMet, PasswordPolicy.IsValid(password));
+        if (!allMet)
+        {
+            var error = Assert.ThrowsExactly<ArgumentException>(() => PasswordPolicy.Validate(password));
+            foreach (var missing in PasswordPolicy.Evaluate(password).Where(r => !r.Met))
+                StringAssert.Contains(error.Message, missing.Label[1..], "The error lists exactly what the checklist shows in red.");
+        }
+    }
+
+    [TestMethod]
     public void PolicyAcceptsBoundaryLengthsAndTemporaryPasswordsComply()
     {
         Assert.IsTrue(PasswordPolicy.IsValid("Abcde1!x"));

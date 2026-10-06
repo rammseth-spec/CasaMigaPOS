@@ -60,7 +60,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool IsChangePassword => screen == "changePassword";
     public bool IsUsers => screen == "users";
     public bool CanManageUsers { get; private set; }
-    public string PasswordRules => PasswordPolicy.Description;
     public string ChangePasswordUser { get; set; } = "";
     public IReadOnlyList<UserRow> Users { get; private set; } = [];
     private UserRow? selectedUser;

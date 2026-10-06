@@ -2,6 +2,8 @@ using System.Security.Cryptography;
 
 namespace CasaMiga.Application;
 
+public sealed record PasswordRequirement(string Label, bool Met);
+
 /// <summary>Regla única de contraseñas para alta, cambio y restablecimiento. El login no la aplica para no bloquear contraseñas previas.</summary>
 public static class PasswordPolicy
 {
@@ -9,14 +11,19 @@ public static class PasswordPolicy
     public const int MaxLength = 16;
     public const string Description = "De 8 a 16 caracteres, con al menos una mayúscula, una minúscula, un número y un carácter especial.";
 
+    /// <summary>Cada requisito con su estado; la interfaz lo muestra en vivo y <see cref="Validate"/> usa exactamente la misma lista.</summary>
+    public static IReadOnlyList<PasswordRequirement> Evaluate(string password) =>
+    [
+        new("De 8 a 16 caracteres", password.Length is >= MinLength and <= MaxLength),
+        new("Una mayúscula", password.Any(char.IsUpper)),
+        new("Una minúscula", password.Any(char.IsLower)),
+        new("Un número", password.Any(char.IsDigit)),
+        new("Un carácter especial (# $ % & * ! …)", password.Any(IsSpecial)),
+    ];
+
     public static void Validate(string password)
     {
-        var missing = new List<string>();
-        if (password.Length is < MinLength or > MaxLength) missing.Add("de 8 a 16 caracteres");
-        if (!password.Any(char.IsUpper)) missing.Add("una mayúscula");
-        if (!password.Any(char.IsLower)) missing.Add("una minúscula");
-        if (!password.Any(char.IsDigit)) missing.Add("un número");
-        if (!password.Any(IsSpecial)) missing.Add("un carácter especial");
+        var missing = Evaluate(password).Where(r => !r.Met).Select(r => char.ToLowerInvariant(r.Label[0]) + r.Label[1..]).ToList();
         if (password.Any(char.IsControl)) missing.Add("sin caracteres de control");
         if (missing.Count > 0) throw new ArgumentException("La contraseña debe tener " + string.Join(", ", missing) + ".");
     }
