@@ -1,0 +1,25 @@
+name: Feature
+description: Propose a controlled Casa Miga POS improvement
+title: "[FEATURE] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risk / affected areas
+      description: Note impacts to money, inventory, migrations, printing, backups, permissions, installer, or hardware.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
