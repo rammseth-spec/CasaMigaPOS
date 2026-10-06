@@ -16,3 +16,8 @@ terminal.json
 casamiga.lock
 events-*.jsonl
 checkout.pending*
+
+# Cloud API (Vercel/Node)
+cloud/node_modules/
+cloud/.vercel/
+cloud/.env*
