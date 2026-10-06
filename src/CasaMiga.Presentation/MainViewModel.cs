@@ -53,6 +53,20 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool IsReady => !Busy;
     public bool IsBootstrap => screen == "bootstrap";
     public bool IsLogin => screen == "login";
+    public bool IsChangePassword => screen == "changePassword";
+    public bool IsUsers => screen == "users";
+    public bool CanManageUsers { get; private set; }
+    public string PasswordRules => PasswordPolicy.Description;
+    public string ChangePasswordUser { get; set; } = "";
+    public IReadOnlyList<UserRow> Users { get; private set; } = [];
+    public UserRow? SelectedUser { get; set; }
+    public string NewUserName { get; set; } = "";
+    public string NewUserDisplay { get; set; } = "";
+    public IReadOnlyList<RoleOption> RoleOptions { get; } = [new("Cashier", "Cajero"), new("Manager", "Encargado")];
+    private static string RoleName(string role) => role switch { "Administrator" => "Administrador", "Manager" => "Encargado", "Cashier" => "Cajero", _ => role };
+    public string NewUserRole { get; set; } = "Cashier";
+    public string TemporaryPasswordNotice { get; private set; } = "";
+    public bool HasTemporaryPasswordNotice => TemporaryPasswordNotice.Length > 0;
     public bool IsDashboard => screen == "dashboard";
     public bool IsCounting => screen == "counting";
     public bool IsClosingResult => screen == "closingResult";
@@ -68,8 +82,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string Amount { get; set; } = "0.00";
     public bool MessageIsSuccess { get; private set; }
     public string Message { get; private set; } = "";
-    public string Heading => screen switch { "pos"=>"Punto de venta", "catalog" => "Catálogo", "salesHistory"=>"Historial de ventas", "inventory" => "Inventario", "recipes"=>"Recetas", "production"=>"Producción", "counting" => "Conteo de caja", "closingResult" => "Resultado de caja", "bootstrap" => "Bienvenido a Casa Miga", "login" => "Inicia sesión", "dashboard" => "Tu caja", "opening" => "Abrir caja", _ => "Preparando Casa Miga" };
-    public string Subtitle => screen switch { "pos"=>"Selecciona productos, revisa el carrito y cobra.", "catalog" => "Categorías y productos · Sin proceso de venta.", "salesHistory"=>"Ventas confirmadas · Consulta de solo lectura.", "inventory" => "Existencias y movimientos del almacén principal · consulta abajo el estado del consumo automático por ventas.", "recipes"=>"Fórmulas y perfiles productivos versionados.", "production"=>"Planeación, confirmación e historial de producción.", "counting" => "Cuenta el efectivo sin consultar el esperado. Continuar guarda tu conteo y no permite cambiarlo después.", "closingResult" => "Revisa el resultado y confirma el cierre definitivo.", "bootstrap" => "Configura el primer administrador. No hay contraseñas predeterminadas.", "login" => "Identifícate para consultar o abrir esta caja.", "opening" => "Registra el efectivo con el que comienza la sesión.", "dashboard" => "Sesión local · Tus datos permanecen en este equipo.", _ => "Validando base y respaldo…" };
+    public string Heading => screen switch { "pos"=>"Punto de venta", "catalog" => "Catálogo", "salesHistory"=>"Historial de ventas", "inventory" => "Inventario", "recipes"=>"Recetas", "production"=>"Producción", "counting" => "Conteo de caja", "closingResult" => "Resultado de caja", "bootstrap" => "Bienvenido a Casa Miga", "login" => "Inicia sesión", "changePassword" => "Cambiar contraseña", "users" => "Usuarios", "dashboard" => "Tu caja", "opening" => "Abrir caja", _ => "Preparando Casa Miga" };
+    public string Subtitle => screen switch { "pos"=>"Selecciona productos, revisa el carrito y cobra.", "catalog" => "Categorías y productos · Sin proceso de venta.", "salesHistory"=>"Ventas confirmadas · Consulta de solo lectura.", "inventory" => "Existencias y movimientos del almacén principal · consulta abajo el estado del consumo automático por ventas.", "recipes"=>"Fórmulas y perfiles productivos versionados.", "production"=>"Planeación, confirmación e historial de producción.", "counting" => "Cuenta el efectivo sin consultar el esperado. Continuar guarda tu conteo y no permite cambiarlo después.", "closingResult" => "Revisa el resultado y confirma el cierre definitivo.", "bootstrap" => "Configura el primer administrador. No hay contraseñas predeterminadas.", "login" => "Identifícate para consultar o abrir esta caja.", "changePassword" => "Confirma tu contraseña actual o temporal y elige una nueva.", "users" => "Crea usuarios y restablece contraseñas olvidadas · Cada acción queda auditada.", "opening" => "Registra el efectivo con el que comienza la sesión.", "dashboard" => "Sesión local · Tus datos permanecen en este equipo.", _ => "Validando base y respaldo…" };
     public string UserLabel => $"Usuario: {user?.Current?.DisplayName}";
     public string TerminalLabel => $"Terminal: {terminal?.Name}";
     public string CurrentUserName => user?.Current?.DisplayName ?? "";
@@ -127,10 +141,61 @@ public sealed class MainViewModel : INotifyPropertyChanged
     });
     public Task LoginAsync(string name, string password) => Execute(async () =>
     {
-        if (!await Task.Run(() => login!.Login(name, password))) { Message = "No se pudo iniciar sesión. Revisa tus datos o espera un minuto e inténtalo de nuevo."; return; }
+        var outcome = await Task.Run(() => login!.Authenticate(name, password));
+        if (outcome == LoginOutcome.PasswordChangeRequired)
+        {
+            ChangePasswordUser = name.Trim(); screen = "changePassword";
+            Message = "Tu contraseña es temporal. Crea una contraseña nueva para continuar."; MessageIsSuccess = true; return;
+        }
+        if (outcome != LoginOutcome.SignedIn) { Message = "No se pudo iniciar sesión. Revisa tus datos o espera un minuto e inténtalo de nuevo."; return; }
         await RefreshAsync(); screen = "dashboard";
     });
-    public void Logout() { if (Busy) return; user?.SignOut(); Pos?.ForgetView(); SalesHistory?.Forget(); Inventory?.Forget(); opened = null; closingResult = null; CountedAmount = ""; CanViewSales=false; CanViewInventory=false;CanViewRecipes=false;CanViewProduction=false;CurrentRoleLabel=""; screen = "login"; Message = ""; Notify(); }
+    public void ShowChangePassword(string name) { if (Busy) return; ChangePasswordUser = name.Trim(); screen = "changePassword"; MessageIsSuccess = false; Message = ""; Notify(); }
+    public void CancelChangePassword() { if (Busy) return; screen = "login"; MessageIsSuccess = false; Message = ""; Notify(); }
+    public Task ChangePasswordAsync(string current, string next, string confirmation) => Execute(async () =>
+    {
+        if (next != confirmation) throw new ArgumentException("Las contraseñas nuevas no coinciden.");
+        var name = ChangePasswordUser;
+        await Task.Run(() => login!.ChangePassword(name, current, next));
+        runtime?.TryLog("identity.password.changed");
+        if (await Task.Run(() => login!.Authenticate(name, next)) == LoginOutcome.SignedIn) { await RefreshAsync(); screen = "dashboard"; }
+        else screen = "login";
+        MessageIsSuccess = true; Message = "Contraseña actualizada.";
+    });
+    public Task ForgotPasswordAsync(string name) => Execute(async () =>
+    {
+        if (name.Trim().Length > 0) await Task.Run(() => login!.RequestPasswordHelp(name));
+        MessageIsSuccess = true;
+        Message = "Pide a un administrador que restablezca tu contraseña en Usuarios. Te dará una contraseña temporal; al entrar con ella crearás una nueva.";
+    });
+    public Task ShowUsersAsync() => Execute(async () => { await LoadUsersAsync(); TemporaryPasswordNotice = ""; screen = "users"; });
+    public Task CreateUserAsync() => Execute(async () =>
+    {
+        string name = NewUserName, display = NewUserDisplay, role = NewUserRole;
+        var temporary = await Task.Run(() => login!.CreateUser(name, display, role));
+        runtime?.TryLog("identity.user.created");
+        TemporaryPasswordNotice = Notice(name.Trim().ToUpperInvariant(), temporary);
+        NewUserName = ""; NewUserDisplay = ""; NewUserRole = "Cashier";
+        await LoadUsersAsync(); MessageIsSuccess = true; Message = "Usuario creado.";
+    });
+    public Task ResetPasswordAsync() => Execute(async () =>
+    {
+        if (SelectedUser is not { } target) throw new ArgumentException("Selecciona un usuario.");
+        var temporary = await Task.Run(() => login!.ResetPassword(target.Id));
+        runtime?.TryLog("identity.password.reset");
+        TemporaryPasswordNotice = Notice(target.Username, temporary);
+        await LoadUsersAsync(); MessageIsSuccess = true; Message = "Contraseña restablecida.";
+    });
+    private static string Notice(string username, string temporary) =>
+        $"Contraseña temporal de {username}: {temporary}\nEntrégala en persona. Sólo se muestra esta vez y deberá cambiarla al iniciar sesión.";
+    private async Task LoadUsersAsync()
+    {
+        var users = await Task.Run(() => login!.ListUsers());
+        Users = users.Select(u => new UserRow(u.Id, u.Username, u.DisplayName, RoleName(u.Role),
+            !u.Active ? "Inactivo" : u.MustChangePassword ? "Debe cambiar contraseña" : "Activo")).ToList();
+        SelectedUser = null;
+    }
+    public void Logout() { if (Busy) return; user?.SignOut(); Users = []; SelectedUser = null; TemporaryPasswordNotice = ""; CanManageUsers = false; Pos?.ForgetView(); SalesHistory?.Forget(); Inventory?.Forget(); opened = null; closingResult = null; CountedAmount = ""; CanViewSales=false; CanViewInventory=false;CanViewRecipes=false;CanViewProduction=false;CurrentRoleLabel=""; screen = "login"; Message = ""; Notify(); }
     public void ShowOpening() { if (Busy || !CanOpen) return; Amount = "0.00"; screen = "opening"; Message = ""; Notify(); }
     public void CancelOpening() { if (Busy) return; screen = "dashboard"; Message = ""; Notify(); }
     public Task OpenAsync() => Execute(async () =>
@@ -184,6 +249,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         CanViewProduction=await Task.Run(()=>catalogService!.Can("production.view"));
         var canConfigureRecipes=await Task.Run(()=>catalogService!.Can("recipe.configure"));
         CurrentRoleLabel=canConfigureRecipes?"Administrador":CanViewProduction?"Manager":"Cajero";
+        CanManageUsers=await Task.Run(()=>login!.CanManageUsers());
     }
     private async Task Execute(Func<Task> action)
     {
@@ -203,3 +269,5 @@ public sealed class MainViewModel : INotifyPropertyChanged
         finally { Busy = false; Notify(); }
     }
 }
+public sealed record UserRow(Guid Id, string Username, string DisplayName, string Role, string Status);
+public sealed record RoleOption(string Id, string Name);

@@ -17,7 +17,7 @@ internal sealed class PhotoFixture : IDisposable
     internal Database Db { get; }
     internal SqliteLocalUnitOfWork Work { get; }
     internal UserSession User { get; } = new();
-    internal string TestPassword { get; } = Guid.NewGuid().ToString("N") + "!Aa";
+    internal string TestPassword { get; } = "Aa1!" + Guid.NewGuid().ToString("N")[..12];
     internal TerminalIdentity Terminal { get; }
     internal CatalogService Catalog { get; }
     internal Product Product { get; }

@@ -24,7 +24,7 @@ public sealed class PosTests
     [TestInitialize]public void Setup()
     {
         directory=Path.Combine(Path.GetTempPath(),"CasaMigaTests",Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
-        db=new(Path.Combine(directory,"casamiga.db"));db.Initialize();work=new(db);user=new();password=Guid.NewGuid().ToString("N");
+        db=new(Path.Combine(directory,"casamiga.db"));db.Initialize();work=new(db);user=new();password="Aa1!"+Guid.NewGuid().ToString("N")[..12];
         terminal=TerminalConfiguration.LoadOrCreate(directory);work.Run(s=>{s.EnsureTerminal(terminal,clock.UtcNow);return true;});
         login=new(work,new LocalPasswords(),clock,user);login.Bootstrap("admin","Prueba POS",password);Assert.IsTrue(login.Login("admin",password));
         catalog=new(work,user,clock,terminal.Id);sweet=catalog.CreateCategory("Dulce","",2);salt=catalog.CreateCategory("Salado","",1);

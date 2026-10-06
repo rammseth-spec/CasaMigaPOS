@@ -87,7 +87,7 @@ public sealed partial class RecipePersistenceTests
         query.CommandText="PRAGMA integrity_check";Assert.AreEqual("ok",query.ExecuteScalar());
         query.CommandText="PRAGMA foreign_key_check";Assert.IsNull(query.ExecuteScalar());
         query.CommandText="SELECT count(*) FROM audit_entry WHERE action='production.confirmed'";Assert.AreEqual(2L,query.ExecuteScalar());
-        query.CommandText="SELECT max(version) FROM schema_migration";Assert.AreEqual(16L,query.ExecuteScalar());
+        query.CommandText="SELECT max(version) FROM schema_migration";Assert.AreEqual(18L,query.ExecuteScalar());
         foreach(var role in new[]{"Administrator","Manager","Cashier"})
         {
             query.CommandText=$"UPDATE app_user SET role_name='{role}' WHERE id='{restoredUser.Current!.Id}'";query.ExecuteNonQuery();

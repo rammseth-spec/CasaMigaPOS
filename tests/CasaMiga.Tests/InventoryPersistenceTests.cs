@@ -36,7 +36,7 @@ public sealed class InventoryPersistenceTests
         clock = new();
         var session = new UserSession();
         var identity = new IdentityService(work, new LocalPasswords(), clock, session);
-        var password = Guid.NewGuid().ToString("N");
+        var password = "Aa1!"+Guid.NewGuid().ToString("N")[..12];
         identity.Bootstrap("admin", "Inventario", password);
         Assert.IsTrue(identity.Login("admin", password));
         actor = session.Current!.Id;
@@ -80,7 +80,7 @@ public sealed class InventoryPersistenceTests
     [TestMethod]
     public void SchemaNineSeedsUnitsLocationAndApprovedPermissions()
     {
-        Assert.AreEqual(16L, Scalar("SELECT count(*) FROM schema_migration"));
+        Assert.AreEqual(18L, Scalar("SELECT count(*) FROM schema_migration"));
         Assert.AreEqual(7L, Scalar("SELECT count(*) FROM measurement_unit"));
         Assert.AreEqual("Almacén principal", Scalar("SELECT name FROM inventory_location WHERE code='MAIN'"));
         Assert.AreEqual(6L, Scalar("SELECT count(*) FROM permission WHERE name LIKE 'inventory.%'"));
@@ -466,7 +466,7 @@ public sealed class InventoryPersistenceTests
         using (var command = connection.CreateCommand())
         {
             command.CommandText = "SELECT count(*) FROM schema_migration";
-            Assert.AreEqual(16L, command.ExecuteScalar());
+            Assert.AreEqual(18L, command.ExecuteScalar());
             command.CommandText = "SELECT name FROM category WHERE id='existing'";
             Assert.AreEqual("Existente", command.ExecuteScalar());
         }

@@ -152,7 +152,7 @@ public sealed class PopupEscapePresentationTests
         {
             await Model.InitializeAsync(new FoundationOptions(directory,IsDevelopment:true));
             Assert.IsTrue(Model.IsBootstrap,Model.Message);
-            var password=Guid.NewGuid().ToString("N");
+            var password="Aa1!"+Guid.NewGuid().ToString("N")[..12];
             await Model.BootstrapAsync("escape-admin","Prueba de teclado",password,password);
             await Model.LoginAsync("escape-admin",password);Assert.IsTrue(Model.CanNavigate,Model.Message);
             await Model.ShowInventoryAsync();Assert.IsTrue(Model.IsInventory,Model.Message);

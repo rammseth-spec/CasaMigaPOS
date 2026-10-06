@@ -1,4 +1,15 @@
-# FASE 1K ABIERTA — 1K.3D, 06/10/2026
+# Usuarios, contraseñas y sincronización fase 1 — 06/10/2026
+
+**Implementado; smoke manual pendiente. Sin commit.**
+
+- **Migración 017** (`must_change_password`, permiso `users.manage` sólo para Administrator). Regla única de contraseña (`PasswordPolicy`): 8–16 caracteres con mayúscula, minúscula, número y carácter especial; aplica a alta, cambio y restablecimiento. El login sigue aceptando contraseñas previas fuera de la regla.
+- Un solo administrador: la creación de usuarios sólo permite Manager o Cashier. Pantalla **Usuarios** (Administrator): listar, crear con contraseña temporal y restablecer contraseña; la temporal se muestra una vez y obliga a cambiarla antes de abrir sesión. Login con «¿Olvidaste tu contraseña?» y «Cambiar contraseña».
+- Auditoría inmutable: `identity.user.created`, `identity.password.reset`, `identity.password.changed`, `identity.password.change_failed`, `identity.password.help_requested`. Nunca se guarda la contraseña ni la temporal.
+- **Migración 018** — fase 1 de [SYNC_PLAN.md](SYNC_PLAN.md): `branch` (una fila inmutable por instalación) y `sync_outbox` llenada por triggers en el mismo commit de caja, conteo, venta y auditoría; respaldo inicial del historial; pendientes no borrables. `SqliteSyncOutbox` lee, marca enviados (todo o nada) y registra fallos. Sin nube aún.
+- Suite `scripts/verify.ps1`: **744/744** (585 generales + 159 WPF), Release 0 errores/advertencias. Incluye fallas inyectadas a mitad de 017 y 018 con rollback completo y reintento.
+- Roles sin cambios por decisión del usuario. Proveedor de nube pendiente.
+
+## Registro anterior — FASE 1K ABIERTA — 1K.3D, 06/10/2026
 
 **FASE 1K.3D técnicamente completada; smoke manual pendiente.** Producción conserva el motor y los contratos de FASE 1J, pero ahora presenta un flujo operativo en tres pasos: producto/perfil/versión y piezas planeadas; vista previa de preparaciones, insumos, disponibilidad y faltante; y captura del resultado real antes de registrar. La cantidad planeada sigue controlando el consumo y la cantidad real sólo controla la entrada de producto terminado. El botón final se deshabilita si alguna cantidad real no es un entero mayor o igual que cero. ContextHelp R3 explica cantidad planeada, preview y resultado real sin mover el layout.
 

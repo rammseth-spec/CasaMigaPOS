@@ -28,7 +28,7 @@ public sealed class CashIdentityTests
     {
         directory = Path.Combine(Path.GetTempPath(), "CasaMigaTests", Guid.NewGuid().ToString("N"));
         database = new(Path.Combine(directory,"cash.db")); database.Initialize();
-        work = new(database); user = new(); clock = new(); password = Guid.NewGuid().ToString("N");
+        work = new(database); user = new(); clock = new(); password = "Aa1!"+Guid.NewGuid().ToString("N")[..12];
         identity = new(work, Passwords, clock, user);
         identity.Bootstrap("admin", "Encargado de prueba", password);
         Assert.IsTrue(identity.Login("admin", password));
@@ -162,7 +162,7 @@ public sealed class CashIdentityTests
         Assert.ThrowsExactly<InvalidOperationException>(()=>identity.Bootstrap("other","Other",password));
         Assert.AreEqual(1L,Scalar("SELECT count(*) FROM app_user"));
         Assert.AreEqual(3L,Scalar("SELECT count(*) FROM app_role"));
-        Assert.AreEqual(27L,Scalar("SELECT count(*) FROM permission"));
+        Assert.AreEqual(28L,Scalar("SELECT count(*) FROM permission"));
         Execute("UPDATE app_user SET role_name='Cashier'");
         Assert.IsTrue(cash.CanOpen());
         Assert.IsFalse(work.Run(s=>s.HasPermission(user.Current!.Id,"cash.close")));
@@ -195,7 +195,7 @@ public sealed class CashIdentityTests
         previous.Initialize(); previous.Validate();
         using var connection=previous.Open();using var query=connection.CreateCommand();
         query.CommandText="SELECT name FROM category WHERE id='c'";Assert.AreEqual("Pan dulce",query.ExecuteScalar());
-        query.CommandText="SELECT count(*) FROM schema_migration";Assert.AreEqual(16L,query.ExecuteScalar());
+        query.CommandText="SELECT count(*) FROM schema_migration";Assert.AreEqual(18L,query.ExecuteScalar());
         query.CommandText="SELECT count(*) FROM app_user";Assert.AreEqual(0L,query.ExecuteScalar());
     }
 }

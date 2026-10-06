@@ -343,7 +343,7 @@ public sealed class InventoryUsabilityPresentationTests
     private sealed class Fixture : IDisposable
     {
         private readonly string directory = Path.Combine(Path.GetTempPath(), "CasaMigaInventoryUsability", Guid.NewGuid().ToString("N"));
-        private readonly string password = Guid.NewGuid().ToString("N");
+        private readonly string password = "Aa1!"+Guid.NewGuid().ToString("N")[..12];
         private readonly Database database;
         private readonly int width; private readonly int height;
         private readonly string baseline;

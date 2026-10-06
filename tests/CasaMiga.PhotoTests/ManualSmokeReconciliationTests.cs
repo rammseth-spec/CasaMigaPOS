@@ -170,7 +170,7 @@ public sealed class ManualSmokeReconciliationTests
             {
                 await fixture.Model.InitializeAsync(new FoundationOptions(fixture.directory, IsDevelopment: true));
                 Assert.IsTrue(fixture.Model.IsBootstrap, fixture.Model.Message);
-                var password = Guid.NewGuid().ToString("N");
+                var password = "Aa1!"+Guid.NewGuid().ToString("N")[..12];
                 await fixture.Model.BootstrapAsync("r1-admin", "Prueba aislada R1", password, password);
                 await fixture.Model.LoginAsync("r1-admin", password);
                 Assert.IsTrue(fixture.Model.CanNavigate, fixture.Model.Message);

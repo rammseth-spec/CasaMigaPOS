@@ -140,7 +140,7 @@ public sealed class InventoryPresentationTests
     private sealed class InventoryFixture : IDisposable
     {
         private readonly string directory = Path.Combine(Path.GetTempPath(), "CasaMigaInventoryWpf", Guid.NewGuid().ToString("N"));
-        private readonly string password = Guid.NewGuid().ToString("N");
+        private readonly string password = "Aa1!"+Guid.NewGuid().ToString("N")[..12];
         private readonly string initialCash;
         private SqliteLocalUnitOfWork work = null!;
         private CatalogService catalog = null!;

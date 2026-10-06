@@ -14,7 +14,7 @@ public sealed class CheckoutPresentationTests
     [TestInitialize]public void Setup()
     {
         directory=Path.Combine(Path.GetTempPath(),"CasaMigaCheckoutUi",Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);database=new(Path.Combine(directory,"casamiga.db"));database.Initialize();work=new(database);session=new(new CheckoutJournal(directory));terminal=TerminalConfiguration.LoadOrCreate(directory);work.Run(s=>{s.EnsureTerminal(terminal,clock.UtcNow);return true;});
-        var identity=new IdentityService(work,new LocalPasswords(),clock,session);var password=Guid.NewGuid().ToString("N");identity.Bootstrap("admin","Administrador",password);Assert.IsTrue(identity.Login("admin",password));var catalog=new CatalogService(work,session,clock,terminal.Id);var category=catalog.CreateCategory("Pan");product=catalog.CreateProduct(category.Id,"P1","Concha","",new Money(1900));new CashService(work,session,clock).Open(terminal.Id,new Money(0));pos=new(work,session,terminal.Id);
+        var identity=new IdentityService(work,new LocalPasswords(),clock,session);var password="Aa1!"+Guid.NewGuid().ToString("N")[..12];identity.Bootstrap("admin","Administrador",password);Assert.IsTrue(identity.Login("admin",password));var catalog=new CatalogService(work,session,clock,terminal.Id);var category=catalog.CreateCategory("Pan");product=catalog.CreateProduct(category.Id,"P1","Concha","",new Money(1900));new CashService(work,session,clock).Open(terminal.Id,new Money(0));pos=new(work,session,terminal.Id);
     }
     [TestCleanup]public void Cleanup()=>Directory.Delete(directory,true);
     [TestMethod]public async Task CobrarPersistsHistoryWithoutPrinting()

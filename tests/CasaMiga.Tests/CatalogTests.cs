@@ -24,7 +24,7 @@ public sealed class CatalogTests
     [TestInitialize]public void Setup()
     {
         root=Path.Combine(Path.GetTempPath(),"CasaMigaTests",Guid.NewGuid().ToString("N"));directory=Path.Combine(root,"source");Directory.CreateDirectory(directory);
-        db=new(Path.Combine(directory,"casamiga.db"));db.Initialize();work=new(db);user=new();clock=new();password=Guid.NewGuid().ToString("N");
+        db=new(Path.Combine(directory,"casamiga.db"));db.Initialize();work=new(db);user=new();clock=new();password="Aa1!"+Guid.NewGuid().ToString("N")[..12];
         terminal=TerminalConfiguration.LoadOrCreate(directory);work.Run(s=>{s.EnsureTerminal(terminal,clock.UtcNow);return true;});
         var identity=new IdentityService(work,Passwords,clock,user);identity.Bootstrap("admin","Prueba catálogo",password);Assert.IsTrue(identity.Login("admin",password));
         catalog=new(work,user,clock,terminal.Id);

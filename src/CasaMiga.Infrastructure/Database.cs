@@ -98,6 +98,16 @@ public sealed class Database(string path)
                 command.CommandText = "SELECT count(*) FROM sqlite_master WHERE name IN ('product_photo_asset','product_photo','product_photo_asset_no_delete','product_photo_asset_immutable','product_photo_no_delete','product_photo_revision')";
                 if (Convert.ToInt64(command.ExecuteScalar()) != 6) throw new InvalidOperationException("La migración de fotos no creó sus restricciones.");
             }
+            if (i + 1 == 17)
+            {
+                command.CommandText = "SELECT (SELECT count(*) FROM pragma_table_info('app_user') WHERE name='must_change_password')=1 AND (SELECT count(*) FROM role_permission WHERE permission_name='users.manage' AND role_name='Administrator')=1";
+                if (Convert.ToInt64(command.ExecuteScalar()) != 1) throw new InvalidOperationException("La migración de usuarios no creó sus estructuras.");
+            }
+            if (i + 1 == 18)
+            {
+                command.CommandText = "SELECT (SELECT count(*) FROM branch)=1 AND (SELECT count(*) FROM sqlite_master WHERE name IN ('sync_outbox','ix_sync_outbox_pending','sync_outbox_no_delete_pending','sync_cash_session_insert','sync_cash_session_update','sync_cash_count_insert','sync_sale_insert','sync_audit_entry_insert','branch_no_delete','branch_id_immutable'))=10";
+                if (Convert.ToInt64(command.ExecuteScalar()) != 1) throw new InvalidOperationException("La migración de sincronización no creó sus estructuras.");
+            }
             command.CommandText = "INSERT INTO schema_migration VALUES($v,$hash,$at)";
             command.Parameters.AddWithValue("$hash", hash);
             command.Parameters.AddWithValue("$at", DateTimeOffset.UtcNow.ToString("O"));

@@ -29,7 +29,7 @@ public sealed class CashClosingTests
         db=new(Path.Combine(directory,"casamiga.db")); db.Initialize();
         terminal=TerminalConfiguration.LoadOrCreate(directory); work=new(db); clock=new();
         work.Run(s=>{s.EnsureTerminal(terminal,clock.UtcNow);return true;});
-        user=new(); password=Guid.NewGuid().ToString("N");
+        user=new(); password="Aa1!"+Guid.NewGuid().ToString("N")[..12];
         var identity=new IdentityService(work,Passwords,clock,user); identity.Bootstrap("owner","Propietario",password);
         Assert.IsTrue(identity.Login("owner",password)); cash=new(work,user,clock); closing=new(work,user,clock);
     }

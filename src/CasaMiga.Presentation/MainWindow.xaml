@@ -25,15 +25,30 @@
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
         <StackPanel><TextBlock Text="Usuario administrador"/><TextBox x:Name="BootstrapUser" AutomationProperties.Name="Usuario administrador" MaxLength="80" Margin="0,6,0,14"/></StackPanel>
         <StackPanel Grid.Column="2"><TextBlock Text="Nombre para mostrar"/><TextBox x:Name="BootstrapName" AutomationProperties.Name="Nombre para mostrar" MaxLength="100" Margin="0,6,0,14"/></StackPanel>
-        <StackPanel Grid.Row="1"><TextBlock Text="Contraseña"/><PasswordBox x:Name="BootstrapPassword" AutomationProperties.Name="Contraseña inicial" MaxLength="128" Margin="0,6,0,8"/></StackPanel>
-        <StackPanel Grid.Row="1" Grid.Column="2"><TextBlock Text="Confirmar contraseña"/><PasswordBox x:Name="BootstrapConfirmation" AutomationProperties.Name="Confirmar contraseña" MaxLength="128" Margin="0,6,0,8"/></StackPanel>
-        <TextBlock Grid.Row="2" Grid.ColumnSpan="3" Text="Elige una contraseña de 12 a 128 caracteres y escríbela igual en ambos campos." Style="{StaticResource CaptionText}" Margin="0,0,0,16"/>
+        <StackPanel Grid.Row="1"><TextBlock Text="Contraseña"/><PasswordBox x:Name="BootstrapPassword" AutomationProperties.Name="Contraseña inicial" MaxLength="16" Margin="0,6,0,8"/></StackPanel>
+        <StackPanel Grid.Row="1" Grid.Column="2"><TextBlock Text="Confirmar contraseña"/><PasswordBox x:Name="BootstrapConfirmation" AutomationProperties.Name="Confirmar contraseña" MaxLength="16" Margin="0,6,0,8"/></StackPanel>
+        <TextBlock Grid.Row="2" Grid.ColumnSpan="3" Text="{Binding PasswordRules,StringFormat={}{0} Escríbela igual en ambos campos.}" TextWrapping="Wrap" Style="{StaticResource CaptionText}" Margin="0,0,0,16"/>
         <Button Grid.Row="3" Grid.ColumnSpan="3" Content="Crear administrador" Click="BootstrapClick"/>
        </Grid>
        <StackPanel Visibility="{Binding IsLogin,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
         <TextBlock Text="Usuario"/><TextBox x:Name="LoginUser" AutomationProperties.Name="Usuario" MaxLength="80" Margin="0,6,0,16"/>
         <TextBlock Text="Contraseña"/><PasswordBox x:Name="LoginPassword" AutomationProperties.Name="Contraseña" MaxLength="128" Margin="0,6,0,24" KeyDown="LoginPasswordKeyDown"/>
         <Button Content="Entrar" Click="LoginClick"/>
+        <WrapPanel HorizontalAlignment="Center" Margin="0,12,0,0">
+         <Button Content="¿Olvidaste tu contraseña?" Click="ForgotPasswordClick" Style="{StaticResource GhostButton}" Margin="0,0,8,0" AutomationProperties.Name="Olvidé mi contraseña"/>
+         <Button Content="Cambiar contraseña" Click="ShowChangePasswordClick" Style="{StaticResource GhostButton}" AutomationProperties.Name="Cambiar contraseña"/>
+        </WrapPanel>
+       </StackPanel>
+       <StackPanel Visibility="{Binding IsChangePassword,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
+        <TextBlock Text="Usuario"/><TextBox x:Name="ChangeUser" Text="{Binding ChangePasswordUser,UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Usuario" MaxLength="80" Margin="0,6,0,14"/>
+        <TextBlock Text="Contraseña actual o temporal"/><PasswordBox x:Name="ChangeCurrent" AutomationProperties.Name="Contraseña actual o temporal" MaxLength="128" Margin="0,6,0,14"/>
+        <Grid>
+         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="16"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+         <StackPanel><TextBlock Text="Contraseña nueva"/><PasswordBox x:Name="ChangeNew" AutomationProperties.Name="Contraseña nueva" MaxLength="16" Margin="0,6,0,8"/></StackPanel>
+         <StackPanel Grid.Column="2"><TextBlock Text="Confirmar contraseña nueva"/><PasswordBox x:Name="ChangeConfirmation" AutomationProperties.Name="Confirmar contraseña nueva" MaxLength="16" Margin="0,6,0,8"/></StackPanel>
+        </Grid>
+        <TextBlock Text="{Binding PasswordRules}" Style="{StaticResource CaptionText}" TextWrapping="Wrap" Margin="0,0,0,16"/>
+        <WrapPanel><Button Content="Cancelar" Click="CancelChangePasswordClick" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8"/><Button Content="Guardar contraseña" Click="ChangePasswordClick" Margin="0,0,0,8"/></WrapPanel>
        </StackPanel>
        <TextBlock Text="{Binding Message}" Margin="0,10,0,0" AutomationProperties.LiveSetting="Polite"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
        <TextBlock Text="Procesando…" Margin="0,10,0,0" Foreground="{DynamicResource TextSecondaryBrush}" Visibility="{Binding Busy,Converter={StaticResource VisibleWhen}}"/>
@@ -67,6 +82,7 @@
        <Button Tag="M2,6 L10,2 18,6 10,10 Z M2,6 L2,15 10,19 18,15 18,6 M10,10 L10,19" Content="Inventario" Click="InventoryNavigationClick" Visibility="{Binding CanViewInventory,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Ir a Inventario"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource SidebarNavButton}"><Style.Triggers><DataTrigger Binding="{Binding IsInventory}" Value="True"><Setter Property="Background" Value="{DynamicResource PrimarySoftBrush}"/><Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger></Style.Triggers></Style></Button.Style></Button>
        <Button Tag="M2,3 Q6,1 10,4 Q14,1 18,3 L18,17 Q14,15 10,18 Q6,15 2,17 Z M10,4 L10,18" Content="Recetas" Click="RecipesNavigationClick" Visibility="{Binding CanViewRecipes,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Ir a Recetas"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource SidebarNavButton}"><Style.Triggers><DataTrigger Binding="{Binding IsRecipes}" Value="True"><Setter Property="Background" Value="{DynamicResource PrimarySoftBrush}"/><Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger></Style.Triggers></Style></Button.Style></Button>
        <Button Tag="M2,18 L2,9 7,5 7,9 12,5 12,10 18,10 18,18 Z M14,10 L14,2 17,2 17,10 M5,14 L7,14 M11,14 L13,14" Content="Producción" Click="ProductionNavigationClick" Visibility="{Binding CanViewProduction,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Ir a Producción"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource SidebarNavButton}"><Style.Triggers><DataTrigger Binding="{Binding IsProduction}" Value="True"><Setter Property="Background" Value="{DynamicResource PrimarySoftBrush}"/><Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger></Style.Triggers></Style></Button.Style></Button>
+       <Button Tag="M10,2 A4,4 0 1,1 9.99,2 Z M2,18 Q2,11 10,11 Q18,11 18,18" Content="Usuarios" Click="UsersNavigationClick" Visibility="{Binding CanManageUsers,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Ir a Usuarios"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource SidebarNavButton}"><Style.Triggers><DataTrigger Binding="{Binding IsUsers}" Value="True"><Setter Property="Background" Value="{DynamicResource PrimarySoftBrush}"/><Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger></Style.Triggers></Style></Button.Style></Button>
        <StackPanel Visibility="{Binding CanViewSales,Converter={StaticResource VisibleWhen}}"><TextBlock Text="CONSULTA" Style="{StaticResource SidebarGroupText}"/></StackPanel>
        <Button Tag="M4,2 L16,2 16,18 4,18 Z M7,6 L13,6 M7,10 L13,10 M7,14 L11,14" Content="Historial de ventas" Click="SalesNavigationClick" Visibility="{Binding CanViewSales,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Ir a Historial de ventas"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource SidebarNavButton}"><Style.Triggers><DataTrigger Binding="{Binding IsSalesHistory}" Value="True"><Setter Property="Background" Value="{DynamicResource PrimarySoftBrush}"/><Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger></Style.Triggers></Style></Button.Style></Button>
       </StackPanel>
@@ -108,6 +124,25 @@
          <Button Content="Abrir caja" Click="ShowOpeningClick" IsEnabled="{Binding CanOpen}" Visibility="{Binding HasNoOpenCash,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,12"/>
          <Button Content="Cerrar caja" Click="BeginClosingClick" Visibility="{Binding HasOpenCash,Converter={StaticResource VisibleWhen}}" Style="{StaticResource DestructiveButton}" Margin="0,0,0,12"/>
          <TextBlock Text="Salir del usuario o cerrar la aplicación no cierra la caja." Style="{StaticResource CaptionText}" Margin="0,4,0,0"/>
+        </StackPanel>
+        <StackPanel Visibility="{Binding IsUsers,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
+         <TextBlock Text="Usuarios registrados" Style="{StaticResource SectionTitleText}" Margin="0,0,0,8"/>
+         <DataGrid x:Name="UserList" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}" Height="220" AutomationProperties.Name="Usuarios">
+          <DataGrid.Columns><DataGridTextColumn Header="Usuario" Binding="{Binding Username,Mode=OneWay}" Width="*"/><DataGridTextColumn Header="Nombre" Binding="{Binding DisplayName,Mode=OneWay}" Width="*"/><DataGridTextColumn Header="Rol" Binding="{Binding Role,Mode=OneWay}" Width="140"/><DataGridTextColumn Header="Estado" Binding="{Binding Status,Mode=OneWay}" Width="200"/></DataGrid.Columns>
+         </DataGrid>
+         <WrapPanel Margin="0,12,0,0"><Button Content="Restablecer contraseña" Click="ResetPasswordClick" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8" AutomationProperties.Name="Restablecer contraseña del usuario seleccionado"/></WrapPanel>
+         <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="9" Padding="16,12" Margin="0,4,0,8" Visibility="{Binding HasTemporaryPasswordNotice,Converter={StaticResource VisibleWhen}}">
+          <TextBox Text="{Binding TemporaryPasswordNotice,Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" TextWrapping="Wrap" FontSize="16" AutomationProperties.Name="Contraseña temporal"/>
+         </Border>
+         <TextBlock Text="Nuevo usuario" Style="{StaticResource SectionTitleText}" Margin="0,16,0,8"/>
+         <Grid>
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="16"/><ColumnDefinition Width="*"/><ColumnDefinition Width="16"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
+          <StackPanel><TextBlock Text="Usuario"/><TextBox Text="{Binding NewUserName,UpdateSourceTrigger=PropertyChanged}" MaxLength="80" AutomationProperties.Name="Usuario nuevo" Margin="0,6,0,8"/></StackPanel>
+          <StackPanel Grid.Column="2"><TextBlock Text="Nombre para mostrar"/><TextBox Text="{Binding NewUserDisplay,UpdateSourceTrigger=PropertyChanged}" MaxLength="100" AutomationProperties.Name="Nombre del usuario nuevo" Margin="0,6,0,8"/></StackPanel>
+          <StackPanel Grid.Column="4"><TextBlock Text="Rol"/><ComboBox ItemsSource="{Binding RoleOptions}" SelectedValuePath="Id" DisplayMemberPath="Name" SelectedValue="{Binding NewUserRole}" AutomationProperties.Name="Rol del usuario nuevo" Margin="0,6,0,8"/></StackPanel>
+         </Grid>
+         <TextBlock Text="Se genera una contraseña temporal; el usuario debe cambiarla en su primer acceso." Style="{StaticResource CaptionText}" Margin="0,0,0,12"/>
+         <WrapPanel><Button Content="Crear usuario" Click="CreateUserClick" Margin="0,0,0,8"/></WrapPanel>
         </StackPanel>
         <StackPanel Visibility="{Binding IsOpening,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
          <TextBlock Text="Fondo inicial en MXN"/><TextBox x:Name="OpeningAmount" AutomationProperties.Name="Fondo inicial en MXN" Text="{Binding Amount,UpdateSourceTrigger=PropertyChanged}" MaxLength="20" Margin="0,8,0,8"/>

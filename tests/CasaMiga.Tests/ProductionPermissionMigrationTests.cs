@@ -25,7 +25,7 @@ public sealed partial class RecipePersistenceTests
         Assert.AreEqual(5L,q.ExecuteScalar());
         q.CommandText="SELECT count(*) FROM role_permission WHERE permission_name IN ('recipe.view','recipe.configure','production.view','production.create','production.confirm')";
         Assert.AreEqual(9L,q.ExecuteScalar());
-        q.CommandText="SELECT max(version) FROM schema_migration";Assert.AreEqual(16L,q.ExecuteScalar());
+        q.CommandText="SELECT max(version) FROM schema_migration";Assert.AreEqual(18L,q.ExecuteScalar());
         database.Validate();
     }
     private void AddPermissionTestUsers()

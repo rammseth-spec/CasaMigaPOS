@@ -61,7 +61,7 @@ public sealed class InventoryApplicationTests
         work = new(database);
         session = new();
         var identity = new IdentityService(work, new LocalPasswords(), clock, session);
-        var password = Guid.NewGuid().ToString("N");
+        var password = "Aa1!"+Guid.NewGuid().ToString("N")[..12];
         identity.Bootstrap("admin", "Inventario", password);
         Assert.IsTrue(identity.Login("admin", password));
         actor = session.Current!.Id;

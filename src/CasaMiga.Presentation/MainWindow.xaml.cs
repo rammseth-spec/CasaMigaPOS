@@ -26,6 +26,33 @@ public partial class MainWindow : Window
         var password = LoginPassword.Password; LoginPassword.Clear();
         await Model.LoginAsync(LoginUser.Text, password);
         if (Model.CanNavigate) EnterFullScreen();
+        else if (Model.IsChangePassword) ChangeCurrent.Focus();
+    }
+    private async void ForgotPasswordClick(object sender, RoutedEventArgs e) => await Model.ForgotPasswordAsync(LoginUser.Text);
+    private void ShowChangePasswordClick(object sender, RoutedEventArgs e)
+    {
+        LoginPassword.Clear(); Model.ShowChangePassword(LoginUser.Text);
+        if (Model.ChangePasswordUser.Length == 0) ChangeUser.Focus(); else ChangeCurrent.Focus();
+    }
+    private void CancelChangePasswordClick(object sender, RoutedEventArgs e) { ClearChangePassword(); Model.CancelChangePassword(); LoginPassword.Focus(); }
+    private async void ChangePasswordClick(object sender, RoutedEventArgs e)
+    {
+        string current = ChangeCurrent.Password, next = ChangeNew.Password, confirmation = ChangeConfirmation.Password;
+        ClearChangePassword();
+        await Model.ChangePasswordAsync(current, next, confirmation);
+        if (Model.CanNavigate) EnterFullScreen();
+        else if (Model.IsLogin) { LoginUser.Text = Model.ChangePasswordUser; LoginPassword.Focus(); }
+        else ChangeCurrent.Focus();
+    }
+    private void ClearChangePassword() { ChangeCurrent.Clear(); ChangeNew.Clear(); ChangeConfirmation.Clear(); }
+    private async void UsersNavigationClick(object sender, RoutedEventArgs e) => await Model.ShowUsersAsync();
+    private async void CreateUserClick(object sender, RoutedEventArgs e) => await Model.CreateUserAsync();
+    private async void ResetPasswordClick(object sender, RoutedEventArgs e)
+    {
+        if (Model.SelectedUser is not { } target) { await Model.ResetPasswordAsync(); return; }
+        if (MessageBox.Show(this, $"Se asignará una contraseña temporal a {target.Username} y deberá cambiarla al entrar. ¿Continuar?",
+            "Restablecer contraseña", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        await Model.ResetPasswordAsync();
     }
     private void LoginPasswordKeyDown(object sender, KeyEventArgs e) { if (e.Key == Key.Enter) { e.Handled = true; LoginClick(sender,e); } }
     private void ShowOpeningClick(object sender, RoutedEventArgs e) { Model.ShowOpening(); OpeningAmount.Focus(); OpeningAmount.SelectAll(); }

@@ -54,11 +54,38 @@ public sealed partial class SqliteLocalUnitOfWork(Database database) : ILocalUni
         public int UserCount() { using var cmd = Command("SELECT count(*) FROM app_user"); return Convert.ToInt32(cmd.ExecuteScalar()); }
         public LocalUser? FindUser(string name) => ReadUser("username=$key", name);
         public LocalUser? FindUser(Guid id) => ReadUser("id=$key", Id(id));
+        private bool? hasMustChange;
         private LocalUser? ReadUser(string predicate, string value)
         {
-            using var cmd = Command("SELECT id,username,display_name,password_hash,active,failed_attempts,locked_until_utc FROM app_user WHERE " + predicate, ("$key", value));
+            // Bases previas a la migración 017 (restauraciones/upgrades en curso) no tienen must_change_password.
+            if (hasMustChange is null)
+            {
+                using var probe = Command("SELECT count(*) FROM pragma_table_info('app_user') WHERE name='must_change_password'");
+                hasMustChange = Convert.ToInt64(probe.ExecuteScalar()) == 1;
+            }
+            using var cmd = Command("SELECT id,username,display_name,password_hash,active,failed_attempts,locked_until_utc,role_name," + (hasMustChange.Value ? "must_change_password" : "0") + " FROM app_user WHERE " + predicate, ("$key", value));
             using var r = cmd.ExecuteReader();
-            return r.Read() ? new(Guid.Parse(r.GetString(0)), r.GetString(1), r.GetString(2), r.GetString(3), r.GetInt32(4) == 1, r.GetInt32(5), Date(r,6)) : null;
+            return r.Read() ? new(Guid.Parse(r.GetString(0)), r.GetString(1), r.GetString(2), r.GetString(3), r.GetInt32(4) == 1, r.GetInt32(5), Date(r,6), r.GetString(7), r.GetInt32(8) == 1) : null;
+        }
+        public void AddUser(Guid id, string username, string displayName, string role, string hash, bool mustChangePassword, DateTimeOffset at)
+        {
+            using var cmd = Command("INSERT INTO app_user(id,username,display_name,password_hash,role_name,must_change_password,created_utc) VALUES($id,$name,$display,$hash,$role,$must,$at)",
+                ("$id", Id(id)), ("$name", username), ("$display", displayName), ("$hash", hash), ("$role", role), ("$must", mustChangePassword ? 1 : 0), ("$at", At(at)));
+            cmd.ExecuteNonQuery();
+        }
+        public void SetPassword(Guid id, string hash, bool mustChangePassword)
+        {
+            using var cmd = Command("UPDATE app_user SET password_hash=$hash,must_change_password=$must,failed_attempts=0,locked_until_utc=NULL WHERE id=$id",
+                ("$id", Id(id)), ("$hash", hash), ("$must", mustChangePassword ? 1 : 0));
+            if (cmd.ExecuteNonQuery() != 1) throw new InvalidOperationException("El usuario ya no existe.");
+        }
+        public IReadOnlyList<UserSummary> ListUsers()
+        {
+            using var cmd = Command("SELECT id,username,display_name,role_name,active,must_change_password,locked_until_utc FROM app_user ORDER BY username");
+            using var r = cmd.ExecuteReader();
+            var users = new List<UserSummary>();
+            while (r.Read()) users.Add(new(Guid.Parse(r.GetString(0)), r.GetString(1), r.GetString(2), r.GetString(3), r.GetInt32(4) == 1, r.GetInt32(5) == 1, Date(r, 6)));
+            return users;
         }
         public void AddAdministrator(Guid id, string username, string displayName, string hash, DateTimeOffset at)
         {

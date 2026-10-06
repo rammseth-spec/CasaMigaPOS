@@ -103,7 +103,7 @@ public sealed class InventoryViewModelTests
         Directory.CreateDirectory(root);
         database = new(Path.Combine(root, "casamiga.db")); database.Initialize(); work = new(database); session = new();
         var identity = new IdentityService(work, new LocalPasswords(), clock, session);
-        var password = Guid.NewGuid().ToString("N"); identity.Bootstrap("admin", "Inventario UI", password);
+        var password = "Aa1!"+Guid.NewGuid().ToString("N")[..12]; identity.Bootstrap("admin", "Inventario UI", password);
         Assert.IsTrue(identity.Login("admin", password)); actor = session.Current!.Id;
         terminal = TerminalConfiguration.LoadOrCreate(root);
         work.Run(local => { local.EnsureTerminal(terminal, clock.UtcNow); return true; });

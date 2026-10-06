@@ -24,7 +24,7 @@ public abstract class SalesFixture
         directory=Path.Combine(Path.GetTempPath(),"CasaMigaTests",Guid.NewGuid().ToString("N")); Directory.CreateDirectory(directory);
         db=new(Path.Combine(directory,"casamiga.db")); if(FixtureSchemaVersion is { } v)SaleContractMigrationTests.InitializeThrough(db,v);else db.Initialize();work=new(db);user=new(new CheckoutJournal(directory));
         terminal=TerminalConfiguration.LoadOrCreate(directory);work.Run(s=>{s.EnsureTerminal(terminal,clock.UtcNow);return true;});
-        var identity=new IdentityService(work,new LocalPasswords(),clock,user);password=Guid.NewGuid().ToString("N");
+        var identity=new IdentityService(work,new LocalPasswords(),clock,user);password="Aa1!"+Guid.NewGuid().ToString("N")[..12];
         identity.Bootstrap("admin","Prueba ventas",password);Assert.IsTrue(identity.Login("admin",password));
         catalog=new(work,user,clock,terminal.Id);var category=catalog.CreateCategory("Pan");
         product=catalog.CreateProduct(category.Id,"P1","Concha","",new Money(1900));

@@ -76,11 +76,14 @@ public sealed partial class RecipePersistenceTests
         var tables=new List<string>();using(var r=q.ExecuteReader())while(r.Read())tables.Add(r.GetString(0));
         var result=new List<string>();
         // Historical business snapshot excludes new photo-only tables when comparing pre-photo upgrades.
-        foreach(var table in tables.Where(x=>(migrations||x!="schema_migration") && (!excludeProductionPermissions || x is not ("product_photo" or "product_photo_asset"))))
+        foreach(var table in tables.Where(x=>(migrations||x!="schema_migration") && (!excludeProductionPermissions || x is not ("product_photo" or "product_photo_asset" or "branch" or "sync_outbox"))))
         {
             q.CommandText="SELECT * FROM \""+table+"\"";
+            // Migration 017 only adds must_change_password and users.manage; compare the historical columns/rows.
+            if(excludeProductionPermissions && table=="app_user")
+                q.CommandText="SELECT id,username,display_name,password_hash,role_name,active,failed_attempts,locked_until_utc,created_utc FROM app_user";
             if(excludeProductionPermissions && table is "permission" or "role_permission")
-                q.CommandText+=" WHERE "+(table=="permission"?"name":"permission_name")+" NOT IN ('recipe.view','recipe.configure','production.view','production.create','production.confirm')";
+                q.CommandText+=" WHERE "+(table=="permission"?"name":"permission_name")+" NOT IN ('recipe.view','recipe.configure','production.view','production.create','production.confirm','users.manage')";
             using var r=q.ExecuteReader();var rows=new List<string>();
             while(r.Read()){var values=new object[r.FieldCount];r.GetValues(values);rows.Add(JsonSerializer.Serialize(values));}
             result.Add(table+string.Join("\n",rows.Order(StringComparer.Ordinal)));
@@ -124,7 +127,7 @@ public sealed partial class RecipePersistenceTests
                 Assert.ThrowsExactly<SqliteException>(()=>old.db.Initialize());Assert.AreEqual(before,old.AllRows(true));old.db.Validate();old.Sql("DROP TRIGGER inject_014");
             }
             old.db.Initialize();old.db.Validate();Assert.AreEqual(rows,old.AllRows(excludeProductionPermissions:true));
-            Assert.AreEqual(16L,old.Sql("SELECT max(version) FROM schema_migration"));
+            Assert.AreEqual(18L,old.Sql("SELECT max(version) FROM schema_migration"));
             Assert.AreEqual(opSchema,old.Sql("SELECT sql FROM sqlite_master WHERE name='inventory_operation'"));
             Assert.AreEqual(0L,old.Sql("SELECT count(*) FROM sqlite_master WHERE name LIKE '%_014'"));
             Assert.IsEmpty(new SqliteInventoryStore(old.db,old.clock).Reconcile());

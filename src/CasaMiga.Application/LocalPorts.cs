@@ -10,7 +10,8 @@ public interface IPasswords
     PasswordCheck Verify(string? hash, string password);
 }
 public sealed record LocalUser(Guid Id, string Username, string DisplayName, string PasswordHash,
-    bool Active, int FailedAttempts, DateTimeOffset? LockedUntil);
+    bool Active, int FailedAttempts, DateTimeOffset? LockedUntil, string Role = "", bool MustChangePassword = false);
+public sealed record UserSummary(Guid Id, string Username, string DisplayName, string Role, bool Active, bool MustChangePassword, DateTimeOffset? LockedUntil);
 public sealed record UserIdentity(Guid Id, string DisplayName);
 public sealed record TerminalIdentity(Guid Id, string Name);
 public sealed record CashSessionView(CashSession Session, string OpenedByName);
@@ -58,6 +59,9 @@ public interface ILocalStore
     LocalUser? FindUser(Guid id);
     void AddAdministrator(Guid id, string username, string displayName, string hash, DateTimeOffset at);
     void UpdateLogin(Guid id, int failures, DateTimeOffset? lockedUntil, string? replacementHash);
+    void AddUser(Guid id, string username, string displayName, string role, string hash, bool mustChangePassword, DateTimeOffset at);
+    void SetPassword(Guid id, string hash, bool mustChangePassword);
+    IReadOnlyList<UserSummary> ListUsers();
     bool HasPermission(Guid user, string permission);
     bool HasRole(Guid user, string role);
     TerminalIdentity? FindTerminal(Guid id);

@@ -233,7 +233,7 @@ public sealed class RecipeUsabilityPresentationTests
         public Fixture()
         {
             Directory.CreateDirectory(root);database=new(Path.Combine(root,"casamiga.db"));database.Initialize();work=new(database);terminal=TerminalConfiguration.LoadOrCreate(root);work.Run(s=>{s.EnsureTerminal(terminal,clock.UtcNow);return true;});
-            var identity=new IdentityService(work,new LocalPasswords(),clock,user);var password=Guid.NewGuid().ToString("N");identity.Bootstrap("admin","Administrador de pruebas",password);Assert.IsTrue(identity.Login("admin",password));
+            var identity=new IdentityService(work,new LocalPasswords(),clock,user);var password="Aa1!"+Guid.NewGuid().ToString("N")[..12];identity.Bootstrap("admin","Administrador de pruebas",password);Assert.IsTrue(identity.Login("admin",password));
             catalog=new(work,user,clock,terminal.Id);inventory=new(new SqliteInventoryStore(database,clock),work,user,clock,terminal.Id);recipes=new(new SqliteProductionUnitOfWork(database),user,clock,terminal.Id);
             Flour=inventory.CreateInventoryItem("SMOKE-MASA-001","Ingrediente masa sintético",InventoryItemKind.RawMaterial,InventoryDimension.Mass);
             Milk=inventory.CreateInventoryItem("SMOKE-VOL-001","Ingrediente volumen sintético",InventoryItemKind.RawMaterial,InventoryDimension.Volume);
