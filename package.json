@@ -1,0 +1,14 @@
+{
+  "name": "casamiga-cloud",
+  "private": true,
+  "version": "0.1.0",
+  "description": "API de sincronización de Casa Miga POS (Vercel Functions + Neon).",
+  "type": "module",
+  "engines": { "node": "24.x" },
+  "scripts": {
+    "test": "node --test \"test/*.test.ts\""
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.0"
+  }
+}
