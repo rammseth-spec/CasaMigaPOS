@@ -17,5 +17,25 @@ Después de terminar pruebas, documentación y checkpoint autorizado, ejecutar a
 La seguridad de datos tiene prioridad: usar copia aislada cuando la base original deba permanecer inmutable; comprobar procesos/DirectoryLease y no matar instancias ni abrir concurrencia insegura. Si no puede abrirse con seguridad, detener la apertura y reportarlo. No cambiar configuración física de impresión. Consultar docs/review-builds.md.
 
 Preferencia permanente del usuario: después de cada modificación entregar en la conversación el usuario y la contraseña de revisión correspondientes a la copia preparada. Verificar que correspondan a esa copia; no inventar ni restablecer credenciales y no almacenarlas en documentación versionada.
+## GitHub / Codex — regla permanente de cierre y sincronización
 
+GitHub forma parte del cierre técnico de cada fase/subfase/bloque de Codex una vez completada la importación canónica pendiente del repositorio local (Issue #3).
 
+Al iniciar cualquier bloque de Codex:
+1. Leer README.md, docs/CURRENT_STATE.md, docs/NEXT_STEPS.md y docs/CODEX_GITHUB_WORKFLOW.md.
+2. Ejecutar git status, git branch -vv, git remote -v y git fetch origin --prune.
+3. Confirmar que el trabajo parte de un checkpoint compatible con origin/main. No reescribir historia ni usar push --force.
+4. Si el remoto todavía no contiene el árbol canónico src/tests/migrations/scripts, detener cualquier sincronización normal y resolver primero tools/github-import/.
+
+Al cerrar correctamente un bloque de producto:
+1. Ejecutar las pruebas y validaciones requeridas, incluyendo scripts/verify.ps1 cuando corresponda.
+2. Revisar git diff --check, el diff completo, migraciones, datos sensibles y documentación.
+3. Actualizar CURRENT_STATE, NEXT_STEPS, reporte/evidencia de fase y cualquier ADR aplicable.
+4. Crear commits claros y dejar el árbol limpio.
+5. Ejecutar tools/github-sync/complete-codex-checkpoint.ps1 -CheckpointName "<fase o subfase>".
+6. El script puede crear/pushear una rama y, si GitHub CLI está autenticado, abrir un PR. Nunca debe hacer force-push ni merge automático.
+7. GitHub CI/CodeQL deben pasar sobre el commit exacto antes de integrar a main.
+8. Un merge o CI verde NO sustituye smoke físico/manual de Qian, cajón, USB/LAN, fullscreen, instalador, Windows 10/11 u otro hardware.
+9. Entregar siempre un reporte final con HEAD local, rama/PR de GitHub, pruebas, resultado CI si ya existe, schema/migraciones, riesgos y siguiente paso autorizado.
+
+Para cierres exclusivamente documentales, no ejecutar suites costosas sin causa, pero sí revisar diff, estado Git y ausencia de cambios accidentales en src/tests/migrations.
