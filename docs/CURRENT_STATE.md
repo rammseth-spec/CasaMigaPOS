@@ -1,3 +1,7 @@
+# Sincronización en línea fases 2–3 — 06/10/2026
+
+**Implementado; API sin desplegar.** Neon `casamiga-pos` con esquema central (`cloud/db/001_init.sql`). API TypeScript en `cloud/` (health, alta de terminal con secreto, recepción idempotente por lote con detección de conflictos), 6/6 pruebas `node:test`. En la app: envío automático en segundo plano, sólo marca lo confirmado, reintentos con espera creciente, llave DPAPI, pantalla Nube y estado en el encabezado. Bloqueo: el conector de Vercel no puede crear proyectos/despliegues en el equipo. Ver [SYNC_PLAN.md](SYNC_PLAN.md). Suite **780/780** (621 + 159), Release 0/0.
+
 # Gestión de usuarios completa — 06/10/2026
 
 **Implementado; smoke manual pendiente.** Pantalla Usuarios: editar nombre y rol (Encargado/Cajero), desactivar/reactivar (no al administrador ni a uno mismo), además de crear y restablecer contraseña. Recuperación del administrador único con `CasaMiga.Maintenance reset-admin <carpeta>`: respaldo y migración como al abrir la app, contraseña temporal mostrada una vez, cambio obligatorio, auditoría `identity.admin.recovered`. Sin migración. Suite **773/773** (614 + 159), Release 0/0.

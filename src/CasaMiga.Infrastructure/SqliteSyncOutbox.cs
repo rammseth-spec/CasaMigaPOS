@@ -1,9 +1,11 @@
 using System.Globalization;
+using System.Text.Json.Nodes;
 
 namespace CasaMiga.Infrastructure;
 
 public sealed record BranchIdentity(Guid Id, string Name);
 public sealed record SyncOutboxEntry(long Sequence, string Entity, string EntityId, string Change, DateTimeOffset EnqueuedAt, int Attempts);
+public sealed record SyncEnvelope(SyncOutboxEntry Entry, JsonObject Payload);
 
 /// <summary>Cola local de sincronización (docs/SYNC_PLAN.md). Los triggers de la migración 018 la llenan; aquí sólo se lee y se marca.</summary>
 public sealed class SqliteSyncOutbox(Database database)
@@ -54,6 +56,63 @@ public sealed class SqliteSyncOutbox(Database database)
             if (q.ExecuteNonQuery() != 1) throw new InvalidOperationException($"La entrada {value} no estaba pendiente.");
         }
         t.Commit();
+    }
+
+    public void RenameBranch(string name)
+    {
+        name = name.Trim();
+        if (name.Length is < 1 or > 100) throw new ArgumentException("El nombre de la sucursal debe tener de 1 a 100 caracteres.");
+        using var c = database.Open(); using var q = c.CreateCommand();
+        q.CommandText = "UPDATE branch SET name=$name"; q.Parameters.AddWithValue("$name", name);
+        q.ExecuteNonQuery();
+    }
+
+    /// <summary>Pendientes con el contenido completo de cada registro, leído en una sola transacción de lectura.</summary>
+    public IReadOnlyList<SyncEnvelope> PendingEnvelopes(int limit)
+    {
+        var pending = Pending(limit);
+        if (pending.Count == 0) return [];
+        using var c = database.Open(readOnly: true); using var t = c.BeginTransaction(deferred: true);
+        return pending.Select(entry => new SyncEnvelope(entry, Payload(c, t, entry))).ToList();
+    }
+
+    private static JsonObject Payload(Microsoft.Data.Sqlite.SqliteConnection c, Microsoft.Data.Sqlite.SqliteTransaction t, SyncOutboxEntry entry)
+    {
+        JsonObject? One(string sql) => Rows(c, t, sql, entry.EntityId).FirstOrDefault();
+        JsonArray Many(string sql) => new(Rows(c, t, sql, entry.EntityId).Select(r => (JsonNode)r).ToArray());
+        var payload = entry.Entity switch
+        {
+            "cash_session" => One("SELECT * FROM cash_session WHERE id=$id"),
+            "cash_count" => One("SELECT * FROM cash_count WHERE session_id=$id"),
+            "audit_entry" => One("SELECT * FROM audit_entry WHERE id=$id"),
+            "sale" => One("SELECT * FROM sale WHERE id=$id") is { } sale
+                ? new JsonObject { ["sale"] = sale, ["items"] = Many("SELECT * FROM sale_item WHERE sale_id=$id ORDER BY position"), ["payment"] = One("SELECT * FROM payment WHERE sale_id=$id") }
+                : null,
+            "sale_refund" => One("SELECT * FROM sale_refund WHERE id=$id") is { } refund
+                ? new JsonObject { ["refund"] = refund, ["items"] = Many("SELECT * FROM sale_refund_item WHERE refund_id=$id ORDER BY position") }
+                : null,
+            _ => throw new InvalidDataException($"Entidad de sincronización desconocida: {entry.Entity}.")
+        };
+        return payload ?? throw new InvalidDataException($"No existe el registro {entry.Entity} {entry.EntityId} de la cola.");
+    }
+
+    private static List<JsonObject> Rows(Microsoft.Data.Sqlite.SqliteConnection c, Microsoft.Data.Sqlite.SqliteTransaction t, string sql, string id)
+    {
+        using var q = c.CreateCommand(); q.Transaction = t; q.CommandText = sql; q.Parameters.AddWithValue("$id", id);
+        using var r = q.ExecuteReader();
+        var rows = new List<JsonObject>();
+        while (r.Read())
+        {
+            var row = new JsonObject();
+            for (int i = 0; i < r.FieldCount; i++)
+                row[r.GetName(i)] = r.IsDBNull(i) ? null : r.GetValue(i) switch
+                {
+                    long n => JsonValue.Create(n), double d => JsonValue.Create(d), string s => JsonValue.Create(s),
+                    byte[] b => JsonValue.Create(Convert.ToBase64String(b)), var other => JsonValue.Create(Convert.ToString(other, CultureInfo.InvariantCulture))
+                };
+            rows.Add(row);
+        }
+        return rows;
     }
 
     public void MarkFailed(long sequence, string error)

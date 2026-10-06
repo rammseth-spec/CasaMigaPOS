@@ -78,6 +78,14 @@ public partial class MainWindow : Window
     private async void CatalogNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowCatalogAsync();
     private async void SalesNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowSalesHistoryAsync();
     private async void ReportsNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowReportsAsync();
+    private async void SyncNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowSyncAsync();
+    private async void SyncNowClick(object sender,RoutedEventArgs e){ if (Model.Sync is { } sync) await sync.RunAsync(); }
+    private async void RegisterTerminalClick(object sender,RoutedEventArgs e)
+    {
+        if (Model.Sync is not { } sync) return;
+        var secret = EnrollmentSecret.Password; EnrollmentSecret.Clear();
+        await sync.RegisterAsync(secret);
+    }
     private async void InventoryNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowInventoryAsync();
     private async void RecipesNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowRecipesAsync();
     private async void ProductionNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowProductionAsync();
@@ -151,6 +159,7 @@ public partial class MainWindow : Window
     private void WindowClosing(object? sender,System.ComponentModel.CancelEventArgs e)
     {
         if(Model.Busy || Model.Pos?.Busy==true){e.Cancel=true;return;}
-        if(!DiscardBefore("cerrar la aplicación"))e.Cancel=true;
+        if(!DiscardBefore("cerrar la aplicación")){e.Cancel=true;return;}
+        Model.Sync?.Dispose();
     }
 }

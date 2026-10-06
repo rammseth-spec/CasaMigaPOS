@@ -1,6 +1,13 @@
 # Plan de sincronización en línea (offline-first)
 
-Estado: **propuesto · fase 1 en implementación**. Fecha: 06/10/2026.
+Estado: **fases 1–3 implementadas; despliegue de la API pendiente de permisos en Vercel**. Fecha: 06/10/2026.
+
+| Fase | Estado |
+|---|---|
+| 1 | Hecha (migraciones 018–019). |
+| 2 | Base central en Neon `casamiga-pos` (`shiny-mouse-28561448`, aws-us-east-1) con `cloud/db/001_init.sql` aplicada. API en `cloud/` (TypeScript, Vercel Functions) probada localmente; **sin desplegar**: el conector de Vercel no tiene permiso para crear proyectos en el equipo. |
+| 3 | Hecha en la app: `SyncEngine` + `HttpSyncTransport`, envío en segundo plano cada 15 s con espera creciente sin conexión (hasta 5 min), llave por terminal cifrada con DPAPI en `sync.json`, pantalla **Nube** (administrador) y estado en el encabezado. |
+| 4–6 | Pendientes. |
 
 ## Objetivo
 
@@ -14,7 +21,7 @@ Cada computadora Windows vende siempre contra su base SQLite local, con o sin In
 - Cada cajero pertenece a **una** sucursal.
 - Los precios se definen **por sucursal**; pueden ser iguales o distintos.
 - Los roles actuales (Administrator, Manager, Cashier) se conservan por ahora.
-- Proveedor de nube: **pendiente**.
+- Proveedor de nube: **Neon (PostgreSQL) + Vercel (API en TypeScript)**, decidido 06/10/2026.
 
 ## Principios
 
