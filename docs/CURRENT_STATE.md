@@ -1,6 +1,6 @@
 # Copia de revisión con catálogo autorizado — 06/10/2026
 
-Copia aislada `%LOCALAPPDATA%\CasaMigaPOS-Review-Catalogo` preparada con `seed-review` desde `docs/catalog/catalogo-autorizado-v2.csv`: esquema 20, `admin` y `cajero1` (temporal), 4 categorías, 26 productos, 32 auditorías, sin caja abierta ni fotos. Build `src/CasaMiga.Presentation/bin/Review-QAv1-5db7718`, launcher `work/Abrir-Casa-Miga-QAv1-5db7718.cmd`, título `Casa Miga POS · Caja · DESARROLLO · QAv1-5db7718`. Credenciales entregadas en la conversación; no se versionan. Smoke manual pendiente.
+Copia aislada `C:\Users\jalex\CasaMiga-Revision\catalogo-QAv1-ad4d70c` (fuera de AppData: Claude Code desktop virtualiza AppData, ver docs/review-builds.md) preparada con `seed-review` desde `docs/catalog/catalogo-autorizado-v2.csv`: esquema 20, `admin` y `cajero1` (temporal), 4 categorías, 26 productos, sin caja abierta ni fotos, con `dev-autologin.json` (entra sola como admin; verificado: evento `development.autologin`). Build `src/CasaMiga.Presentation/bin/Review-QAv1-ad4d70c`, launcher `work/Abrir-Casa-Miga-QAv1-ad4d70c.cmd`, título `Casa Miga POS · Caja · DESARROLLO · QAv1-ad4d70c`. La copia previa en `%LOCALAPPDATA%\CasaMigaPOS-Review-Catalogo` quedó sólo en el almacenamiento virtualizado del agente: no es válida. Credenciales entregadas en la conversación; no se versionan. Smoke manual pendiente.
 
 # Contraseñas en vivo y campos de la marca — 06/10/2026
 
