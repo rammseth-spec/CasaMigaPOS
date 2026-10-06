@@ -87,6 +87,7 @@ public interface ILocalStore
     Sale? FindSaleByOperation(Guid operation);
     Money CashSalesTotal(Guid session);
     Money CashRefundsTotal(Guid session);
+    SalesReportData QuerySalesReport(DateTimeOffset fromUtc, DateTimeOffset untilUtc);
     void AddRefund(SaleRefundRecord refund);
     IReadOnlyList<SaleRefundRecord> ListRefunds(Guid saleId);
     SaleRefundRecord? FindRefundByOperation(Guid operation);

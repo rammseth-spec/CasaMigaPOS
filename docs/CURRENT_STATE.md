@@ -1,3 +1,7 @@
+# Reportes y corte del día — 06/10/2026
+
+**Implementado; smoke manual pendiente.** Pantalla **Reportes** (`sales.view`: Administrator, Manager): periodo por días locales (máx. 366), resumen (ventas, vendido, devuelto, neto, ticket promedio), por producto, por cajero y cortes de caja de los turnos abiertos en el periodo (fondo, ventas, devoluciones, esperado, contado, diferencia). Ventas cuentan por fecha de venta y devoluciones por fecha de devolución. Exportación CSV UTF-8 con BOM y neutralización de fórmulas. Sin migración. Suite **761/761** (602 + 159), Release 0/0.
+
 # Cancelaciones y devoluciones — 06/10/2026
 
 **Implementado; smoke manual pendiente.** Migración 019: `sale_refund` / `sale_refund_item` inmutables, permiso `sales.refund` (Administrator, Manager), triggers que validan caja abierta, cantidades acumuladas, reglas de cancelación y efectivo suficiente; `sync_outbox` reconstruida para aceptar `sale_refund` conservando secuencias. Esperado de caja = fondo + ventas − devoluciones. Historial muestra «Devuelto» y la sección de cancelación/devolución. Inventario sin cambios. Política y pendientes en [REFUNDS.md](REFUNDS.md). `Database.LatestVersion` evita fijar el número de esquema en pruebas. Suite **756/756** (597 + 159), Release 0/0.

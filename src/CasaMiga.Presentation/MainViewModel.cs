@@ -28,6 +28,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public SalesHistoryViewModel? SalesHistory { get; private set; }
     public bool IsSalesHistory => screen == "salesHistory";
     public bool CanViewSales { get; private set; }
+    public ReportsViewModel? Reports { get; private set; }
+    public bool IsReports => screen == "reports";
     public InventoryViewModel? Inventory { get; private set; }
     public bool IsInventory => screen == "inventory";
     public bool CanViewInventory { get; private set; }
@@ -82,8 +84,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string Amount { get; set; } = "0.00";
     public bool MessageIsSuccess { get; private set; }
     public string Message { get; private set; } = "";
-    public string Heading => screen switch { "pos"=>"Punto de venta", "catalog" => "Catálogo", "salesHistory"=>"Historial de ventas", "inventory" => "Inventario", "recipes"=>"Recetas", "production"=>"Producción", "counting" => "Conteo de caja", "closingResult" => "Resultado de caja", "bootstrap" => "Bienvenido a Casa Miga", "login" => "Inicia sesión", "changePassword" => "Cambiar contraseña", "users" => "Usuarios", "dashboard" => "Tu caja", "opening" => "Abrir caja", _ => "Preparando Casa Miga" };
-    public string Subtitle => screen switch { "pos"=>"Selecciona productos, revisa el carrito y cobra.", "catalog" => "Categorías y productos · Sin proceso de venta.", "salesHistory"=>"Ventas confirmadas · Consulta de solo lectura.", "inventory" => "Existencias y movimientos del almacén principal · consulta abajo el estado del consumo automático por ventas.", "recipes"=>"Fórmulas y perfiles productivos versionados.", "production"=>"Planeación, confirmación e historial de producción.", "counting" => "Cuenta el efectivo sin consultar el esperado. Continuar guarda tu conteo y no permite cambiarlo después.", "closingResult" => "Revisa el resultado y confirma el cierre definitivo.", "bootstrap" => "Configura el primer administrador. No hay contraseñas predeterminadas.", "login" => "Identifícate para consultar o abrir esta caja.", "changePassword" => "Confirma tu contraseña actual o temporal y elige una nueva.", "users" => "Crea usuarios y restablece contraseñas olvidadas · Cada acción queda auditada.", "opening" => "Registra el efectivo con el que comienza la sesión.", "dashboard" => "Sesión local · Tus datos permanecen en este equipo.", _ => "Validando base y respaldo…" };
+    public string Heading => screen switch { "pos"=>"Punto de venta", "catalog" => "Catálogo", "salesHistory"=>"Historial de ventas", "reports"=>"Reportes", "inventory" => "Inventario", "recipes"=>"Recetas", "production"=>"Producción", "counting" => "Conteo de caja", "closingResult" => "Resultado de caja", "bootstrap" => "Bienvenido a Casa Miga", "login" => "Inicia sesión", "changePassword" => "Cambiar contraseña", "users" => "Usuarios", "dashboard" => "Tu caja", "opening" => "Abrir caja", _ => "Preparando Casa Miga" };
+    public string Subtitle => screen switch { "pos"=>"Selecciona productos, revisa el carrito y cobra.", "catalog" => "Categorías y productos · Sin proceso de venta.", "salesHistory"=>"Ventas confirmadas · Consulta de solo lectura.", "reports"=>"Ventas, devoluciones y cortes de caja por periodo · Sólo lectura.", "inventory" => "Existencias y movimientos del almacén principal · consulta abajo el estado del consumo automático por ventas.", "recipes"=>"Fórmulas y perfiles productivos versionados.", "production"=>"Planeación, confirmación e historial de producción.", "counting" => "Cuenta el efectivo sin consultar el esperado. Continuar guarda tu conteo y no permite cambiarlo después.", "closingResult" => "Revisa el resultado y confirma el cierre definitivo.", "bootstrap" => "Configura el primer administrador. No hay contraseñas predeterminadas.", "login" => "Identifícate para consultar o abrir esta caja.", "changePassword" => "Confirma tu contraseña actual o temporal y elige una nueva.", "users" => "Crea usuarios y restablece contraseñas olvidadas · Cada acción queda auditada.", "opening" => "Registra el efectivo con el que comienza la sesión.", "dashboard" => "Sesión local · Tus datos permanecen en este equipo.", _ => "Validando base y respaldo…" };
     public string UserLabel => $"Usuario: {user?.Current?.DisplayName}";
     public string TerminalLabel => $"Terminal: {terminal?.Name}";
     public string CurrentUserName => user?.Current?.DisplayName ?? "";
@@ -122,6 +124,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 SalesHistory = new(new SalesHistoryService(database,user,TimeZoneInfo.Local),receipts,(eventName,errorType)=>runtime.TryLog(eventName,errorType),new RefundService(database,user,clock,terminal.Id));
                 Inventory = new(new InventoryService(new SqliteInventoryStore(sqlite, clock), database, user, clock, terminal.Id),
                     catalogService, (eventName,errorType)=>runtime.TryLog(eventName,errorType),new ConsumptionViewModel(new SaleConsumptionService(database,database,user,clock,terminal.Id)));
+                Reports = new(new ReportService(database,user,TimeZoneInfo.Local),(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 var inventoryService=new InventoryService(new SqliteInventoryStore(sqlite,clock),database,user,clock,terminal.Id);
                 var productionWork=new SqliteProductionUnitOfWork(sqlite);
                 var recipeService=new RecipeService(productionWork,user,clock,terminal.Id);
@@ -195,7 +198,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             !u.Active ? "Inactivo" : u.MustChangePassword ? "Debe cambiar contraseña" : "Activo")).ToList();
         SelectedUser = null;
     }
-    public void Logout() { if (Busy) return; user?.SignOut(); Users = []; SelectedUser = null; TemporaryPasswordNotice = ""; CanManageUsers = false; Pos?.ForgetView(); SalesHistory?.Forget(); Inventory?.Forget(); opened = null; closingResult = null; CountedAmount = ""; CanViewSales=false; CanViewInventory=false;CanViewRecipes=false;CanViewProduction=false;CurrentRoleLabel=""; screen = "login"; Message = ""; Notify(); }
+    public void Logout() { if (Busy) return; user?.SignOut(); Users = []; SelectedUser = null; TemporaryPasswordNotice = ""; CanManageUsers = false; Pos?.ForgetView(); SalesHistory?.Forget(); Reports?.Forget(); Inventory?.Forget(); opened = null; closingResult = null; CountedAmount = ""; CanViewSales=false; CanViewInventory=false;CanViewRecipes=false;CanViewProduction=false;CurrentRoleLabel=""; screen = "login"; Message = ""; Notify(); }
     public void ShowOpening() { if (Busy || !CanOpen) return; Amount = "0.00"; screen = "opening"; Message = ""; Notify(); }
     public void CancelOpening() { if (Busy) return; screen = "dashboard"; Message = ""; Notify(); }
     public Task OpenAsync() => Execute(async () =>
@@ -210,6 +213,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public Task ShowPosAsync() => Execute(async () => {await Pos!.EnterAsync();screen="pos";});
     public Task ShowCatalogAsync() => Execute(async () => {await Catalog!.LoadAsync();screen="catalog";});
     public Task ShowSalesHistoryAsync() => Execute(async () => {await SalesHistory!.LoadAsync();screen="salesHistory";});
+    public Task ShowReportsAsync() => Execute(async () => {await Reports!.LoadAsync();screen="reports";});
     public Task ShowInventoryAsync() => Execute(async () =>
     {
         await Inventory!.LoadAsync(); CanViewInventory = Inventory.CanView;
