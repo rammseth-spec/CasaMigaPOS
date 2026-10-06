@@ -28,7 +28,7 @@ Cada computadora Windows vende siempre contra su base SQLite local, con o sin In
 1. **La venta nunca depende de la red.** La base local sigue siendo la fuente de verdad de cada terminal.
 2. **Cola en la misma transacción.** Cada cambio sincronizable se anota en `sync_outbox` mediante triggers SQL, dentro de la misma transacción que lo produce. Si la operación se revierte, la anotación también.
 3. **Reenvío seguro.** Todo se identifica por UUID; la nube aplica cada registro de forma idempotente, así que reenviar después de un corte no duplica.
-4. **Sin secretos de base de datos en las computadoras.** Las terminales hablan con una API propia (ASP.NET Core, C#) usando una llave por terminal; nunca con la base central directamente.
+4. **Sin secretos de base de datos en las computadoras.** Las terminales hablan con una API propia (TypeScript en Vercel) usando una llave por terminal; nunca con la base central directamente.
 5. **Una base local = una sucursal.** El precio local de cada producto es el precio de esa sucursal. La tabla de precios por sucursal existe sólo en la nube y cada sucursal descarga los suyos.
 
 ## Fases

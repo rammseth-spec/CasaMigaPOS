@@ -1,0 +1,7 @@
+<Project>
+  <!-- Hereda la configuración común y fija el RID de publicación para que los lock files sean estables con y sin -r win-x64. -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+  <PropertyGroup>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+  </PropertyGroup>
+</Project>

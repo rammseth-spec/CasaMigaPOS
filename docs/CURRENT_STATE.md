@@ -1,3 +1,7 @@
+# Instalador de Windows — 06/10/2026
+
+**Implementado; sin firma.** Inno Setup 6: `scripts/build-installer.ps1` publica app y herramienta autocontenidas y genera `CasaMigaPOS-<versión>-setup.exe` + SHA-256. Instala en Program Files o por usuario, actualiza in situ, nunca toca `%LOCALAPPDATA%\CasaMigaPOS`. Probado: instalación/desinstalación silenciosa, herramienta funcional, datos conservados. `reset-admin` muestra el motivo real de rechazo. Ver [INSTALLER.md](INSTALLER.md). Suite **780/780**, Release 0/0.
+
 # Sincronización en línea fases 2–3 — 06/10/2026
 
 **Implementado; API sin desplegar.** Neon `casamiga-pos` con esquema central (`cloud/db/001_init.sql`). API TypeScript en `cloud/` (health, alta de terminal con secreto, recepción idempotente por lote con detección de conflictos), 6/6 pruebas `node:test`. En la app: envío automático en segundo plano, sólo marca lo confirmado, reintentos con espera creciente, llave DPAPI, pantalla Nube y estado en el encabezado. Bloqueo: el conector de Vercel no puede crear proyectos/despliegues en el equipo. Ver [SYNC_PLAN.md](SYNC_PLAN.md). Suite **780/780** (621 + 159), Release 0/0.

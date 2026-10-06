@@ -58,6 +58,11 @@ try
     else throw new ArgumentException("Argumentos inválidos.");
     return 0;
 }
+catch (InvalidOperationException error) when (args.Length > 0 && args[0] == "reset-admin")
+{
+    Console.Error.WriteLine(error.Message);
+    return 1;
+}
 catch (Exception error)
 {
     Console.Error.WriteLine($"No se completó la operación ({error.GetType().Name}). Revisa comando, archivos, permisos y espacio. No sobrescribas la base existente.");
