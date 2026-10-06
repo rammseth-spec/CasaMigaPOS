@@ -1,3 +1,7 @@
+# Verificación independiente de QAv1 — 06/10/2026
+
+Clon limpio de GitHub (`6ec695a`): restore `--locked-mode`, Release 0/0, **780/780** .NET y **6/6** API. Revisión de código independiente sin hallazgos críticos/altos. Corregidos: (1) devoluciones de ventas con tarjeta/transferencia indicaban «entrega en efectivo» — ahora la instrucción, nota y confirmaciones dependen del método; (2) respuestas no-JSON del servidor (502, portal Wi-Fi) se tratan como sin conexión y quedan registradas; (3) la sincronización corre fuera del hilo de la interfaz, su tarea de fondo no puede fallar sin control (política de cierre del POS) y el cierre ya no libera el token en uso; (4) la sucursal sólo se renombra si la nube acepta el registro. Riesgos bajos documentados en SYNC_PLAN.md. Suite **784/784** (625 + 159), Release 0/0.
+
 # Instalador de Windows — 06/10/2026
 
 **Implementado; sin firma.** Inno Setup 6: `scripts/build-installer.ps1` publica app y herramienta autocontenidas y genera `CasaMigaPOS-<versión>-setup.exe` + SHA-256. Instala en Program Files o por usuario, actualiza in situ, nunca toca `%LOCALAPPDATA%\CasaMigaPOS`. Probado: instalación/desinstalación silenciosa, herramienta funcional, datos conservados. `reset-admin` muestra el motivo real de rechazo. Ver [INSTALLER.md](INSTALLER.md). Suite **780/780**, Release 0/0.

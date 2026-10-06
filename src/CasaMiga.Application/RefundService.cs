@@ -21,7 +21,7 @@ public sealed class RefundException(string message) : Exception(message);
 
 /// <summary>
 /// Cancelaciones y devoluciones como operaciones compensatorias inmutables (docs/REFUNDS.md).
-/// La venta original no cambia; el efectivo sale de la caja abierta de esta terminal y el inventario no se modifica.
+/// La venta original no cambia; el inventario no se modifica. Sólo las devoluciones de ventas en efectivo salen de la caja abierta de esta terminal.
 /// </summary>
 public sealed class RefundService(ILocalUnitOfWork database, UserSession identity, IClock clock, Guid terminalId)
 {
@@ -114,13 +114,21 @@ public sealed class RefundService(ILocalUnitOfWork database, UserSession identit
 
         var open = store.FindOpenSession(terminalId);
         string blocker = "";
-        if (open is null) blocker = "Abre la caja de esta terminal para devolver efectivo.";
-        else if (store.FindCount(open.Session.Id) is not null) blocker = "La caja ya tiene conteo confirmado; ciérrala y abre una nueva para devolver efectivo.";
+        if (open is null) blocker = "Abre la caja de esta terminal para registrar devoluciones.";
+        else if (store.FindCount(open.Session.Id) is not null) blocker = "La caja ya tiene conteo confirmado; ciérrala y abre una nueva para registrar devoluciones.";
         else if (lines.All(l => l.Remaining == 0)) blocker = "Esta venta ya fue cancelada o devuelta por completo.";
 
         var canCancel = blocker.Length == 0 && refunds.Count == 0 && open!.Session.Id == detail.Sale.CashSessionId;
         return new(detail, lines, refunds, canCancel, blocker.Length == 0, blocker);
     }
+
+    /// <summary>Qué debe hacer el cajero con el dinero. Sólo las ventas en efectivo se devuelven desde el cajón.</summary>
+    public static string CustomerInstruction(PaymentMethod method, Money total) => method switch
+    {
+        PaymentMethod.Cash => $"Entrega {Format(total)} en efectivo al cliente.",
+        PaymentMethod.Card => $"Reembolsa {Format(total)} a la tarjeta del cliente desde la terminal bancaria. No entregues efectivo de la caja.",
+        _ => $"Reembolsa {Format(total)} al cliente por transferencia. No entregues efectivo de la caja."
+    };
 
     private LocalUser? Actor(ILocalStore store) =>
         identity.Current is { } current && store.FindUser(current.Id) is { Active: true } user && store.HasPermission(user.Id, Permission) ? user : null;

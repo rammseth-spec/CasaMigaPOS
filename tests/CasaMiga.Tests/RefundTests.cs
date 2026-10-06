@@ -157,8 +157,23 @@ public sealed class RefundTests : SalesFixture
 
         var closing = new CashClosingService(work, user, clock);
         closing.SubmitCount(cash.Id, Expected(cash.Id)); closing.Close(cash.Id);
-        Assert.AreEqual("Abre la caja de esta terminal para devolver efectivo.", Refunds().Options(sale.Id).Blocker);
+        Assert.AreEqual("Abre la caja de esta terminal para registrar devoluciones.", Refunds().Options(sale.Id).Blocker);
         Assert.ThrowsExactly<RefundException>(() => Refunds().Return(sale.Id, [new(1, 1)], "Sin caja"));
+    }
+
+    [TestMethod]
+    public void CustomerInstructionOnlySendsCashFromTheDrawerForCashSales()
+    {
+        var total = new Money(3800);
+        StringAssert.Contains(RefundService.CustomerInstruction(PaymentMethod.Cash, total), "en efectivo al cliente");
+        foreach (var method in new[] { PaymentMethod.Card, PaymentMethod.Transfer })
+        {
+            var text = RefundService.CustomerInstruction(method, total);
+            Assert.DoesNotContain("en efectivo al cliente", text, $"{method} refunds must never tell the cashier to hand out drawer cash.");
+            StringAssert.Contains(text, "No entregues efectivo de la caja");
+        }
+        StringAssert.Contains(RefundService.CustomerInstruction(PaymentMethod.Card, total), "tarjeta");
+        StringAssert.Contains(RefundService.CustomerInstruction(PaymentMethod.Transfer, total), "transferencia");
     }
 
     [TestMethod]

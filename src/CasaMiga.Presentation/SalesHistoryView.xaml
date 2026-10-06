@@ -63,7 +63,7 @@
     </DataGrid>
     <TextBlock Text="Motivo (obligatorio)" Margin="0,12,0,0"/>
     <TextBox Text="{Binding RefundReason,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" AutomationProperties.Name="Motivo de cancelación o devolución" Margin="0,6,0,8"/>
-    <TextBlock Text="El efectivo sale de la caja abierta de esta terminal. El inventario no se modifica." Style="{StaticResource CaptionText}" Margin="0,0,0,12"/>
+    <TextBlock Text="{Binding RefundMediumNote}" Style="{StaticResource CaptionText}" TextWrapping="Wrap" Margin="0,0,0,12"/>
     <WrapPanel>
      <Button Content="Devolver piezas indicadas" Click="ReturnItemsClick" IsEnabled="{Binding CanReturnItems}" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8"/>
      <Button Content="Cancelar venta completa" Click="CancelSaleClick" IsEnabled="{Binding CanCancelSale}" Style="{StaticResource DestructiveButton}" Margin="0,0,0,8"/>

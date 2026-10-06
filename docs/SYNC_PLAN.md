@@ -44,6 +44,9 @@ Cada computadora Windows vende siempre contra su base SQLite local, con o sin In
 
 ## Riesgos abiertos
 
+- El contenido (`payload`) se lee al **enviar**, no al encolar: un evento `insert` de `cash_session` puede llegar ya con el estado cerrado. Cada cambio posterior tiene su propio `seq`, así que el estado final converge; la fase 5 debe proyectar por el `seq` más alto de cada registro.
+- Intentos fallidos de «Cambiar contraseña» y solicitudes de «¿Olvidaste tu contraseña?» se auditan sin límite y se sincronizan; requiere acceso físico a la caja. Evaluar límite por usuario si aparece abuso.
+
 - Primer arranque de una segunda sucursal: debe descargar el administrador existente en vez de crear otro (fase 4).
 - Relojes de las computadoras: la nube debe registrar su propia hora de recepción además de la hora local.
 - Restaurar un respaldo antiguo puede reenviar registros ya enviados; la idempotencia lo cubre.

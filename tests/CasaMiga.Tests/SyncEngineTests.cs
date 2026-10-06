@@ -59,6 +59,7 @@ public sealed class SyncEngineTests : SalesFixture
         var (engine, transport, outbox) = Engine();
         await Assert.ThrowsExactlyAsync<SyncUnauthorizedException>(() => engine.RegisterAsync(Api, "mal", "Centro", terminal.Id, terminal.Name));
         Assert.IsNull(SyncSettings.Load(directory));
+        Assert.AreEqual("Sucursal principal", outbox.Branch().Name, "A rejected registration leaves the local branch name untouched.");
         await Assert.ThrowsExactlyAsync<ArgumentException>(() => engine.RegisterAsync("http://inseguro.example/", "secreto-correcto", "Centro", terminal.Id, terminal.Name));
 
         await engine.RegisterAsync(Api, "secreto-correcto", "Sucursal Centro", terminal.Id, terminal.Name);
@@ -158,6 +159,42 @@ public sealed class SyncEngineTests : SalesFixture
 
         handler.Status = HttpStatusCode.Unauthorized;
         await Assert.ThrowsExactlyAsync<SyncUnauthorizedException>(() => transport.SendAsync(new Uri(Api), key, Guid.NewGuid(), batch, default));
+    }
+
+    [TestMethod]
+    [DataRow(HttpStatusCode.BadGateway, DisplayName = "502 con página HTML del gateway")]
+    [DataRow(HttpStatusCode.OK, DisplayName = "200 con portal cautivo de Wi-Fi")]
+    public async Task NonJsonServerResponsesCountAsOfflineAndKeepQueue(HttpStatusCode status)
+    {
+        Persist();
+        var outbox = new SqliteSyncOutbox(db);
+        SyncSettings.Create(new Uri(Api), outbox.Branch().Id, new string('a', 43)).Save(directory);
+        var engine = new SyncEngine(outbox, new HttpSyncTransport(new HttpClient(new StaticHandler(status, "<html>Iniciar sesión en la red</html>", "text/html"))), directory);
+        var pending = outbox.PendingCount();
+
+        var result = await engine.RunOnceAsync();
+        Assert.AreEqual(SyncState.Offline, result.State);
+        Assert.AreEqual(pending, outbox.PendingCount(), "Nothing is marked sent without a valid confirmation.");
+        Assert.AreEqual(1, outbox.Pending(1)[0].Attempts, "The failure is recorded for diagnosis.");
+    }
+
+    [TestMethod]
+    public async Task RegisteringAgainstAWebsiteThatIsNotTheApiExplainsTheProblem()
+    {
+        var transport = new HttpSyncTransport(new HttpClient(new StaticHandler(HttpStatusCode.NotFound, "<html>404</html>", "text/html")));
+        var error = await Assert.ThrowsExactlyAsync<InvalidOperationException>(() =>
+            transport.RegisterAsync(new Uri(Api), "secreto", new BranchIdentity(Guid.NewGuid(), "Centro"), Guid.NewGuid(), "Caja", default));
+        StringAssert.Contains(error.Message, "404");
+        var ok = new HttpSyncTransport(new HttpClient(new StaticHandler(HttpStatusCode.OK, "<html>sitio</html>", "text/html")));
+        error = await Assert.ThrowsExactlyAsync<InvalidOperationException>(() =>
+            ok.RegisterAsync(new Uri(Api), "secreto", new BranchIdentity(Guid.NewGuid(), "Centro"), Guid.NewGuid(), "Caja", default));
+        StringAssert.Contains(error.Message, "no corresponde");
+    }
+
+    private sealed class StaticHandler(HttpStatusCode status, string body, string mediaType) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancel)
+            => Task.FromResult(new HttpResponseMessage(status) { Content = new StringContent(body, Encoding.UTF8, mediaType) });
     }
 
     private sealed class RecordingHandler : HttpMessageHandler

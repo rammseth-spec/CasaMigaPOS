@@ -52,6 +52,14 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
     public bool CanCancelSale=>ShowRefunds&&RefundOptions?.CanCancel==true&&!Busy;
     public bool CanReturnItems=>ShowRefunds&&RefundOptions?.CanReturn==true&&!Busy;
     public string RefundBlocker=>RefundOptions?.Blocker??"";
+    private bool CashSale=>Detail?.Sale.Payment.Kind is null or PaymentMethod.Cash;
+    public string RefundMediumNote=>CashSale
+        ?"El efectivo sale de la caja abierta de esta terminal. El inventario no se modifica."
+        :$"Venta pagada con {Payment.Label(Detail!.Sale.Payment.Kind).ToLowerInvariant()}: se reembolsa por el mismo medio y no sale efectivo de la caja. El inventario no se modifica.";
+    public string CancelConfirmation=>Detail is null?"":$"Se cancelará la venta {Detail.Sale.Folio}. {RefundService.CustomerInstruction(Detail.Sale.Payment.Kind,Detail.Sale.Total)} No se puede deshacer. ¿Continuar?";
+    public string ReturnConfirmation=>(CashSale
+        ?"Se registrará la devolución de las piezas indicadas y se entregará el efectivo correspondiente."
+        :$"Se registrará la devolución de las piezas indicadas y se reembolsará por {Payment.Label(Detail!.Sale.Payment.Kind).ToLowerInvariant()}; no sale efectivo de la caja.")+" No se puede deshacer. ¿Continuar?";
     public string RefundHistory=>RefundOptions is not {Refunds.Count:>0} o?"Sin cancelaciones ni devoluciones.":
         string.Join("\n",o.Refunds.Select(r=>$"{(r.Kind==RefundKind.Cancellation?"CANCELACIÓN":"DEVOLUCIÓN")} · {r.RefundedAt.ToLocalTime():dd/MM/yyyy HH:mm} · {Format(r.Total)} · {r.UserName} · {r.Reason} · "
             +string.Join(", ",r.Items.Select(i=>$"{i.Quantity} × {i.ProductName}"))))+$"\nTotal devuelto: {Format(o.RefundedTotal)}";
@@ -122,13 +130,13 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
         Busy=true;Message="";RefundMessage="";RefundSucceeded=false;Notify();
         try
         {
-            var saleId=Detail.Sale.Id;var reason=RefundReason;
+            var saleId=Detail.Sale.Id;var reason=RefundReason;var method=Detail.Sale.Payment.Kind;
             var lines=RefundLines.Select(l=>new RefundLine(l.Position,l.ToReturn)).ToArray();
             var result=await Task.Run(()=>cancel?refunds.Cancel(saleId,reason):refunds.Return(saleId,lines,reason));
             log(cancel?"sale.cancelled":"sale.returned",null);
             await LoadRefundsAsync();
             RefundSucceeded=true;
-            RefundMessage=$"{(cancel?"Venta cancelada":"Devolución registrada")}. Entrega {Format(result.Total)} en efectivo al cliente.";
+            RefundMessage=$"{(cancel?"Venta cancelada":"Devolución registrada")}. {RefundService.CustomerInstruction(method,result.Total)}";
         }
         catch(AccessDeniedException error){RefundAllowed=false;RefundMessage=error.Message;log("authorization.denied",null);}
         catch(RefundException error){RefundMessage=error.Message;}

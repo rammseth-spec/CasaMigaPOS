@@ -107,10 +107,10 @@ public sealed class HttpSyncTransport(HttpClient http) : ISyncTransport
         {
             enrollmentSecret, branch = new { id = branch.Id, name = branch.Name }, terminal = new { id = terminalId, name = terminalName }
         }, cancel);
-        var body = await response.Content.ReadFromJsonAsync<JsonObject>(cancel);
         if (response.StatusCode == HttpStatusCode.Forbidden) throw new SyncUnauthorizedException("El secreto de alta no es correcto.");
-        if (!response.IsSuccessStatusCode) throw new InvalidOperationException((string?)body?["error"] ?? $"El servidor respondió {(int)response.StatusCode}.");
-        return (string?)body?["terminalKey"] ?? throw new InvalidOperationException("El servidor no devolvió la llave de la terminal.");
+        var body = await ReadBody(response, cancel);
+        if (!response.IsSuccessStatusCode) throw new InvalidOperationException((string?)body?["error"] ?? $"El servidor respondió {(int)response.StatusCode}. Revisa la dirección.");
+        return (string?)body?["terminalKey"] ?? throw new InvalidOperationException("La dirección no corresponde a un servidor de Casa Miga.");
     }
 
     public async Task<SyncBatchResult> SendAsync(Uri api, string terminalKey, Guid branchId, IReadOnlyList<SyncEnvelope> batch, CancellationToken cancel)
@@ -131,11 +131,21 @@ public sealed class HttpSyncTransport(HttpClient http) : ISyncTransport
         using var response = await http.SendAsync(request, cancel);
         if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
             throw new SyncUnauthorizedException("El servidor rechazó la terminal. Vuelve a registrarla.");
-        var body = await response.Content.ReadFromJsonAsync<JsonObject>(cancel);
+        var body = await ReadBody(response, cancel);
         if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.Conflict)
             throw new HttpRequestException((string?)body?["error"] ?? $"El servidor respondió {(int)response.StatusCode}.");
+        // Un 200 que no es JSON (p. ej. portal de una red Wi-Fi) no confirma nada: se trata como sin conexión.
+        if (body is null) throw new HttpRequestException("Respuesta no válida del servidor.");
         static long[] Read(JsonNode? node) => node is JsonArray a ? a.Select(x => x!.GetValue<long>()).ToArray() : [];
-        return new(Read(body?["accepted"]), Read(body?["conflicts"]));
+        return new(Read(body["accepted"]), Read(body["conflicts"]));
+    }
+
+    /// <summary>Lee el cuerpo sin fallar si no es JSON (páginas de error de un gateway, portales cautivos).</summary>
+    private static async Task<JsonObject?> ReadBody(HttpResponseMessage response, CancellationToken cancel)
+    {
+        var text = await response.Content.ReadAsStringAsync(cancel);
+        try { return JsonNode.Parse(text) as JsonObject; }
+        catch (JsonException) { return null; }
     }
 }
 
@@ -157,10 +167,12 @@ public sealed class SyncEngine(SqliteSyncOutbox outbox, ISyncTransport transport
     {
         var api = SyncSettings.ValidateUrl(apiUrl);
         if (string.IsNullOrWhiteSpace(enrollmentSecret)) throw new ArgumentException("Escribe el secreto de alta.");
-        outbox.RenameBranch(branchName);
-        var branch = outbox.Branch();
+        var name = branchName.Trim();
+        if (name.Length is < 1 or > 100) throw new ArgumentException("El nombre de la sucursal debe tener de 1 a 100 caracteres.");
+        var branch = outbox.Branch() with { Name = name };
         var key = await transport.RegisterAsync(api, enrollmentSecret.Trim(), branch, terminalId, terminalName, cancel);
         SyncSettings.Create(api, branch.Id, key).Save(dataDirectory);
+        outbox.RenameBranch(name);
         Status = Status with { State = SyncState.Pending, Detail = "Terminal registrada." };
         return branch.Name;
     }

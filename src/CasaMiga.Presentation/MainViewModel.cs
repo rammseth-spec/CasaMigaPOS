@@ -245,7 +245,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public Task ShowCatalogAsync() => Execute(async () => {await Catalog!.LoadAsync();screen="catalog";});
     public Task ShowSalesHistoryAsync() => Execute(async () => {await SalesHistory!.LoadAsync();screen="salesHistory";});
     public Task ShowReportsAsync() => Execute(async () => {await Reports!.LoadAsync();screen="reports";});
-    public Task ShowSyncAsync() => Execute(async () => { if (!CanManageUsers) throw new AccessDeniedException(); await Sync!.RunAsync(); screen = "sync"; });
+    public Task ShowSyncAsync() => Execute(() =>
+    {
+        if (!CanManageUsers) throw new AccessDeniedException();
+        screen = "sync"; _ = Sync!.RunAsync(); // El estado se actualiza solo; la pantalla no espera el envío.
+        return Task.CompletedTask;
+    });
     public Task ShowInventoryAsync() => Execute(async () =>
     {
         await Inventory!.LoadAsync(); CanViewInventory = Inventory.CanView;

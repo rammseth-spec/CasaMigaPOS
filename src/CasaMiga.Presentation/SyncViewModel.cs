@@ -39,34 +39,47 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
     };
     public string StatusDetail => Status.Detail + (Status.LastSuccess is { } at ? $"\nÚltimo envío confirmado: {at.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture)}" : "");
     public event PropertyChangedEventHandler? PropertyChanged;
-    private void Notify() => System.Windows.Application.Current?.Dispatcher.BeginInvoke(() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null)));
+    private void Notify()
+    {
+        try { System.Windows.Application.Current?.Dispatcher.BeginInvoke(() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null))); }
+        catch (Exception) { } // Durante el cierre el Dispatcher puede ya no existir.
+    }
 
     public void Start() => _ = Task.Run(LoopAsync);
 
+    // Nunca debe fallar: una tarea en segundo plano con error no observado cierra el POS por política (App.xaml.cs).
     private async Task LoopAsync()
     {
-        while (!stop.IsCancellationRequested)
+        try
         {
-            await RunAsync();
-            delay = Status.State switch
+            while (!stop.IsCancellationRequested)
             {
-                SyncState.Offline => TimeSpan.FromSeconds(Math.Min(300, delay.TotalSeconds * 2)),
-                SyncState.NeedsAttention => TimeSpan.FromMinutes(5),
-                _ => TimeSpan.FromSeconds(15)
-            };
-            try { await Task.Delay(delay, stop.Token); } catch (TaskCanceledException) { return; }
+                await RunAsync();
+                delay = Status.State switch
+                {
+                    SyncState.Offline => TimeSpan.FromSeconds(Math.Min(300, delay.TotalSeconds * 2)),
+                    SyncState.NeedsAttention => TimeSpan.FromMinutes(5),
+                    _ => TimeSpan.FromSeconds(15)
+                };
+                await Task.Delay(delay, stop.Token);
+            }
         }
+        catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
+        catch (Exception error) { log("sync.loop.failed", error.GetType().Name); }
     }
 
+    /// <summary>Ejecuta un envío fuera del hilo de la interfaz. Nunca lanza excepciones.</summary>
     public async Task RunAsync()
     {
         if (!await gate.WaitAsync(0)) return;
         try
         {
-            Status = await engine.RunOnceAsync(stop.Token);
+            var token = stop.Token;
+            Status = await Task.Run(() => engine.RunOnceAsync(token), token);
             if (Status.State is SyncState.NeedsAttention) log("sync.attention", null);
         }
-        catch (Exception error) when (!stop.IsCancellationRequested)
+        catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
+        catch (Exception error)
         {
             Status = Status with { State = SyncState.NeedsAttention, Detail = "No se pudo leer la cola de sincronización." };
             log("sync.failed", error.GetType().Name);
@@ -95,5 +108,6 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
         finally { Busy = false; Notify(); }
     }
 
-    public void Dispose() { stop.Cancel(); stop.Dispose(); }
+    // Sólo cancela: el ciclo puede seguir leyendo stop.Token mientras termina.
+    public void Dispose() => stop.Cancel();
 }
