@@ -1,0 +1,60 @@
+name: CodeQL
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "*.slnx"
+      - "Directory.Build.props"
+      - "global.json"
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "*.slnx"
+      - "Directory.Build.props"
+      - "global.json"
+
+permissions:
+  contents: read
+  security-events: write
+  packages: read
+
+jobs:
+  analyze:
+    name: Analyze C#
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify source exists
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "src")) {
+            Write-Error "Source tree has not been imported into GitHub yet."
+            exit 1
+          }
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: csharp
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Build
+        shell: pwsh
+        run: dotnet build CasaMigaPOS.slnx -c Release --nologo
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3

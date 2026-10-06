@@ -1,0 +1,80 @@
+name: Casa Miga POS CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "migrations/**"
+      - "scripts/**"
+      - "*.slnx"
+      - "Directory.Build.props"
+      - "global.json"
+      - "NuGet.Config"
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "migrations/**"
+      - "scripts/**"
+      - "*.slnx"
+      - "Directory.Build.props"
+      - "global.json"
+      - "NuGet.Config"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: casamiga-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify on Windows
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify repository completeness
+        shell: pwsh
+        run: |
+          $required = @(
+            "src",
+            "tests",
+            "migrations",
+            "scripts/verify.ps1",
+            "CasaMigaPOS.slnx",
+            "global.json"
+          )
+          $missing = $required | Where-Object { -not (Test-Path $_) }
+          if ($missing.Count -gt 0) {
+            Write-Error ("Repository is incomplete. Missing: " + ($missing -join ", "))
+            exit 1
+          }
+
+      - name: Setup .NET from global.json
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Run canonical verification
+        shell: pwsh
+        run: ./scripts/verify.ps1
+
+      - name: Upload verification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: casamiga-verification-${{ github.sha }}
+          path: |
+            TestResults/**
+            artifacts/**
+          if-no-files-found: ignore
+          retention-days: 14
