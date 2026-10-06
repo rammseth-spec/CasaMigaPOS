@@ -108,7 +108,7 @@ public sealed class SyncOutboxTests
         var auditsBefore = (long)Scalar(db, "SELECT count(*) FROM audit_entry")!;
 
         db.Initialize(); db.Validate();
-        Assert.AreEqual(18L, Scalar(db, "SELECT max(version) FROM schema_migration"));
+        Assert.AreEqual((long)Database.LatestVersion, Scalar(db, "SELECT max(version) FROM schema_migration"));
         Assert.AreEqual("cash_session:insert,audit_entry:insert,audit_entry:insert", Outbox(db), "Sessions are queued before audit history.");
         Assert.AreEqual(auditsBefore, Scalar(db, "SELECT count(*) FROM audit_entry"));
 
@@ -135,7 +135,7 @@ public sealed class SyncOutboxTests
         Assert.AreEqual(audits, Scalar(db, "SELECT count(*) FROM audit_entry"));
 
         db.Initialize(); db.Validate();
-        Assert.AreEqual(18L, Scalar(db, "SELECT max(version) FROM schema_migration"));
+        Assert.AreEqual((long)Database.LatestVersion, Scalar(db, "SELECT max(version) FROM schema_migration"));
         Assert.AreEqual(audits, Scalar(db, "SELECT count(*) FROM sync_outbox WHERE entity='audit_entry'"));
     }
 

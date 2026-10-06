@@ -29,7 +29,8 @@ public sealed record SalesHistoryRow(
     string CashierName,
     Guid TerminalId,
     string TerminalName,
-    Guid CashSessionId);
+    Guid CashSessionId,
+    Money Refunded = default);
 
 public sealed record SalesHistoryPage(
     IReadOnlyList<SalesHistoryRow> Items,

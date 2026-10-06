@@ -18,6 +18,7 @@
      <DataGridTextColumn Header="Folio" Binding="{Binding Folio}" Width="260"/>
      <DataGridTextColumn Header="Fecha local" Binding="{Binding Date}" Width="175"/>
      <DataGridTextColumn Header="Total" Binding="{Binding Total}" Width="100"/>
+     <DataGridTextColumn Header="Devuelto" Binding="{Binding Refunded}" Width="100"/>
      <DataGridTextColumn Header="Pago" Binding="{Binding Method}" Width="80"/>
      <DataGridTextColumn Header="Cajero actual" Binding="{Binding Cashier}" Width="150"/>
      <DataGridTextColumn Header="Terminal actual" Binding="{Binding Terminal}" Width="160"/>
@@ -45,6 +46,32 @@
     <Button Content="{Binding ReprintButtonText}" Click="ReprintClick" IsEnabled="{Binding CanReprintTicket}" Visibility="{Binding ShowReprintTicket,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Reimprimir ticket"/>
    </WrapPanel>
    <TextBlock Text="{Binding ReprintMessage}" AutomationProperties.LiveSetting="Polite" Margin="0,12,0,0" TextWrapping="Wrap"/>
+   <StackPanel Visibility="{Binding ShowRefunds,Converter={StaticResource VisibleWhen}}" Margin="0,20,0,0">
+    <TextBlock Text="Cancelaciones y devoluciones" Style="{StaticResource SectionTitleText}" Margin="0,0,0,8"/>
+    <TextBlock Text="{Binding RefundHistory}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+    <TextBlock Text="{Binding RefundBlocker}" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+    <DataGrid ItemsSource="{Binding RefundLines}" Height="180" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" AutomationProperties.Name="Piezas a devolver">
+     <DataGrid.Columns>
+      <DataGridTextColumn Header="#" Binding="{Binding Position,Mode=OneWay}" Width="45" IsReadOnly="True"/>
+      <DataGridTextColumn Header="Producto" Binding="{Binding Name,Mode=OneWay}" Width="*" MinWidth="180" IsReadOnly="True"/>
+      <DataGridTextColumn Header="Precio" Binding="{Binding UnitPrice,Mode=OneWay}" Width="100" IsReadOnly="True"/>
+      <DataGridTextColumn Header="Vendidas" Binding="{Binding Sold,Mode=OneWay}" Width="90" IsReadOnly="True"/>
+      <DataGridTextColumn Header="Ya devueltas" Binding="{Binding Refunded,Mode=OneWay}" Width="110" IsReadOnly="True"/>
+      <DataGridTextColumn Header="Disponibles" Binding="{Binding Remaining,Mode=OneWay}" Width="100" IsReadOnly="True"/>
+      <DataGridTextColumn Header="A devolver" Binding="{Binding ToReturn,UpdateSourceTrigger=PropertyChanged}" Width="110"/>
+     </DataGrid.Columns>
+    </DataGrid>
+    <TextBlock Text="Motivo (obligatorio)" Margin="0,12,0,0"/>
+    <TextBox Text="{Binding RefundReason,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" AutomationProperties.Name="Motivo de cancelación o devolución" Margin="0,6,0,8"/>
+    <TextBlock Text="El efectivo sale de la caja abierta de esta terminal. El inventario no se modifica." Style="{StaticResource CaptionText}" Margin="0,0,0,12"/>
+    <WrapPanel>
+     <Button Content="Devolver piezas indicadas" Click="ReturnItemsClick" IsEnabled="{Binding CanReturnItems}" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8"/>
+     <Button Content="Cancelar venta completa" Click="CancelSaleClick" IsEnabled="{Binding CanCancelSale}" Style="{StaticResource DestructiveButton}" Margin="0,0,0,8"/>
+    </WrapPanel>
+    <TextBlock Text="{Binding RefundMessage}" TextWrapping="Wrap" FontSize="16" AutomationProperties.LiveSetting="Polite" Margin="0,8,0,0">
+     <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding RefundSucceeded}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+    </TextBlock>
+   </StackPanel>
   </StackPanel>
   <TextBlock Text="{Binding Message}" Foreground="{DynamicResource ErrorBrush}" AutomationProperties.LiveSetting="Polite" Margin="0,12,0,0"/>
  </StackPanel>

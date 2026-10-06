@@ -82,7 +82,8 @@ public sealed partial class SqliteLocalUnitOfWork
 
             using var count = Command("SELECT count(*) FROM sale s" + predicate, parameters);
             var total = Convert.ToInt32(count.ExecuteScalar());
-            using var page = Command("SELECT s.id,s.terminal_id,s.sequence,s.confirmed_utc,s.total_cents,p.method,s.user_id,u.display_name,t.name,s.cash_session_id"
+            using var page = Command("SELECT s.id,s.terminal_id,s.sequence,s.confirmed_utc,s.total_cents,p.method,s.user_id,u.display_name,t.name,s.cash_session_id,"
+                + (HasRefunds() ? "(SELECT COALESCE(SUM(r.total_cents),0) FROM sale_refund r WHERE r.sale_id=s.id)" : "0")
                 + " FROM sale s JOIN payment p ON p.sale_id=s.id JOIN app_user u ON u.id=s.user_id JOIN terminal t ON t.id=s.terminal_id"
                 + predicate + " ORDER BY s.confirmed_utc DESC,s.id DESC LIMIT $limit OFFSET $offset", parameters);
             page.Parameters.AddWithValue("$limit", pageSize);
@@ -96,7 +97,7 @@ public sealed partial class SqliteLocalUnitOfWork
                 var rowSequence = reader.GetInt64(2);
                 items.Add(new(saleId, $"{terminalId:N}-{rowSequence:D8}", Date(reader, 3)!.Value,
                     new(reader.GetInt64(4)), reader.GetString(5), Guid.Parse(reader.GetString(6)), reader.GetString(7),
-                    terminalId, reader.GetString(8), Guid.Parse(reader.GetString(9))));
+                    terminalId, reader.GetString(8), Guid.Parse(reader.GetString(9)), new(reader.GetInt64(10))));
             }
             return new(items, total, filter.Page, pageSize);
         }

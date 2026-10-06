@@ -15,6 +15,7 @@ public sealed record SalesHistoryRowView(SalesHistoryRow Row)
     public string Cashier => Row.CashierName;
     public string Terminal => Row.TerminalName;
     public string CashSession => Row.CashSessionId.ToString("D");
+    public string Refunded => Row.Refunded.Cents == 0 ? "" : Row.Refunded.Cents == Row.Total.Cents ? "Total" : Format(Row.Refunded);
     private static string Format(Money value)=>(value.Cents/100m).ToString("C2",CultureInfo.GetCultureInfo("es-MX"));
 }
 
@@ -28,8 +29,32 @@ public sealed record SalesHistoryItemView(int Position, SaleItem Item)
     private static string Format(Money value)=>(value.Cents/100m).ToString("C2",CultureInfo.GetCultureInfo("es-MX"));
 }
 
-public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptService receipts,Action<string,string?> log):INotifyPropertyChanged
+public sealed class RefundLineView(RefundableLine line)
 {
+    public int Position=>line.Position;
+    public string Name=>line.ProductName;
+    public string UnitPrice=>(line.UnitPrice.Cents/100m).ToString("C2",CultureInfo.GetCultureInfo("es-MX"));
+    public int Sold=>line.Sold;
+    public int Refunded=>line.Refunded;
+    public int Remaining=>line.Remaining;
+    public int ToReturn {get;set;}
+}
+
+public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptService receipts,Action<string,string?> log,RefundService? refunds=null):INotifyPropertyChanged
+{
+    public bool RefundAllowed {get;private set;}
+    public RefundOptions? RefundOptions {get;private set;}
+    public IReadOnlyList<RefundLineView> RefundLines {get;private set;}=[];
+    public string RefundReason {get;set;}="";
+    public string RefundMessage {get;private set;}="";
+    public bool RefundSucceeded {get;private set;}
+    public bool ShowRefunds=>Detail is not null&&RefundAllowed;
+    public bool CanCancelSale=>ShowRefunds&&RefundOptions?.CanCancel==true&&!Busy;
+    public bool CanReturnItems=>ShowRefunds&&RefundOptions?.CanReturn==true&&!Busy;
+    public string RefundBlocker=>RefundOptions?.Blocker??"";
+    public string RefundHistory=>RefundOptions is not {Refunds.Count:>0} o?"Sin cancelaciones ni devoluciones.":
+        string.Join("\n",o.Refunds.Select(r=>$"{(r.Kind==RefundKind.Cancellation?"CANCELACIÓN":"DEVOLUCIÓN")} · {r.RefundedAt.ToLocalTime():dd/MM/yyyy HH:mm} · {Format(r.Total)} · {r.UserName} · {r.Reason} · "
+            +string.Join(", ",r.Items.Select(i=>$"{i.Quantity} × {i.ProductName}"))))+$"\nTotal devuelto: {Format(o.RefundedTotal)}";
     private int page;
     private SalesHistoryMode mode=SalesHistoryMode.Recent;
     public bool Busy {get;private set;}
@@ -77,7 +102,40 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
         Detail=await Task.Run(()=>service.Detail(SelectedSale.SaleId))??throw new SalesHistoryException("La venta seleccionada ya no está disponible.");
         DetailItems=Detail.Sale.Items.Select((item,index)=>new SalesHistoryItemView(index+1,item)).ToArray();
         ReprintAllowed=await Task.Run(receipts.CanReprint);
+        RefundMessage="";RefundSucceeded=false;
+        await LoadRefundsAsync();
     });
+    private async Task LoadRefundsAsync()
+    {
+        RefundAllowed=refunds is not null&&await Task.Run(refunds.CanRefund);
+        if(!RefundAllowed||Detail is null){RefundOptions=null;RefundLines=[];return;}
+        var saleId=Detail.Sale.Id;
+        RefundOptions=await Task.Run(()=>refunds!.Options(saleId));
+        RefundLines=RefundOptions.Lines.Select(l=>new RefundLineView(l)).ToArray();
+        RefundReason="";
+    }
+    public Task CancelSaleAsync()=>RefundAsync(true);
+    public Task ReturnItemsAsync()=>RefundAsync(false);
+    private async Task RefundAsync(bool cancel)
+    {
+        if(Busy||Detail is null||refunds is null)return;
+        Busy=true;Message="";RefundMessage="";RefundSucceeded=false;Notify();
+        try
+        {
+            var saleId=Detail.Sale.Id;var reason=RefundReason;
+            var lines=RefundLines.Select(l=>new RefundLine(l.Position,l.ToReturn)).ToArray();
+            var result=await Task.Run(()=>cancel?refunds.Cancel(saleId,reason):refunds.Return(saleId,lines,reason));
+            log(cancel?"sale.cancelled":"sale.returned",null);
+            await LoadRefundsAsync();
+            RefundSucceeded=true;
+            RefundMessage=$"{(cancel?"Venta cancelada":"Devolución registrada")}. Entrega {Format(result.Total)} en efectivo al cliente.";
+        }
+        catch(AccessDeniedException error){RefundAllowed=false;RefundMessage=error.Message;log("authorization.denied",null);}
+        catch(RefundException error){RefundMessage=error.Message;}
+        catch(ArgumentException error){RefundMessage=error.Message;}
+        catch(Exception error){RefundMessage="No se pudo registrar la devolución. Revisa el historial antes de reintentar.";log("sale.refund.failed",error.GetType().Name);}
+        finally{Busy=false;Notify();}
+    }
     public async Task ReprintAsync()
     {
         if(Busy||Detail is null||!ReprintAllowed)return;
@@ -118,6 +176,7 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
     private void ClearDetail()
     {
         Detail=null;DetailItems=[];ReprintAllowed=false;ReprintResult=null;ReprintMessage="";
+        RefundAllowed=false;RefundOptions=null;RefundLines=[];RefundReason="";RefundMessage="";RefundSucceeded=false;
     }
     private static DateOnly? ParseDate(string value,string label)
     {

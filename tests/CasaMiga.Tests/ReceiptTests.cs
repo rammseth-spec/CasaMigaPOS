@@ -329,7 +329,7 @@ public sealed class ReceiptTests : SalesFixture
             s.NextSaleSequence(terminal.Id),clock.UtcNow,[new(oldProduct.Id,oldProduct.Name,oldProduct.SalePrice,1)],Guid.NewGuid(),new Money(200));s.AddSale(candidate);return candidate;});
         old.Initialize();old.Validate();
         using var verified=old.Open();using var query=verified.CreateCommand();
-        query.CommandText="SELECT count(*) FROM schema_migration";Assert.AreEqual(18L,query.ExecuteScalar());
+        query.CommandText="SELECT count(*) FROM schema_migration";Assert.AreEqual((long)Database.LatestVersion,query.ExecuteScalar());
         query.CommandText="SELECT count(*) FROM sale WHERE id=$id";query.Parameters.AddWithValue("$id",oldSale.Id.ToString("D"));Assert.AreEqual(1L,query.ExecuteScalar());
         query.CommandText="SELECT count(*) FROM sqlite_master WHERE type='table' AND name IN('receipt_snapshot','receipt_print_request','receipt_print_event')";
         Assert.AreEqual(3L,query.ExecuteScalar());

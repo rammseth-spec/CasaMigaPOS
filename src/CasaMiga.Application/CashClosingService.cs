@@ -2,13 +2,13 @@ using CasaMiga.Domain;
 namespace CasaMiga.Application;
 
 public sealed record CashCount(Guid SessionId, Guid CountedBy, DateTimeOffset CountedAt, Money Counted);
-public sealed record ClosingResult(CashSession Session, CashCount Count, Money Expected, Money Difference);
+public sealed record ClosingResult(CashSession Session, CashCount Count, Money Expected, Money Difference, Money Refunds = default);
 public sealed class CashClosingException(string message) : Exception(message);
 
 public sealed class CashClosingService(ILocalUnitOfWork database, UserSession identity, IClock clock)
 {
-    // Applied cash is net of change. Never add received cash a second time.
-    private static Money Expected(ILocalStore store, CashSession session) => session.OpeningFund + store.CashSalesTotal(session.Id);
+    // Applied cash is net of change. Never add received cash a second time. Cash refunds leave the drawer.
+    private static Money Expected(ILocalStore store, CashSession session) => session.OpeningFund + store.CashSalesTotal(session.Id) - store.CashRefundsTotal(session.Id);
     private LocalUser Authorize(ILocalStore store, CashSession session)
     {
         identity.RequireEmptyCart();
@@ -27,7 +27,7 @@ public sealed class CashClosingService(ILocalUnitOfWork database, UserSession id
     private static ClosingResult Result(ILocalStore store, CashSession session, CashCount count)
     {
         var expected=Expected(store,session);
-        return new(session,count,expected,new Money(checked(count.Counted.Cents-expected.Cents)));
+        return new(session,count,expected,new Money(checked(count.Counted.Cents-expected.Cents)),store.CashRefundsTotal(session.Id));
     }
     private T Run<T>(Func<ILocalStore,T> operation) => identity.Synchronized(() => database.Run(operation));
     public ClosingResult? Resume(Guid id) => Run<ClosingResult?>(store =>

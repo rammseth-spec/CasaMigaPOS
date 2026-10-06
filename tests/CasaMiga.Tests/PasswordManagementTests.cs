@@ -190,14 +190,14 @@ public sealed class PasswordManagementTests
         Assert.AreEqual(0L, Probe("SELECT count(*) FROM permission WHERE name='users.manage'"));
         using (var c = upgrade.Open()) { using var q = c.CreateCommand(); q.CommandText = "DROP TRIGGER inject_017"; q.ExecuteNonQuery(); }
         upgrade.Initialize(); upgrade.Validate();
-        Assert.AreEqual(18L, Probe("SELECT max(version) FROM schema_migration"));
+        Assert.AreEqual((long)Database.LatestVersion, Probe("SELECT max(version) FROM schema_migration"));
         Assert.AreEqual(1L, Probe("SELECT count(*) FROM role_permission WHERE permission_name='users.manage'"));
     }
 
     [TestMethod]
     public void MigrationAddsManagePermissionOnlyToAdministrator()
     {
-        Assert.AreEqual(18L, Scalar("SELECT max(version) FROM schema_migration"));
+        Assert.AreEqual((long)Database.LatestVersion, Scalar("SELECT max(version) FROM schema_migration"));
         Assert.AreEqual("Administrator", Scalar("SELECT group_concat(role_name) FROM role_permission WHERE permission_name='users.manage'"));
     }
 }

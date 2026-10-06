@@ -9,6 +9,9 @@ public sealed class Database(string path)
 {
     public string FilePath { get; } = Path.GetFullPath(path);
 
+    /// <summary>Versión de esquema que alcanza <see cref="Initialize"/>: una por migración embebida.</summary>
+    public static int LatestVersion { get; } = typeof(Database).Assembly.GetManifestResourceNames().Count(n => n.EndsWith(".sql", StringComparison.Ordinal));
+
     public SqliteConnection Open(bool readOnly = false)
     {
         var connection = new SqliteConnection(new SqliteConnectionStringBuilder
@@ -107,6 +110,12 @@ public sealed class Database(string path)
             {
                 command.CommandText = "SELECT (SELECT count(*) FROM branch)=1 AND (SELECT count(*) FROM sqlite_master WHERE name IN ('sync_outbox','ix_sync_outbox_pending','sync_outbox_no_delete_pending','sync_cash_session_insert','sync_cash_session_update','sync_cash_count_insert','sync_sale_insert','sync_audit_entry_insert','branch_no_delete','branch_id_immutable'))=10";
                 if (Convert.ToInt64(command.ExecuteScalar()) != 1) throw new InvalidOperationException("La migración de sincronización no creó sus estructuras.");
+            }
+            if (i + 1 == 19)
+            {
+                command.CommandText = "SELECT (SELECT count(*) FROM sqlite_master WHERE name IN ('sale_refund','sale_refund_item','sale_refund_item_valid','sale_refund_complete','sale_refund_no_update','sale_refund_no_delete','sale_refund_item_no_update','sale_refund_item_no_delete','ux_audit_sale_refund','sync_outbox','ix_sync_outbox_pending','sync_outbox_no_delete_pending','sync_cash_session_insert','sync_cash_session_update','sync_cash_count_insert','sync_sale_insert','sync_sale_refund_insert','sync_audit_entry_insert'))=18"
+                    + " AND (SELECT count(*) FROM role_permission WHERE permission_name='sales.refund')=2";
+                if (Convert.ToInt64(command.ExecuteScalar()) != 1) throw new InvalidOperationException("La migración de devoluciones no creó sus estructuras.");
             }
             command.CommandText = "INSERT INTO schema_migration VALUES($v,$hash,$at)";
             command.Parameters.AddWithValue("$hash", hash);

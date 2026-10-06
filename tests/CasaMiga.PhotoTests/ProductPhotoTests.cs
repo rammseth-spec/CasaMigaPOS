@@ -17,13 +17,13 @@ public sealed class ProductPhotoTests
     [TestInitialize] public void Setup() => f = new();
     [TestCleanup] public void Cleanup() => f.Dispose();
     [TestMethod] public void FreshSchema16AndNoAssociation()
-    { Assert.AreEqual(18L, f.Sql("SELECT max(version) FROM schema_migration")); Assert.IsNull(f.Service.Current(f.Product.Id).Photo); }
+    { Assert.AreEqual((long)Database.LatestVersion, f.Sql("SELECT max(version) FROM schema_migration")); Assert.IsNull(f.Service.Current(f.Product.Id).Photo); }
     [TestMethod] public void Upgrade15To16PreservesMigrationHashes()
     {
         var path = Path.Combine(f.Root, "legacy"); PhotoFixture.BuildLegacy(path, 15); var db = new Database(Path.Combine(path, "casamiga.db"));
         string Hashes() { using var c = db.Open(); using var q = c.CreateCommand(); q.CommandText = "SELECT group_concat(sha256) FROM schema_migration WHERE version<=15"; return (string)q.ExecuteScalar()!; }
         var before = Hashes(); db.Initialize(); db.Validate(); Assert.AreEqual(before, Hashes());
-        using var connection = db.Open(); using var cmd = connection.CreateCommand(); cmd.CommandText = "SELECT max(version) FROM schema_migration"; Assert.AreEqual(18L, cmd.ExecuteScalar());
+        using var connection = db.Open(); using var cmd = connection.CreateCommand(); cmd.CommandText = "SELECT max(version) FROM schema_migration"; Assert.AreEqual((long)Database.LatestVersion, cmd.ExecuteScalar());
     }
     [TestMethod][DataRow("jpeg", "PROVISIONAL")][DataRow("png", "REAL")]
     public void ImportPreservesOriginalAndCropAndProduces512(string format, string provenance)

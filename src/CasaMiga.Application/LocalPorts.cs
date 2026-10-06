@@ -86,6 +86,10 @@ public interface ILocalStore
     void ValidateSaleInventoryRecovery(Sale sale);
     Sale? FindSaleByOperation(Guid operation);
     Money CashSalesTotal(Guid session);
+    Money CashRefundsTotal(Guid session);
+    void AddRefund(SaleRefundRecord refund);
+    IReadOnlyList<SaleRefundRecord> ListRefunds(Guid saleId);
+    SaleRefundRecord? FindRefundByOperation(Guid operation);
     SalesHistoryPage QuerySales(SalesHistoryFilter filter);
     SalesHistoryDetail? FindSaleDetail(Guid saleId);
     ReceiptSnapshot? FindReceiptSnapshot(Guid saleId);

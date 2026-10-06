@@ -1,6 +1,10 @@
+# Cancelaciones y devoluciones — 06/10/2026
+
+**Implementado; smoke manual pendiente.** Migración 019: `sale_refund` / `sale_refund_item` inmutables, permiso `sales.refund` (Administrator, Manager), triggers que validan caja abierta, cantidades acumuladas, reglas de cancelación y efectivo suficiente; `sync_outbox` reconstruida para aceptar `sale_refund` conservando secuencias. Esperado de caja = fondo + ventas − devoluciones. Historial muestra «Devuelto» y la sección de cancelación/devolución. Inventario sin cambios. Política y pendientes en [REFUNDS.md](REFUNDS.md). `Database.LatestVersion` evita fijar el número de esquema en pruebas. Suite **756/756** (597 + 159), Release 0/0.
+
 # Usuarios, contraseñas y sincronización fase 1 — 06/10/2026
 
-**Implementado; smoke manual pendiente. Sin commit.**
+**Implementado; smoke manual pendiente. Commit `0c6e2cb` en `QAv1`.**
 
 - **Migración 017** (`must_change_password`, permiso `users.manage` sólo para Administrator). Regla única de contraseña (`PasswordPolicy`): 8–16 caracteres con mayúscula, minúscula, número y carácter especial; aplica a alta, cambio y restablecimiento. El login sigue aceptando contraseñas previas fuera de la regla.
 - Un solo administrador: la creación de usuarios sólo permite Manager o Cashier. Pantalla **Usuarios** (Administrator): listar, crear con contraseña temporal y restablecer contraseña; la temporal se muestra una vez y obliga a cambiarla antes de abrir sesión. Login con «¿Olvidaste tu contraseña?» y «Cambiar contraseña».
