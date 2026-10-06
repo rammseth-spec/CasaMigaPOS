@@ -14,3 +14,8 @@ Regla permanente autorizada el 03/10/2026 en 1K.3A-R1. El acceso anclado del usu
 10. Comprobar nuevamente hash de la base original y reportar cualquier diferencia. Entregar credenciales correspondientes a la copia preparada cuando estén disponibles y autorizadas, junto con un checklist concreto. El estado es «Corrección técnica completada; smoke manual pendiente» hasta aprobación explícita del usuario.
 
 Esta regla no autoriza cambios de negocio, migraciones, impresiones, operaciones reales o nuevas fases. No permite modificar Domain/Application/Infrastructure para identificar un build visual.
+
+## Hallazgos 06/10/2026 (Claude Code desktop)
+
+- **AppData virtualizado.** Claude Code desktop es una app MSIX: todo lo que sus herramientas escriben en `%LOCALAPPDATA%` (y `%APPDATA%`) se redirige a `%LOCALAPPDATA%\Packages\Claude_…\LocalCache\…`, invisible para la app abierta desde el Explorador. Una copia preparada ahí parece correcta para el agente y vacía para el usuario. **Preparar copias de revisión fuera de AppData**, p. ej. `C:\Users\<usuario>\CasaMiga-Revision\<copia>` (fuera de OneDrive). Abrir la app con `explorer.exe <launcher>` para que no dependa del proceso del agente.
+- **Inicio automático de desarrollo (excepción autorizada por el usuario).** Si la carpeta de datos de una copia de desarrollo contiene `dev-autologin.json` (`{"Username":"…","Password":"…"}`), la app entra sola con el login normal. Una instalación normal lo ignora. Sólo en copias de revisión, nunca versionado; borrar el archivo lo desactiva. Esta excepción reemplaza, para esas copias, la indicación de abrir sin iniciar sesión.

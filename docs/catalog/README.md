@@ -8,4 +8,4 @@ Preparar una copia de revisión **nueva** (nunca sobre una instalación existent
 dotnet run --project tools/CasaMiga.Phase1K2CSmoke -- seed-review docs/catalog/catalogo-autorizado-v2.csv C:\ruta\nueva\vacia
 ```
 
-Crea `admin` (contraseña generada) y `cajero1` (contraseña temporal, debe cambiarla al entrar), 4 categorías y 26 productos auditados. Las credenciales se imprimen una sola vez; no guardarlas en documentos versionados. Herramienta de desarrollo: no se instala en las cajas.
+Crea `admin` (contraseña generada) y `cajero1` (contraseña temporal, debe cambiarla al entrar), 4 categorías y 26 productos auditados. Las credenciales se imprimen una sola vez; no guardarlas en documentos versionados. Herramienta de desarrollo: no se instala en las cajas. Desde Claude Code desktop usar una carpeta fuera de AppData (ver docs/review-builds.md). Para entrar sin escribir credenciales en una copia de desarrollo, crear `dev-autologin.json` en la carpeta de datos.

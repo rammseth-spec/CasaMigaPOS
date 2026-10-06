@@ -147,6 +147,27 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 screen = login.NeedsBootstrap() ? "bootstrap" : "login";
             });
         });
+        await TryDevelopmentAutoLoginAsync(options);
+    }
+
+    // Sólo desarrollo: entra con las credenciales de dev-autologin.json usando el login normal. Al salir del usuario vuelve el login.
+    private async Task TryDevelopmentAutoLoginAsync(FoundationOptions options)
+    {
+        if (!IsLogin) return;
+        DevelopmentAutoLogin? auto;
+        try { auto = DevelopmentAutoLogin.TryLoad(options); }
+        catch (Exception error) when (error is System.IO.InvalidDataException or System.Text.Json.JsonException or System.IO.IOException or UnauthorizedAccessException)
+        { Message = $"No se pudo leer {DevelopmentAutoLogin.FileName}; inicia sesión manualmente."; Notify(); return; }
+        if (auto is null) return;
+        await LoginAsync(auto.Username, auto.Password);
+        runtime?.TryLog(CanNavigate ? "development.autologin" : "development.autologin.failed");
+        if (CanNavigate)
+        {
+            MessageIsSuccess = true;
+            Message = $"Sesión iniciada automáticamente como {auto.Username.Trim().ToUpperInvariant()} (sólo desarrollo). Para desactivarlo borra {DevelopmentAutoLogin.FileName} de la carpeta de datos.";
+        }
+        else if (IsLogin) Message = "El inicio automático de desarrollo no funcionó. Inicia sesión manualmente.";
+        Notify();
     }
     public Task BootstrapAsync(string name, string display, string password, string confirmation) => Execute(async () =>
     {
