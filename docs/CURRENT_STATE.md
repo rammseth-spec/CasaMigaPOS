@@ -1,3 +1,7 @@
+# Copia de revisión con catálogo autorizado — 06/10/2026
+
+Copia aislada `%LOCALAPPDATA%\CasaMigaPOS-Review-Catalogo` preparada con `seed-review` desde `docs/catalog/catalogo-autorizado-v2.csv`: esquema 20, `admin` y `cajero1` (temporal), 4 categorías, 26 productos, 32 auditorías, sin caja abierta ni fotos. Build `src/CasaMiga.Presentation/bin/Review-QAv1-5db7718`, launcher `work/Abrir-Casa-Miga-QAv1-5db7718.cmd`, título `Casa Miga POS · Caja · DESARROLLO · QAv1-5db7718`. Credenciales entregadas en la conversación; no se versionan. Smoke manual pendiente.
+
 # Contraseñas en vivo y campos de la marca — 06/10/2026
 
 **Implementado; smoke manual pendiente.** Alta de administrador y cambio de contraseña muestran los requisitos en vivo (gris antes de escribir, verde cumplido, rojo pendiente) y si la confirmación coincide; bordes del campo en verde/rojo; el botón se habilita sólo con todo cumplido y Enter envía. `PasswordPolicy.Evaluate` es la única fuente de la lista y de `Validate`. Todos los campos de contraseña (`PasswordInput`) tienen botón para mostrar/ocultar; al mostrarla, copiar/cortar quedan deshabilitados y sin historial de deshacer. Plantilla de `TextBox`/`PasswordBox` del tema: borde redondeado y, al seleccionar, anillo café con brillo trigo sin mover el diseño; color de validación `ValidBrush` #2E7D32 (no es color de marca). Suite **797/797** (633 + 164), Release 0/0.
