@@ -107,7 +107,7 @@ public sealed class ManualSmokeReconciliationTests
         Assert.IsFalse(VisibleButton(view, "Agregar producto").IsEnabled);
         Assert.IsFalse(VisibleButton(view, "Quitar seleccionado").IsEnabled);
         Assert.IsFalse(VisibleButton(view, "Calcular necesidades").IsEnabled);
-        Assert.IsFalse(VisibleButton(view, "Crear producción").IsEnabled);
+        Assert.IsFalse(VisibleButton(view, "Preparar registro de producción").IsEnabled);
         Assert.IsTrue(VisibleButton(view, "Cancelar").IsEnabled);
         var grid = Descendants<DataGrid>(view).Single(x => x.IsVisible && ReferenceEquals(x.ItemsSource, model.Plan));
         Assert.AreEqual(1, model.Plan.Count);
@@ -121,7 +121,7 @@ public sealed class ManualSmokeReconciliationTests
             model.Plan[0].Planned = quantity;
             fixture.Layout();
             Assert.IsFalse(VisibleButton(view, "Calcular necesidades").IsEnabled, $"No active profile exists; quantity '{quantity}' cannot make the plan valid.");
-            Assert.IsFalse(VisibleButton(view, "Crear producción").IsEnabled);
+            Assert.IsFalse(VisibleButton(view, "Preparar registro de producción").IsEnabled);
         }
         Capture(fixture.Window, "r1-production-no-profiles.png");
         fixture.AssertNoCommercialEffects();

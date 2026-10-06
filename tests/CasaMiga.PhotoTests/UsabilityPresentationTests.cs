@@ -103,7 +103,7 @@ public sealed class UsabilityPresentationTests
         recipes.NewProfile();WpfTestHost.Layout(recipeView);AssertVisible(recipeView,"No hay artículos terminados disponibles. Crea primero un artículo de tipo Producto terminado en Inventario.");Assert.IsFalse(Button(recipeView,"Crear perfil").IsEnabled);
         Assert.IsFalse(Button(recipeView,"Crear perfil").IsEnabled);
         var production=fixture.Production();await production.LoadAsync();var productionView=new ProductionView{DataContext=production};production.NewProduction();WpfTestHost.Layout(productionView);
-        AssertVisible(productionView,"No hay perfiles productivos activos.");Assert.IsFalse(Button(productionView,"Calcular necesidades").IsEnabled);Assert.IsFalse(Button(productionView,"Crear producción").IsEnabled);Assert.IsFalse(Button(productionView,"Quitar seleccionado").IsEnabled);
+        AssertVisible(productionView,"No hay perfiles productivos activos.");Assert.IsFalse(Button(productionView,"Calcular necesidades").IsEnabled);Assert.IsFalse(Button(productionView,"Preparar registro de producción").IsEnabled);Assert.IsFalse(Button(productionView,"Quitar seleccionado").IsEnabled);
         await production.ShowDraftsAsync();WpfTestHost.Layout(productionView);AssertVisible(productionView,"No hay producciones en borrador.");Assert.IsFalse(Button(productionView,"Ver detalle").IsEnabled);
         await production.ShowHistoryAsync();WpfTestHost.Layout(productionView);AssertVisible(productionView,"Aún no hay producciones confirmadas.");
         fixture.AssertNoOperations();
@@ -148,6 +148,24 @@ public sealed class UsabilityPresentationTests
         var help=new ContextHelp{HelpText="Texto de prueba de ayuda."};var window=new Window{Content=help,Width=420,Height=240,Left=-10000,Top=-10000,ShowInTaskbar=false,ShowActivated=false};
         try{window.Show();WpfTestHost.Layout(window,420,240);var trigger=(Button)help.FindName("HelpButton");Assert.IsFalse(help.IsOpen);trigger.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));WpfTestHost.Layout(window,420,240);Assert.IsTrue(help.IsOpen);AssertVisible(help.HelpSurface,"Texto de prueba de ayuda.");trigger.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));Assert.IsFalse(help.IsOpen);}
         finally{window.Close();}
+    });
+
+    [TestMethod]
+    public Task ProductionWorkflowKeepsHelpAndPrimaryActionsUsableAtReviewSizes()=>WpfTestHost.OnUi(async()=>
+    {
+        using var fixture=new Fixture();var vm=fixture.Production();await vm.LoadAsync();vm.NewProduction();
+        var view=new ProductionView{DataContext=vm};
+        foreach(var size in new[]{new Size(1280,820),new Size(1920,1080)})
+        {
+            WpfTestHost.Layout(view,size.Width,size.Height);
+            AssertVisible(view,"1. Productos y piezas planeadas");
+            Assert.IsTrue(Descendants<ContextHelp>(view).Any(x=>x.HelpText==vm.PlannedHelpText));
+            Assert.IsTrue(Visible(Button(view,"Calcular necesidades")));
+            Assert.IsTrue(Visible(Button(view,"Preparar registro de producción")));
+        }
+        Assert.IsFalse(Button(view,"Calcular necesidades").IsEnabled);
+        Assert.IsFalse(Button(view,"Preparar registro de producción").IsEnabled);
+        fixture.AssertNoOperations();
     });
 
     private static (ScrollViewer Page,UserControl Module) Page(UIElement child)

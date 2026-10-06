@@ -1,4 +1,12 @@
-# FASE 1K ABIERTA — 1K.3C-R3, 06/10/2026
+# FASE 1K ABIERTA — 1K.3D, 06/10/2026
+
+**FASE 1K.3D técnicamente completada; smoke manual pendiente.** Producción conserva el motor y los contratos de FASE 1J, pero ahora presenta un flujo operativo en tres pasos: producto/perfil/versión y piezas planeadas; vista previa de preparaciones, insumos, disponibilidad y faltante; y captura del resultado real antes de registrar. La cantidad planeada sigue controlando el consumo y la cantidad real sólo controla la entrada de producto terminado. El botón final se deshabilita si alguna cantidad real no es un entero mayor o igual que cero. ContextHelp R3 explica cantidad planeada, preview y resultado real sin mover el layout.
+
+La fixture aislada `work/phase1k3d-smoke-20261006` contiene exclusivamente datos SMOKE/NO COMERCIAL. Una ejecución automatizada autorizada registró 5 piezas planeadas y 4 reales: consumió 312.5 g de masa, 125 ml de volumen, 6 piezas y 5 g de la alternativa A; agregó 4 piezas terminadas. Un segundo borrador de 1,000 piezas reprodujo un faltante de 1,106 piezas y su confirmación fallida no cambió balances, ledger ni producto terminado. Preview, ventas y caja permanecieron sin mutación; no hubo impresión.
+
+Focales: 10/10 de Producción y 15/15 WPF/ContextHelp. Suite completa `scripts/verify.ps1`: **718/718** (559 generales + 159 WPF), 0 fallidas/omitidas. Release: 0 errores/advertencias. Schema 16, sin 017; Domain/Application/Infrastructure y migraciones intactos. Base protegida SHA-256 inicial/final `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Revisión: `src/CasaMiga.Presentation/bin/Phase1K3D/`, `work/Abrir-Casa-Miga-1K3D.cmd`, DataDirectory `work/phase1k3d-smoke-20261006`, título `Casa Miga POS · Caja · DESARROLLO · 1K.3D`. Ver `PHASE_1K3D_REPORT.md`.
+
+## Registro anterior — 1K.3C-R3
 
 **FASE 1K.3C técnicamente completada; pendiente un smoke final corto de R3.** El `Popup` de R2 podía crear una superficie/HWND independiente y conservar z-order fuera del ciclo visual del shell. `ContextHelp` usa ahora un `Adorner` dentro del árbol visual y del mismo HWND de `MainWindow`; por construcción no puede quedar como ventana flotante sobre otra aplicación. Abrirlo sigue sin participar en el layout base.
 

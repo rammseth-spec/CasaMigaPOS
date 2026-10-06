@@ -5,9 +5,9 @@ using CasaMiga.Domain;
 
 namespace CasaMiga.Presentation;
 
-public sealed record ProductionProfileChoice(Guid VersionId,Guid ProductId,string ProductName,string ProfileName)
+public sealed record ProductionProfileChoice(Guid VersionId,Guid ProductId,string ProductName,string ProfileName,int Version)
 {
-    public override string ToString()=>$"{ProductName} · {ProfileName}";
+    public override string ToString()=>$"{ProductName} · {ProfileName} · Versión {Version}";
 }
 public sealed class ProductionPlanEdit : INotifyPropertyChanged
 {
@@ -16,8 +16,11 @@ public sealed class ProductionPlanEdit : INotifyPropertyChanged
     public string Planned{get=>planned;set{if(planned==value)return;planned=value;PropertyChanged?.Invoke(this,new(nameof(Planned)));}}
     public event PropertyChangedEventHandler? PropertyChanged;
 }
-public sealed record ProductionRequirementRow(string Name,string Required,string Available,string State);
-public sealed record ProductionFormulaRow(string Name,string Required);
+public sealed record ProductionRequirementRow(string Name,string Required,string Available,string Shortage,string State);
+public sealed record ProductionFormulaRow(string Name,int Version,string Required)
+{
+    public string VersionLabel=>$"Versión {Version}";
+}
 public sealed record ProductionHistoryRow(Guid Id,string Date,string State,string Creator,string Terminal,string Products,string Result,bool ZeroOutput);
 public sealed class ProductionActualEdit:INotifyPropertyChanged
 {
@@ -25,6 +28,7 @@ public sealed class ProductionActualEdit:INotifyPropertyChanged
     public Guid ProductId{get;init;} public string ProductName{get;init;}=""; public long Planned{get;init;}
     public string Actual{get=>actual;set{if(actual==value)return;actual=value;PropertyChanged?.Invoke(this,new(nameof(Actual)));PropertyChanged?.Invoke(this,new(nameof(Difference)));}}
     public string Difference=>long.TryParse(Actual,out var value)?value>Planned?"Mayor que lo planeado":value<Planned?"Menor que lo planeado":"Igual a lo planeado":"Escribe un entero";
+    public bool IsValid=>long.TryParse(Actual,out var value)&&value>=0;
     public event PropertyChangedEventHandler? PropertyChanged;
 }
 public sealed class ProductionAlternativeEdit : INotifyPropertyChanged
@@ -47,8 +51,13 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
     public bool Busy{get;private set;} public bool Ready=>!Busy; public bool CanView{get;private set;} public bool CanCreate{get;private set;} public bool CanConfirm{get;private set;}
     public bool IsHome=>screen=="home";public bool IsBuilder=>screen=="builder";public bool IsDrafts=>screen=="drafts";public bool IsHistory=>screen=="history";public bool IsDetail=>screen=="detail";
     public bool DetailIsDraft=>batch?.Status=="DRAFT"; public bool DetailIsConfirmed=>batch?.Status=="CONFIRMED";
-    public bool CanConfirmDetail=>DetailIsDraft&&CanConfirm&&batch?.CreatedBy==user.Current?.Id&&batch?.TerminalId==terminalId;
-    public string ConfirmationRestriction=>!DetailIsDraft?"Consulta histórica de solo lectura.":CanConfirmDetail?"Este plan está bloqueado. Captura el resultado real para confirmarlo.":"Sólo el usuario y terminal que crearon este borrador pueden confirmarlo.";
+    private bool OwnDraft=>DetailIsDraft&&CanConfirm&&batch?.CreatedBy==user.Current?.Id&&batch?.TerminalId==terminalId;
+    public bool ActualsAreValid=>Actuals.Count>0&&Actuals.All(x=>x.IsValid);
+    public bool CanConfirmDetail=>OwnDraft&&ActualsAreValid;
+    public string ConfirmationRestriction=>!DetailIsDraft?"Consulta histórica de solo lectura.":!OwnDraft?"Sólo el usuario y terminal que crearon este borrador pueden registrarlo.":!ActualsAreValid?"Captura una cantidad real entera, igual o mayor que cero, para cada producto.":"El plan está bloqueado. Revisa el resultado real antes de registrarlo.";
+    public string PlannedHelpText=>"La cantidad planeada es el número entero de piezas terminadas que se pretende elaborar. Esta cantidad determina las preparaciones y los insumos que se consumirán al registrar. Ejemplo sintético: si planeas 5 piezas, las necesidades se calculan para esas 5 piezas.";
+    public string PreviewHelpText=>"Calcular necesidades sólo consulta el plan y el inventario: no reserva ni descuenta existencias. El stock se valida de nuevo al registrar la producción.";
+    public string ActualHelpText=>"La cantidad real es el número de piezas terminadas obtenidas. El inventario recibe esa cantidad real, pero los insumos se descuentan según el plan bloqueado. Ejemplo sintético: 5 planeadas y 4 reales consumen los insumos de 5 y agregan 4 terminados. Registrar cero consume los insumos planeados y no genera producto terminado.";
     public string Message{get;private set;}="";public bool MessageIsSuccess{get;private set;}
     public IReadOnlyList<ProductionProfileChoice> Profiles{get;private set;}=[];
     private ProductionPlanEdit? selectedPlan; private ProductionHistoryRow? selectedRow;
@@ -67,9 +76,9 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
     public IReadOnlyList<ProductionHistoryRow> Rows{get;private set;}=[];public ProductionHistoryRow? SelectedRow{get=>selectedRow;set{if(selectedRow==value)return;selectedRow=value;Notify();}}
     public ObservableCollection<ProductionActualEdit> Actuals{get;}=[];
     public string DetailHeader=>batch is null?"":$"Producción · {(batch.Status=="DRAFT"?"Borrador":"Confirmada")}";
-    public string DetailContext=>batch is null?"":$"Creada: {batch.CreatedAt.ToLocalTime():dd/MM/yyyy HH:mm}\nCreada por: {batch.CreatedByName}\nTerminal: {batch.TerminalName}";
-    public IReadOnlyList<string> DetailProducts=>batch?.Outputs.Select(x=>$"{x.ProductName}: planeado {x.PlannedCount} pzas · real {(x.ActualCount?.ToString()??"pendiente")}").ToArray()??[];
-    public IReadOnlyList<string> DetailFormulas=>batch?.Formulas.Select(x=>$"{x.Name}: {InventoryDisplay.Format(x.Required.AtomicUnits,x.Required.Dimension)}").ToArray()??[];
+    public string DetailContext=>batch is null?"":$"Creada: {batch.CreatedAt.ToLocalTime():dd/MM/yyyy HH:mm}\nCreada por: {batch.CreatedByName}\nTerminal: {batch.TerminalName}"+(batch.ConfirmedAt is {} confirmed?$"\nRegistrada: {confirmed.ToLocalTime():dd/MM/yyyy HH:mm}":"");
+    public IReadOnlyList<string> DetailProducts=>batch?.Outputs.Select(x=>$"{x.ProductName}: {x.PlannedCount} {(x.PlannedCount==1?"pieza planeada":"piezas planeadas")} · {(x.ActualCount is {} actual?$"{actual} {(actual==1?"pieza real":"piezas reales")}":"resultado pendiente")}").ToArray()??[];
+    public IReadOnlyList<string> DetailFormulas=>batch?.Formulas.Select(x=>$"{x.Name}: {InventoryDisplay.Format(x.Required.AtomicUnits,x.Required.Dimension)} requeridos").ToArray()??[];
     public IReadOnlyList<string> DetailInputs=>batch is null?[]:InputLines(batch.Inputs);
     public bool TotalZero=>Actuals.Count>0&&Actuals.All(x=>long.TryParse(x.Actual,out var v)&&v==0);
     public event PropertyChangedEventHandler? PropertyChanged;private void Notify()=>PropertyChanged?.Invoke(this,new(null));
@@ -85,7 +94,7 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
         items=itemRows.ToDictionary(x=>x.InventoryItemId,x=>new RecipeItemChoice(x.InventoryItemId,x.Name,x.Dimension));
         var products=new List<ProductRow>();for(int page=0;;page++){var r=await Task.Run(()=>catalog.Products(new(Page:page)));products.AddRange(r.Items);if(products.Count>=r.Total)break;}
         var names=products.ToDictionary(x=>x.Product.Id,x=>x.Product.Name);var list=new List<ProductionProfileChoice>();
-        foreach(var p in await Task.Run(()=>recipes.ListProfiles(200)))if(p.ActiveVersionId is {} id&&await Task.Run(()=>recipes.GetProfileVersion(id)) is { } v)list.Add(new(id,p.ProductId,names.GetValueOrDefault(p.ProductId,"Producto"),v.Value.Name));
+        foreach(var p in await Task.Run(()=>recipes.ListProfiles(200)))if(p.ActiveVersionId is {} id&&await Task.Run(()=>recipes.GetProfileVersion(id)) is { } v)list.Add(new(id,p.ProductId,names.GetValueOrDefault(p.ProductId,"Producto"),v.Value.Name,v.Value.Version));
         Profiles=list;
     }
     public void NewProduction(){if(!Ready||!CanCreate)return;TrackPlan();Plan.Clear();SelectedPlan=null;Plan.Add(new());Alternatives.Clear();FormulaRows=[];RequirementRows=[];PreviewReady=false;PreviewConfirmable=false;createBatchId=Guid.NewGuid();createOperationId=Guid.NewGuid();screen="builder";Message="";Notify();}
@@ -112,16 +121,16 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
     public Task PreviewAsync()=>Run(async()=>
     {
         var command=Command();var result=await Task.Run(()=>service.PrepareProduction(command));
-        FormulaRows=result.Planning.RequiredFormulas.Select(x=>{var f=recipes.GetFormulaVersion(x.FormulaVersionId)!.Value;return new ProductionFormulaRow(f.Name,InventoryDisplay.Format(x.Required.AtomicUnits,x.Required.Dimension));}).ToArray();
-        RequirementRows=(result.Planning.Plan?.Ingredients??[]).Select(x=>{var item=items[x.InventoryItemId];var stock=result.Stock.Single(s=>s.ItemId==x.InventoryItemId);var shortage=result.Shortages.FirstOrDefault(s=>s.ItemId==x.InventoryItemId);return new ProductionRequirementRow(item.Name,InventoryDisplay.Format(x.Quantity.AtomicUnits,x.Quantity.Dimension),stock.Available is {} a?InventoryDisplay.Format(a,stock.Dimension):"Sin inicializar",!stock.Active?"Inactivo":shortage is null?"Disponible":$"Faltan {InventoryDisplay.Format(shortage.Required-(shortage.Available??0),stock.Dimension)}");}).ToArray();
+        FormulaRows=result.Planning.RequiredFormulas.Select(x=>{var f=recipes.GetFormulaVersion(x.FormulaVersionId)!.Value;return new ProductionFormulaRow(f.Name,f.Version,InventoryDisplay.Format(x.Required.AtomicUnits,x.Required.Dimension));}).ToArray();
+        RequirementRows=(result.Planning.Plan?.Ingredients??[]).Select(x=>{var item=items[x.InventoryItemId];var stock=result.Stock.Single(s=>s.ItemId==x.InventoryItemId);var shortage=result.Shortages.FirstOrDefault(s=>s.ItemId==x.InventoryItemId);var missing=shortage is null?"—":InventoryDisplay.Format(shortage.Required-(shortage.Available??0),stock.Dimension);return new ProductionRequirementRow(item.Name,InventoryDisplay.Format(x.Quantity.AtomicUnits,x.Quantity.Dimension),stock.Available is {} a?InventoryDisplay.Format(a,stock.Dimension):"Sin saldo inicial",missing,!stock.Active?"Inactivo":stock.Available is null?"Sin saldo inicial":shortage is null?"Suficiente":"Faltante");}).ToArray();
         Alternatives.Clear();int n=0;foreach(var formula in result.Planning.Plan?.Formulas??[]){foreach(var group in formula.Version.Alternatives){n++;var ineligible=result.Planning.IneligibleOptions.Where(x=>x.GroupId==group.Id).Select(x=>x.OptionId).ToHashSet();var options=group.PreferenceOrder.Concat(group.Options.Select(x=>x.Id)).Distinct().Select(id=>{var o=group.Options.Single(x=>x.Id==id);return new ProductionAlternativeOption(id,items[o.Ingredient.InventoryItemId].Name,!ineligible.Contains(id));}).ToArray();var selected=formula.Ingredients.FirstOrDefault(x=>x.GroupId==group.Id)?.OptionId;Alternatives.Add(new(){FormulaVersionId=formula.Version.Id,GroupId=group.Id,Label=$"Grupo {n} · {formula.Version.Name}",Options=options,Selected=options.FirstOrDefault(x=>x.Id==selected)});}}
         foreach(var choice in Alternatives)choice.PropertyChanged+=PlanChanged;
-        PreviewReady=true;PreviewConfirmable=result.CanConfirm;PreviewState=result.CanConfirm?"Plan calculado. El stock mostrado es informativo y se validará de nuevo al confirmar.":HumanProblems(result);Notify();
+        PreviewReady=true;PreviewConfirmable=result.CanConfirm;PreviewState=result.CanConfirm?"Plan calculado. El stock mostrado es informativo y se validará de nuevo al registrar.":HumanProblems(result);Notify();
     });
     private static string HumanProblems(ProductionPreview value)
     {
         if(value.Planning.Issues.Any(x=>x.Code==ProductionError.NonRepresentableScale))return "No es posible calcular esta receta exactamente con las unidades configuradas. Revisa la cantidad planeada o la receta.";
-        if(value.InactiveItems.Count>0)return "Hay insumos o productos terminados inactivos.";if(value.Shortages.Count>0)return "No hay existencia suficiente. Revisa todos los faltantes mostrados.";return "El plan tiene datos pendientes de corregir.";
+        if(value.InactiveItems.Count>0)return "Hay insumos o productos terminados inactivos.";if(value.Shortages.Count>0)return "No hay existencia suficiente. Revisa todos los faltantes mostrados.";if(value.Stock.Any(x=>x.Available is null))return "Hay insumos o producto terminado sin saldo inicial.";return "El plan tiene datos pendientes de corregir.";
     }
     public Task CreateDraftAsync()=>Run(async()=>
     {
@@ -134,10 +143,11 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
     private Task LoadRows(bool drafts)=>Run(async()=>
     {
         var ids=await Task.Run(()=>service.ListProductions(200));var batches=(await Task.WhenAll(ids.Select(id=>Task.Run(()=>service.GetProduction(id))))).Where(x=>x is not null).Cast<StoredProductionBatch>().Where(x=>drafts?x.Status=="DRAFT":x.Status=="CONFIRMED").ToArray();
-        Rows=batches.Select(x=>new ProductionHistoryRow(x.Id,x.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm"),x.Status=="DRAFT"?"Borrador":"Confirmada",x.CreatedByName,x.TerminalName,string.Join(", ",x.Outputs.Select(o=>o.ProductName)),string.Join(" · ",x.Outputs.Select(o=>$"{o.PlannedCount}/{o.ActualCount?.ToString()??"—"}")),x.Outputs.All(o=>o.ActualCount==0))).ToArray();screen=drafts?"drafts":"history";SelectedRow=null;
+        Rows=batches.Select(x=>new ProductionHistoryRow(x.Id,x.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm"),x.Status=="DRAFT"?"Borrador":"Confirmada",x.CreatedByName,x.TerminalName,string.Join(", ",x.Outputs.Select(o=>o.ProductName)),string.Join(" · ",x.Outputs.Select(o=>$"{o.PlannedCount} planeadas · {(o.ActualCount is {} actual?$"{actual} reales":"resultado pendiente")}")),x.Outputs.All(o=>o.ActualCount==0))).ToArray();screen=drafts?"drafts":"history";SelectedRow=null;
     });
     public Task OpenDetailAsync()=>Run(async()=>{var row=SelectedRow??throw new ArgumentException("Selecciona una producción.");batch=await Task.Run(()=>service.GetProduction(row.Id))??throw new ArgumentException("La producción ya no existe.");LoadDetail();screen="detail";});
-    private void LoadDetail(){Actuals.Clear();foreach(var o in batch!.Outputs)Actuals.Add(new(){ProductId=o.ProductId,ProductName=o.ProductName,Planned=o.PlannedCount,Actual=o.ActualCount?.ToString()??o.PlannedCount.ToString()});Notify();}
+    private void LoadDetail(){foreach(var row in Actuals)row.PropertyChanged-=ActualChanged;Actuals.Clear();foreach(var o in batch!.Outputs){var row=new ProductionActualEdit{ProductId=o.ProductId,ProductName=o.ProductName,Planned=o.PlannedCount,Actual=o.ActualCount?.ToString()??o.PlannedCount.ToString()};row.PropertyChanged+=ActualChanged;Actuals.Add(row);}Notify();}
+    private void ActualChanged(object? sender,PropertyChangedEventArgs args){if(args.PropertyName==nameof(ProductionActualEdit.Actual))Notify();}
     public Task ConfirmAsync()=>Run(async()=>
     {
         if(batch is null||!CanConfirmDetail)throw new ArgumentException(ConfirmationRestriction);var actual=Actuals.Select(x=>{if(!long.TryParse(x.Actual,out var value)||value<0)throw new ArgumentException("La cantidad real debe ser un entero igual o mayor que cero.");return new ActualOutputLine(x.ProductId,value);}).ToArray();
@@ -146,7 +156,7 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
     public void Back(){screen=screen=="detail"?"home":"home";Message="";Notify();}
     public static string ErrorMessage(ProductionException e)=>e.Code switch
     {
-        ProductionFailure.InsufficientStock=>"No hay existencia suficiente para confirmar esta producción.",ProductionFailure.InactiveItem=>"Un insumo o producto terminado ya no está activo.",ProductionFailure.NotInitialized=>"Un insumo o producto terminado todavía no tiene saldo inicial.",ProductionFailure.ConcurrencyConflict or ProductionFailure.RevisionConflict=>"La producción cambió o fue confirmada desde otra operación. Actualiza la información.",ProductionFailure.IdempotencyConflict=>"La identidad de esta producción corresponde a datos diferentes.",ProductionFailure.UnresolvedPlan=>"El plan tiene problemas pendientes y no puede confirmarse.",_=>"No se pudo completar la producción. Actualiza la información."
+        ProductionFailure.InsufficientStock=>"No hay existencia suficiente para registrar esta producción.",ProductionFailure.InactiveItem=>"Un insumo o producto terminado ya no está activo.",ProductionFailure.NotInitialized=>"Un insumo o producto terminado todavía no tiene saldo inicial.",ProductionFailure.ConcurrencyConflict or ProductionFailure.RevisionConflict=>"La producción cambió o ya fue registrada desde otra operación. Actualiza la información.",ProductionFailure.IdempotencyConflict=>"La identidad de esta producción corresponde a datos diferentes.",ProductionFailure.UnresolvedPlan=>"El plan tiene problemas pendientes y no puede registrarse.",_=>"No se pudo completar la producción. Actualiza la información."
     };
     public static IReadOnlyList<string> InputLines(IEnumerable<StoredProductionInput> inputs)=>inputs
         .GroupBy(x=>(x.ItemId,x.Required.Dimension))

@@ -1,5 +1,19 @@
-# Próximo paso — smoke final corto de 1K.3C-R3
+# Próximo paso — smoke manual corto de 1K.3D
 
+Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.3D`, abierta desde `work/Abrir-Casa-Miga-1K3D.cmd`, con DataDirectory `work/phase1k3d-smoke-20261006`. No usar el acceso anclado ni builds anteriores.
+
+1. Iniciar sesión y entrar en Producción.
+2. Revisar el historial sintético: 5 piezas planeadas, 4 reales, fecha/hora local y cantidades humanas.
+3. Nueva producción → seleccionar `Producto terminado sintético · SMOKE-PROFILE-001 · Versión 1` → capturar 5 piezas.
+4. Calcular necesidades; revisar preparaciones, MASS/VOLUME/COUNT, Disponible, Faltante y Estado. Confirmar en Inventario que el preview no alteró saldos.
+5. Abrir las ayudas de cantidad planeada, vista previa y resultado real; comprobar overlay, Esc, Alt+Tab/minimizar y ausencia de movimiento del formulario.
+6. Preparar el registro, capturar el resultado real y registrar una sola producción sintética autorizada. Revisar resultado e historial.
+7. Crear otro plan de 1,000 piezas sólo para preview; comprobar el faltante de COUNT, que no permite preparar el registro y que inventario permanece intacto. Cancelar.
+8. Revisar 1280×820, 1920×1080 y F11. Salir sin tocar otros módulos.
+
+No usar recetas comerciales, imprimir, vender, abrir/cerrar caja, crear migración 017 ni iniciar Pedidos/Tiendas. Tras el smoke, esperar confirmación explícita del usuario.
+
+## Registro anterior — smoke final corto de 1K.3C-R3
 Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.3C-R3`, abierta desde `work/Abrir-Casa-Miga-1K3C-R3.cmd`, con DataDirectory `work/phase1k3c-r3-smoke-20261006`. No usar el acceso anclado ni builds anteriores.
 
 1. Login → Recetas → `SMOKE-REC-001` → Versión 2 → Editar borrador.
