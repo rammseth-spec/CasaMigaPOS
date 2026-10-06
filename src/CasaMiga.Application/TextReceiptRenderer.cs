@@ -33,10 +33,19 @@ public sealed class TextReceiptRenderer(int columns = 48)
         lines.Add(new string('-', Columns));
         lines.Add(Pair("Subtotal", Money(receipt.Subtotal)));
         lines.Add(Pair("TOTAL", Money(receipt.Total)));
-        lines.Add(Pair("Pago", receipt.PaymentMethod));
-        lines.Add(Pair("Efectivo", Money(receipt.Received)));
-        lines.Add(Pair("Aplicado", Money(receipt.Applied)));
-        lines.Add(Pair("Cambio", Money(receipt.Change)));
+        if (receipt.PaymentMethod == "CASH")
+        {
+            // Formato validado en impresora física; no cambiar sin nuevo smoke.
+            lines.Add(Pair("Pago", receipt.PaymentMethod));
+            lines.Add(Pair("Efectivo", Money(receipt.Received)));
+            lines.Add(Pair("Aplicado", Money(receipt.Applied)));
+            lines.Add(Pair("Cambio", Money(receipt.Change)));
+        }
+        else
+        {
+            lines.Add(Pair("Pago", receipt.PaymentMethod == "CARD" ? "TARJETA" : "TRANSFERENCIA"));
+            lines.Add(Pair("Pagado", Money(receipt.Applied)));
+        }
         lines.Add(new string('-', Columns));
         AddCentered(lines, receipt.Business.ClosingMessage);
         if (copyKind != ReceiptCopyKind.Original) AddCentered(lines, "COPIA · NO ABRE CAJÓN");

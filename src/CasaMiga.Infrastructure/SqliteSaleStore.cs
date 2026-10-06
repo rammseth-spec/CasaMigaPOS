@@ -14,6 +14,18 @@ public sealed partial class SqliteLocalUnitOfWork
                 ("$terminal", Id(terminal)), ("$value", next));
             update.ExecuteNonQuery(); return next;
         }
+        private bool? hasPaymentReference;
+        // Bases previas a la migración 020 sólo admiten efectivo y no tienen referencia.
+        private bool HasPaymentReference()
+        {
+            if (hasPaymentReference is null)
+            {
+                using var probe = Command("SELECT count(*) FROM pragma_table_info('payment') WHERE name='reference'");
+                hasPaymentReference = Convert.ToInt64(probe.ExecuteScalar()) == 1;
+            }
+            return hasPaymentReference.Value;
+        }
+        private string PaymentReferenceColumn => HasPaymentReference() ? "p.reference" : "NULL";
         public void AddSale(Sale sale)
         {
             var contract = HasInventoryContract();
@@ -25,9 +37,10 @@ public sealed partial class SqliteLocalUnitOfWork
                     ("$price", item.UnitPrice.Cents), ("$quantity", item.Quantity), ("$total", item.LineTotal.Cents));
                 row.ExecuteNonQuery();
             }
-            using var payment = Command("INSERT INTO payment VALUES($id,$sale,'CASH',$applied,$received,$change)",
-                ("$id", Id(sale.Payment.Id)), ("$sale", Id(sale.Id)), ("$applied", sale.Payment.Applied.Cents),
-                ("$received", sale.Payment.Received.Cents), ("$change", sale.Payment.Change.Cents));
+            using var payment = Command("INSERT INTO payment(id,sale_id,method,applied_cents,received_cents,change_cents"
+                + (HasPaymentReference() ? ",reference) VALUES($id,$sale,$method,$applied,$received,$change,$reference)" : ") VALUES($id,$sale,$method,$applied,$received,$change)"),
+                ("$id", Id(sale.Payment.Id)), ("$sale", Id(sale.Id)), ("$method", sale.Payment.Method), ("$applied", sale.Payment.Applied.Cents),
+                ("$received", sale.Payment.Received.Cents), ("$change", sale.Payment.Change.Cents), ("$reference", sale.Payment.Reference));
             payment.ExecuteNonQuery();
             using var header = Command("INSERT INTO sale(id,operation_id,user_id,terminal_id,cash_session_id,sequence,confirmed_utc,subtotal_cents,total_cents"
                 + (contract ? ",inventory_evaluation_contract_version,inventory_evaluation_id" : "")
@@ -41,18 +54,19 @@ public sealed partial class SqliteLocalUnitOfWork
         }
         public Sale? FindSaleByOperation(Guid operation)
         {
-            using var query = Command("SELECT s.id,s.user_id,s.terminal_id,s.cash_session_id,s.sequence,s.confirmed_utc,p.id,p.received_cents FROM sale s JOIN payment p ON p.sale_id=s.id WHERE s.operation_id=$operation", ("$operation", Id(operation)));
-            Guid id, user, terminal, cash, payment; long sequence, received; DateTimeOffset at;
+            using var query = Command("SELECT s.id,s.user_id,s.terminal_id,s.cash_session_id,s.sequence,s.confirmed_utc,p.id,p.received_cents,p.method," + PaymentReferenceColumn + " FROM sale s JOIN payment p ON p.sale_id=s.id WHERE s.operation_id=$operation", ("$operation", Id(operation)));
+            Guid id, user, terminal, cash, payment; long sequence, received; DateTimeOffset at; PaymentMethod method; string? reference;
             using (var r = query.ExecuteReader())
             {
                 if (!r.Read()) return null;
                 id=Guid.Parse(r.GetString(0));user=Guid.Parse(r.GetString(1));terminal=Guid.Parse(r.GetString(2));cash=Guid.Parse(r.GetString(3));
                 sequence=r.GetInt64(4);at=Date(r,5)!.Value;payment=Guid.Parse(r.GetString(6));received=r.GetInt64(7);
+                method=Payment.Parse(r.GetString(8));reference=r.IsDBNull(9)?null:r.GetString(9);
             }
             using var rows = Command("SELECT product_id,product_name,unit_price_cents,quantity FROM sale_item WHERE sale_id=$id ORDER BY position", ("$id", Id(id)));
             using var reader = rows.ExecuteReader(); var items = new List<SaleItem>();
             while (reader.Read()) items.Add(new(Guid.Parse(reader.GetString(0)),reader.GetString(1),new(reader.GetInt64(2)),reader.GetInt32(3)));
-            return new(id,operation,user,terminal,cash,sequence,at,items,payment,new(received));
+            return new(id,operation,user,terminal,cash,sequence,at,items,payment,new(received),method,reference);
         }
         public Money CashSalesTotal(Guid session)
         {
@@ -104,10 +118,10 @@ public sealed partial class SqliteLocalUnitOfWork
 
         public SalesHistoryDetail? FindSaleDetail(Guid saleId)
         {
-            using var query = Command("SELECT s.operation_id,s.user_id,u.display_name,s.terminal_id,t.name,s.cash_session_id,s.sequence,s.confirmed_utc,p.id,p.method,p.applied_cents,p.received_cents,p.change_cents,s.subtotal_cents,s.total_cents"
+            using var query = Command("SELECT s.operation_id,s.user_id,u.display_name,s.terminal_id,t.name,s.cash_session_id,s.sequence,s.confirmed_utc,p.id,p.method,p.applied_cents,p.received_cents,p.change_cents,s.subtotal_cents,s.total_cents," + PaymentReferenceColumn
                 + " FROM sale s JOIN payment p ON p.sale_id=s.id JOIN app_user u ON u.id=s.user_id JOIN terminal t ON t.id=s.terminal_id WHERE s.id=$id", ("$id", Id(saleId)));
             Guid operation, user, terminal, cash, payment; long sequence, received, applied, change, subtotal, total;
-            DateTimeOffset at; string cashierName, terminalName, method;
+            DateTimeOffset at; string cashierName, terminalName, method; string? reference;
             using (var reader = query.ExecuteReader())
             {
                 if (!reader.Read()) return null;
@@ -115,6 +129,7 @@ public sealed partial class SqliteLocalUnitOfWork
                 terminal=Guid.Parse(reader.GetString(3));terminalName=reader.GetString(4);cash=Guid.Parse(reader.GetString(5));sequence=reader.GetInt64(6);
                 at=Date(reader,7)!.Value;payment=Guid.Parse(reader.GetString(8));method=reader.GetString(9);applied=reader.GetInt64(10);
                 received=reader.GetInt64(11);change=reader.GetInt64(12);subtotal=reader.GetInt64(13);total=reader.GetInt64(14);
+                reference=reader.IsDBNull(15)?null:reader.GetString(15);
             }
             using var rows = Command("SELECT product_id,product_name,unit_price_cents,quantity,line_total_cents FROM sale_item WHERE sale_id=$id ORDER BY position", ("$id", Id(saleId)));
             using var itemReader = rows.ExecuteReader(); var items = new List<SaleItem>();
@@ -124,7 +139,7 @@ public sealed partial class SqliteLocalUnitOfWork
                 if (item.LineTotal.Cents != itemReader.GetInt64(4)) throw new InvalidDataException("La partida histórica no es coherente.");
                 items.Add(item);
             }
-            var sale = new Sale(saleId, operation, user, terminal, cash, sequence, at, items, payment, new(received));
+            var sale = new Sale(saleId, operation, user, terminal, cash, sequence, at, items, payment, new(received), Payment.Parse(method), reference);
             if (method != sale.Payment.Method || applied != sale.Payment.Applied.Cents || change != sale.Payment.Change.Cents
                 || subtotal != sale.Subtotal.Cents || total != sale.Total.Cents)
                 throw new InvalidDataException("La venta histórica no es coherente.");

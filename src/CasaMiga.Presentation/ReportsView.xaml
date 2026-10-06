@@ -23,6 +23,16 @@
      <DataGridTextColumn Header="Neto" Binding="{Binding Net}" Width="120"/>
     </DataGrid.Columns>
    </DataGrid>
+   <TextBlock Text="Por forma de pago" Style="{StaticResource SectionTitleText}" Margin="0,16,0,6"/>
+   <DataGrid ItemsSource="{Binding Payments}" Height="120" IsReadOnly="True" AutoGenerateColumns="False" AutomationProperties.Name="Ventas por forma de pago">
+    <DataGrid.Columns>
+     <DataGridTextColumn Header="Forma de pago" Binding="{Binding Method}" Width="*"/>
+     <DataGridTextColumn Header="Ventas" Binding="{Binding Sales}" Width="100"/>
+     <DataGridTextColumn Header="Vendido" Binding="{Binding Sold}" Width="130"/>
+     <DataGridTextColumn Header="Devuelto" Binding="{Binding Refunded}" Width="130"/>
+     <DataGridTextColumn Header="Neto" Binding="{Binding Net}" Width="130"/>
+    </DataGrid.Columns>
+   </DataGrid>
    <TextBlock Text="Por cajero" Style="{StaticResource SectionTitleText}" Margin="0,16,0,6"/>
    <DataGrid ItemsSource="{Binding Cashiers}" Height="140" IsReadOnly="True" AutoGenerateColumns="False" AutomationProperties.Name="Ventas por cajero">
     <DataGrid.Columns>

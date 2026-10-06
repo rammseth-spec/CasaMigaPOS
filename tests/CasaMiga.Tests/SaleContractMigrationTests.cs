@@ -36,7 +36,7 @@ public sealed class SaleContractMigrationTests
     [TestCleanup] public void Cleanup()=>Directory.Delete(root,true);
     private void Insert(SqliteConnection c,SqliteTransaction tx,int version,string? evaluation)
     {
-        Execute(c,tx,"INSERT INTO sale_item VALUES('new',1,'p','P',100,1,100); INSERT INTO payment VALUES('pay2','new','CASH',100,100,0)");
+        Execute(c,tx,"INSERT INTO sale_item VALUES('new',1,'p','P',100,1,100); INSERT INTO payment(id,sale_id,method,applied_cents,received_cents,change_cents) VALUES('pay2','new','CASH',100,100,0)");
         Execute(c,tx,$"INSERT INTO sale VALUES('new','op2','u','t','c',2,'2026-09-12T00:00:00Z',100,100,{version},{(evaluation is null?"NULL":"'"+evaluation+"'")})");
     }
     [TestMethod] public void LegacyAfterElevenRemainsLegacyAndColumnsAreImmutable()

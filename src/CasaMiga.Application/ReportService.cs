@@ -9,13 +9,20 @@ public sealed record ProductReportRow(Guid ProductId, string ProductName, long Q
     public Money Net => Sold - Refunded;
 }
 public sealed record CashierReportRow(Guid UserId, string Name, int Sales, Money Sold);
+public sealed record PaymentReportRow(PaymentMethod Method, int Sales, Money Sold, Money Refunded)
+{
+    public Money Net => Sold - Refunded;
+}
 public sealed record SessionReportRow(Guid SessionId, string OpenedBy, DateTimeOffset OpenedAt, DateTimeOffset? ClosedAt, bool Closed,
     Money Opening, Money CashSales, Money Refunds, Money? Counted, Money? Difference)
 {
     public Money Expected => Opening + CashSales - Refunds;
 }
 public sealed record SalesReportData(int SaleCount, Money Gross, Money Refunded, IReadOnlyList<ProductReportRow> Products,
-    IReadOnlyList<CashierReportRow> Cashiers, IReadOnlyList<SessionReportRow> Sessions);
+    IReadOnlyList<CashierReportRow> Cashiers, IReadOnlyList<SessionReportRow> Sessions, IReadOnlyList<PaymentReportRow>? Payments = null)
+{
+    public IReadOnlyList<PaymentReportRow> ByMethod => Payments ?? [];
+}
 public sealed record SalesReport(DateOnly From, DateOnly Through, SalesReportData Data)
 {
     public Money Net => Data.Gross - Data.Refunded;
@@ -55,6 +62,9 @@ public sealed class ReportService(ILocalReadUnitOfWork database, UserSession ide
         Row();
         Row("Producto", "Piezas vendidas", "Vendido", "Piezas devueltas", "Devuelto", "Neto");
         foreach (var p in report.Data.Products) Row(p.ProductName, p.QuantitySold, Amount(p.Sold), p.QuantityRefunded, Amount(p.Refunded), Amount(p.Net));
+        Row();
+        Row("Forma de pago", "Ventas", "Vendido", "Devuelto", "Neto");
+        foreach (var m in report.Data.ByMethod) Row(Payment.Label(m.Method), m.Sales, Amount(m.Sold), Amount(m.Refunded), Amount(m.Net));
         Row();
         Row("Cajero", "Ventas", "Vendido");
         foreach (var c in report.Data.Cashiers) Row(c.Name, c.Sales, Amount(c.Sold));

@@ -67,7 +67,7 @@ public sealed class RefundService(ILocalUnitOfWork database, UserSession identit
 
                 var session = store.FindOpenSession(terminalId)!.Session;
                 var available = session.OpeningFund + store.CashSalesTotal(session.Id) - store.CashRefundsTotal(session.Id);
-                if (total.Cents > available.Cents)
+                if (options.Detail.Sale.Payment.Kind == PaymentMethod.Cash && total.Cents > available.Cents)
                     throw new RefundException($"No hay suficiente efectivo esperado en caja para devolver {Format(total)}.");
 
                 var refund = new SaleRefundRecord(Guid.NewGuid(), operation, saleId, kind, reason, actor.Id, actor.DisplayName,

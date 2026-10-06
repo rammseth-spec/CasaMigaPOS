@@ -1,11 +1,22 @@
-<Window x:Class="CasaMiga.Presentation.CheckoutDialog" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Cobro en efectivo" Width="640" SizeToContent="Height" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" Background="{DynamicResource CanvasBrush}" Closing="DialogClosing">
+<Window x:Class="CasaMiga.Presentation.CheckoutDialog" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Cobro" Width="640" SizeToContent="Height" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" Background="{DynamicResource CanvasBrush}" Closing="DialogClosing">
  <StackPanel Margin="28">
-  <TextBlock Text="Cobro en efectivo" FontSize="26" FontWeight="SemiBold" Margin="0,0,0,16"/>
+  <TextBlock Text="Cobro" FontSize="26" FontWeight="SemiBold" Margin="0,0,0,16"/>
   <StackPanel Visibility="{Binding IsCapture,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding Ready}">
    <TextBlock Text="Total a cobrar"/><TextBlock Text="{Binding Total}" FontSize="28" FontWeight="Bold" Margin="0,4,0,16"/>
-   <TextBlock Text="Efectivo recibido (MXN)"/><TextBox x:Name="ReceivedInput" Text="{Binding Received,UpdateSourceTrigger=PropertyChanged}" MaxLength="24" Margin="0,4,0,12" AutomationProperties.Name="Efectivo recibido"/>
-   <DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Change}" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="Cambio"/></DockPanel>
-   <TextBlock Text="Confirma sólo después de recibir el efectivo. Volver conserva el carrito." FontSize="15" Margin="0,12,0,0"/>
+   <TextBlock Text="Forma de pago"/>
+   <WrapPanel Margin="0,6,0,14">
+    <RadioButton Content="Efectivo" IsChecked="{Binding IsCash}" GroupName="PaymentMethod" FontSize="17" Margin="0,0,24,0" AutomationProperties.Name="Pago en efectivo"/>
+    <RadioButton Content="Tarjeta" IsChecked="{Binding IsCard}" GroupName="PaymentMethod" FontSize="17" Margin="0,0,24,0" AutomationProperties.Name="Pago con tarjeta"/>
+    <RadioButton Content="Transferencia" IsChecked="{Binding IsTransfer}" GroupName="PaymentMethod" FontSize="17" AutomationProperties.Name="Pago por transferencia"/>
+   </WrapPanel>
+   <StackPanel Visibility="{Binding ShowCashFields,Converter={StaticResource VisibleWhen}}">
+    <TextBlock Text="Efectivo recibido (MXN)"/><TextBox x:Name="ReceivedInput" Text="{Binding Received,UpdateSourceTrigger=PropertyChanged}" MaxLength="24" Margin="0,4,0,12" AutomationProperties.Name="Efectivo recibido"/>
+    <DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Change}" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="Cambio"/></DockPanel>
+   </StackPanel>
+   <StackPanel Visibility="{Binding ShowReference,Converter={StaticResource VisibleWhen}}">
+    <TextBlock Text="Referencia (opcional) · últimos 4 dígitos, autorización o folio"/><TextBox Text="{Binding Reference,UpdateSourceTrigger=PropertyChanged}" MaxLength="40" Margin="0,4,0,12" AutomationProperties.Name="Referencia del pago"/>
+   </StackPanel>
+   <TextBlock Text="{Binding Instructions}" FontSize="15" TextWrapping="Wrap" Margin="0,12,0,0"/>
   </StackPanel>
   <TextBlock Text="Resultado pendiente: verifica este intento antes de volver a cobrar." Visibility="{Binding Recovery,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,16"/>
   <TextBlock Text="{Binding ResultText}" Visibility="{Binding HasResult,Converter={StaticResource VisibleWhen}}" FontSize="20" Margin="0,0,0,16"/>

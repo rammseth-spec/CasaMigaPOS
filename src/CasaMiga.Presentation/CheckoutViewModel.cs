@@ -10,13 +10,23 @@ public sealed class CheckoutViewModel(CheckoutService service, ReceiptService re
     private CheckoutRequest? attempt;
     private bool printRequested;
     public string Received { get=>received; set {received=value;Notify();} }
+    private PaymentMethod method=PaymentMethod.Cash;
+    public PaymentMethod Method { get=>method; set {method=value;Notify();} }
+    public bool IsCash { get=>method==PaymentMethod.Cash; set {if(value)Method=PaymentMethod.Cash;} }
+    public bool IsCard { get=>method==PaymentMethod.Card; set {if(value)Method=PaymentMethod.Card;} }
+    public bool IsTransfer { get=>method==PaymentMethod.Transfer; set {if(value)Method=PaymentMethod.Transfer;} }
+    public bool ShowCashFields=>IsCapture&&IsCash;
+    public bool ShowReference=>IsCapture&&!IsCash;
+    public string Reference { get; set; }="";
+    public string Instructions=>IsCash?"Confirma sólo después de recibir el efectivo. Volver conserva el carrito."
+        :"Confirma sólo cuando la terminal bancaria o la transferencia muestre el pago aprobado por el total exacto.";
     public bool Busy { get; private set; }
     public bool Ready=>!Busy;
     public bool Acknowledged { get; private set; }
     public bool CanClose=>!Busy && (Result is null || Acknowledged);
     public bool Recovery { get; private set; }=recovery;
     public bool IsCapture=>!Recovery && Result is null;
-    public bool CanConfirm=>!Busy && IsCapture && TryReceived(out _);
+    public bool CanConfirm=>!Busy && IsCapture && (!IsCash || TryReceived(out _));
     public Sale? Result { get; private set; }
     public string Total=>PosViewModel.Format(total);
     public string Change=>TryReceived(out var amount)?PosViewModel.Format(total.ChangeFrom(amount)):"—";
@@ -24,7 +34,9 @@ public sealed class CheckoutViewModel(CheckoutService service, ReceiptService re
     public string PrintMessage { get; private set; }="";
     public ReceiptPrintResult? PrintResult { get; private set; }
     public bool CanRetryPrint=>!Busy && Result is not null && PrintResult?.State is ReceiptPrintState.Requested or ReceiptPrintState.Failed or ReceiptPrintState.Unknown;
-    public string ResultText=>Result is { } sale ? $"Venta confirmada\nFolio: {sale.Folio}\nTotal: {PosViewModel.Format(sale.Total)}\nRecibido: {PosViewModel.Format(sale.Payment.Received)}\nCambio: {PosViewModel.Format(sale.Payment.Change)}" : "";
+    public string ResultText=>Result is not { } sale ? "" : sale.Payment.Kind==PaymentMethod.Cash
+        ? $"Venta confirmada\nFolio: {sale.Folio}\nTotal: {PosViewModel.Format(sale.Total)}\nRecibido: {PosViewModel.Format(sale.Payment.Received)}\nCambio: {PosViewModel.Format(sale.Payment.Change)}"
+        : $"Venta confirmada\nFolio: {sale.Folio}\nTotal: {PosViewModel.Format(sale.Total)}\nPago: {Payment.Label(sale.Payment.Kind)}{(sale.Payment.Reference is { } r ? $" · Ref. {r}" : "")}";
     public bool HasResult=>Result is not null;
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Notify()=>PropertyChanged?.Invoke(this,new PropertyChangedEventArgs(null));
@@ -37,9 +49,11 @@ public sealed class CheckoutViewModel(CheckoutService service, ReceiptService re
     public Task ConfirmAsync(bool print)=>Run(async()=>
     {
         if(!IsCapture)return;
-        if(!TryReceived(out var amount))throw new CheckoutException("El recibido debe cubrir el total, con máximo dos decimales.");
+        var amount=total;
+        if(IsCash&&!TryReceived(out amount))throw new CheckoutException("El recibido debe cubrir el total, con máximo dos decimales.");
         printRequested=print;
-        attempt=await Task.Run(()=>service.Prepare(amount));
+        var chosen=method;var reference=IsCash?null:Reference;
+        attempt=await Task.Run(()=>service.Prepare(amount,chosen,reference));
         Result=await Task.Run(()=>service.Confirm(attempt));
         if(print)await PrintOriginalAsync();
         else PrintMessage="Venta cobrada correctamente. Quedó registrada en Historial sin imprimir ticket.";
@@ -82,7 +96,7 @@ public sealed class CheckoutViewModel(CheckoutService service, ReceiptService re
         catch(AccessDeniedException e){Message=e.Message;}
         catch(CheckoutInventoryException e){Message=CheckoutInventoryMessages.Format(e,attempt?.Cart.Lines.FirstOrDefault(l=>l.ProductId==e.ProductId)?.ProductName);}
         catch(CheckoutException e){Message=e.Message;}
-        catch(ArgumentException){Message="Revisa el importe recibido. El cobro no pudo completarse.";}
+        catch(ArgumentException e){Message=IsCash?"Revisa el importe recibido. El cobro no pudo completarse.":e.Message;}
         catch(OverflowException){Message="El importe excede el límite permitido. No se confirmó una nueva venta.";}
         catch(Exception){Message="No se pudo completar o verificar el cobro. Revisa el resultado pendiente antes de recibir dinero nuevamente.";}
         finally

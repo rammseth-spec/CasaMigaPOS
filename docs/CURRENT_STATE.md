@@ -1,3 +1,7 @@
+# Formas de pago — 06/10/2026
+
+**Implementado; smoke manual pendiente.** Migración 020: `payment` admite `CASH`, `CARD`, `TRANSFER` y referencia opcional; tarjeta/transferencia por el total exacto sin cambio. Un método por venta. Esperado de caja sólo cuenta efectivo; devoluciones de ventas no-efectivo no tocan el cajón. Cobro con selector de método; historial, ticket y reportes muestran el método. Ticket de efectivo sin cambios. Ver [PAYMENTS.md](PAYMENTS.md). Suite **770/770** (611 + 159), Release 0/0.
+
 # Reportes y corte del día — 06/10/2026
 
 **Implementado; smoke manual pendiente.** Pantalla **Reportes** (`sales.view`: Administrator, Manager): periodo por días locales (máx. 366), resumen (ventas, vendido, devuelto, neto, ticket promedio), por producto, por cajero y cortes de caja de los turnos abiertos en el periodo (fondo, ventas, devoluciones, esperado, contado, diferencia). Ventas cuentan por fecha de venta y devoluciones por fecha de devolución. Exportación CSV UTF-8 con BOM y neutralización de fórmulas. Sin migración. Suite **761/761** (602 + 159), Release 0/0.

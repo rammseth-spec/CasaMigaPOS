@@ -21,7 +21,7 @@ public sealed partial class SqliteLocalUnitOfWork
         public Money CashRefundsTotal(Guid session)
         {
             if (!HasRefunds()) return new(0);
-            using var query = Command("SELECT COALESCE(SUM(total_cents),0) FROM sale_refund WHERE cash_session_id=$cash", ("$cash", Id(session)));
+            using var query = Command("SELECT COALESCE(SUM(r.total_cents),0) FROM sale_refund r JOIN payment p ON p.sale_id=r.sale_id WHERE r.cash_session_id=$cash AND p.method='CASH'", ("$cash", Id(session)));
             return new(Convert.ToInt64(query.ExecuteScalar()));
         }
 

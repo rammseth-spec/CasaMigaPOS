@@ -231,7 +231,7 @@ public sealed class RefundTests : SalesFixture
         Assert.AreEqual(before, Snapshot());
 
         old.Initialize(); old.Validate();
-        Assert.AreEqual(19L, Scalar("SELECT max(version) FROM schema_migration"));
+        Assert.AreEqual((long)Database.LatestVersion, Scalar("SELECT max(version) FROM schema_migration"));
         Assert.AreEqual(before, Snapshot(), "Sequences, sent marks and attempts survive the outbox rebuild.");
         var beforeCount = Scalar("SELECT count(*) FROM sync_outbox");
         new CashClosingService(oldWork, session, clock).SubmitCount(oldWork.Run(s => s.FindOpenSession(terminal.Id))!.Session.Id, new Money(100));

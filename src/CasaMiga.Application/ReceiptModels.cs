@@ -61,7 +61,7 @@ public sealed class ReceiptDocument
         ArgumentNullException.ThrowIfNull(items);ArgumentNullException.ThrowIfNull(business);
         if (version != CurrentVersion || string.IsNullOrWhiteSpace(folio) || folio.Length>80 || confirmedAt==default || userId == Guid.Empty || terminalId == Guid.Empty
             || string.IsNullOrWhiteSpace(cashierName) || string.IsNullOrWhiteSpace(terminalName) || items.Count == 0
-            || paymentMethod != "CASH" || string.IsNullOrWhiteSpace(business.DisplayName)
+            || paymentMethod is not ("CASH" or "CARD" or "TRANSFER") || string.IsNullOrWhiteSpace(business.DisplayName)
             || string.IsNullOrWhiteSpace(business.ClosingMessage)) throw new ArgumentException("Datos de ticket inválidos.");
         var copy = items.ToArray();
         if(copy.Select(item=>item.ProductId).Distinct().Count()!=copy.Length)throw new ArgumentException("Las partidas de ticket deben ser únicas.");
@@ -72,7 +72,8 @@ public sealed class ReceiptDocument
                 || item.LineTotal.Cents<0 || item.LineTotal != item.UnitPrice.Multiply(item.Quantity)) throw new ArgumentException("Partida de ticket inválida.");
             calculated += item.LineTotal;
         }
-        if (subtotal.Cents<0 || received.Cents<0 || change.Cents<0 || calculated != subtotal || total != subtotal || applied != total || applied.ChangeFrom(received) != change)
+        if (subtotal.Cents<0 || received.Cents<0 || change.Cents<0 || calculated != subtotal || total != subtotal || applied != total || applied.ChangeFrom(received) != change
+            || (paymentMethod != "CASH" && received != applied))
             throw new ArgumentException("Importes de ticket incoherentes.");
         Version = version; Folio = folio.Trim(); ConfirmedAt = confirmedAt; UserId = userId; CashierName = cashierName.Trim();
         TerminalId = terminalId; TerminalName = terminalName.Trim(); Items = Array.AsReadOnly(copy); Subtotal = subtotal; Total = total;

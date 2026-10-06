@@ -47,6 +47,21 @@ public sealed partial class SqliteLocalUnitOfWork
             using (var r = byUser.ExecuteReader())
                 while (r.Read()) cashiers.Add(new(Guid.Parse(r.GetString(0)), r.GetString(1), r.GetInt32(2), new(r.GetInt64(3))));
 
+            var methods = new Dictionary<string, (int Sales, long Sold, long Refunded)>();
+            using (var byMethod = Command("SELECT p.method,count(*),SUM(p.applied_cents) FROM sale s JOIN payment p ON p.sale_id=s.id"
+                + " WHERE s.confirmed_utc>=$from AND s.confirmed_utc<$until GROUP BY p.method", range))
+            using (var r = byMethod.ExecuteReader())
+                while (r.Read()) methods[r.GetString(0)] = (r.GetInt32(1), r.GetInt64(2), 0);
+            if (HasRefunds())
+            {
+                using var back = Command("SELECT p.method,SUM(f.total_cents) FROM sale_refund f JOIN payment p ON p.sale_id=f.sale_id"
+                    + " WHERE f.refunded_utc>=$from AND f.refunded_utc<$until GROUP BY p.method", range);
+                using var r = back.ExecuteReader();
+                while (r.Read()) { var m = methods.GetValueOrDefault(r.GetString(0)); methods[r.GetString(0)] = (m.Sales, m.Sold, m.Refunded + r.GetInt64(1)); }
+            }
+            var paymentRows = methods.Select(m => new PaymentReportRow(Payment.Parse(m.Key), m.Value.Sales, new(m.Value.Sold), new(m.Value.Refunded)))
+                .OrderBy(m => m.Method).ToList();
+
             var sessions = new List<(Guid Id, string By, DateTimeOffset Opened, DateTimeOffset? Closed, bool IsClosed, long Opening, long? Counted)>();
             using (var shifts = Command("SELECT c.id,u.display_name,c.opened_utc,c.closed_utc,c.state,c.opening_cents,COALESCE(c.counted_cents,n.counted_cents)"
                 + " FROM cash_session c JOIN app_user u ON u.id=c.opened_by LEFT JOIN cash_count n ON n.session_id=c.id"
@@ -65,7 +80,7 @@ public sealed partial class SqliteLocalUnitOfWork
 
             var productRows = products.Select(p => new ProductReportRow(p.Key, p.Value.Name, p.Value.Qty, new(p.Value.Sold), p.Value.RQty, new(p.Value.Refunded)))
                 .OrderByDescending(p => p.Net.Cents).ThenBy(p => p.ProductName, StringComparer.CurrentCulture).ToList();
-            return new(saleCount, new(gross), new(refunded), productRows, cashiers, sessionRows);
+            return new(saleCount, new(gross), new(refunded), productRows, cashiers, sessionRows, paymentRows);
         }
     }
 }

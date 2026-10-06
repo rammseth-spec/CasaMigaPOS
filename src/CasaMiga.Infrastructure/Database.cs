@@ -117,6 +117,11 @@ public sealed class Database(string path)
                     + " AND (SELECT count(*) FROM role_permission WHERE permission_name='sales.refund')=2";
                 if (Convert.ToInt64(command.ExecuteScalar()) != 1) throw new InvalidOperationException("La migración de devoluciones no creó sus estructuras.");
             }
+            if (i + 1 == 20)
+            {
+                command.CommandText = "SELECT (SELECT count(*) FROM pragma_table_info('payment') WHERE name='reference')=1 AND (SELECT count(*) FROM sqlite_master WHERE name IN ('payment','payment_no_update','payment_no_delete','payment_no_append','sale_refund_complete','sale_complete'))=6 AND (SELECT count(*) FROM sqlite_master WHERE name='payment_020')=0";
+                if (Convert.ToInt64(command.ExecuteScalar()) != 1) throw new InvalidOperationException("La migración de formas de pago no creó sus estructuras.");
+            }
             command.CommandText = "INSERT INTO schema_migration VALUES($v,$hash,$at)";
             command.Parameters.AddWithValue("$hash", hash);
             command.Parameters.AddWithValue("$at", DateTimeOffset.UtcNow.ToString("O"));

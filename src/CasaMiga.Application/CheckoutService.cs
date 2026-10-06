@@ -9,7 +9,7 @@ public interface ICheckoutJournal
     void Clear(Guid operation);
 }
 public class CheckoutException(string message) : Exception(message);
-public sealed record CheckoutRequest(Guid OperationId, Cart Cart, Money Received);
+public sealed record CheckoutRequest(Guid OperationId, Cart Cart, Money Received, PaymentMethod Method = PaymentMethod.Cash, string? Reference = null);
 
 public sealed class CheckoutService(ILocalUnitOfWork database, UserSession identity, IClock clock,
     Guid terminal, ICheckoutJournal journal, ICheckoutReceiptSnapshot? receiptSnapshot = null)
@@ -29,18 +29,21 @@ public sealed class CheckoutService(ILocalUnitOfWork database, UserSession ident
             || !store.HasPermission(actor.Id,"sales.complete")) throw new AccessDeniedException();
         return actor.Id;
     }
-    public CheckoutRequest Prepare(Money received) => identity.Synchronized(() =>
+    /// <summary>Tarjeta y transferencia se cobran por el total exacto; <paramref name="received"/> sólo aplica al efectivo.</summary>
+    public CheckoutRequest Prepare(Money received, PaymentMethod method = PaymentMethod.Cash, string? reference = null) => identity.Synchronized(() =>
     {
         if (HasPending) throw new CheckoutException("Hay un cobro pendiente de verificación.");
         var cart=identity.Cart ?? throw new CheckoutException("El carrito está vacío.");
-        ValidateCart(cart, received);
+        if(method!=PaymentMethod.Cash) received=cart.Subtotal;
+        reference=string.IsNullOrWhiteSpace(reference)?null:reference.Trim();
+        ValidateCart(cart, received, method, reference);
         Run(s=>{Authorize(s);ValidateContext(s,cart);return true;});
-        return new CheckoutRequest(Guid.NewGuid(),cart,received);
+        return new CheckoutRequest(Guid.NewGuid(),cart,received,method,reference);
     });
-    private static void ValidateCart(Cart cart, Money received)
+    private static void ValidateCart(Cart cart, Money received, PaymentMethod method = PaymentMethod.Cash, string? reference = null)
     {
         if(cart.IsEmpty) throw new CheckoutException("El carrito está vacío.");
-        _=cart.Subtotal.ChangeFrom(received);
+        _=new Payment(Guid.NewGuid(),cart.Subtotal,received,method,reference);
     }
     private CashSession ValidateContext(ILocalStore store, Cart cart)
     {
@@ -53,7 +56,7 @@ public sealed class CheckoutService(ILocalUnitOfWork database, UserSession ident
     }
     private static bool Matches(Sale sale, CheckoutRequest request) => sale.OperationId==request.OperationId
         && sale.UserId==request.Cart.UserId && sale.TerminalId==request.Cart.TerminalId && sale.CashSessionId==request.Cart.CashSessionId
-        && sale.Payment.Received==request.Received && sale.Items.SequenceEqual(request.Cart.Lines.Select(l=>new SaleItem(l.ProductId,l.ProductName,l.UnitPrice,l.Quantity)));
+        && sale.Payment.Received==request.Received && sale.Payment.Kind==request.Method && sale.Payment.Reference==request.Reference && sale.Items.SequenceEqual(request.Cart.Lines.Select(l=>new SaleItem(l.ProductId,l.ProductName,l.UnitPrice,l.Quantity)));
     private void Finish(Sale sale, CheckoutRequest? request)
     {
         // Do not clear a different cart when returning an old idempotent result.
@@ -66,7 +69,7 @@ public sealed class CheckoutService(ILocalUnitOfWork database, UserSession ident
         if(request.OperationId==Guid.Empty) throw new CheckoutException("Operación inválida.");
         if(request.Cart.UserId!=identity.Current?.Id || request.Cart.TerminalId!=terminal) throw new AccessDeniedException();
         Run(s=>Authorize(s));
-        ValidateCart(request.Cart,request.Received);
+        ValidateCart(request.Cart,request.Received,request.Method,request.Reference);
         var pending=journal.Read();
         if(pending is not null && pending!=request.OperationId) throw new CheckoutException("Verifica el cobro anterior.");
         var previousRequest=unresolved;
@@ -94,7 +97,7 @@ public sealed class CheckoutService(ILocalUnitOfWork database, UserSession ident
                 }
                 _=cash.OpeningFund + store.CashSalesTotal(cash.Id) + request.Cart.Subtotal;
                 var sale=new Sale(Guid.NewGuid(),request.OperationId,actor,terminal,cash.Id,store.NextSaleSequence(terminal),clock.UtcNow,
-                    request.Cart.Lines.Select(l=>new SaleItem(l.ProductId,l.ProductName,l.UnitPrice,l.Quantity)),Guid.NewGuid(),request.Received);
+                    request.Cart.Lines.Select(l=>new SaleItem(l.ProductId,l.ProductName,l.UnitPrice,l.Quantity)),Guid.NewGuid(),request.Received,request.Method,request.Reference);
                 store.AddSale(sale);
                 store.AddAudit(new(Guid.NewGuid(),actor,terminal,"sale.completed",sale.Id,sale.ConfirmedAt,
                     JsonSerializer.Serialize(new{operationId=sale.OperationId,folio=sale.Folio,cashSessionId=cash.Id,paymentId=sale.Payment.Id,

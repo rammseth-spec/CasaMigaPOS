@@ -82,6 +82,8 @@ public sealed partial class RecipePersistenceTests
             // Migration 017 only adds must_change_password and users.manage; compare the historical columns/rows.
             if(excludeProductionPermissions && table=="app_user")
                 q.CommandText="SELECT id,username,display_name,password_hash,role_name,active,failed_attempts,locked_until_utc,created_utc FROM app_user";
+            if(excludeProductionPermissions && table=="payment")
+                q.CommandText="SELECT id,sale_id,method,applied_cents,received_cents,change_cents FROM payment";
             if(excludeProductionPermissions && table is "permission" or "role_permission")
                 q.CommandText+=" WHERE "+(table=="permission"?"name":"permission_name")+" NOT IN ('recipe.view','recipe.configure','production.view','production.create','production.confirm','users.manage','sales.refund')";
             using var r=q.ExecuteReader();var rows=new List<string>();

@@ -14,6 +14,14 @@ public sealed record ProductReportView(ProductReportRow Row)
     public string RefundedAmount => Row.Refunded.Cents == 0 ? "" : ReportsViewModel.Format(Row.Refunded);
     public string Net => ReportsViewModel.Format(Row.Net);
 }
+public sealed record PaymentReportView(PaymentReportRow Row)
+{
+    public string Method => Payment.Label(Row.Method);
+    public int Sales => Row.Sales;
+    public string Sold => ReportsViewModel.Format(Row.Sold);
+    public string Refunded => Row.Refunded.Cents == 0 ? "" : ReportsViewModel.Format(Row.Refunded);
+    public string Net => ReportsViewModel.Format(Row.Net);
+}
 public sealed record CashierReportView(CashierReportRow Row)
 {
     public string Name => Row.Name;
@@ -43,6 +51,7 @@ public sealed class ReportsViewModel(ReportService service, Action<string, strin
     public bool HasReport => Report is not null;
     public IReadOnlyList<ProductReportView> Products { get; private set; } = [];
     public IReadOnlyList<CashierReportView> Cashiers { get; private set; } = [];
+    public IReadOnlyList<PaymentReportView> Payments { get; private set; } = [];
     public IReadOnlyList<SessionReportView> Sessions { get; private set; } = [];
     public string Summary => Report is not { } r ? "" :
         $"Ventas: {r.Data.SaleCount}   ·   Vendido: {Format(r.Data.Gross)}   ·   Devuelto: {Format(r.Data.Refunded)}   ·   Neto: {Format(r.Net)}   ·   Ticket promedio: {Format(r.AverageTicket)}";
@@ -70,6 +79,7 @@ public sealed class ReportsViewModel(ReportService service, Action<string, strin
             Report = await Task.Run(() => service.Sales(from, through));
             Products = Report.Data.Products.Select(p => new ProductReportView(p)).ToArray();
             Cashiers = Report.Data.Cashiers.Select(c => new CashierReportView(c)).ToArray();
+            Payments = Report.Data.ByMethod.Select(m => new PaymentReportView(m)).ToArray();
             Sessions = Report.Data.Sessions.Select(s => new SessionReportView(s)).ToArray();
         }
         catch (AccessDeniedException error) { Forget(); Message = error.Message; log("authorization.denied", null); }
@@ -81,7 +91,7 @@ public sealed class ReportsViewModel(ReportService service, Action<string, strin
     public string SuggestedFileName => Report is null ? "reporte.csv" : $"CasaMiga-ventas-{Report.From:yyyy-MM-dd}_{Report.Through:yyyy-MM-dd}.csv";
     public void Exported(string path) { Message = $"Reporte guardado en {path}"; log("report.exported", null); Notify(); }
     public void ExportFailed() { Message = "No se pudo guardar el archivo. Revisa la carpeta elegida."; Notify(); }
-    public void Forget() { Report = null; Products = []; Cashiers = []; Sessions = []; Message = ""; Notify(); }
+    public void Forget() { Report = null; Products = []; Cashiers = []; Payments = []; Sessions = []; Message = ""; Notify(); }
 
     private static DateOnly Parse(string value, string label)
     {

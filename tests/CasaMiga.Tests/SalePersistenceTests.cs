@@ -81,7 +81,7 @@ public sealed class SalePersistenceTests : SalesFixture
     }
     [TestMethod] public void OrphanPaymentCannotCommit()
     {
-        Assert.ThrowsExactly<SqliteException>(()=>Sql($"INSERT INTO payment VALUES('{Guid.NewGuid()}','{Guid.NewGuid()}','CASH',0,0,0)"));
+        Assert.ThrowsExactly<SqliteException>(()=>Sql($"INSERT INTO payment(id,sale_id,method,applied_cents,received_cents,change_cents) VALUES('{Guid.NewGuid()}','{Guid.NewGuid()}','CASH',0,0,0)"));
     }
     [TestMethod] public void ConfirmedRowsCannotBeEditedDeletedOrAppended()
     {

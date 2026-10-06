@@ -11,7 +11,7 @@ public sealed record SalesHistoryRowView(SalesHistoryRow Row)
     public string Folio => Row.Folio;
     public string Date => Row.ConfirmedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss zzz", CultureInfo.InvariantCulture);
     public string Total => Format(Row.Total);
-    public string Method => Row.PaymentMethod;
+    public string Method => Payment.Label(Payment.Parse(Row.PaymentMethod));
     public string Cashier => Row.CashierName;
     public string Terminal => Row.TerminalName;
     public string CashSession => Row.CashSessionId.ToString("D");
@@ -81,7 +81,7 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
         ? "REINTENTAR REIMPRESIÓN":"REIMPRIMIR TICKET";
     public string DetailTitle=>Detail is null?"":$"Venta {Detail.Sale.Folio}";
     public string DetailContext=>Detail is null?"":$"Fecha: {Detail.Sale.ConfirmedAt.ToLocalTime():dd/MM/yyyy HH:mm:ss zzz}\nCajero actual: {Detail.CashierName}\nUserId: {Detail.Sale.UserId:D}\nTerminal actual: {Detail.TerminalName}\nTerminalId: {Detail.Sale.TerminalId:D}\nCashSessionId: {Detail.Sale.CashSessionId:D}\nSaleId: {Detail.Sale.Id:D}";
-    public string DetailPayment=>Detail is null?"":$"Subtotal: {Format(Detail.Sale.Subtotal)}\nTotal: {Format(Detail.Sale.Total)}\nMétodo: {Detail.Sale.Payment.Method}\nAplicado: {Format(Detail.Sale.Payment.Applied)}\nRecibido: {Format(Detail.Sale.Payment.Received)}\nCambio: {Format(Detail.Sale.Payment.Change)}";
+    public string DetailPayment=>Detail is null?"":$"Subtotal: {Format(Detail.Sale.Subtotal)}\nTotal: {Format(Detail.Sale.Total)}\nMétodo: {Payment.Label(Detail.Sale.Payment.Kind)}{(Detail.Sale.Payment.Reference is { } reference ? $" · Ref. {reference}" : "")}\nAplicado: {Format(Detail.Sale.Payment.Applied)}\nRecibido: {Format(Detail.Sale.Payment.Received)}\nCambio: {Format(Detail.Sale.Payment.Change)}";
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Notify()=>PropertyChanged?.Invoke(this,new PropertyChangedEventArgs(null));
     private static string Format(Money value)=>(value.Cents/100m).ToString("C2",CultureInfo.GetCultureInfo("es-MX"));
