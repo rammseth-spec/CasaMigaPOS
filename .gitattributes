@@ -5,6 +5,7 @@
 *.ps1 text eol=crlf
 *.pdf binary
 *.png binary
+*.jpg binary
 *.ico binary
 # Applied migrations are hashed byte-for-byte; never normalize their line endings.
 migrations/*.sql -text

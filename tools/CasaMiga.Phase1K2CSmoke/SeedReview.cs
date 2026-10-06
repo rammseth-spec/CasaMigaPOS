@@ -4,20 +4,31 @@ using System.Text.Json;
 using CasaMiga.Application;
 using CasaMiga.Domain;
 using CasaMiga.Infrastructure;
+using CasaMiga.Presentation;
 using Microsoft.VisualBasic.FileIO;
 
 /// <summary>
-/// Prepara una copia de revisión NUEVA con el catálogo autorizado v2 versionado en docs/catalog (sin fotos: los mosaicos
-/// originales no están en Git). Crea administrador y un cajero con contraseña temporal; las credenciales se imprimen una sola vez.
+/// Prepara una copia de revisión NUEVA con el catálogo autorizado v2 versionado en docs/catalog.
+/// Opcional: fotos provisionales por SKU (--photos) y ventas de prueba de los últimos días (--demo-days) hechas con los
+/// servicios reales (caja, cobro, devoluciones, cierre), de modo que respetan todas las reglas de la base.
 /// Exige carpeta nueva y vacía: nunca toca una instalación existente. Herramienta de desarrollo; no se instala en las cajas.
 /// </summary>
 internal static class SeedReview
 {
     private sealed record Row(int Id, string Name, int PriceMxn, string Category, string Note);
+    private sealed class DemoClock : IClock { public DateTimeOffset UtcNow { get; set; } }
 
-    public static int Run(string csvPath, string targetPath)
+    public static int Run(string[] args)
     {
-        var target = Path.GetFullPath(targetPath);
+        if (args.Length < 2) throw new ArgumentException("Uso: seed-review <catálogo csv> <carpeta nueva> [--photos <carpeta>] [--demo-days N]");
+        var csvPath = args[0]; var target = Path.GetFullPath(args[1]);
+        string? photos = null; var demoDays = 0;
+        for (int i = 2; i < args.Length; i++)
+        {
+            if (args[i] == "--photos" && i + 1 < args.Length) photos = Path.GetFullPath(args[++i]);
+            else if (args[i] == "--demo-days" && i + 1 < args.Length && int.TryParse(args[++i], out var days) && days is >= 1 and <= 60) demoDays = days;
+            else throw new ArgumentException($"Opción no reconocida: {args[i]}");
+        }
         if (!Path.IsPathFullyQualified(target) || target.StartsWith(@"\\", StringComparison.Ordinal)) throw new ArgumentException("Se requiere una ruta local absoluta.");
         if (Directory.Exists(target) && Directory.EnumerateFileSystemEntries(target).Any()) throw new InvalidOperationException("La copia de revisión requiere una carpeta nueva y vacía.");
         var rows = Read(csvPath);
@@ -25,9 +36,11 @@ internal static class SeedReview
         using var lease = new DirectoryLease(target);
         var clock = new SystemClock();
         new FoundationRuntime(new FoundationOptions(target, true)).Start();
-        var unit = new SqliteLocalUnitOfWork(new Database(Path.Combine(target, "casamiga.db")));
+        var database = new Database(Path.Combine(target, "casamiga.db"));
+        var unit = new SqliteLocalUnitOfWork(database);
         var terminal = TerminalConfiguration.LoadOrCreate(target);
-        var session = new UserSession(new CheckoutJournal(target));
+        var journal = new CheckoutJournal(target);
+        var session = new UserSession(journal);
         var identity = new IdentityService(unit, new LocalPasswords(), clock, session);
 
         var adminPassword = PasswordPolicy.GenerateTemporary();
@@ -39,16 +52,147 @@ internal static class SeedReview
         var categories = new Dictionary<string, Guid>(StringComparer.Ordinal);
         foreach (var name in rows.Select(r => r.Category).Distinct(StringComparer.Ordinal))
             categories.Add(name, catalog.CreateCategory(name, "Catálogo autorizado v2 · docs/catalog", categories.Count).Id);
+        var products = new List<(Row Row, Product Product)>();
         foreach (var row in rows)
-            catalog.CreateProduct(categories[row.Category], $"CM-{row.Id:000}", row.Name, row.Note, new Money(checked(row.PriceMxn * 100L)), false);
-        session.SignOut();
+            products.Add((row, catalog.CreateProduct(categories[row.Category], $"CM-{row.Id:000}", row.Name, row.Note, new Money(checked(row.PriceMxn * 100L)), false)));
+
+        var imported = 0;
+        if (photos is not null)
+        {
+            var photoService = new ProductPhotoService(new SqliteProductPhotoStore(database), new ProductPhotoFileStore(target), new WpfProductPhotoProcessor(), session, clock, terminal.Id);
+            foreach (var (row, product) in products)
+            {
+                var file = Path.Combine(photos, $"CM-{row.Id:000}.jpg");
+                if (!File.Exists(file)) continue;
+                using var input = File.OpenRead(file);
+                var edge = ImageEdge(file);
+                photoService.Import(new(product.Id, 0, Guid.NewGuid(), Path.GetFileName(file), "PROVISIONAL", new PhotoCrop(0, 0, edge)), input);
+                imported++;
+            }
+        }
+
+        var demo = demoDays > 0 ? SeedSales(unit, journal, session, identity, adminPassword, terminal, products, demoDays) : null;
+        if (session.Current is not null) session.SignOut();
 
         Console.WriteLine(JsonSerializer.Serialize(new
         {
-            Target = target, Terminal = terminal.Name, Categories = categories.Count, Products = rows.Count,
-            Admin = "admin", AdminPassword = adminPassword, Cashier = "cajero1", CashierTemporaryPassword = cashierTemporary
+            Target = target, Terminal = terminal.Name, Categories = categories.Count, Products = rows.Count, Photos = imported,
+            Admin = "admin", AdminPassword = adminPassword, Cashier = "cajero1", CashierTemporaryPassword = cashierTemporary,
+            DemoSales = demo?.Sales ?? 0, DemoRefunds = demo?.Refunds ?? 0, DemoShifts = demo?.Shifts ?? 0, DemoCashiers = demo?.Cashiers
         }));
         return 0;
+    }
+
+    private static int ImageEdge(string file)
+    {
+        using var stream = File.OpenRead(file);
+        var frame = System.Windows.Media.Imaging.BitmapFrame.Create(stream, System.Windows.Media.Imaging.BitmapCreateOptions.DelayCreation, System.Windows.Media.Imaging.BitmapCacheOption.None);
+        return Math.Min(frame.PixelWidth, frame.PixelHeight);
+    }
+
+    private sealed record DemoResult(int Sales, int Refunds, int Shifts, Dictionary<string, string> Cashiers);
+
+    /// <summary>Ventas sintéticas deterministas (semilla fija) de los últimos días, cerrando cada turno; hoy queda sin caja abierta.</summary>
+    private static DemoResult SeedSales(SqliteLocalUnitOfWork unit, CheckoutJournal journal, UserSession session, IdentityService identity, string adminPassword,
+        TerminalIdentity terminal, List<(Row Row, Product Product)> products, int days)
+    {
+        var random = new Random(2026);
+        var demoClock = new DemoClock();
+        var cashiers = new Dictionary<string, string>();
+        foreach (var (user, display) in new[] { ("ana", "Cajera Ana"), ("luis", "Cajero Luis") })
+        {
+            var temporary = identity.CreateUser(user, display, "Cashier");
+            var password = PasswordPolicy.GenerateTemporary();
+            identity.ChangePassword(user, temporary, password);
+            cashiers[user] = password;
+        }
+        session.SignOut();
+        var cash = new CashService(unit, session, demoClock);
+        var closing = new CashClosingService(unit, session, demoClock);
+        var pos = new PosService(unit, session, terminal.Id);
+        var checkout = new CheckoutService(unit, session, demoClock, terminal.Id, journal);
+        var refunds = new RefundService(unit, session, demoClock, terminal.Id);
+
+        // Popularidad relativa por SKU (conchas, bolillo, cuernito y café se venden más; octubre: pan de muerto).
+        var weight = new Dictionary<int, int> { [1] = 12, [2] = 10, [3] = 9, [4] = 7, [5] = 3, [6] = 6, [7] = 6, [8] = 4, [9] = 3, [10] = 4, [11] = 3, [12] = 4, [13] = 6,
+            [14] = 3, [15] = 2, [16] = 3, [17] = 4, [18] = 3, [19] = 3, [20] = 6, [21] = 3, [22] = 3, [23] = 3, [24] = 8, [25] = 2, [26] = 2 };
+        var hours = new (int Hour, int Weight)[] { (7, 6), (8, 10), (9, 9), (10, 6), (11, 4), (12, 3), (13, 4), (14, 3), (15, 3), (16, 4), (17, 7), (18, 9), (19, 7), (20, 3) };
+        var reasons = new[] { "Pan aplastado", "Cliente cambió de opinión", "Cobro duplicado" };
+        var zone = TimeZoneInfo.Local;
+        DateTimeOffset At(DateOnly day, int hour, int minute) =>
+            new(TimeZoneInfo.ConvertTimeToUtc(day.ToDateTime(new TimeOnly(hour, minute), DateTimeKind.Unspecified), zone), TimeSpan.Zero);
+        T Pick<T>(IReadOnlyList<(T Value, int Weight)> options)
+        {
+            var roll = random.Next(options.Sum(o => o.Weight));
+            foreach (var (value, w) in options) { if ((roll -= w) < 0) return value; }
+            return options[^1].Value;
+        }
+        void SignIn(string user, string password) { if (session.Current is not null) session.SignOut(); if (!identity.Login(user, password)) throw new InvalidOperationException($"No se pudo iniciar sesión como {user}."); }
+
+        var productOptions = products.Select(p => (p.Product, weight.GetValueOrDefault(p.Row.Id, 2))).ToList();
+        int sales = 0, refundCount = 0, shifts = 0;
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        for (var offset = days; offset >= 1; offset--)
+        {
+            var day = today.AddDays(-offset);
+            var (user, password) = offset % 2 == 0 ? ("ana", cashiers["ana"]) : ("luis", cashiers["luis"]);
+            var weekend = day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+            var count = (weekend ? 42 : 30) + random.Next(0, 9);
+            var times = Enumerable.Range(0, count).Select(_ => At(day, Pick(hours.Select(h => (h.Hour, h.Weight)).ToList()), random.Next(0, 60))).OrderBy(t => t).ToList();
+
+            demoClock.UtcNow = At(day, 7, 0);
+            SignIn(user, password);
+            var shift = cash.Open(terminal.Id, new Money(50000)).Session; shifts++;
+            var refundAt = random.Next(5, count - 5);
+            for (int i = 0; i < times.Count; i++)
+            {
+                demoClock.UtcNow = times[i];
+                var lines = random.Next(1, 5);
+                foreach (var product in Enumerable.Range(0, lines).Select(_ => Pick(productOptions)).Distinct())
+                {
+                    pos.Add(product.Id);
+                    var extra = product.Sku == "CM-003" ? random.Next(0, 6) : random.Next(0, 3);
+                    for (int q = 0; q < extra; q++) pos.Increment(product.Id);
+                }
+                var total = session.Cart!.Subtotal;
+                var roll = random.Next(100);
+                var method = roll < 65 ? PaymentMethod.Cash : roll < 90 ? PaymentMethod.Card : PaymentMethod.Transfer;
+                var received = method == PaymentMethod.Cash ? RoundUpCash(total, random) : total;
+                var reference = method == PaymentMethod.Card ? random.Next(1000, 9999).ToString(CultureInfo.InvariantCulture) : null;
+                var sale = checkout.Confirm(checkout.Prepare(received, method, reference));
+                checkout.Acknowledge(sale.OperationId);
+                sales++;
+
+                if (i == refundAt && offset % 3 != 0)
+                {
+                    demoClock.UtcNow = times[i].AddMinutes(5);
+                    SignIn("admin", adminPassword);
+                    var reason = reasons[random.Next(reasons.Length)];
+                    if (offset == days) refunds.Cancel(sale.Id, "Venta capturada por error");
+                    else refunds.Return(sale.Id, [new(1, 1)], reason);
+                    refundCount++;
+                    SignIn(user, password);
+                }
+            }
+
+            // Cierre a las 21:00 por el administrador: casi siempre exacto, algún día con faltante o sobrante.
+            demoClock.UtcNow = At(day, 21, 0);
+            SignIn("admin", adminPassword);
+            var expected = unit.Run(s => s.FindSession(shift.Id)!.OpeningFund + s.CashSalesTotal(shift.Id) - s.CashRefundsTotal(shift.Id));
+            var difference = offset == 2 ? -2000 : offset == 4 ? 500 : 0;
+            closing.SubmitCount(shift.Id, new Money(expected.Cents + difference));
+            closing.Close(shift.Id);
+            session.SignOut();
+        }
+        return new(sales, refundCount, shifts, cashiers);
+    }
+
+    private static Money RoundUpCash(Money total, Random random)
+    {
+        if (random.Next(100) < 25) return total; // pago exacto
+        foreach (var bill in new long[] { 2000, 5000, 10000, 20000, 50000 })
+            if (bill >= total.Cents) return new Money(bill);
+        return new Money((total.Cents / 50000 + 1) * 50000);
     }
 
     private static IReadOnlyList<Row> Read(string csvPath)
