@@ -1,4 +1,14 @@
-# FASE 1K ABIERTA — 1K.3D, 06/10/2026
+# FASE 1K ABIERTA — 1K.3D-R1, 06/10/2026
+
+**FASE 1K.3D-R1 técnicamente completada; smoke final corto pendiente.** El pulido de Producción corrige pluralización de piezas, presenta MASS/VOLUME en forma compuesta exacta cuando mejora la lectura, amplía la columna Planeado / real, reemplaza el checkbox «Sin producto» por un resultado textual y diferencia claramente el lenguaje de borrador frente al historial confirmado. El plan conserva su inmutabilidad y ahora se explica como «ya quedó fijado». La comparación del resultado real cuantifica piezas de diferencia.
+
+La ayuda de vista previa conserva que calcular no reserva ni descuenta y ahora explica Necesario, Disponible, Faltante y Estado con un ejemplo 500/350/150. La ayuda de Resultado real mantiene su semántica aprobada: el consumo depende de lo planeado y la entrada terminada de lo realmente obtenido, incluido cero. No cambió el motor, la persistencia ni las reglas de Producción.
+
+Pruebas focales: **7/7** generales y **4/4** WPF/ContextHelp. Suite completa `scripts/verify.ps1`: **719/719** (560 generales + 159 WPF), 0 fallidas/omitidas. Release: 0 errores/advertencias. Schema 16, sin 017; Domain/Application/Infrastructure y migraciones intactos. Base protegida SHA-256 inicial/final `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Revisión: `src/CasaMiga.Presentation/bin/Phase1K3D-R1/`, `work/Abrir-Casa-Miga-1K3D-R1.cmd`, DataDirectory `work/phase1k3d-r1-smoke-20261006`, título `Casa Miga POS · Caja · DESARROLLO · 1K.3D-R1`. Ver `PHASE_1K3D_R1_REPORT.md`.
+
+El baseline real fue `bd6771ec05b35fde505020f872c6e878f09ddfe9`, no el `cfcd80c5...` previsto en la autorización: entre ambos el usuario pidió conectar y subir QA a GitHub, lo que produjo el merge documentado de las historias. R1 no realiza push ni modifica ramas/remotos.
+
+## Registro anterior — 1K.3D
 
 **FASE 1K.3D técnicamente completada; smoke manual pendiente.** Producción conserva el motor y los contratos de FASE 1J, pero ahora presenta un flujo operativo en tres pasos: producto/perfil/versión y piezas planeadas; vista previa de preparaciones, insumos, disponibilidad y faltante; y captura del resultado real antes de registrar. La cantidad planeada sigue controlando el consumo y la cantidad real sólo controla la entrada de producto terminado. El botón final se deshabilita si alguna cantidad real no es un entero mayor o igual que cero. ContextHelp R3 explica cantidad planeada, preview y resultado real sin mover el layout.
 

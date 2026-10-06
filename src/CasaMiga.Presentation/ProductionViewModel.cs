@@ -21,13 +21,22 @@ public sealed record ProductionFormulaRow(string Name,int Version,string Require
 {
     public string VersionLabel=>$"Versión {Version}";
 }
-public sealed record ProductionHistoryRow(Guid Id,string Date,string State,string Creator,string Terminal,string Products,string Result,bool ZeroOutput);
+public sealed record ProductionHistoryRow(Guid Id,string Date,string State,string Creator,string Terminal,string Products,string Result,string OutputResult);
 public sealed class ProductionActualEdit:INotifyPropertyChanged
 {
     private string actual="0";
     public Guid ProductId{get;init;} public string ProductName{get;init;}=""; public long Planned{get;init;}
     public string Actual{get=>actual;set{if(actual==value)return;actual=value;PropertyChanged?.Invoke(this,new(nameof(Actual)));PropertyChanged?.Invoke(this,new(nameof(Difference)));}}
-    public string Difference=>long.TryParse(Actual,out var value)?value>Planned?"Mayor que lo planeado":value<Planned?"Menor que lo planeado":"Igual a lo planeado":"Escribe un entero";
+    public string Difference
+    {
+        get
+        {
+            if(!long.TryParse(Actual,out var value)||value<0)return "Escribe un entero igual o mayor que cero";
+            if(value==Planned)return "Igual a lo planeado";
+            var difference=value>Planned?value-Planned:Planned-value;
+            return $"{difference} {(difference==1?"pieza":"piezas")} {(value>Planned?"más":"menos")} de lo planeado";
+        }
+    }
     public bool IsValid=>long.TryParse(Actual,out var value)&&value>=0;
     public event PropertyChangedEventHandler? PropertyChanged;
 }
@@ -54,9 +63,9 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
     private bool OwnDraft=>DetailIsDraft&&CanConfirm&&batch?.CreatedBy==user.Current?.Id&&batch?.TerminalId==terminalId;
     public bool ActualsAreValid=>Actuals.Count>0&&Actuals.All(x=>x.IsValid);
     public bool CanConfirmDetail=>OwnDraft&&ActualsAreValid;
-    public string ConfirmationRestriction=>!DetailIsDraft?"Consulta histórica de solo lectura.":!OwnDraft?"Sólo el usuario y terminal que crearon este borrador pueden registrarlo.":!ActualsAreValid?"Captura una cantidad real entera, igual o mayor que cero, para cada producto.":"El plan está bloqueado. Revisa el resultado real antes de registrarlo.";
+    public string ConfirmationRestriction=>!DetailIsDraft?"Consulta histórica de solo lectura.":!OwnDraft?"Sólo el usuario y terminal que crearon este borrador pueden registrarlo.":!ActualsAreValid?"Captura una cantidad real entera, igual o mayor que cero, para cada producto.":"El plan ya quedó fijado. Revisa el resultado real antes de registrarlo.";
     public string PlannedHelpText=>"La cantidad planeada es el número entero de piezas terminadas que se pretende elaborar. Esta cantidad determina las preparaciones y los insumos que se consumirán al registrar. Ejemplo sintético: si planeas 5 piezas, las necesidades se calculan para esas 5 piezas.";
-    public string PreviewHelpText=>"Calcular necesidades sólo consulta el plan y el inventario: no reserva ni descuenta existencias. El stock se valida de nuevo al registrar la producción.";
+    public string PreviewHelpText=>"Calcular necesidades sólo consulta el plan y el inventario: no reserva ni descuenta existencias, no registra movimientos ni modifica el ledger. Necesario es la cantidad que requiere este plan. Disponible es la existencia actual. Faltante es la diferencia cuando el inventario no alcanza. Estado indica si hay inventario suficiente o una condición que impide continuar. Ejemplo sintético: Necesario 500 g; Disponible 350 g; Faltante 150 g; Estado Faltante. El stock se valida de nuevo al registrar la producción.";
     public string ActualHelpText=>"La cantidad real es el número de piezas terminadas obtenidas. El inventario recibe esa cantidad real, pero los insumos se descuentan según el plan bloqueado. Ejemplo sintético: 5 planeadas y 4 reales consumen los insumos de 5 y agregan 4 terminados. Registrar cero consume los insumos planeados y no genera producto terminado.";
     public string Message{get;private set;}="";public bool MessageIsSuccess{get;private set;}
     public IReadOnlyList<ProductionProfileChoice> Profiles{get;private set;}=[];
@@ -77,8 +86,11 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
     public ObservableCollection<ProductionActualEdit> Actuals{get;}=[];
     public string DetailHeader=>batch is null?"":$"Producción · {(batch.Status=="DRAFT"?"Borrador":"Confirmada")}";
     public string DetailContext=>batch is null?"":$"Creada: {batch.CreatedAt.ToLocalTime():dd/MM/yyyy HH:mm}\nCreada por: {batch.CreatedByName}\nTerminal: {batch.TerminalName}"+(batch.ConfirmedAt is {} confirmed?$"\nRegistrada: {confirmed.ToLocalTime():dd/MM/yyyy HH:mm}":"");
+    public string DetailPlanTitle=>"Plan de producción";
+    public string DetailFormulasTitle=>"Preparaciones del plan";
+    public string DetailInputsTitle=>DetailIsDraft?"Ingredientes que se descontarán":"Ingredientes consumidos";
     public IReadOnlyList<string> DetailProducts=>batch?.Outputs.Select(x=>$"{x.ProductName}: {x.PlannedCount} {(x.PlannedCount==1?"pieza planeada":"piezas planeadas")} · {(x.ActualCount is {} actual?$"{actual} {(actual==1?"pieza real":"piezas reales")}":"resultado pendiente")}").ToArray()??[];
-    public IReadOnlyList<string> DetailFormulas=>batch?.Formulas.Select(x=>$"{x.Name}: {InventoryDisplay.Format(x.Required.AtomicUnits,x.Required.Dimension)} requeridos").ToArray()??[];
+    public IReadOnlyList<string> DetailFormulas=>batch?.Formulas.Select(x=>$"{x.Name}: {InventoryDisplay.FormatProduction(x.Required.AtomicUnits,x.Required.Dimension)} requeridos").ToArray()??[];
     public IReadOnlyList<string> DetailInputs=>batch is null?[]:InputLines(batch.Inputs);
     public bool TotalZero=>Actuals.Count>0&&Actuals.All(x=>long.TryParse(x.Actual,out var v)&&v==0);
     public event PropertyChangedEventHandler? PropertyChanged;private void Notify()=>PropertyChanged?.Invoke(this,new(null));
@@ -121,8 +133,8 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
     public Task PreviewAsync()=>Run(async()=>
     {
         var command=Command();var result=await Task.Run(()=>service.PrepareProduction(command));
-        FormulaRows=result.Planning.RequiredFormulas.Select(x=>{var f=recipes.GetFormulaVersion(x.FormulaVersionId)!.Value;return new ProductionFormulaRow(f.Name,f.Version,InventoryDisplay.Format(x.Required.AtomicUnits,x.Required.Dimension));}).ToArray();
-        RequirementRows=(result.Planning.Plan?.Ingredients??[]).Select(x=>{var item=items[x.InventoryItemId];var stock=result.Stock.Single(s=>s.ItemId==x.InventoryItemId);var shortage=result.Shortages.FirstOrDefault(s=>s.ItemId==x.InventoryItemId);var missing=shortage is null?"—":InventoryDisplay.Format(shortage.Required-(shortage.Available??0),stock.Dimension);return new ProductionRequirementRow(item.Name,InventoryDisplay.Format(x.Quantity.AtomicUnits,x.Quantity.Dimension),stock.Available is {} a?InventoryDisplay.Format(a,stock.Dimension):"Sin saldo inicial",missing,!stock.Active?"Inactivo":stock.Available is null?"Sin saldo inicial":shortage is null?"Suficiente":"Faltante");}).ToArray();
+        FormulaRows=result.Planning.RequiredFormulas.Select(x=>{var f=recipes.GetFormulaVersion(x.FormulaVersionId)!.Value;return new ProductionFormulaRow(f.Name,f.Version,InventoryDisplay.FormatProduction(x.Required.AtomicUnits,x.Required.Dimension));}).ToArray();
+        RequirementRows=(result.Planning.Plan?.Ingredients??[]).Select(x=>{var item=items[x.InventoryItemId];var stock=result.Stock.Single(s=>s.ItemId==x.InventoryItemId);var shortage=result.Shortages.FirstOrDefault(s=>s.ItemId==x.InventoryItemId);var missing=shortage is null?"—":InventoryDisplay.FormatProduction(shortage.Required-(shortage.Available??0),stock.Dimension);return new ProductionRequirementRow(item.Name,InventoryDisplay.FormatProduction(x.Quantity.AtomicUnits,x.Quantity.Dimension),stock.Available is {} a?InventoryDisplay.FormatProduction(a,stock.Dimension):"Sin saldo inicial",missing,!stock.Active?"Inactivo":stock.Available is null?"Sin saldo inicial":shortage is null?"Suficiente":"Faltante");}).ToArray();
         Alternatives.Clear();int n=0;foreach(var formula in result.Planning.Plan?.Formulas??[]){foreach(var group in formula.Version.Alternatives){n++;var ineligible=result.Planning.IneligibleOptions.Where(x=>x.GroupId==group.Id).Select(x=>x.OptionId).ToHashSet();var options=group.PreferenceOrder.Concat(group.Options.Select(x=>x.Id)).Distinct().Select(id=>{var o=group.Options.Single(x=>x.Id==id);return new ProductionAlternativeOption(id,items[o.Ingredient.InventoryItemId].Name,!ineligible.Contains(id));}).ToArray();var selected=formula.Ingredients.FirstOrDefault(x=>x.GroupId==group.Id)?.OptionId;Alternatives.Add(new(){FormulaVersionId=formula.Version.Id,GroupId=group.Id,Label=$"Grupo {n} · {formula.Version.Name}",Options=options,Selected=options.FirstOrDefault(x=>x.Id==selected)});}}
         foreach(var choice in Alternatives)choice.PropertyChanged+=PlanChanged;
         PreviewReady=true;PreviewConfirmable=result.CanConfirm;PreviewState=result.CanConfirm?"Plan calculado. El stock mostrado es informativo y se validará de nuevo al registrar.":HumanProblems(result);Notify();
@@ -137,13 +149,13 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
         if(!PreviewReady||!PreviewConfirmable)throw new ArgumentException("Calcula un preview válido antes de crear la producción.");var command=Command();
         var current=await Task.Run(()=>service.PrepareProduction(command));
         if(!current.CanConfirm)throw new ArgumentException(HumanProblems(current));
-        batch=await Task.Run(()=>service.CreateProduction(new(createBatchId!.Value,createOperationId!.Value,command)));LoadDetail();screen="detail";MessageIsSuccess=true;Message="Producción creada como borrador. El plan quedó bloqueado.";
+        batch=await Task.Run(()=>service.CreateProduction(new(createBatchId!.Value,createOperationId!.Value,command)));LoadDetail();screen="detail";MessageIsSuccess=true;Message="Producción preparada como borrador. El plan ya quedó fijado.";
     });
     public Task ShowDraftsAsync()=>LoadRows(true);public Task ShowHistoryAsync()=>LoadRows(false);
     private Task LoadRows(bool drafts)=>Run(async()=>
     {
         var ids=await Task.Run(()=>service.ListProductions(200));var batches=(await Task.WhenAll(ids.Select(id=>Task.Run(()=>service.GetProduction(id))))).Where(x=>x is not null).Cast<StoredProductionBatch>().Where(x=>drafts?x.Status=="DRAFT":x.Status=="CONFIRMED").ToArray();
-        Rows=batches.Select(x=>new ProductionHistoryRow(x.Id,x.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm"),x.Status=="DRAFT"?"Borrador":"Confirmada",x.CreatedByName,x.TerminalName,string.Join(", ",x.Outputs.Select(o=>o.ProductName)),string.Join(" · ",x.Outputs.Select(o=>$"{o.PlannedCount} planeadas · {(o.ActualCount is {} actual?$"{actual} reales":"resultado pendiente")}")),x.Outputs.All(o=>o.ActualCount==0))).ToArray();screen=drafts?"drafts":"history";SelectedRow=null;
+        Rows=batches.Select(x=>new ProductionHistoryRow(x.Id,x.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm"),x.Status=="DRAFT"?"Borrador":"Confirmada",x.CreatedByName,x.TerminalName,string.Join(", ",x.Outputs.Select(o=>o.ProductName)),string.Join(" · ",x.Outputs.Select(o=>$"{o.PlannedCount} {(o.PlannedCount==1?"planeada":"planeadas")} · {(o.ActualCount is {} actual?$"{actual} {(actual==1?"real":"reales")}":"resultado pendiente")}")),string.Join(" · ",x.Outputs.Select(o=>o.ActualCount switch{null=>$"{o.ProductName}: resultado pendiente",0=>$"{o.ProductName}: sin producto terminado",var actual=>$"{o.ProductName}: {actual} {(actual==1?"pieza obtenida":"piezas obtenidas")}"})))).ToArray();screen=drafts?"drafts":"history";SelectedRow=null;
     });
     public Task OpenDetailAsync()=>Run(async()=>{var row=SelectedRow??throw new ArgumentException("Selecciona una producción.");batch=await Task.Run(()=>service.GetProduction(row.Id))??throw new ArgumentException("La producción ya no existe.");LoadDetail();screen="detail";});
     private void LoadDetail(){foreach(var row in Actuals)row.PropertyChanged-=ActualChanged;Actuals.Clear();foreach(var o in batch!.Outputs){var row=new ProductionActualEdit{ProductId=o.ProductId,ProductName=o.ProductName,Planned=o.PlannedCount,Actual=o.ActualCount?.ToString()??o.PlannedCount.ToString()};row.PropertyChanged+=ActualChanged;Actuals.Add(row);}Notify();}
@@ -160,7 +172,7 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
     };
     public static IReadOnlyList<string> InputLines(IEnumerable<StoredProductionInput> inputs)=>inputs
         .GroupBy(x=>(x.ItemId,x.Required.Dimension))
-        .Select(group=>$"{group.First().Name}: {InventoryDisplay.Format(group.Sum(x=>x.Required.AtomicUnits),group.Key.Dimension)}"+
+        .Select(group=>$"{group.First().Name}: {InventoryDisplay.FormatProduction(group.Sum(x=>x.Required.AtomicUnits),group.Key.Dimension)}"+
             (group.Any(x=>x.GroupId.HasValue)?" · alternativa seleccionada":"")).ToArray();
-    private async Task Run(Func<Task> action){if(Busy)return;Busy=true;Message="";MessageIsSuccess=false;Notify();try{await action();}catch(AccessDeniedException){Message="No tienes permiso para esta operación de producción.";log("production.authorization.denied",null);}catch(ProductionException e){Message=ErrorMessage(e);if(e.Shortages.Count>0)Message+=" "+string.Join(" ",e.Shortages.Select(x=>$"Faltan {InventoryDisplay.Format(x.Required-(x.Available??0),items[x.ItemId].Dimension)} de {items[x.ItemId].Name}."));}catch(ProductionDomainException){Message="Revisa las cantidades y configuración del plan.";}catch(ArgumentException e){Message=e.Message;}catch(Exception e){Message="No se completó la operación de producción.";log("production.operation.failed",e.GetType().Name);}finally{Busy=false;Notify();}}
+    private async Task Run(Func<Task> action){if(Busy)return;Busy=true;Message="";MessageIsSuccess=false;Notify();try{await action();}catch(AccessDeniedException){Message="No tienes permiso para esta operación de producción.";log("production.authorization.denied",null);}catch(ProductionException e){Message=ErrorMessage(e);if(e.Shortages.Count>0)Message+=" "+string.Join(" ",e.Shortages.Select(x=>$"Faltan {InventoryDisplay.FormatProduction(x.Required-(x.Available??0),items[x.ItemId].Dimension)} de {items[x.ItemId].Name}."));}catch(ProductionDomainException){Message="Revisa las cantidades y configuración del plan.";}catch(ArgumentException e){Message=e.Message;}catch(Exception e){Message="No se completó la operación de producción.";log("production.operation.failed",e.GetType().Name);}finally{Busy=false;Notify();}}
 }
