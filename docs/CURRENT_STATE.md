@@ -1,4 +1,14 @@
-# FASE 1K ABIERTA — 1K.3C-R2, 05/10/2026
+# FASE 1K ABIERTA — 1K.3C-R3, 06/10/2026
+
+**FASE 1K.3C técnicamente completada; pendiente un smoke final corto de R3.** El `Popup` de R2 podía crear una superficie/HWND independiente y conservar z-order fuera del ciclo visual del shell. `ContextHelp` usa ahora un `Adorner` dentro del árbol visual y del mismo HWND de `MainWindow`; por construcción no puede quedar como ventana flotante sobre otra aplicación. Abrirlo sigue sin participar en el layout base.
+
+La ayuda se retira al pulsar Esc o el mismo `?`, al minimizar, perder activación/Alt+Tab, ocultar o descargar la vista, cerrar la ventana y cambiar F11/tamaño. Restaurar o reactivar nunca la abre automáticamente; puede abrirse manualmente después. Se conservan ancho máximo 520 DIP, Wrap, límites del viewport, prioridad de Escape, contenido aprobado y asociaciones de Ingredientes directos/Política de cantidad.
+
+Pruebas focales WPF **46/46** y suite completa `scripts/verify.ps1` **716/716** (558 generales + 158 WPF), sin fallos ni omisiones. Release y build `Phase1K3C-R3`: 0 errores/advertencias; diff check correcto. La regresión `ContextHelpDoesNotRemainVisibleWhenOwnerWindowLosesActivationOrIsMinimized` materializa dos ventanas y cubre 1280×820/1920×1080, mismo HWND, minimizar/restaurar, desactivar/reactivar, reapertura, Escape y ausencia de layout shift.
+
+Revisión: `work/phase1k3c-r3-smoke-20261006`, build `src/CasaMiga.Presentation/bin/Phase1K3C-R3/`, launcher `work/Abrir-Casa-Miga-1K3C-R3.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.3C-R3`. Schema 16, sin 017; base protegida SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`; Domain/Application/Infrastructure, migraciones, datos y configuración física intactos. Ver `PHASE_1K3C_R3_REPORT.md`. No iniciar 1K.3D ni Pedidos.
+
+## Registro anterior — 1K.3C-R2
 
 **FASE 1K.3C-R2 técnicamente completada; smoke visual/manual pendiente.** `ContextHelp` usa ahora un `Popup` flotante anclado al botón: abrirlo no participa en la medición del formulario ni desplaza campos o tablas. El ancho se limita entre el espacio disponible y 520 DIP, el texto conserva Wrap, el eje horizontal se ajusta al borde derecho y el panel cambia arriba cuando no cabe debajo. Escape se atiende desde la ventana real y desde el árbol separado del Popup; cierra primero la ayuda más reciente, conserva editor/borrador y mantiene la prioridad antes de ComboBox, fullscreen y navegación.
 

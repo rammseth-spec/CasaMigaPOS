@@ -146,7 +146,7 @@ public sealed class UsabilityPresentationTests
         Assert.AreEqual(((SolidColorBrush)System.Windows.Application.Current.FindResource("TextPrimaryBrush")).Color,((SolidColorBrush)button.Foreground).Color);
         var border=(Border)button.Template.FindName("Surface",button);Assert.AreEqual(1d,border.Opacity);
         var help=new ContextHelp{HelpText="Texto de prueba de ayuda."};var window=new Window{Content=help,Width=420,Height=240,Left=-10000,Top=-10000,ShowInTaskbar=false,ShowActivated=false};
-        try{window.Show();WpfTestHost.Layout(window,420,240);var popup=(Popup)help.FindName("HelpPopup");var card=(Border)help.FindName("PopupCard");var trigger=(Button)help.FindName("HelpButton");Assert.IsFalse(popup.IsOpen);trigger.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));WpfTestHost.Layout(window,420,240);Assert.IsTrue(popup.IsOpen);AssertVisible(card,"Texto de prueba de ayuda.");trigger.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));Assert.IsFalse(popup.IsOpen);}
+        try{window.Show();WpfTestHost.Layout(window,420,240);var trigger=(Button)help.FindName("HelpButton");Assert.IsFalse(help.IsOpen);trigger.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));WpfTestHost.Layout(window,420,240);Assert.IsTrue(help.IsOpen);AssertVisible(help.HelpSurface,"Texto de prueba de ayuda.");trigger.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));Assert.IsFalse(help.IsOpen);}
         finally{window.Close();}
     });
 

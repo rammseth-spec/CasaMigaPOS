@@ -73,6 +73,7 @@ public partial class MainWindow : Window
     private void FullScreenClick(object sender, RoutedEventArgs e) => ToggleFullScreen();
     private void ToggleFullScreen()
     {
+        ContextHelp.CloseAll();
         if (isFullScreen) { ExitFullScreen(); return; }
         EnterFullScreen();
     }

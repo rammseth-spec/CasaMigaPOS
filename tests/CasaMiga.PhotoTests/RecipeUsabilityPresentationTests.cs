@@ -166,11 +166,11 @@ public sealed class RecipeUsabilityPresentationTests
         {
             editorWindow.Show();WpfTestHost.Layout(editorWindow,width,height);vm.Yield="1";
             var yieldHelp=Descendants<ContextHelp>(view).Single(x=>x.IsVisible&&x.Label=="Ayuda de rendimiento");
-            var yieldButton=(Button)yieldHelp.FindName("HelpButton");var yieldPopup=(Popup)yieldHelp.FindName("HelpPopup");
+            var yieldButton=(Button)yieldHelp.FindName("HelpButton");
             var yieldInput=Descendants<TextBox>(view).Single(x=>BindingOperations.GetBinding(x,TextBox.TextProperty)?.Path.Path=="Yield");var originalName=vm.Name;
-            yieldButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));WpfTestHost.Layout(editorWindow,width,height);Assert.IsTrue(yieldPopup.IsOpen);
+            yieldButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));WpfTestHost.Layout(editorWindow,width,height);Assert.IsTrue(yieldHelp.IsOpen);
             yieldInput.Focus();Keyboard.Focus(yieldInput);SendKey(yieldInput,editorWindow,Key.Escape);WpfTestHost.Layout(editorWindow,width,height);
-            Assert.IsFalse(yieldPopup.IsOpen);Assert.IsTrue(vm.IsFormulaEditor);Assert.AreEqual("1",vm.Yield);Assert.AreEqual(originalName,vm.Name);Assert.IsTrue(editorWindow.IsVisible);
+            Assert.IsFalse(yieldHelp.IsOpen);Assert.IsTrue(vm.IsFormulaEditor);Assert.AreEqual("1",vm.Yield);Assert.AreEqual(originalName,vm.Name);Assert.IsTrue(editorWindow.IsVisible);
         }
         finally{editorWindow.Close();}
 
@@ -182,17 +182,17 @@ public sealed class RecipeUsabilityPresentationTests
         try
         {
             window.Show();WpfTestHost.Layout(window,width,height);
-            var popup=(Popup)help.FindName("HelpPopup");var button=(Button)help.FindName("HelpButton");var card=(Border)help.FindName("PopupCard");
+            var button=(Button)help.FindName("HelpButton");var card=(Border)help.HelpSurface;
             var beforeY=neighbor.TranslatePoint(new Point(),host).Y;var beforeHeight=host.ActualHeight;var original=nearby.Text;
             button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));WpfTestHost.Layout(window,width,height);
-            Assert.IsTrue(popup.IsOpen);Assert.AreEqual(beforeY,neighbor.TranslatePoint(new Point(),host).Y,0.1,"El popover no debe desplazar controles vecinos.");Assert.AreEqual(beforeHeight,host.ActualHeight,0.1,"El popover no debe aumentar el layout base.");
+            Assert.IsTrue(help.IsOpen);Assert.AreEqual(beforeY,neighbor.TranslatePoint(new Point(),host).Y,0.1,"El overlay no debe desplazar controles vecinos.");Assert.AreEqual(beforeHeight,host.ActualHeight,0.1,"El overlay no debe aumentar el layout base.");
             Assert.IsGreaterThanOrEqualTo(420d,card.ActualWidth);Assert.IsLessThanOrEqualTo(520d,card.ActualWidth);Assert.AreEqual(TextWrapping.Wrap,Descendants<TextBlock>(card).Single(x=>x.Text==vm.AlternativesHelpText).TextWrapping);
-            var target=button.TransformToAncestor(window).Transform(new Point());var topLeft=new Point(target.X+popup.HorizontalOffset,target.Y+popup.VerticalOffset);var bottomRight=new Point(topLeft.X+card.ActualWidth,topLeft.Y+card.ActualHeight);
+            var topLeft=card.TranslatePoint(new Point(),window);var bottomRight=new Point(topLeft.X+card.ActualWidth,topLeft.Y+card.ActualHeight);
             Assert.IsGreaterThanOrEqualTo(0d,topLeft.X);Assert.IsGreaterThanOrEqualTo(0d,topLeft.Y);Assert.IsLessThanOrEqualTo(window.ActualWidth,bottomRight.X+1);Assert.IsLessThanOrEqualTo(window.ActualHeight,bottomRight.Y+1);
-            button.Focus();Keyboard.Focus(button);SendKey(button,window,Key.Escape);WpfTestHost.Layout(window,width,height);Assert.IsFalse(popup.IsOpen);Assert.IsTrue(window.IsVisible);
-            button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));nearby.Focus();Keyboard.Focus(nearby);SendKey(nearby,window,Key.Escape);WpfTestHost.Layout(window,width,height);Assert.IsFalse(popup.IsOpen);Assert.AreEqual(original,nearby.Text);Assert.IsTrue(window.IsVisible);
-            button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));card.Focus();Keyboard.Focus(card);SendKey(card,window,Key.Escape);WpfTestHost.Layout(window,width,height);Assert.IsFalse(popup.IsOpen);Assert.IsTrue(window.IsVisible);
-            button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));Assert.IsTrue(popup.IsOpen);button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));Assert.IsFalse(popup.IsOpen);
+            button.Focus();Keyboard.Focus(button);SendKey(button,window,Key.Escape);WpfTestHost.Layout(window,width,height);Assert.IsFalse(help.IsOpen);Assert.IsTrue(window.IsVisible);
+            button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));nearby.Focus();Keyboard.Focus(nearby);SendKey(nearby,window,Key.Escape);WpfTestHost.Layout(window,width,height);Assert.IsFalse(help.IsOpen);Assert.AreEqual(original,nearby.Text);Assert.IsTrue(window.IsVisible);
+            button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));card.Focus();Keyboard.Focus(card);SendKey(card,window,Key.Escape);WpfTestHost.Layout(window,width,height);Assert.IsFalse(help.IsOpen);Assert.IsTrue(window.IsVisible);
+            button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));Assert.IsTrue(help.IsOpen);button.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));Assert.IsFalse(help.IsOpen);
         }
         finally{window.Close();}
         fixture.AssertNoEffects();await Task.CompletedTask;

@@ -188,14 +188,13 @@ public sealed class InventoryUsabilityPresentationTests
         }
         Assert.IsTrue(Button(view, "Confirmar").IsEnabled, vm.PreviewError);
         var help = Descendants<ContextHelp>(view).Single(x => x.IsVisible && x.HelpText == vm.OperationHelpText);
-        var popup = (Popup)help.FindName("HelpPopup");
         var helpButton = (Button)help.FindName("HelpButton");
-        Assert.IsFalse(popup.IsOpen);
+        Assert.IsFalse(help.IsOpen);
         helpButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent)); help.BringIntoView(); fixture.Layout();
-        Assert.IsTrue(popup.IsOpen);
-        AssertText((Border)help.FindName("PopupCard"), vm.OperationHelpText);
+        Assert.IsTrue(help.IsOpen);
+        AssertText(help.HelpSurface, vm.OperationHelpText);
         helpButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent)); fixture.Layout();
-        Assert.IsFalse(popup.IsOpen);
+        Assert.IsFalse(help.IsOpen);
         Assert.IsFalse(Descendants<TextBlock>(help).Any(x => x.IsVisible && x.Text == vm.OperationHelpText));
         quantity.BringIntoView(); fixture.Layout();
         Capture(fixture.Window, $"1k3b-preview-{operation}.png");
@@ -244,11 +243,11 @@ public sealed class InventoryUsabilityPresentationTests
         Button(view, "Saldo inicial").RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent)); fixture.Layout();
         AssertText(view, "Existencia al comenzar");
         var help = Descendants<ContextHelp>(view).Single(x => x.IsVisible && x.HelpText == vm.OperationHelpText);
-        var popup = (Popup)help.FindName("HelpPopup"); var helpButton = (Button)help.FindName("HelpButton");
-        helpButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent)); fixture.Layout(); Assert.IsTrue(popup.IsOpen);
-        AssertText((Border)help.FindName("PopupCard"), vm.OperationHelpText);
+        var helpButton = (Button)help.FindName("HelpButton");
+        helpButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent)); fixture.Layout(); Assert.IsTrue(help.IsOpen);
+        AssertText(help.HelpSurface, vm.OperationHelpText);
         StringAssert.Contains(vm.OperationHelpText, "entrada de compra");
-        helpButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent)); Assert.IsFalse(popup.IsOpen);
+        helpButton.RaiseEvent(new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent)); Assert.IsFalse(help.IsOpen);
         Bound<TextBox>(view, TextBox.TextProperty, "Quantity").Text = "0"; fixture.Layout();
         Assert.AreEqual(0L, vm.OperationPreview!.BeforeAtomic); Assert.AreEqual(0L, vm.OperationPreview.AfterAtomic);
         Assert.IsTrue(Button(view, "Confirmar").IsEnabled);
