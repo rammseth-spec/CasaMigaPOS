@@ -13,6 +13,8 @@ public partial class ReportsView : UserControl
     private async void GenerateClick(object sender, RoutedEventArgs e) => await Model.GenerateAsync();
     private async void TodayClick(object sender, RoutedEventArgs e) => await Model.TodayAsync();
     private async void MonthClick(object sender, RoutedEventArgs e) => await Model.MonthAsync();
+    private async void YesterdayClick(object sender, RoutedEventArgs e) => await Model.YesterdayAsync();
+    private async void LastSevenDaysClick(object sender, RoutedEventArgs e) => await Model.LastSevenDaysAsync();
     private void ExportClick(object sender, RoutedEventArgs e)
     {
         if (Model.Csv() is not { } csv) return;
