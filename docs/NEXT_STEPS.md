@@ -1,4 +1,18 @@
-# Próximo paso — smoke final corto de 1K.3D-R1
+# Próximo paso — smoke manual de 1K.4A
+
+Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4A`, abierta desde `work/Abrir-Casa-Miga-1K4A.cmd`, con DataDirectory `work/phase1k4a-smoke-20261006`. No usar el acceso anclado ni builds anteriores.
+
+1. Login y POS: elegir Pan salado; buscar `Bolillo mantequilla`, luego `CM-003`; comprobar respuesta breve, $8 y categoría preservada.
+2. Pulsar × Limpiar; buscar un texto sin coincidencias; con texto, pulsar Esc y confirmar que limpia sin navegar. Repetir en F11.
+3. Revisar `SMOKE-1K4A-LARGO`: nombre hasta dos líneas y precio visible. Revisar `SMOKE-1K4A-SINFOTO`: placeholder `Sin imagen`.
+4. Catálogo: cambiar rápidamente Todos/Pan dulce/Pan salado, activar Mostrar inactivos y probar búsqueda por nombre/SKU; confirmar que no reaparecen resultados de un filtro anterior.
+5. Nuevo producto: llenar datos sintéticos, elegir categoría existente y abrir `+ Nueva categoría`; confirmar que el borrador se conserva y la categoría nueva queda seleccionada. Cancelar cualquier alta que no deba persistir.
+6. Editar un producto con foto provisional; confirmar `Origen de la imagen` y `Foto provisional`. No reemplazar ni quitar fotos durante este smoke.
+7. Revisar 1280×820, 1920×1080 y F11; salir.
+
+No ejecutar ventas, caja, impresión, inventario o producción. No modificar la base protegida para crear Pan salado. Después del smoke, esperar confirmación explícita del usuario; no iniciar 1K.4B, Historial, Carrito, Pedidos/Tiendas ni migración 017.
+
+## Registro anterior — smoke final corto de 1K.3D-R1
 
 Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.3D-R1`, abierta desde `work/Abrir-Casa-Miga-1K3D-R1.cmd`, con DataDirectory `work/phase1k3d-r1-smoke-20261006`. No usar el acceso anclado ni builds anteriores.
 

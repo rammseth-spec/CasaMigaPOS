@@ -2,9 +2,10 @@
  <Grid IsEnabled="{Binding Ready}">
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <DockPanel Grid.Row="1" Margin="0,0,0,6"><TextBlock DockPanel.Dock="Right" Text="DEMO · precios de prueba" Foreground="{DynamicResource BrandBrush}" FontSize="14" Visibility="{Binding IsDevelopment,Converter={StaticResource VisibleWhen}}"/><TextBlock Text="Venta temporal hasta confirmar el cobro" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="14"/></DockPanel>
-  <Grid Grid.Row="2" Margin="0,0,0,6" MaxHeight="46"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+  <Grid Grid.Row="2" Margin="0,0,0,6" MaxHeight="46"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
    <Grid><TextBlock Text="Buscar nombre o SKU" Margin="12,0" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" IsHitTestVisible="False"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Search}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock><TextBox Background="Transparent" x:Name="SearchInput" Text="{Binding Search,UpdateSourceTrigger=PropertyChanged}" MaxLength="160" AutomationProperties.Name="Buscar producto por nombre o SKU" ToolTip="Buscar nombre o SKU"/></Grid>
    <Button Grid.Column="1" Content="Buscar" Click="SearchClick" Margin="8,0,0,0" MinWidth="96"/>
+   <Button Grid.Column="2" Content="× Limpiar" Click="ClearSearchClick" Margin="8,0,0,0" MinWidth="104" Style="{StaticResource SecondaryButton}" Visibility="{Binding HasSearch,Converter={StaticResource VisibleWhen}}"/>
   </Grid>
   <ScrollViewer Grid.Row="3" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0,0,0,8">
    <ItemsControl ItemsSource="{Binding Categories}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Button Content="{Binding Label}" Tag="{Binding Selected}" CommandParameter="{Binding Id}" Style="{StaticResource SectionTabButton}" Click="CategoryClick" Margin="0,0,8,4"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
@@ -12,8 +13,10 @@
   <Grid Grid.Row="4"><Grid.ColumnDefinitions><ColumnDefinition Width="7*" MinWidth="420"/><ColumnDefinition Width="3*" MinWidth="300"/></Grid.ColumnDefinitions>
    <Grid Margin="0,0,12,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <TextBlock Text="Productos · pulsa una tarjeta para agregar" FontWeight="SemiBold" Margin="0,0,0,6"/>
-    <ScrollViewer x:Name="ProductCatalogScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-     <ItemsControl ItemsSource="{Binding Products}" IsEnabled="{Binding CanOperate}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate>
+    <Grid Grid.Row="1">
+     <TextBlock Text="{Binding EmptyProductsMessage}" Foreground="{DynamicResource MutedBrush}" FontSize="16" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding HasNoProducts,Converter={StaticResource VisibleWhen}}"/>
+     <ScrollViewer x:Name="ProductCatalogScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <ItemsControl ItemsSource="{Binding Products}" IsEnabled="{Binding CanOperate}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate>
       <Button Style="{StaticResource ProductTile}" Tag="{Binding Id}" Click="ProductClick" IsEnabled="{Binding IsActive}" ToolTip="{Binding Name}" AutomationProperties.Name="{Binding Name}">
        <Grid><Grid.RowDefinitions><RowDefinition Height="160"/><RowDefinition Height="48"/><RowDefinition Height="32"/></Grid.RowDefinitions>
         <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="10" ClipToBounds="True">
@@ -21,7 +24,7 @@
           <Image Source="{Binding Photo}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" Visibility="{Binding HasPhoto,Converter={StaticResource VisibleWhen}}"/>
           <Grid Visibility="{Binding IsFallback,Converter={StaticResource VisibleWhen}}">
            <Path Data="M4,5 L16,5 18,8 18,17 2,17 2,8 Z M7,5 L8.5,2 11.5,2 13,5 M10,9 A3,3 0 1 1 9.99,9" Stroke="{DynamicResource WheatBrush}" StrokeThickness="1.6" Stretch="Uniform" Width="48" Height="48" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-           <TextBlock Text="Sin foto" Style="{StaticResource CaptionText}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,18"/>
+           <TextBlock Text="Sin imagen" Style="{StaticResource CaptionText}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,18"/>
           </Grid>
          </Grid>
         </Border>
@@ -29,8 +32,9 @@
         <TextBlock Grid.Row="2" Text="{Binding Price}" FontSize="20" Foreground="{DynamicResource PrimaryBrush}" FontWeight="Bold" TextAlignment="Left" Margin="2,0" VerticalAlignment="Center"/>
        </Grid>
       </Button>
-     </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
-    </ScrollViewer>
+      </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+     </ScrollViewer>
+    </Grid>
     <DockPanel Grid.Row="2" Margin="0,8,0,0"><WrapPanel DockPanel.Dock="Right"><Button Content="Anterior" Click="PreviousClick" IsEnabled="{Binding Previous}" MinWidth="100"/><Button Content="Siguiente" Click="NextClick" IsEnabled="{Binding Next}" MinWidth="100" Margin="8,0,0,0"/></WrapPanel><TextBlock Text="{Binding PageLabel}" FontSize="14" VerticalAlignment="Center"/></DockPanel>
    </Grid>
    <Border Grid.Column="1" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource AvocadoLeafBrush}" BorderThickness="1" CornerRadius="12" Padding="12">

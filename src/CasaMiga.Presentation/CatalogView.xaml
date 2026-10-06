@@ -12,12 +12,15 @@
   <StackPanel Visibility="{Binding IsProducts,Converter={StaticResource VisibleWhen}}">
    <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
     <StackPanel Margin="0,0,12,0"><TextBlock Text="Buscar nombre o SKU" FontSize="16"/><TextBox x:Name="SearchBox" Text="{Binding Search,UpdateSourceTrigger=PropertyChanged}" MaxLength="160" AutomationProperties.Name="Buscar nombre o SKU"/></StackPanel>
-    <StackPanel Grid.Column="1"><TextBlock Text="Filtrar por categoría" FontSize="16"/><ComboBox ItemsSource="{Binding Filters}" SelectedValuePath="Id" DisplayMemberPath="Name" SelectedValue="{Binding FilterCategoryId}" AutomationProperties.Name="Filtrar por categoría"/></StackPanel>
+    <StackPanel Grid.Column="1"><TextBlock Text="Filtrar por categoría" FontSize="16"/><ComboBox ItemsSource="{Binding Filters}" SelectedValuePath="Id" DisplayMemberPath="Name" SelectedValue="{Binding FilterCategoryId,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Filtrar por categoría"/></StackPanel>
    </Grid>
-   <WrapPanel Margin="0,0,0,10"><CheckBox Content="Mostrar inactivos" IsChecked="{Binding ShowInactive}" Margin="0,0,16,0"/><Button Content="Buscar / aplicar" Click="SearchClick"/></WrapPanel>
-   <DataGrid x:Name="ProductList" ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProduct}" Height="190" AutomationProperties.Name="Productos">
-    <DataGrid.Columns><DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="100"/><DataGridTextColumn Header="Categoría" Binding="{Binding CategoryName}" Width="150"/><DataGridTextColumn Header="Precio" Binding="{Binding Price}" Width="100"/><DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="90"/></DataGrid.Columns>
-   </DataGrid>
+   <WrapPanel Margin="0,0,0,10"><CheckBox Content="Mostrar inactivos" IsChecked="{Binding ShowInactive,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" Margin="0,0,16,0"/><Button Content="Buscar / aplicar" Click="SearchClick" Margin="0,0,12,0"/><Button Content="× Limpiar" Click="ClearSearchClick" Style="{StaticResource SecondaryButton}" Visibility="{Binding HasSearch,Converter={StaticResource VisibleWhen}}"/></WrapPanel>
+   <Grid Height="190">
+    <DataGrid x:Name="ProductList" ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProduct}" AutomationProperties.Name="Productos">
+     <DataGrid.Columns><DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="100"/><DataGridTextColumn Header="Categoría" Binding="{Binding CategoryName}" Width="150"/><DataGridTextColumn Header="Precio" Binding="{Binding Price}" Width="100"/><DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="90"/></DataGrid.Columns>
+    </DataGrid>
+    <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="10" Padding="18" Margin="6" Visibility="{Binding HasNoProducts,Converter={StaticResource VisibleWhen}}"><TextBlock Text="{Binding EmptyProductsMessage}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="16" TextWrapping="Wrap"/></Border>
+   </Grid>
    <WrapPanel Margin="0,12,0,0"><Button Content="Nuevo producto" Click="NewProductClick" IsEnabled="{Binding CanCreateProduct}" Margin="0,0,12,8"/><Button Content="Administrar foto" Click="ManagePhotoClick" IsEnabled="{Binding CanEditProduct}" Margin="0,0,12,8"/><Button Content="Editar producto" Click="EditProductClick" IsEnabled="{Binding CanEditProduct}" Margin="0,0,12,8"/><Button Content="Activar / desactivar" Click="ToggleProductClick" IsEnabled="{Binding CanToggleProduct}" Margin="0,0,0,8"/></WrapPanel>
    <TextBlock Text="{Binding PageLabel}" FontSize="15" Margin="0,6,0,8"/><WrapPanel><Button Content="Anterior" Click="PreviousClick" IsEnabled="{Binding HasPrevious}" Margin="0,0,12,8"/><Button Content="Siguiente" Click="NextClick" IsEnabled="{Binding HasNext}" Margin="0,0,0,8"/></WrapPanel>
   </StackPanel>
@@ -34,14 +37,14 @@
     <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="240"/><ColumnDefinition Width="22"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
      <Border Width="240" Height="240" Background="{DynamicResource SurfaceBrush}" CornerRadius="12" ClipToBounds="True">
       <Grid><Image Source="{Binding CurrentPhoto}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" Visibility="{Binding HasCurrentPhoto,Converter={StaticResource VisibleWhen}}"/>
-       <Grid Visibility="{Binding HasNoCurrentPhoto,Converter={StaticResource VisibleWhen}}"><Path Data="M4,5 L16,5 18,8 18,17 2,17 2,8 Z M7,5 L8.5,2 11.5,2 13,5 M10,9 A3,3 0 1 1 9.99,9" Stroke="{DynamicResource WheatBrush}" StrokeThickness="1.6" Stretch="Uniform" Width="52" Height="52"/><TextBlock Text="Sin foto" Style="{StaticResource CaptionText}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,26"/></Grid>
+       <Grid Visibility="{Binding HasNoCurrentPhoto,Converter={StaticResource VisibleWhen}}"><Path Data="M4,5 L16,5 18,8 18,17 2,17 2,8 Z M7,5 L8.5,2 11.5,2 13,5 M10,9 A3,3 0 1 1 9.99,9" Stroke="{DynamicResource WheatBrush}" StrokeThickness="1.6" Stretch="Uniform" Width="52" Height="52"/><TextBlock Text="Sin imagen" Style="{StaticResource CaptionText}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,26"/></Grid>
       </Grid>
      </Border>
      <StackPanel Grid.Column="2">
       <TextBlock Text="IMAGEN DEL PRODUCTO" Style="{StaticResource SectionTitleText}" Foreground="{DynamicResource AvocadoLeafBrush}"/>
       <TextBlock Text="{Binding CurrentPhotoStatus}" FontSize="18" FontWeight="SemiBold" Margin="0,6,0,12"/>
       <TextBlock Text="Esta imagen aparece en la tarjeta del Punto de venta. Usa una foto real cuando esté disponible; las referencias de trabajo deben marcarse como provisionales." Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,12"/>
-      <TextBlock Text="Tipo de fotografía"/>
+      <TextBlock Text="Origen de la imagen"/>
       <ComboBox SelectedValue="{Binding PhotoProvenance}" SelectedValuePath="Tag" Margin="0,4,0,12" IsEnabled="{Binding CanManagePhoto}"><ComboBoxItem Content="Foto real" Tag="REAL"/><ComboBoxItem Content="Foto provisional" Tag="PROVISIONAL"/></ComboBox>
       <WrapPanel><Button Content="{Binding PhotoActionLabel}" Click="ChangePhotoClick" IsEnabled="{Binding CanManagePhoto}" Margin="0,0,12,8"/><Button Content="Quitar foto" Click="RemovePhotoClick" IsEnabled="{Binding CanRemovePhoto}" Style="{StaticResource SecondaryButton}" Margin="0,0,0,8"/></WrapPanel>
       <TextBlock Text="Guarda primero los productos nuevos; después podrás asociar su fotografía." Style="{StaticResource CaptionText}" Visibility="{Binding CannotManagePhoto,Converter={StaticResource VisibleWhen}}"/>
@@ -50,9 +53,12 @@
    </Border>
    <TextBlock Text="Nombre"/><TextBox x:Name="ProductName" Text="{Binding Name,UpdateSourceTrigger=PropertyChanged}" MaxLength="160" AutomationProperties.Name="Nombre de producto" Margin="0,4,0,12"/>
    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-    <StackPanel Margin="0,0,12,12"><TextBlock Text="Categoría"/><ComboBox ItemsSource="{Binding Categories}" SelectedValuePath="Id" SelectedValue="{Binding ProductCategoryId}" AutomationProperties.Name="Categoría del producto" Margin="0,4,0,0"/></StackPanel>
+    <StackPanel Margin="0,0,12,12"><TextBlock Text="Categoría"/><DockPanel Margin="0,4,0,0"><Button Content="+ Nueva categoría" Click="BeginInlineCategoryClick" IsEnabled="{Binding CanCreateInlineCategory}" Style="{StaticResource SecondaryButton}" DockPanel.Dock="Right" Margin="8,0,0,0"/><ComboBox ItemsSource="{Binding Categories}" SelectedValuePath="Id" SelectedValue="{Binding ProductCategoryId}" AutomationProperties.Name="Categoría del producto"/></DockPanel></StackPanel>
     <StackPanel Grid.Column="1" Margin="0,0,0,12"><TextBlock Text="Precio MXN · punto decimal"/><TextBox Text="{Binding Price,UpdateSourceTrigger=PropertyChanged}" MaxLength="20" AutomationProperties.Name="Precio MXN" Margin="0,4,0,0"/></StackPanel>
    </Grid>
+   <Border Background="{DynamicResource SurfaceSecondaryBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,0,0,12" Visibility="{Binding IsInlineCategoryEditor,Converter={StaticResource VisibleWhen}}">
+    <StackPanel><TextBlock Text="Crear categoría sin salir del producto" FontWeight="SemiBold"/><TextBlock Text="El producto en captura conserva nombre, precio, SKU y descripción." Style="{StaticResource CaptionText}" Margin="0,2,0,8"/><TextBox x:Name="InlineCategoryName" Text="{Binding NewCategoryName,UpdateSourceTrigger=PropertyChanged}" MaxLength="100" AutomationProperties.Name="Nombre de nueva categoría"/><WrapPanel Margin="0,10,0,0"><Button Content="Cancelar categoría" Click="CancelInlineCategoryClick" Style="{StaticResource SecondaryButton}" Margin="0,0,10,0"/><Button Content="Crear y seleccionar" Click="CreateInlineCategoryClick"/></WrapPanel></StackPanel>
+   </Border>
    <TextBlock Text="SKU opcional"/><TextBox Text="{Binding Sku,UpdateSourceTrigger=PropertyChanged}" MaxLength="80" AutomationProperties.Name="SKU" Margin="0,4,0,12"/>
    <TextBlock Text="Descripción opcional"/><TextBox Text="{Binding Description,UpdateSourceTrigger=PropertyChanged}" MaxLength="1000" AutomationProperties.Name="Descripción de producto" Margin="0,4,0,8"/>
    <CheckBox Content="Controlar inventario en el futuro (sólo metadato)" IsChecked="{Binding TrackInventory}" Margin="0,0,0,12"/>

@@ -20,6 +20,14 @@ public partial class CatalogView:UserControl
         if(Model.IsProductEditor)Dispatcher.BeginInvoke(()=>PhotoSection.BringIntoView());
     }
     private async void SearchClick(object s,RoutedEventArgs e)=>await Model.SearchAsync();
+    private async void ClearSearchClick(object s,RoutedEventArgs e){await Model.ClearSearchAsync();SearchBox.Focus();}
+    private void BeginInlineCategoryClick(object s,RoutedEventArgs e)
+    {
+        Model.BeginInlineCategory();
+        if(Model.IsInlineCategoryEditor)Dispatcher.BeginInvoke(()=>{InlineCategoryName.Focus();InlineCategoryName.BringIntoView();});
+    }
+    private void CancelInlineCategoryClick(object s,RoutedEventArgs e)=>Model.CancelInlineCategory();
+    private async void CreateInlineCategoryClick(object s,RoutedEventArgs e)=>await Model.CreateInlineCategoryAsync();
     private async void SaveClick(object s,RoutedEventArgs e)=>await Model.SaveAsync();
     private async void CancelClick(object s,RoutedEventArgs e)=>await Model.CancelAsync();
     private async void ToggleCategoryClick(object s,RoutedEventArgs e)=>await Model.ToggleCategoryAsync();
@@ -48,7 +56,9 @@ public partial class CatalogView:UserControl
     }
     private async void CatalogKeyDown(object s,KeyEventArgs e)
     {
-        if(e.Key==Key.Escape&&(Model.IsCategoryEditor||Model.IsProductEditor)){e.Handled=true;await Model.CancelAsync();}
+        if(e.Key==Key.Escape&&Model.IsInlineCategoryEditor){e.Handled=true;Model.CancelInlineCategory();}
+        else if(e.Key==Key.Escape&&(Model.IsCategoryEditor||Model.IsProductEditor)){e.Handled=true;await Model.CancelAsync();}
+        else if(e.Key==Key.Escape&&Keyboard.FocusedElement==SearchBox&&Model.HasSearch){e.Handled=true;await Model.ClearSearchAsync();SearchBox.Focus();}
         else if(e.Key==Key.Enter&&Keyboard.FocusedElement==SearchBox){e.Handled=true;await Model.SearchAsync();}
     }
 }

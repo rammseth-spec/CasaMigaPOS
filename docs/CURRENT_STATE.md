@@ -1,4 +1,12 @@
-# FASE 1K ABIERTA — 1K.3D-R1, 06/10/2026
+# FASE 1K ABIERTA — 1K.4A, 06/10/2026
+
+**FASE 1K.4A técnicamente completada; smoke manual pendiente.** POS y Catálogo incorporan búsqueda en vivo por nombre/SKU con debounce de 250 ms, cancelación de consultas obsoletas, × Limpiar, Escape contextual, categoría preservada y estados vacíos humanos. El filtro administrativo conserva selecciones válidas y responde correctamente a cambios rápidos. El editor de producto permite crear una categoría inline sin perder el borrador y presenta `Origen de la imagen` con REAL/PROVISIONAL intactos; el placeholder visible es `Sin imagen`. Cards mantienen foto, dos líneas de nombre y precio reservado.
+
+La base protegida permanece SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. En ella Pan salado no existe; Bolillo mantequilla `CM-003` sí existe a $8 MXN y no fue mutado. La copia aislada `work/phase1k4a-smoke-20261006` agrega Pan salado, vincula allí el bolillo y añade casos sintéticos largo/sin imagen/inactivo. Conserva schema 16, 25 fotos PROVISIONAL, 3 REAL y conteos operativos antes/después. No hubo ventas, caja, inventario, impresión o producción.
+
+Pruebas focales **14/14**, incluida regresión exacta de Producción 1K.3D. Suite completa `scripts/verify.ps1`: **725/725** (560 generales + 165 WPF/Presentation), 0 fallidas/omitidas. Release Phase1K4A: 0 errores/advertencias. Domain/Application/Infrastructure y migraciones intactos; sin 017. Revisión: `src/CasaMiga.Presentation/bin/Phase1K4A/`, `work/Abrir-Casa-Miga-1K4A.cmd`, DataDirectory `work/phase1k4a-smoke-20261006`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4A`. Ver `PHASE_1K4A_REPORT.md`. No iniciar 1K.4B.
+
+## Registro anterior — 1K.3D-R1
 
 **FASE 1K.3D-R1 técnicamente completada; smoke final corto pendiente.** El pulido de Producción corrige pluralización de piezas, presenta MASS/VOLUME en forma compuesta exacta cuando mejora la lectura, amplía la columna Planeado / real, reemplaza el checkbox «Sin producto» por un resultado textual y diferencia claramente el lenguaje de borrador frente al historial confirmado. El plan conserva su inmutabilidad y ahora se explica como «ya quedó fijado». La comparación del resultado real cuantifica piezas de diferencia.
 
