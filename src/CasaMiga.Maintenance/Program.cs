@@ -6,7 +6,7 @@ using CasaMiga.Infrastructure;
 try
 {
     if (args.Length < 2)
-        throw new ArgumentException("Uso: init|backup|list|print-test <directorio absoluto>; restore-installation <cmbackup> <directorio nuevo>; restore <db legado> <archivo nuevo>.");
+        throw new ArgumentException("Uso: init|backup|list|print-test|reset-admin <directorio absoluto>; restore-installation <cmbackup> <directorio nuevo>; restore <db legado> <archivo nuevo>.");
     if (args[0] == "print-test" && args.Length == 2 && Path.IsPathFullyQualified(args[1]) && !args[1].StartsWith(@"\\", StringComparison.Ordinal))
     {
         var test = new ControlledReceiptPrintTest(
@@ -41,6 +41,17 @@ try
             case "init": Console.WriteLine(new FoundationRuntime(new FoundationOptions(args[1])).Start()); break;
             case "backup": Console.WriteLine(backups.Create()); break;
             case "list": foreach (var file in backups.History()) Console.WriteLine(file); break;
+            case "reset-admin":
+            {
+                // Respaldo + migración igual que al abrir la app; después contraseña temporal auditada.
+                Console.WriteLine(new FoundationRuntime(new FoundationOptions(args[1])).Start());
+                var identity = new CasaMiga.Application.IdentityService(new SqliteLocalUnitOfWork(database), new LocalPasswords(), new SystemClock(), new CasaMiga.Application.UserSession());
+                var (username, temporary) = identity.RecoverAdministrator();
+                Console.WriteLine($"Administrador: {username}");
+                Console.WriteLine($"Contraseña temporal: {temporary}");
+                Console.WriteLine("Se muestra sólo esta vez. Al iniciar sesión deberá crearse una contraseña nueva.");
+                break;
+            }
             default: throw new ArgumentException("Comando no reconocido.");
         }
     }

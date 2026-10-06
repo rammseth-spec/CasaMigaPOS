@@ -132,7 +132,17 @@
          <DataGrid x:Name="UserList" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}" Height="220" AutomationProperties.Name="Usuarios">
           <DataGrid.Columns><DataGridTextColumn Header="Usuario" Binding="{Binding Username,Mode=OneWay}" Width="*"/><DataGridTextColumn Header="Nombre" Binding="{Binding DisplayName,Mode=OneWay}" Width="*"/><DataGridTextColumn Header="Rol" Binding="{Binding Role,Mode=OneWay}" Width="140"/><DataGridTextColumn Header="Estado" Binding="{Binding Status,Mode=OneWay}" Width="200"/></DataGrid.Columns>
          </DataGrid>
-         <WrapPanel Margin="0,12,0,0"><Button Content="Restablecer contraseña" Click="ResetPasswordClick" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8" AutomationProperties.Name="Restablecer contraseña del usuario seleccionado"/></WrapPanel>
+         <Grid Margin="0,12,0,0" IsEnabled="{Binding CanEditSelectedUser}">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="16"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
+          <StackPanel><TextBlock Text="Nombre del usuario seleccionado"/><TextBox Text="{Binding EditUserDisplay,UpdateSourceTrigger=PropertyChanged}" MaxLength="100" AutomationProperties.Name="Nombre del usuario seleccionado" Margin="0,6,0,8"/></StackPanel>
+          <StackPanel Grid.Column="2"><TextBlock Text="Rol"/><ComboBox ItemsSource="{Binding RoleOptions}" SelectedValuePath="Id" DisplayMemberPath="Name" SelectedValue="{Binding EditUserRole}" AutomationProperties.Name="Rol del usuario seleccionado" Margin="0,6,0,8"/></StackPanel>
+         </Grid>
+         <WrapPanel Margin="0,4,0,0">
+          <Button Content="Guardar cambios" Click="SaveUserClick" IsEnabled="{Binding CanEditSelectedUser}" Margin="0,0,12,8" AutomationProperties.Name="Guardar cambios del usuario seleccionado"/>
+          <Button Content="{Binding ToggleUserText}" Click="ToggleUserClick" IsEnabled="{Binding CanEditSelectedUser}" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8" AutomationProperties.Name="Desactivar o reactivar usuario"/>
+          <Button Content="Restablecer contraseña" Click="ResetPasswordClick" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8" AutomationProperties.Name="Restablecer contraseña del usuario seleccionado"/>
+         </WrapPanel>
+         <TextBlock Text="El administrador no se edita aquí. Si olvida su contraseña, se recupera en este equipo con: CasaMiga.Maintenance reset-admin &lt;carpeta de datos&gt;" Style="{StaticResource CaptionText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
          <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="9" Padding="16,12" Margin="0,4,0,8" Visibility="{Binding HasTemporaryPasswordNotice,Converter={StaticResource VisibleWhen}}">
           <TextBox Text="{Binding TemporaryPasswordNotice,Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" TextWrapping="Wrap" FontSize="16" AutomationProperties.Name="Contraseña temporal"/>
          </Border>

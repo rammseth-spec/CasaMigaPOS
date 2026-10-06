@@ -61,7 +61,16 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string PasswordRules => PasswordPolicy.Description;
     public string ChangePasswordUser { get; set; } = "";
     public IReadOnlyList<UserRow> Users { get; private set; } = [];
-    public UserRow? SelectedUser { get; set; }
+    private UserRow? selectedUser;
+    public UserRow? SelectedUser
+    {
+        get => selectedUser;
+        set { selectedUser = value; EditUserDisplay = value?.DisplayName ?? ""; EditUserRole = value?.RoleId is "Manager" ? "Manager" : "Cashier"; Notify(); }
+    }
+    public string EditUserDisplay { get; set; } = "";
+    public string EditUserRole { get; set; } = "Cashier";
+    public bool CanEditSelectedUser => SelectedUser is { IsAdministrator: false } && IsReady;
+    public string ToggleUserText => SelectedUser is { Active: false } ? "Reactivar usuario" : "Desactivar usuario";
     public string NewUserName { get; set; } = "";
     public string NewUserDisplay { get; set; } = "";
     public IReadOnlyList<RoleOption> RoleOptions { get; } = [new("Cashier", "Cajero"), new("Manager", "Encargado")];
@@ -181,6 +190,22 @@ public sealed class MainViewModel : INotifyPropertyChanged
         NewUserName = ""; NewUserDisplay = ""; NewUserRole = "Cashier";
         await LoadUsersAsync(); MessageIsSuccess = true; Message = "Usuario creado.";
     });
+    public Task SaveUserAsync() => Execute(async () =>
+    {
+        if (SelectedUser is not { } target) throw new ArgumentException("Selecciona un usuario.");
+        string display = EditUserDisplay, role = EditUserRole;
+        await Task.Run(() => login!.UpdateUser(target.Id, display, role));
+        runtime?.TryLog("identity.user.updated");
+        await LoadUsersAsync(target.Id); MessageIsSuccess = true; Message = "Usuario actualizado.";
+    });
+    public Task ToggleUserAsync() => Execute(async () =>
+    {
+        if (SelectedUser is not { } target) throw new ArgumentException("Selecciona un usuario.");
+        var activate = !target.Active;
+        await Task.Run(() => login!.SetActive(target.Id, activate));
+        runtime?.TryLog(activate ? "identity.user.reactivated" : "identity.user.deactivated");
+        await LoadUsersAsync(target.Id); MessageIsSuccess = true; Message = activate ? "Usuario reactivado." : "Usuario desactivado. Ya no puede iniciar sesión.";
+    });
     public Task ResetPasswordAsync() => Execute(async () =>
     {
         if (SelectedUser is not { } target) throw new ArgumentException("Selecciona un usuario.");
@@ -191,12 +216,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
     });
     private static string Notice(string username, string temporary) =>
         $"Contraseña temporal de {username}: {temporary}\nEntrégala en persona. Sólo se muestra esta vez y deberá cambiarla al iniciar sesión.";
-    private async Task LoadUsersAsync()
+    private async Task LoadUsersAsync(Guid? keep = null)
     {
         var users = await Task.Run(() => login!.ListUsers());
         Users = users.Select(u => new UserRow(u.Id, u.Username, u.DisplayName, RoleName(u.Role),
-            !u.Active ? "Inactivo" : u.MustChangePassword ? "Debe cambiar contraseña" : "Activo")).ToList();
-        SelectedUser = null;
+            !u.Active ? "Inactivo" : u.MustChangePassword ? "Debe cambiar contraseña" : "Activo", u.Role, u.Active)).ToList();
+        SelectedUser = Users.FirstOrDefault(u => u.Id == keep);
     }
     public void Logout() { if (Busy) return; user?.SignOut(); Users = []; SelectedUser = null; TemporaryPasswordNotice = ""; CanManageUsers = false; Pos?.ForgetView(); SalesHistory?.Forget(); Reports?.Forget(); Inventory?.Forget(); opened = null; closingResult = null; CountedAmount = ""; CanViewSales=false; CanViewInventory=false;CanViewRecipes=false;CanViewProduction=false;CurrentRoleLabel=""; screen = "login"; Message = ""; Notify(); }
     public void ShowOpening() { if (Busy || !CanOpen) return; Amount = "0.00"; screen = "opening"; Message = ""; Notify(); }
@@ -273,5 +298,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         finally { Busy = false; Notify(); }
     }
 }
-public sealed record UserRow(Guid Id, string Username, string DisplayName, string Role, string Status);
+public sealed record UserRow(Guid Id, string Username, string DisplayName, string Role, string Status, string RoleId = "", bool Active = true)
+{
+    public bool IsAdministrator => RoleId == "Administrator";
+}
 public sealed record RoleOption(string Id, string Name);

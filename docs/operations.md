@@ -86,6 +86,7 @@ El respaldo vigente sigue siendo v1 con tres entradas. `PHASE_1K2A_DESIGN.md`, s
 dotnet run --project src/CasaMiga.Maintenance -- init C:\CasaMiga-Dev
 dotnet run --project src/CasaMiga.Maintenance -- backup C:\CasaMiga-Dev
 dotnet run --project src/CasaMiga.Maintenance -- list C:\CasaMiga-Dev
+dotnet run --project src/CasaMiga.Maintenance -- reset-admin C:\CasaMiga-Dev
 dotnet run --project src/CasaMiga.Maintenance -- restore-installation C:\CasaMiga-Dev\backups\ARCHIVO.cmbackup C:\CasaMiga-Restaurada
 ```
 

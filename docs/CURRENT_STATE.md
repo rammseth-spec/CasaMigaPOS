@@ -1,3 +1,7 @@
+# Gestión de usuarios completa — 06/10/2026
+
+**Implementado; smoke manual pendiente.** Pantalla Usuarios: editar nombre y rol (Encargado/Cajero), desactivar/reactivar (no al administrador ni a uno mismo), además de crear y restablecer contraseña. Recuperación del administrador único con `CasaMiga.Maintenance reset-admin <carpeta>`: respaldo y migración como al abrir la app, contraseña temporal mostrada una vez, cambio obligatorio, auditoría `identity.admin.recovered`. Sin migración. Suite **773/773** (614 + 159), Release 0/0.
+
 # Formas de pago — 06/10/2026
 
 **Implementado; smoke manual pendiente.** Migración 020: `payment` admite `CASH`, `CARD`, `TRANSFER` y referencia opcional; tarjeta/transferencia por el total exacto sin cambio. Un método por venta. Esperado de caja sólo cuenta efectivo; devoluciones de ventas no-efectivo no tocan el cajón. Cobro con selector de método; historial, ticket y reportes muestran el método. Ticket de efectivo sin cambios. Ver [PAYMENTS.md](PAYMENTS.md). Suite **770/770** (611 + 159), Release 0/0.

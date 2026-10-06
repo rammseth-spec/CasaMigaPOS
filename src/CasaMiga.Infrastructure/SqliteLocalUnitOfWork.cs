@@ -79,6 +79,16 @@ public sealed partial class SqliteLocalUnitOfWork(Database database) : ILocalUni
                 ("$id", Id(id)), ("$hash", hash), ("$must", mustChangePassword ? 1 : 0));
             if (cmd.ExecuteNonQuery() != 1) throw new InvalidOperationException("El usuario ya no existe.");
         }
+        public void UpdateUser(Guid id, string displayName, string role)
+        {
+            using var cmd = Command("UPDATE app_user SET display_name=$display,role_name=$role WHERE id=$id", ("$id", Id(id)), ("$display", displayName), ("$role", role));
+            if (cmd.ExecuteNonQuery() != 1) throw new InvalidOperationException("El usuario ya no existe.");
+        }
+        public void SetUserActive(Guid id, bool active)
+        {
+            using var cmd = Command("UPDATE app_user SET active=$active,failed_attempts=0,locked_until_utc=NULL WHERE id=$id", ("$id", Id(id)), ("$active", active ? 1 : 0));
+            if (cmd.ExecuteNonQuery() != 1) throw new InvalidOperationException("El usuario ya no existe.");
+        }
         public IReadOnlyList<UserSummary> ListUsers()
         {
             using var cmd = Command("SELECT id,username,display_name,role_name,active,must_change_password,locked_until_utc FROM app_user ORDER BY username");

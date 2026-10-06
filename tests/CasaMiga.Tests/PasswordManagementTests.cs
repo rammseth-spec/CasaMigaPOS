@@ -195,6 +195,57 @@ public sealed class PasswordManagementTests
     }
 
     [TestMethod]
+    public void AdministratorEditsAndDeactivatesUsersWithAudit()
+    {
+        var temporary = identity.CreateUser("cajero3", "Cajero centro", "Cashier");
+        identity.ChangePassword("cajero3", temporary, "Centro#2026xy");
+        Assert.IsTrue(identity.Login("admin", AdminPassword));
+        var id = identity.ListUsers().Single(u => u.Username == "CAJERO3").Id;
+
+        identity.UpdateUser(id, "Encargada norte", "Manager");
+        var updated = identity.ListUsers().Single(u => u.Id == id);
+        Assert.AreEqual("Encargada norte", updated.DisplayName); Assert.AreEqual("Manager", updated.Role);
+        Assert.AreEqual(1L, Audits("identity.user.updated"));
+
+        identity.SetActive(id, false);
+        Assert.IsFalse(identity.Login("cajero3", "Centro#2026xy"), "Inactive users cannot sign in.");
+        Assert.IsTrue(identity.Login("admin", AdminPassword));
+        identity.SetActive(id, false);
+        Assert.AreEqual(1L, Audits("identity.user.deactivated"), "Repeating the same state does not audit twice.");
+        identity.SetActive(id, true);
+        Assert.AreEqual(1L, Audits("identity.user.reactivated"));
+        Assert.IsTrue(identity.Login("cajero3", "Centro#2026xy"));
+    }
+
+    [TestMethod]
+    public void AdministratorAndOwnUserCannotBeEditedOrPromoted()
+    {
+        var adminId = identity.ListUsers().Single(u => u.Username == "ADMIN").Id;
+        Assert.ThrowsExactly<ArgumentException>(() => identity.SetActive(adminId, false));
+        Assert.ThrowsExactly<ArgumentException>(() => identity.UpdateUser(adminId, "Otro", "Manager"));
+        identity.CreateUser("cajero4", "Cajero sur", "Cashier");
+        var id = identity.ListUsers().Single(u => u.Username == "CAJERO4").Id;
+        Assert.ThrowsExactly<ArgumentException>(() => identity.UpdateUser(id, "Cajero sur", "Administrator"));
+        Assert.ThrowsExactly<ArgumentException>(() => identity.UpdateUser(id, "  ", "Cashier"));
+        Assert.AreEqual(1L, Scalar("SELECT count(*) FROM app_user WHERE role_name='Administrator'"));
+    }
+
+    [TestMethod]
+    public void MaintenanceRecoversForgottenAdministratorPassword()
+    {
+        for (int i = 0; i < 5; i++) Assert.IsFalse(identity.Login("admin", "Olvidada#123"));
+        var recovery = new IdentityService(work, Passwords, clock, new UserSession());
+        var (username, temporary) = recovery.RecoverAdministrator();
+        Assert.AreEqual("ADMIN", username);
+        Assert.IsTrue(PasswordPolicy.IsValid(temporary));
+        Assert.IsFalse(identity.Login("admin", AdminPassword), "The forgotten password stops working.");
+        Assert.AreEqual(LoginOutcome.PasswordChangeRequired, identity.Authenticate("admin", temporary), "Recovery unlocks and forces a new password.");
+        identity.ChangePassword("admin", temporary, "Nueva#2026adm");
+        Assert.IsTrue(identity.Login("admin", "Nueva#2026adm"));
+        Assert.AreEqual(1L, Audits("identity.admin.recovered"));
+    }
+
+    [TestMethod]
     public void MigrationAddsManagePermissionOnlyToAdministrator()
     {
         Assert.AreEqual((long)Database.LatestVersion, Scalar("SELECT max(version) FROM schema_migration"));

@@ -126,6 +126,59 @@ public sealed class IdentityService(ILocalUnitOfWork database, IPasswords passwo
         return temporary;
     }
 
+    public void UpdateUser(Guid userId, string displayName, string role)
+    {
+        displayName = displayName.Trim();
+        if (displayName.Length is < 1 or > 100) throw new ArgumentException("El nombre debe tener de 1 a 100 caracteres.");
+        if (role is not ("Manager" or "Cashier")) throw new ArgumentException("Sólo existe un administrador. El rol debe ser Encargado o Cajero.");
+        database.Run(store =>
+        {
+            var (actor, target) = ManagedTarget(store, userId);
+            store.UpdateUser(target.Id, displayName, role);
+            store.AddAudit(new(Guid.NewGuid(), actor.Id, null, "identity.user.updated", target.Id, clock.UtcNow,
+                JsonSerializer.Serialize(new { before = new { target.DisplayName, target.Role }, after = new { DisplayName = displayName, Role = role } })));
+            return true;
+        });
+    }
+
+    public void SetActive(Guid userId, bool active) => database.Run(store =>
+    {
+        var (actor, target) = ManagedTarget(store, userId);
+        if (target.Active == active) return true;
+        store.SetUserActive(target.Id, active);
+        store.AddAudit(new(Guid.NewGuid(), actor.Id, null, active ? "identity.user.reactivated" : "identity.user.deactivated", target.Id, clock.UtcNow, "{}"));
+        return true;
+    });
+
+    /// <summary>
+    /// Recuperación del administrador único desde la herramienta de mantenimiento local (requiere acceso al equipo y la app cerrada).
+    /// Asigna una contraseña temporal, reactiva y desbloquea; debe cambiarse al entrar. Devuelve (usuario, temporal).
+    /// </summary>
+    public (string Username, string Temporary) RecoverAdministrator()
+    {
+        var temporary = PasswordPolicy.GenerateTemporary();
+        var hash = passwords.Hash(temporary);
+        var username = database.Run(store =>
+        {
+            var admin = store.ListUsers().SingleOrDefault(u => u.Role == "Administrator")
+                ?? throw new InvalidOperationException("No hay administrador; usa la configuración inicial de la aplicación.");
+            store.SetUserActive(admin.Id, true);
+            store.SetPassword(admin.Id, hash, mustChangePassword: true);
+            store.AddAudit(new(Guid.NewGuid(), admin.Id, null, "identity.admin.recovered", admin.Id, clock.UtcNow, JsonSerializer.Serialize(new { channel = "maintenance" })));
+            return admin.Username;
+        });
+        return (username, temporary);
+    }
+
+    private (LocalUser Actor, LocalUser Target) ManagedTarget(ILocalStore store, Guid userId)
+    {
+        var actor = Manager(store) ?? throw new AccessDeniedException();
+        if (actor.Id == userId) throw new ArgumentException("No puedes modificar tu propio usuario desde aquí.");
+        var target = store.FindUser(userId) ?? throw new ArgumentException("El usuario ya no existe.");
+        if (target.Role == "Administrator") throw new ArgumentException("El administrador no se puede editar ni desactivar.");
+        return (actor, target);
+    }
+
     private LocalUser? Verify(ILocalStore store, string username, string password, bool rehash = true)
     {
         if (username.Length > 80 || password.Length is < 1 or > 128) return null;

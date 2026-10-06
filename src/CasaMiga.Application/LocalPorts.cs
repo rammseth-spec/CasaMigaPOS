@@ -62,6 +62,8 @@ public interface ILocalStore
     void AddUser(Guid id, string username, string displayName, string role, string hash, bool mustChangePassword, DateTimeOffset at);
     void SetPassword(Guid id, string hash, bool mustChangePassword);
     IReadOnlyList<UserSummary> ListUsers();
+    void UpdateUser(Guid id, string displayName, string role);
+    void SetUserActive(Guid id, bool active);
     bool HasPermission(Guid user, string permission);
     bool HasRole(Guid user, string role);
     TerminalIdentity? FindTerminal(Guid id);

@@ -47,6 +47,14 @@ public partial class MainWindow : Window
     private void ClearChangePassword() { ChangeCurrent.Clear(); ChangeNew.Clear(); ChangeConfirmation.Clear(); }
     private async void UsersNavigationClick(object sender, RoutedEventArgs e) => await Model.ShowUsersAsync();
     private async void CreateUserClick(object sender, RoutedEventArgs e) => await Model.CreateUserAsync();
+    private async void SaveUserClick(object sender, RoutedEventArgs e) => await Model.SaveUserAsync();
+    private async void ToggleUserClick(object sender, RoutedEventArgs e)
+    {
+        if (Model.SelectedUser is not { } target) return;
+        if (target.Active && MessageBox.Show(this, $"{target.Username} ya no podrá iniciar sesión hasta que lo reactives. ¿Continuar?",
+            "Desactivar usuario", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        await Model.ToggleUserAsync();
+    }
     private async void ResetPasswordClick(object sender, RoutedEventArgs e)
     {
         if (Model.SelectedUser is not { } target) { await Model.ResetPasswordAsync(); return; }
