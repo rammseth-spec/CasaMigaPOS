@@ -1,3 +1,9 @@
+# Recoger sin cortes y doble apertura — 07/10/2026
+
+**Implementado; smoke manual pendiente.** Recoger charola: el aviso vacío de la ventana ocupaba 39 px y hacía desplazar la página al tocar una foto; ahora no ocupa lugar. Tarjetas más bajas (dos por renglón a 1280 px; seis panes caben completos) y cobro sin desplazarse: importe y forma de pago en renglones compactos, y «Anular esta charola…» como paso aparte con su motivo (sin MessageBox). Abrir Casa Miga dos veces con la misma carpeta de datos ya no muestra «Cierre por error»: trae al frente la ventana abierta (o avisa que ya está abierta) y sale con código 0 sin registrar incidente.
+
+Build `src/CasaMiga.Presentation/bin/Review-QAv1-d0baaf3` sobre la misma copia `demo-charolas-QAv1-7c33343`, launcher `work/Abrir-Casa-Miga-QAv1-d0baaf3.cmd`, con `dev-autologin.json` (entra como admin). Suite **829/829** (657 + 172), Release 0/0. Credenciales en la conversación.
+
 # Charolas a consignación — 06/10/2026
 
 **Implementado; smoke manual pendiente.** Nueva pantalla **Charolas** (Administrator y Manager) con migración 021: precio de charola por producto, tiendas cliente con charola habitual, entregar, recoger (lo que regresa se aparta para Piedra), cobros por tienda aparte de la caja con saldo pendiente, anulación de charolas sin recoger y reporte (% de venta, Piedra, cargado, pagado, saldo y margen que se queda en tiendas). Registros inmutables y validados por la base; auditoría `consignment.*`. `seed-review --demo-days` ahora también crea 3 tiendas con charolas diarias, recolecciones y cobros. Corregido un enlace de WPF que dejaba vacía la lista de la charola habitual cuando la pantalla nacía sin datos; prueba de regresión con el orden real de arranque. Ver [CONSIGNMENT.md](CONSIGNMENT.md).
