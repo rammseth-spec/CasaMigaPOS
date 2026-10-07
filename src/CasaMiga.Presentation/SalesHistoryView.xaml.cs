@@ -12,7 +12,11 @@ public partial class SalesHistoryView : UserControl
     private async void TodayClick(object sender,RoutedEventArgs e)=>await Model.TodayAsync();
     private async void YesterdayClick(object sender,RoutedEventArgs e)=>await Model.YesterdayAsync();
     private async void CurrentSessionClick(object sender,RoutedEventArgs e)=>await Model.CurrentSessionAsync();
-    private async void SearchDatesClick(object sender,RoutedEventArgs e)=>await Model.SearchDatesAsync();
+    private async void SearchDatesClick(object sender,RoutedEventArgs e)=>await Model.SearchDatesAsync(FromDatePicker.Text,ThroughDatePicker.Text);
+    private void DatePickerValidationError(object sender,DatePickerDateValidationErrorEventArgs e)
+    {
+        e.ThrowException=false;Model.ReportDateInputError();
+    }
     private async void ClearClick(object sender,RoutedEventArgs e)=>await Model.ClearAsync();
     private async void PreviousClick(object sender,RoutedEventArgs e)=>await Model.PageAsync(-1);
     private async void NextClick(object sender,RoutedEventArgs e)=>await Model.PageAsync(1);

@@ -9,7 +9,6 @@ public sealed record SalesHistoryRowView(SalesHistoryRow Row, TimeZoneInfo TimeZ
 {
     public Guid SaleId => Row.SaleId;
     public string SaleNumber => $"Venta #{Row.Sequence:D6}";
-    public string HumanIdentifier => $"{Row.TerminalName} · {SaleNumber}";
     public string Date => TimeZoneInfo.ConvertTime(Row.ConfirmedAt,TimeZone).ToString("dd/MM/yyyy · HH:mm",CultureInfo.InvariantCulture);
     public string Total => Format(Row.Total);
     public string Method => PaymentLabel(Row.PaymentMethod);
@@ -68,7 +67,7 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
     public string ReprintMessage {get;private set;}="";
     public string ReprintButtonText=>ReprintResult?.State is ReceiptPrintState.Failed or ReceiptPrintState.Unknown
         ? "Reintentar reimpresión":"Reimprimir ticket";
-    public string DetailTitle=>Detail is null?"":$"{Detail.TerminalName} · Venta #{Detail.Sale.Sequence:D6}";
+    public string DetailTitle=>Detail is null?"":$"Venta #{Detail.Sale.Sequence:D6}";
     public string DetailContext=>Detail is null?"":$"Fecha: {Local(Detail.Sale.ConfirmedAt):dd/MM/yyyy · HH:mm}\nResponsable: {Detail.CashierName}\nCaja: {Detail.TerminalName}";
     public string DetailSubtotal=>Detail is null?"":Format(Detail.Sale.Subtotal);
     public string DetailTotal=>Detail is null?"":Format(Detail.Sale.Total);
@@ -96,7 +95,20 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
         FromDate=day.ToDateTime(TimeOnly.MinValue);ThroughDate=FromDate;await Refresh();
     });
     public Task SearchFolioAsync()=>Run(async()=>{FromDate=null;ThroughDate=null;cashSessionId=null;mode=SalesHistoryMode.Folio;page=0;await Refresh();});
-    public Task SearchDatesAsync()=>Run(async()=>{Folio="";cashSessionId=null;mode=SalesHistoryMode.DateRange;page=0;await Refresh();});
+    public Task SearchDatesAsync()=>FromDate is { } from&&ThroughDate is { } through
+        ? ApplyDateRangeAsync(DateOnly.FromDateTime(from),DateOnly.FromDateTime(through))
+        : RejectDateRange("Captura las fechas desde y hasta con formato dd/mm/aaaa.");
+    public Task SearchDatesAsync(string fromText,string throughText)
+    {
+        if(!TryParseDate(fromText,out var from)||!TryParseDate(throughText,out var through))
+            return RejectDateRange("Captura fechas válidas con formato dd/mm/aaaa, por ejemplo 07/10/2026.");
+        return ApplyDateRangeAsync(from,through);
+    }
+    public void ReportDateInputError()
+    {
+        if(Busy)return;
+        Message="Captura fechas válidas con formato dd/mm/aaaa, por ejemplo 07/10/2026.";Notify();
+    }
     public Task CurrentSessionAsync()=>Run(async()=>
     {
         Folio="";FromDate=null;ThroughDate=null;page=0;mode=SalesHistoryMode.CashSession;cashSessionId=currentCashSession();
@@ -151,7 +163,8 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
         DateOnly? through=ThroughDate is { } last?DateOnly.FromDateTime(last):null;
         var result=await Task.Run(()=>service.Search(new(mode,Folio,from,through,page,cashSessionId)));
         Sales=result.Items.Select(x=>new SalesHistoryRowView(x,timeZone)).ToArray();SelectedSale=null;
-        PageLabel=$"Página {page+1} · hasta {result.PageSize} por página";
+        var pageCount=result.Total==0?0:(result.Total+result.PageSize-1)/result.PageSize;
+        PageLabel=result.Total==0?"":$"Página {page+1} de {pageCount} · {result.Total} {(result.Total==1?"venta":"ventas")} · {result.PageSize} por página";
         FilterSummary=$"{FilterLabel()} · {result.Total} {(result.Total==1?"venta":"ventas")}";
         HasNext=(page+1)*result.PageSize<result.Total;ClearDetail();
     }
@@ -164,6 +177,22 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
         SalesHistoryMode.DateRange=>"Rango personalizado",
         _=>"Venta encontrada"
     };
+    private Task ApplyDateRangeAsync(DateOnly from,DateOnly through)
+    {
+        if(from>through)return RejectDateRange("La fecha desde no puede ser posterior a la fecha hasta.");
+        return Run(async()=>
+        {
+            Folio="";cashSessionId=null;mode=SalesHistoryMode.DateRange;page=0;
+            FromDate=from.ToDateTime(TimeOnly.MinValue);ThroughDate=through.ToDateTime(TimeOnly.MinValue);await Refresh();
+        });
+    }
+    private Task RejectDateRange(string message)
+    {
+        if(!Busy){Message=message;Notify();}
+        return Task.CompletedTask;
+    }
+    private static bool TryParseDate(string? text,out DateOnly value)=>DateOnly.TryParseExact(
+        text?.Trim(),"dd/MM/yyyy",CultureInfo.InvariantCulture,DateTimeStyles.None,out value);
     private void ResetFilters(){Folio="";FromDate=null;ThroughDate=null;cashSessionId=null;page=0;}
     private void ClearDetail()
     {

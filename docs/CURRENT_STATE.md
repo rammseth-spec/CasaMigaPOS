@@ -1,8 +1,12 @@
-# FASE 1K ABIERTA — 1K.4C, 07/10/2026
+# FASE 1K ABIERTA — 1K.4C-R1, 07/10/2026
 
-**FASE 1K.4C técnicamente completada; smoke humano pendiente.** Historial usa `Sale.Sequence` persistido como `Nombre de caja · Venta #NNNNNN`, fechas locales y `Efectivo`; oculta GUID, folio técnico, CashSessionId y «Aplicado». Incorpora filtros Todos/Hoy/Ayer/Rango/Sesión actual. El filtro opcional de CashSessionId se aplica en SQLite antes de count/LIMIT/OFFSET y `null` conserva el comportamiento previo. El resumen muestra sólo el total completo y fiable de ventas.
+**FASE 1K.4C-R1 técnicamente completada; smoke humano pendiente.** Historial presenta fechas con DatePicker y entrada manual estricta `dd/MM/yyyy`, ayuda de una línea `dd/mm/aaaa` y mensajes humanos sin reemplazar el filtro activo ante fechas inválidas o rangos invertidos. El listado separa `Venta #NNNNNN` de la columna Caja y el detalle evita repetir la terminal en el título. La paginación informa página actual/total, total real de ventas y singular/plural; un resultado vacío no presenta una página ficticia.
 
-Focales **26/26**; suite final **737/737** (561 generales + 176 WPF/Presentation), 0 fallidas/omitidas; Release Phase1K4C 0 errores/advertencias. Domain y migraciones intactos; Application/Infrastructure sólo amplían la consulta de lectura. Schema 16, sin 017. Base protegida SHA-256 inicial/final `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Revisión: `src/CasaMiga.Presentation/bin/Phase1K4C/`, `work/Abrir-Casa-Miga-1K4C.cmd`, DataDirectory `work/phase1k4c-smoke-20261007`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4C`. Ver `PHASE_1K4C_REPORT.md`. No iniciar 1K.4D; no publicar hasta después de su cierre.
+Focales **28/28**; suite final **739/739** (561 generales + 178 WPF/Presentation), 0 fallidas/omitidas; Release Phase1K4C-R1 0 errores/advertencias. Sólo Presentation, pruebas y documentación; Domain/Application/Infrastructure/SQLite/migraciones intactos. Schema 16, sin 017. Base protegida SHA-256 inicial/final `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Revisión: `src/CasaMiga.Presentation/bin/Phase1K4C-R1/`, `work/Abrir-Casa-Miga-1K4C-R1.cmd`, DataDirectory `work/phase1k4c-r1-smoke-20261007`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4C-R1`. Ver `PHASE_1K4C_R1_REPORT.md`. No iniciar 1K.4D; no publicar hasta después de su cierre.
+
+## Registro anterior — 1K.4C
+
+1K.4C introdujo identificadores humanos, filtros Todos/Hoy/Ayer/Rango/Sesión actual y detalle financiero de sólo lectura. Suite 737/737; schema 16 y base protegida intactos. R1 sustituye su build para la revisión pendiente.
 
 ## Registro anterior — 1K.4B-R1
 

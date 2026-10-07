@@ -1,14 +1,16 @@
-# Próximo paso — smoke manual de 1K.4C
+# Próximo paso — smoke manual de 1K.4C-R1
 
-Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4C`, abierta desde `work/Abrir-Casa-Miga-1K4C.cmd`, con DataDirectory `work/phase1k4c-smoke-20261007`. No usar el acceso anclado ni builds anteriores.
+Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4C-R1`, abierta desde `work/Abrir-Casa-Miga-1K4C-R1.cmd`, con DataDirectory `work/phase1k4c-r1-smoke-20261007`. No usar el acceso anclado ni builds anteriores.
 
 1. Iniciar sesión y entrar en Historial de ventas.
-2. Revisar Todos, Hoy, Ayer y un rango 06/10/2026–07/10/2026; comprobar fechas `dd/MM/yyyy · HH:mm` y conteos humanos.
-3. Elegir Sesión actual. Debe indicar 57 ventas, habilitar Siguiente y mostrar exclusivamente `CASA-MIGA-CAJA-01 · Venta #NNNNNN`.
-4. Ir a la segunda página y volver; no deben aparecer caja auxiliar, GUID, folio técnico, CashSessionId, `CASH` ni «Aplicado».
-5. Abrir una venta de varias piezas. Revisar productos históricos, precio unitario, cantidad, importe, subtotal, total, Efectivo, recibido, cambio, responsable y caja.
-6. Confirmar que Reimprimir ticket aparece según permiso, sin pulsarlo.
-7. Revisar 1280×820, 1920×1080 y F11/Escape. Salir sin operar.
+2. Confirmar que ambos DatePicker muestran `dd/mm/aaaa` en una línea y conservan calendario. Escribir `06/10/2026`–`07/10/2026` y aplicar.
+3. Probar `32/10/2026`, `31/02/2026`, texto y Desde posterior a Hasta: debe aparecer un mensaje humano y conservarse el filtro ya aplicado.
+4. Revisar Todos, Hoy, Ayer y Rango; comprobar fechas `dd/MM/yyyy · HH:mm`, conteos y día final inclusivo.
+5. Elegir Sesión actual. Debe indicar 57 ventas; la primera página debe decir `Página 1 de 2 · 57 ventas · 50 por página` y mostrar únicamente `Venta #NNNNNN`, con la caja en su propia columna.
+6. Ir a la segunda página: debe decir `Página 2 de 2`, contener siete filas y deshabilitar Siguiente. No deben aparecer caja auxiliar, GUID, folio técnico, CashSessionId, `CASH` ni «Aplicado».
+7. Abrir una venta de varias piezas. El título sólo debe mostrar `Venta #NNNNNN`; el contexto conserva fecha, responsable y caja. Revisar productos históricos, precio unitario, cantidad, importe, subtotal, total, Efectivo, recibido y cambio.
+8. Confirmar que Reimprimir ticket aparece según permiso, sin pulsarlo.
+9. Revisar 1280×820, 1920×1080 y F11/Escape. Salir sin operar.
 
 No vender, cobrar, abrir/cerrar/contar caja, modificar inventario/producción ni imprimir. Después del smoke, esperar confirmación explícita. No iniciar 1K.4D ni publicar: el siguiente checkpoint GitHub permanece después de 1K.4D.
 
