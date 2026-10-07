@@ -108,6 +108,38 @@ public sealed class PosCartUsabilityTests
         fixture.AssertNoCommercialEffects();
     });
 
+    [TestMethod]
+    public Task CartMutationsKeepCatalogContainersImagesAndScrollStable()=>WpfTestHost.OnUi(async()=>
+    {
+        using var fixture=new Fixture();var vm=fixture.Pos();await vm.EnterAsync();
+        await vm.CategoryAsync(fixture.Category.Id);vm.Search="CART";await vm.SearchAsync();
+        await System.Windows.Threading.Dispatcher.Yield(System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+        var products=vm.Products;var view=new PosView{DataContext=vm};var window=new Window{Content=view,Width=1000,Height=630,ShowInTaskbar=false,WindowStyle=WindowStyle.None};
+        try
+        {
+            window.Show();WpfTestHost.Layout(window,1000,630);
+            var productList=Descendants<ItemsControl>(view).Single(x=>ReferenceEquals(x.ItemsSource,products));
+            var catalogScroll=Descendants<ScrollViewer>(view).Single(x=>Descendants<ItemsControl>(x).Any(y=>ReferenceEquals(y,productList)));
+            catalogScroll.ScrollToVerticalOffset(Math.Min(120,catalogScroll.ScrollableHeight));WpfTestHost.Layout(window,1000,630);
+            var initialOffset=catalogScroll.VerticalOffset;var card=Descendants<Button>(view).Single(x=>x.Tag is Guid id&&id==fixture.Products[0].Id);var content=card.Content;
+            var search=vm.Search;var category=vm.Categories.Single(x=>x.Selected).Id;var pageLabel=vm.PageLabel;
+            var enabledTransitions=0;card.IsEnabledChanged+=(_,_)=>enabledTransitions++;
+            var broadNotifications=0;vm.PropertyChanged+=(_,args)=>{if(string.IsNullOrEmpty(args.PropertyName)||args.PropertyName==nameof(vm.Products))broadNotifications++;};
+            var initialPhotoLoads=fixture.PhotoLoadCount;
+
+            await vm.AddAsync(fixture.Products[0].Id);await vm.AddAsync(fixture.Products[0].Id);await vm.IncrementAsync(fixture.Products[0].Id);
+            await vm.DecrementAsync(fixture.Products[0].Id);await vm.RemoveAsync(fixture.Products[0].Id);await vm.AddAsync(fixture.Products[1].Id);vm.Discard(true);
+            WpfTestHost.Layout(window,1000,630);
+
+            Assert.AreSame(products,vm.Products);Assert.AreSame(products,productList.ItemsSource);Assert.AreSame(card,Descendants<Button>(view).Single(x=>x.Tag is Guid id&&id==fixture.Products[0].Id));Assert.AreSame(content,card.Content);
+            Assert.AreEqual(initialPhotoLoads,fixture.PhotoLoadCount,"Cart mutations must not reload product photos.");Assert.AreEqual(initialOffset,catalogScroll.VerticalOffset,0.5,"Cart mutations must preserve catalog scroll.");
+            Assert.AreEqual(search,vm.Search);Assert.AreEqual(category,vm.Categories.Single(x=>x.Selected).Id);Assert.AreEqual(pageLabel,vm.PageLabel,"Cart mutations must preserve the active search, category and page.");
+            Assert.AreEqual(0,enabledTransitions,$"Catalog cards must not be disabled and re-enabled by cart mutations. Broad notifications: {broadNotifications}.");Assert.AreEqual(0,broadNotifications,"Cart mutations must not notify the catalog or all properties.");
+        }
+        finally{window.Close();}
+        fixture.AssertNoCommercialEffects();
+    });
+
     private static bool IsFullyVisible(FrameworkElement child,FrameworkElement viewport)
     {
         try{var point=child.TransformToAncestor(viewport).Transform(new Point());return point.Y>=-0.5&&point.Y+child.ActualHeight<=viewport.ActualHeight+0.5;}catch(InvalidOperationException){return false;}
@@ -121,15 +153,16 @@ public sealed class PosCartUsabilityTests
     private sealed class Fixture:IDisposable
     {
         private readonly string root=Path.Combine(Path.GetTempPath(),"CasaMiga1K4B",Guid.NewGuid().ToString("N"));
-        private readonly Database database;private readonly SqliteLocalUnitOfWork work;private readonly UserSession user=new();private readonly IClock clock=new SystemClock();private readonly TerminalIdentity terminal;private readonly IProductPhotoUiGateway photos=new FakePhotos();
-        public IReadOnlyList<Product> Products{get;}public Product LongProduct=>Products[4];
+        private readonly Database database;private readonly SqliteLocalUnitOfWork work;private readonly UserSession user=new();private readonly IClock clock=new SystemClock();private readonly TerminalIdentity terminal;private readonly FakePhotos photos=new();
+        public IReadOnlyList<Product> Products{get;}public Product LongProduct=>Products[4];public Category Category{get;}
+        public int PhotoLoadCount=>photos.LoadCount;
         public Fixture()
         {
             Directory.CreateDirectory(root);database=new(Path.Combine(root,"casamiga.db"));database.Initialize();work=new(database);terminal=TerminalConfiguration.LoadOrCreate(root);work.Run(s=>{s.EnsureTerminal(terminal,clock.UtcNow);return true;});
             var identity=new IdentityService(work,new LocalPasswords(),clock,user);var password=Guid.NewGuid().ToString("N")+"!Aa";identity.Bootstrap("admin","Administrador sintético",password);Assert.IsTrue(identity.Login("admin",password));
-            var catalog=new CatalogService(work,user,clock,terminal.Id);var category=catalog.CreateCategory("Pan dulce");
+            var catalog=new CatalogService(work,user,clock,terminal.Id);Category=catalog.CreateCategory("Pan dulce");
             var names=new[]{"Concha sintética","Dona sintética","Cuernito sintético","Galleta sintética","Producto con un nombre deliberadamente largo que debe ocupar como máximo dos renglones","Muffin sintético","Panqué sintético"};
-            Products=names.Select((name,index)=>catalog.CreateProduct(category.Id,$"CART-{index+1:00}",name,"",new Money(1300+index*200))).ToArray();
+            Products=names.Select((name,index)=>catalog.CreateProduct(Category.Id,$"CART-{index+1:00}",name,"",new Money(1300+index*200))).ToArray();
             var actor=user.Current??throw new AssertFailedException("Synthetic identity was not established.");work.Run(store=>{store.AddCashSession(CashSession.Open(Guid.NewGuid(),terminal.Id,actor.Id,clock.UtcNow,new Money(0)));return true;});
         }
         public PosViewModel Pos()
@@ -146,7 +179,8 @@ public sealed class PosCartUsabilityTests
     }
     private sealed class FakePhotos:IProductPhotoUiGateway
     {
-        public Task<ProductPhotoVisual> LoadAsync(Guid productId,CancellationToken cancellationToken=default)=>Task.FromResult(new ProductPhotoVisual(1,null,null,"Sin foto",null,null));
+        public int LoadCount;
+        public Task<ProductPhotoVisual> LoadAsync(Guid productId,CancellationToken cancellationToken=default){Interlocked.Increment(ref LoadCount);return Task.FromResult(new ProductPhotoVisual(1,null,null,"Sin foto",null,null));}
         public Task<ProductPhotoVisual> ImportAsync(Guid productId,long revision,string originalName,string provenance,PhotoCrop crop,byte[] original,CancellationToken cancellationToken=default)=>throw new AssertFailedException("Cart tests must not import photos.");
         public Task<ProductPhotoVisual> RemoveAsync(Guid productId,long revision,CancellationToken cancellationToken=default)=>throw new AssertFailedException("Cart tests must not remove photos.");
     }

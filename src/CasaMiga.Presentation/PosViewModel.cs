@@ -24,14 +24,17 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
     private readonly SemaphoreSlim cartOperations = new(1, 1);
     private int pendingCartOperations;
     private bool entered;
-    public bool Busy { get; private set; }
-    public bool Ready => !Busy;
+    private bool operationBusy;
+    public bool CartBusy => Volatile.Read(ref pendingCartOperations)>0;
+    public bool Busy => operationBusy||CartBusy;
+    public bool Ready => !operationBusy;
     public CheckoutService Checkout => checkout;
     public ReceiptService Receipts => receipts;
     public Money TotalMoney => cart?.Subtotal ?? new Money(0);
     public bool RecoveryRequired { get; private set; }
     public bool CanOperate => Ready && !RecoveryRequired;
-    public bool CanCheckout => CanOperate && HasLines;
+    public bool CanModifyCart => CanOperate && !CartBusy;
+    public bool CanCheckout => CanModifyCart && HasLines;
     public bool IsDevelopment { get; init; }
     public string OperatorLabel => operatorLabel();
     private string search = "";
@@ -70,6 +73,12 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
     public bool Next { get; private set; }
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Notify()=>PropertyChanged?.Invoke(this,new PropertyChangedEventArgs(null));
+    private void Notify(params string[] properties){foreach(var property in properties)PropertyChanged?.Invoke(this,new PropertyChangedEventArgs(property));}
+    private void NotifyCart(bool productsChanged=false)
+    {
+        Notify(nameof(Lines),nameof(ProductCount),nameof(PieceCount),nameof(CartSummary),nameof(HasLines),nameof(IsEmpty),nameof(Subtotal),nameof(Total),nameof(TotalMoney),nameof(CartBusy),nameof(Busy),nameof(CanModifyCart),nameof(CanCheckout),nameof(Message));
+        if(productsChanged)Notify(nameof(Products),nameof(HasNoProducts));
+    }
     public static string Format(Money money)=>(money.Cents/100m).ToString("C2",CultureInfo.GetCultureInfo("es-MX"));
     public async Task EnterAsync()
     {
@@ -78,11 +87,11 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
         catch { RecoveryRequired=true; }
         if(RecoveryRequired){Message="Verifica el cobro pendiente antes de continuar.";Notify();return;}
         // Propagate refusal to the shell: a closed cash session must not enter POS.
-        var result=await Task.Run(()=>service.Load()); Apply(result);entered=true;Notify();
+        var result=await Task.Run(()=>service.Load()); Apply(result,true);entered=true;Notify();
     }
-    private void Apply(PosPage result)
+    private void Apply(PosPage result,bool replaceCart=false)
     {
-        cart=result.Cart;
+        if(replaceCart)cart=result.Cart;
         var cards=result.Products.Items.Select(row=>new ProductCardViewModel(row)).ToArray();Products=cards;StartPhotoLoad(cards);
         Categories=new[]{new PosCategory(null,"Todos",category is null)}.Concat(result.Categories.Select(c=>new PosCategory(c.Id,c.Name,c.Id==category))).ToArray();
         PageLabel=$"{result.Products.Total} productos · página {page+1}";Next=(page+1)*result.Products.PageSize<result.Products.Total;
@@ -137,12 +146,12 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
     public Task IncrementAsync(Guid id)=>RunCart(async()=>cart=await Task.Run(()=>service.Increment(id)));
     public Task DecrementAsync(Guid id)=>RunCart(async()=>cart=await Task.Run(()=>service.Decrement(id)));
     public Task RemoveAsync(Guid id)=>RunCart(async()=>cart=await Task.Run(()=>service.Remove(id)));
-    public void Discard(bool confirmed){service.Discard(confirmed);cart=null;Message="";Notify();}
+    public void Discard(bool confirmed){service.Discard(confirmed);cart=null;Message="";NotifyCart();}
     public void ForgetView(){CancelSearch();entered=false;photoLoad.Cancel();cart=null;Products=[];Categories=[];Search="";Message="";Notify();}
     public Task AfterCheckoutAsync()=>Run(EnterAsync);
     private async Task Run(Func<Task> operation)
     {
-        if(Busy)return;Busy=true;Message="";Notify();
+        if(Busy)return;operationBusy=true;Message="";Notify();
         try{await operation();}
         catch(OverflowException){Message="La cantidad o el total excede el límite permitido. El carrito no cambió.";}
         catch(ArgumentException e){Message=e.Message;}
@@ -151,25 +160,26 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
         catch(CheckoutException e){Message=e.Message;}
         catch(AccessDeniedException){Message="No tienes permiso para usar el POS.";Products=[];}
         catch(Exception e){log("pos.operation.failed",e.GetType().Name);Message="No se completó la operación. Revisa el estado del equipo antes de continuar.";}
-        finally{Busy=false;Notify();}
+        finally{operationBusy=false;Notify();}
     }
     private async Task RunCart(Func<Task> operation)
     {
-        if(Interlocked.Increment(ref pendingCartOperations)==1){Busy=true;Message="";Notify();}
+        if(Interlocked.Increment(ref pendingCartOperations)==1)Notify(nameof(CartBusy),nameof(Busy),nameof(CanModifyCart),nameof(CanCheckout));
         await cartOperations.WaitAsync();
+        var productsChanged=false;Message="";
         try{await operation();}
         catch(OverflowException){Message="La cantidad o el total excede el límite permitido. El carrito no cambió.";}
         catch(ArgumentException e){Message=e.Message;}
-        catch(PosException e){Message=e.Message;Products=[];}
+        catch(PosException e){Message=e.Message;Products=[];productsChanged=true;}
         catch(CartDiscardRequiredException e){Message=e.Message;}
         catch(CheckoutException e){Message=e.Message;}
-        catch(AccessDeniedException){Message="No tienes permiso para usar el POS.";Products=[];}
+        catch(AccessDeniedException){Message="No tienes permiso para usar el POS.";Products=[];productsChanged=true;}
         catch(Exception e){log("pos.operation.failed",e.GetType().Name);Message="No se completó la operación. Revisa el estado del equipo antes de continuar.";}
         finally
         {
             cartOperations.Release();
-            Busy=Interlocked.Decrement(ref pendingCartOperations)>0;
-            Notify();
+            Interlocked.Decrement(ref pendingCartOperations);
+            NotifyCart(productsChanged);
         }
     }
 }

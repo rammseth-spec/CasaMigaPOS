@@ -1,4 +1,17 @@
-# Próximo paso — smoke manual de 1K.4B
+# Próximo paso — smoke corto de 1K.4B-R1
+
+Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4B-R1`, abierta desde `work/Abrir-Casa-Miga-1K4B-R1.cmd`, con DataDirectory `work/phase1k4b-r1-smoke-20261007`. No usar el acceso anclado ni builds anteriores.
+
+1. Iniciar sesión y entrar al POS; observar el catálogo.
+2. Agregar el producto A y confirmar que imágenes y tarjetas no parpadean.
+3. Agregar A nuevamente y confirmar que la misma fila aumenta a dos piezas sin refrescar el catálogo.
+4. Agregar B; usar + y −; eliminar B.
+5. Confirmar durante todo el recorrido que búsqueda, categoría, página y scroll del catálogo permanecen estables.
+6. No cobrar. Limpiar el carrito si hace falta y salir.
+
+Si el recorrido no muestra parpadeo, cerrar formalmente 1K.4B. No iniciar 1K.4C, 1K.4D, Pedidos/Tiendas, instalador o migración 017. No publicar esta R1: el siguiente checkpoint GitHub permanece previsto después de 1K.4D.
+
+## Registro anterior — smoke manual de 1K.4B
 
 Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4B`, abierta desde `work/Abrir-Casa-Miga-1K4B.cmd`, con DataDirectory `work/phase1k4b-smoke-20261006`. No usar el acceso anclado ni builds anteriores.
 

@@ -1,4 +1,10 @@
-# FASE 1K ABIERTA — 1K.4B, 07/10/2026
+# FASE 1K ABIERTA — 1K.4B-R1, 07/10/2026
+
+**FASE 1K.4B-R1 técnicamente completada; smoke humano del parpadeo pendiente.** La causa fue el uso de `Busy` y una notificación global en cada mutación del carrito: WPF deshabilitaba y habilitaba nuevamente el árbol completo del POS, incluido el catálogo, y el estilo de las tarjetas cambiaba su opacidad. Las mutaciones ahora notifican sólo propiedades del carrito, conservan la referencia de `Products`, `ItemsSource`, contenedores, imágenes, búsqueda, categoría, página y scroll. Un estado ocupado específico protege carrito, checkout y cierre sin deshabilitar el catálogo.
+
+Pruebas focales **17/17**. Suite final **732/732** (560 generales + 172 WPF/Presentation), 0 fallidas/omitidas; Release R1 0 errores/advertencias. Una ejecución previa de la suite expuso un fallo intermitente ajeno al cambio al abrir un ComboBox de Inventario; pasó 3/3 aislada, toda la suite WPF 172/172 y la verificación final completa. Domain/Application/Infrastructure y migraciones intactos; schema 16, sin 017. Base protegida SHA-256 inicial/final `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Revisión: `src/CasaMiga.Presentation/bin/Phase1K4B-R1/`, `work/Abrir-Casa-Miga-1K4B-R1.cmd`, DataDirectory `work/phase1k4b-r1-smoke-20261007`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4B-R1`. Ver `PHASE_1K4B_R1_REPORT.md`. No iniciar 1K.4C; no publicar hasta el checkpoint previsto después de 1K.4D.
+
+## Registro anterior — 1K.4B
 
 **FASE 1K.4B técnicamente completada; smoke manual pendiente.** El carrito del POS ocupa ahora toda la altura operativa junto al catálogo y presenta filas compactas de 82 DIP con nombre de hasta dos líneas, precio unitario, importe, cantidad y controles +/−/eliminar accesibles. El encabezado distingue productos de piezas con singular/plural correcto; las partidas tienen scroll propio, una partida nueva fuera de vista se desplaza sólo lo necesario y el pie fijo conserva Subtotal, TOTAL, Limpiar, Cobrar y Cobrar + imprimir. Menos queda deshabilitado en una pieza y Eliminar es la acción explícita para quitarla. Las mutaciones se serializan para no perder comandos aceptados ni duplicarlos.
 
