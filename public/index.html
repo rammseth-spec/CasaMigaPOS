@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#F5F3EF">
+<title>Casa Miga · Panel</title>
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="panel.css">
+<script src="panel.js" defer></script>
+</head>
+<body>
+<main id="login" class="login" hidden>
+  <form id="login-form" class="card login-card" autocomplete="on">
+    <img src="logo.png" alt="Casa Miga Panadería" class="login-logo">
+    <h1>Panel de sucursales</h1>
+    <p class="muted">Ventas, cortes y cajas de todas las sucursales.</p>
+    <label for="password">Contraseña del panel</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="200">
+    <button type="submit" class="primary">Entrar</button>
+    <p id="login-error" class="error" role="alert"></p>
+  </form>
+</main>
+
+<div id="app" hidden>
+  <header class="topbar">
+    <img src="logo.png" alt="Casa Miga" class="top-logo">
+    <div class="top-title"><strong>Panel</strong><span id="updated" class="muted"></span></div>
+    <button id="refresh" class="ghost" type="button" aria-label="Actualizar">Actualizar</button>
+    <button id="logout" class="ghost" type="button">Salir</button>
+  </header>
+
+  <section class="filters" aria-label="Filtros">
+    <div class="chips" role="group" aria-label="Periodo">
+      <button type="button" data-period="today" class="chip">Hoy</button>
+      <button type="button" data-period="yesterday" class="chip">Ayer</button>
+      <button type="button" data-period="7" class="chip">7 días</button>
+      <button type="button" data-period="month" class="chip">Este mes</button>
+      <button type="button" data-period="30" class="chip">30 días</button>
+    </div>
+    <div class="custom">
+      <label>Del <input id="from" type="date"></label>
+      <label>al <input id="to" type="date"></label>
+      <select id="branch" aria-label="Sucursal"><option value="">Todas las sucursales</option></select>
+    </div>
+  </section>
+
+  <p id="error" class="error banner" role="alert" hidden></p>
+
+  <section class="kpis" aria-label="Resumen">
+    <article class="card kpi"><span>Ventas netas</span><strong id="k-net">—</strong><small id="k-gross" class="muted"></small></article>
+    <article class="card kpi"><span>Tickets</span><strong id="k-tickets">—</strong><small id="k-average" class="muted"></small></article>
+    <article class="card kpi"><span>Devoluciones</span><strong id="k-refunds">—</strong><small class="muted">Cancelaciones y devoluciones</small></article>
+    <article class="card kpi"><span>Diferencias de caja</span><strong id="k-diff">—</strong><small id="k-diff-detail" class="muted"></small></article>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>Ventas por día</h2>
+      <div id="days" class="bars" role="list"></div>
+    </article>
+    <article class="card">
+      <h2>Formas de pago</h2>
+      <div id="methods" class="methods"></div>
+      <h2 class="spaced">Más vendidos</h2>
+      <ol id="products" class="products"></ol>
+    </article>
+  </section>
+
+  <section class="card">
+    <h2>Cortes de caja</h2>
+    <div class="table-wrap">
+      <table id="sessions">
+        <thead><tr><th>Caja</th><th>Turno</th><th class="num">Fondo</th><th class="num">Esperado</th><th class="num">Contado</th><th class="num">Diferencia</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p id="sessions-empty" class="muted" hidden>Sin cortes en el periodo.</p>
+  </section>
+
+  <section class="card">
+    <h2>Cajas conectadas</h2>
+    <ul id="terminals" class="terminals"></ul>
+  </section>
+
+  <footer class="muted foot">Cifras de lo que han subido las cajas. Una caja sin Internet sigue vendiendo y se pone al día al reconectarse.</footer>
+</div>
+</body>
+</html>

@@ -13,3 +13,9 @@ export async function authenticate(key: string): Promise<{ id: string; branchId:
   if (rows.length !== 1) throw new ProtocolError('Terminal no autorizada', 401);
   return { id: rows[0].id as string, branchId: rows[0].branch_id as string };
 }
+
+/** Consultas con parámetros posicionales para el panel (mismo contrato que PGlite en las pruebas). */
+export function query(): (text: string, params: unknown[]) => Promise<Record<string, unknown>[]> {
+  const db = sql();
+  return (text, params) => db.query(text, params) as Promise<Record<string, unknown>[]>;
+}
