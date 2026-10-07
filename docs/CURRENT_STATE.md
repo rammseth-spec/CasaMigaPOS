@@ -4,7 +4,7 @@
 
 **Folio visible C01-001061** (elegido por el usuario): clave de la caja tomada del número al final de su nombre («CASA-MIGA-CAJA-01» → C01) y consecutivo de seis cifras (`DisplayFolio`). Se muestra en el historial, el detalle, la confirmación de cancelación, el aviso de venta cobrada y los tickets nuevos. El folio interno (`Sale.Folio`, terminal + consecutivo) no cambia: sigue en la auditoría, la sincronización y el detalle («Folio interno»). La búsqueda acepta «C01-001061», «1061» o el folio largo de los tickets anteriores; las reimpresiones de ventas viejas conservan el folio con que se imprimieron. Una segunda caja debe llevar otro número al final de su nombre para no repetir la clave.
 
-Suite **834/834** (661 + 173), Release 0/0.
+Build `src/CasaMiga.Presentation/bin/Review-QAv1-38aa9ad` sobre la copia `demo-charolas-QAv1-7c33343`, launcher `work/Abrir-Casa-Miga-QAv1-38aa9ad.cmd`, con `dev-autologin.json` (entra como admin). Suite **834/834** (661 + 173), Release 0/0. Credenciales en la conversación.
 
 # Recoger sin cortes y doble apertura — 07/10/2026
 
