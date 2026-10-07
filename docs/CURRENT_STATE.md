@@ -1,4 +1,10 @@
-# FASE 1K ABIERTA — 1K.4A, 06/10/2026
+# FASE 1K ABIERTA — 1K.4B, 07/10/2026
+
+**FASE 1K.4B técnicamente completada; smoke manual pendiente.** El carrito del POS ocupa ahora toda la altura operativa junto al catálogo y presenta filas compactas de 82 DIP con nombre de hasta dos líneas, precio unitario, importe, cantidad y controles +/−/eliminar accesibles. El encabezado distingue productos de piezas con singular/plural correcto; las partidas tienen scroll propio, una partida nueva fuera de vista se desplaza sólo lo necesario y el pie fijo conserva Subtotal, TOTAL, Limpiar, Cobrar y Cobrar + imprimir. Menos queda deshabilitado en una pieza y Eliminar es la acción explícita para quitarla. Las mutaciones se serializan para no perder comandos aceptados ni duplicarlos.
+
+Pruebas focales **16/16**. Suite completa `scripts/verify.ps1`: **731/731** (560 generales + 171 WPF/Presentation), 0 fallidas/omitidas. Release Phase1K4B: 0 errores/advertencias. Domain/Application/Infrastructure y migraciones intactos; schema 16, sin 017. Base protegida SHA-256 inicial/final `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Revisión: `src/CasaMiga.Presentation/bin/Phase1K4B/`, `work/Abrir-Casa-Miga-1K4B.cmd`, DataDirectory `work/phase1k4b-smoke-20261006`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4B`. Ver `PHASE_1K4B_REPORT.md`. No iniciar 1K.4C.
+
+## Registro anterior — 1K.4A
 
 **FASE 1K.4A técnicamente completada; smoke manual pendiente.** POS y Catálogo incorporan búsqueda en vivo por nombre/SKU con debounce de 250 ms, cancelación de consultas obsoletas, × Limpiar, Escape contextual, categoría preservada y estados vacíos humanos. El filtro administrativo conserva selecciones válidas y responde correctamente a cambios rápidos. El editor de producto permite crear una categoría inline sin perder el borrador y presenta `Origen de la imagen` con REAL/PROVISIONAL intactos; el placeholder visible es `Sin imagen`. Cards mantienen foto, dos líneas de nombre y precio reservado.
 

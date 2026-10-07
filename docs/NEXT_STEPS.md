@@ -1,4 +1,18 @@
-# Próximo paso — smoke manual de 1K.4A
+# Próximo paso — smoke manual de 1K.4B
+
+Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4B`, abierta desde `work/Abrir-Casa-Miga-1K4B.cmd`, con DataDirectory `work/phase1k4b-smoke-20261006`. No usar el acceso anclado ni builds anteriores.
+
+1. Iniciar sesión, entrar al POS y confirmar el carrito vacío: `0 productos · 0 piezas`, Subtotal/TOTAL en $0.00 y las tres acciones deshabilitadas.
+2. Agregar un producto: revisar nombre, precio unitario, importe, `1 producto · 1 pieza` y total. Pulsar la misma tarjeta otra vez y confirmar una sola fila con dos piezas.
+3. Agregar un producto distinto y confirmar `2 productos · 3 piezas`; revisar que cada importe y el total sumen una sola vez.
+4. Probar + y −. Al llegar a una pieza, − debe quedar deshabilitado; usar el icono con tooltip `Eliminar producto del carrito` para quitar la fila.
+5. Agregar cinco o más productos. Confirmar al menos cuatro filas cómodas a 1280×820, scroll sólo en las partidas, desplazamiento mínimo al agregar una fila fuera de vista y pie fijo.
+6. Probar nombre largo, Limpiar con confirmación y vuelta al estado vacío. No abrir el diálogo de cobro si no se realizará una venta autorizada.
+7. Revisar 1920×1080 y F11; comprobar además búsqueda en vivo, × Limpiar, categoría y Escape de 1K.4A. Salir sin confirmar venta ni imprimir.
+
+No ejecutar ventas, pagos, caja, impresión, inventario o producción. Tras el smoke, esperar confirmación explícita del usuario. No iniciar 1K.4C, 1K.4D, Pedidos/Tiendas, instalador o migración 017. No publicar 1K.4B en GitHub: el siguiente checkpoint remoto está previsto después de 1K.4D.
+
+## Registro anterior — smoke manual de 1K.4A
 
 Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4A`, abierta desde `work/Abrir-Casa-Miga-1K4A.cmd`, con DataDirectory `work/phase1k4a-smoke-20261006`. No usar el acceso anclado ni builds anteriores.
 

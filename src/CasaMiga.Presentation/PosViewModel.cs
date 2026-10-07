@@ -21,6 +21,8 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
     private Cart? cart;
     private long searchRevision;
     private CancellationTokenSource? searchCancellation;
+    private readonly SemaphoreSlim cartOperations = new(1, 1);
+    private int pendingCartOperations;
     private bool entered;
     public bool Busy { get; private set; }
     public bool Ready => !Busy;
@@ -52,6 +54,9 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
     private CancellationTokenSource photoLoad = new();
     public IReadOnlyList<ProductCardViewModel> Products { get; private set; } = [];
     public IReadOnlyList<PosCartLine> Lines => cart?.Lines.Select(l=>new PosCartLine(l)).ToArray() ?? [];
+    public int ProductCount => cart?.Lines.Count ?? 0;
+    public long PieceCount => cart?.Lines.Aggregate(0L,(total,line)=>checked(total+line.Quantity)) ?? 0;
+    public string CartSummary => $"{ProductCount} {(ProductCount==1?"producto":"productos")} · {PieceCount} {(PieceCount==1?"pieza":"piezas")}";
     public bool HasLines => cart is { IsEmpty:false };
     public bool IsEmpty => !HasLines;
     public bool HasNoProducts=>Products.Count==0&&!RecoveryRequired;
@@ -128,10 +133,10 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
     public Task ClearSearchAsync(){Search="";return SearchAsync();}
     public Task CategoryAsync(Guid? id)=>Run(async()=>{CancelSearch();category=id;page=0;await Refresh();});
     public Task PageAsync(int delta)=>Run(async()=>{page=Math.Max(0,page+delta);await Refresh();});
-    public Task AddAsync(Guid id)=>Run(async()=>cart=await Task.Run(()=>service.Add(id)));
-    public Task IncrementAsync(Guid id)=>Run(async()=>cart=await Task.Run(()=>service.Increment(id)));
-    public Task DecrementAsync(Guid id)=>Run(async()=>cart=await Task.Run(()=>service.Decrement(id)));
-    public Task RemoveAsync(Guid id)=>Run(async()=>cart=await Task.Run(()=>service.Remove(id)));
+    public Task AddAsync(Guid id)=>RunCart(async()=>cart=await Task.Run(()=>service.Add(id)));
+    public Task IncrementAsync(Guid id)=>RunCart(async()=>cart=await Task.Run(()=>service.Increment(id)));
+    public Task DecrementAsync(Guid id)=>RunCart(async()=>cart=await Task.Run(()=>service.Decrement(id)));
+    public Task RemoveAsync(Guid id)=>RunCart(async()=>cart=await Task.Run(()=>service.Remove(id)));
     public void Discard(bool confirmed){service.Discard(confirmed);cart=null;Message="";Notify();}
     public void ForgetView(){CancelSearch();entered=false;photoLoad.Cancel();cart=null;Products=[];Categories=[];Search="";Message="";Notify();}
     public Task AfterCheckoutAsync()=>Run(EnterAsync);
@@ -147,5 +152,24 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
         catch(AccessDeniedException){Message="No tienes permiso para usar el POS.";Products=[];}
         catch(Exception e){log("pos.operation.failed",e.GetType().Name);Message="No se completó la operación. Revisa el estado del equipo antes de continuar.";}
         finally{Busy=false;Notify();}
+    }
+    private async Task RunCart(Func<Task> operation)
+    {
+        if(Interlocked.Increment(ref pendingCartOperations)==1){Busy=true;Message="";Notify();}
+        await cartOperations.WaitAsync();
+        try{await operation();}
+        catch(OverflowException){Message="La cantidad o el total excede el límite permitido. El carrito no cambió.";}
+        catch(ArgumentException e){Message=e.Message;}
+        catch(PosException e){Message=e.Message;Products=[];}
+        catch(CartDiscardRequiredException e){Message=e.Message;}
+        catch(CheckoutException e){Message=e.Message;}
+        catch(AccessDeniedException){Message="No tienes permiso para usar el POS.";Products=[];}
+        catch(Exception e){log("pos.operation.failed",e.GetType().Name);Message="No se completó la operación. Revisa el estado del equipo antes de continuar.";}
+        finally
+        {
+            cartOperations.Release();
+            Busy=Interlocked.Decrement(ref pendingCartOperations)>0;
+            Notify();
+        }
     }
 }

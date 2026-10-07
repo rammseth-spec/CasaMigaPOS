@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 namespace CasaMiga.Presentation;
 public partial class PosView : UserControl
 {
@@ -23,7 +24,13 @@ public partial class PosView : UserControl
     private async void SearchClick(object s,RoutedEventArgs e){await Model.SearchAsync();ProductCatalogScroll.ScrollToTop();}
     private async void ClearSearchClick(object s,RoutedEventArgs e){await Model.ClearSearchAsync();ProductCatalogScroll.ScrollToTop();SearchInput.Focus();}
     private async void CategoryClick(object s,RoutedEventArgs e){await Model.CategoryAsync(((Button)s).CommandParameter as Guid?);ProductCatalogScroll.ScrollToTop();}
-    private async void ProductClick(object s,RoutedEventArgs e)=>await Model.AddAsync((Guid)((Button)s).Tag);
+    private async void ProductClick(object s,RoutedEventArgs e)
+    {
+        var id=(Guid)((Button)s).Tag;
+        var isNew=!Model.Lines.Any(line=>line.Id==id);
+        await Model.AddAsync(id);
+        if(isNew&&Model.Lines.Any(line=>line.Id==id))BringCartLineIntoView(id);
+    }
     private async void IncreaseClick(object s,RoutedEventArgs e)=>await Model.IncrementAsync((Guid)((Button)s).Tag);
     private async void DecreaseClick(object s,RoutedEventArgs e)=>await Model.DecrementAsync((Guid)((Button)s).Tag);
     private async void RemoveClick(object s,RoutedEventArgs e)=>await Model.RemoveAsync((Guid)((Button)s).Tag);
@@ -52,6 +59,12 @@ public partial class PosView : UserControl
         if(Model.HasLines && !DiscardDialog.Confirm(Window.GetWindow(this),"limpiar el carrito"))return;
         Model.Discard(true);
     }
+    private void BringCartLineIntoView(Guid id)=>Dispatcher.BeginInvoke(() =>
+    {
+        var item=CartLinesList.Items.Cast<PosCartLine>().SingleOrDefault(line=>line.Id==id);
+        if(item is not null&&CartLinesList.ItemContainerGenerator.ContainerFromItem(item) is FrameworkElement container)
+            container.BringIntoView();
+    },DispatcherPriority.Loaded);
     private async void PosKeyDown(object s,KeyEventArgs e)
     {
         if(PopupEscape.TryHandle(e))return;
