@@ -5,8 +5,9 @@ using CasaMiga.Domain;
 
 namespace CasaMiga.Presentation;
 
-public sealed record ProductReportView(int Rank, ProductReportRow Row, long TotalNetCents)
+public sealed record ProductReportView(int Rank, ProductReportRow Row, long TotalNetCents, long MaxNetCents = 0)
 {
+    public double ShareRatio => MaxNetCents <= 0 ? 0 : Math.Max(0, (double)Row.Net.Cents / MaxNetCents);
     public string Name => Row.ProductName;
     public long Sold => Row.QuantitySold;
     public string SoldAmount => ReportsViewModel.Format(Row.Sold);
@@ -34,6 +35,9 @@ public sealed record SessionReportView(SessionReportRow Row)
 {
     public string Opened => Row.OpenedAt.ToLocalTime().ToString("dd/MM HH:mm", CultureInfo.InvariantCulture);
     public string Closed => Row.ClosedAt?.ToLocalTime().ToString("dd/MM HH:mm", CultureInfo.InvariantCulture) ?? "Abierta";
+    // Apertura y cierre en una columna; la fecha del cierre sólo aparece si es otro día.
+    public string Shift => Row.ClosedAt is not { } closed ? $"{Opened} – abierta"
+        : $"{Opened} – {closed.ToLocalTime().ToString(closed.ToLocalTime().Date == Row.OpenedAt.ToLocalTime().Date ? "HH:mm" : "dd/MM HH:mm", CultureInfo.InvariantCulture)}";
     public string OpenedBy => Row.OpenedBy;
     public string Opening => ReportsViewModel.Format(Row.Opening);
     public string CashSales => ReportsViewModel.Format(Row.CashSales);
@@ -81,14 +85,22 @@ public sealed record RefundReasonView(RefundReasonRow Row)
     public string Amount => ReportsViewModel.Format(Row.Amount);
 }
 
-public sealed record ForecastView(ForecastRow Row, int Days)
+public sealed record ForecastView(ForecastRow Row, int Days, int MaxSuggested = 0)
 {
+    public double Ratio => MaxSuggested <= 0 ? 0 : (double)Row.Suggested / MaxSuggested;
     public string Name => Row.ProductName;
     public string Last => Row.LastQuantity == 0 ? "—" : Row.LastQuantity.ToString(CultureInfo.InvariantCulture);
     public string Average => Row.Average.ToString("0.0", CultureInfo.InvariantCulture);
     public int Suggested => Row.Suggested;
     public string Basis => $"{Row.DaysWithSales} de {Days}";
 }
+
+/// <summary>Barra horizontal; <see cref="Ratio"/> va de 0 a 1 respecto a la barra más larga.</summary>
+public sealed record BarView(string Label, string Value, double Ratio, string Tip);
+/// <summary>Barra vertical por día o semana; <see cref="Height"/> en píxeles, hasta <see cref="ReportsViewModel.ChartHeight"/>.</summary>
+public sealed record DayBarView(string Label, string Value, double Height, string Tip);
+/// <summary>Par de barras del comparativo: periodo anterior y actual, alineados por posición.</summary>
+public sealed record PairBarView(string Label, double Current, double Previous, string Tip);
 
 public enum ReportTab { Summary, Comparison, Heatmap, CashControl, Forecast }
 
@@ -175,6 +187,20 @@ public sealed class ReportsViewModel(ReportService service, Action<string, strin
         $"Promedio de los últimos {f.WeeksRequested} {Plural(DayName(f.Target.DayOfWeek))} con venta, más {Analytics.SafetyMargin * 100:0} % de margen, redondeado hacia arriba."
         + (f.WeeksWithData < f.WeeksRequested ? $" Hay datos de {f.WeeksWithData} de {f.WeeksRequested} semanas: la sugerencia mejora con más historial." : "");
 
+    // Gráficas
+    public const double ChartHeight = 150;
+    public IReadOnlyList<DayBarView> DailyBars { get; private set; } = [];
+    public bool HasDailyBars => DailyBars.Any(b => b.Height > 0);
+    public string DailyTitle { get; private set; } = "Ventas por día";
+    public IReadOnlyList<BarView> PaymentBars { get; private set; } = [];
+    public IReadOnlyList<BarView> TopProductBars { get; private set; } = [];
+    public bool HasTopProductBars => TopProductBars.Count > 0;
+    public IReadOnlyList<PairBarView> ComparisonBars { get; private set; } = [];
+    public bool HasComparisonBars => ComparisonBars.Any(b => b.Current > 0 || b.Previous > 0);
+    public IReadOnlyList<BarView> ReasonBars { get; private set; } = [];
+    /// <summary>Confirma que Generar sí corrió aunque las cifras no cambien.</summary>
+    public string GeneratedLabel { get; private set; } = "";
+
     public string Message { get; private set; } = "";
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Notify() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
@@ -216,11 +242,13 @@ public sealed class ReportsViewModel(ReportService service, Action<string, strin
         var (report, comparison, heatmap, control) = await Task.Run(() => (service.Sales(from, through), service.Compare(from, through), service.Heatmap(from, through), service.CashControl(from, through)));
         Report = report;
         var totalNet = report.Data.Products.Sum(p => p.Net.Cents);
-        Products = report.Data.Products.Select((p, i) => new ProductReportView(i + 1, p, totalNet)).ToArray();
+        var maxNet = report.Data.Products.Select(p => p.Net.Cents).DefaultIfEmpty(0).Max();
+        Products = report.Data.Products.Select((p, i) => new ProductReportView(i + 1, p, totalNet, maxNet)).ToArray();
         Cashiers = report.Data.Cashiers.Select(c => new CashierReportView(c)).ToArray();
         Payments = report.Data.ByMethod.Select(m => new PaymentReportView(m)).ToArray();
         Sessions = report.Data.Sessions.Select(s => new SessionReportView(s)).ToArray();
-        ShowComparison(comparison); ShowHeatmap(heatmap); ShowCashControl(control);
+        ShowComparison(comparison); ShowHeatmap(heatmap); ShowCashControl(control); ShowCharts(report, comparison, control);
+        GeneratedLabel = $"Actualizado a las {DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture)}";
     });
 
     public Task ForecastAsync() => RunAsync(async () =>
@@ -228,7 +256,9 @@ public sealed class ReportsViewModel(ReportService service, Action<string, strin
         if (ForecastSelected is not { } target) throw new ReportException("Elige el día que quieres planear.");
         var forecast = await Task.Run(() => service.Forecast(DateOnly.FromDateTime(target)));
         Forecast = forecast;
-        ForecastRows = forecast.Rows.Select(r => new ForecastView(r, forecast.WeeksWithData)).ToArray();
+        var maxSuggested = forecast.Rows.Select(r => r.Suggested).DefaultIfEmpty(0).Max();
+        ForecastRows = forecast.Rows.Select(r => new ForecastView(r, forecast.WeeksWithData, maxSuggested)).ToArray();
+        GeneratedLabel = $"Actualizado a las {DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture)}";
     });
 
     private async Task RunAsync(Func<Task> work)
@@ -270,6 +300,61 @@ public sealed class ReportsViewModel(ReportService service, Action<string, strin
         HeatTotals = byHour.Select(c => Cell("Todos los días", c, hourMax)).ToArray();
     }
 
+    private sealed record Bucket(DateOnly From, DateOnly Through, int Sales, long Cents);
+    // Hasta 31 días, una barra por día; si el periodo es más largo, una barra por cada 7 días desde su inicio.
+    private static IReadOnlyList<Bucket> Buckets(IReadOnlyList<DaySales> days) => days.Count <= 31
+        ? days.Select(d => new Bucket(d.Day, d.Day, d.Sales, d.Amount.Cents)).ToList()
+        : days.Chunk(7).Select(c => new Bucket(c[0].Day, c[^1].Day, c.Sum(d => d.Sales), c.Sum(d => d.Amount.Cents))).ToList();
+    private static string Span(Bucket b) => b.From == b.Through ? Capitalized(b.From.ToString("dddd d 'de' MMMM", Spanish))
+        : $"Del {b.From.ToString("d MMM", Spanish)} al {b.Through.ToString("d MMM", Spanish)}";
+    private static string BarLabel(Bucket b, int index, int count)
+    {
+        // Con muchas barras sólo se rotula una de cada varias; el detalle completo está en la ayuda emergente.
+        var every = count <= 16 ? 1 : (int)Math.Ceiling(count / 16.0);
+        if (index % every != 0) return "";
+        return b.From != b.Through ? b.From.ToString("d MMM", Spanish)
+            : count <= 10 ? $"{DayName(b.From.DayOfWeek)[..3]} {b.From.Day}" : b.From.Day.ToString(CultureInfo.InvariantCulture);
+    }
+    private static string Compact(long cents) => cents >= 100000
+        ? "$" + (cents / 100000m).ToString("0.#", CultureInfo.InvariantCulture) + "k" : "$" + (cents / 100m).ToString("0", CultureInfo.InvariantCulture);
+    private static double BarHeight(long cents, long max) => cents <= 0 ? 0 : Math.Max(2, ChartHeight * cents / max);
+    private static string Percent(decimal value) => value.ToString("0.0", CultureInfo.InvariantCulture) + " %";
+
+    private void ShowCharts(SalesReport report, PeriodComparison comparison, CashControlReport control)
+    {
+        var current = Buckets(comparison.CurrentDays ?? []);
+        var previous = Buckets(comparison.PreviousDays ?? []);
+        DailyTitle = current.Count > 0 && current[0].From != current[0].Through ? "Ventas por semana" : "Ventas por día";
+        var max = Math.Max(1, current.Select(b => b.Cents).DefaultIfEmpty(0).Max());
+        DailyBars = current.Select((b, i) => new DayBarView(BarLabel(b, i, current.Count), current.Count <= 14 && b.Cents > 0 ? Compact(b.Cents) : "",
+            BarHeight(b.Cents, max), $"{Span(b)} · {Plural(b.Sales, "venta", "ventas")} · {Format(new(b.Cents))}")).ToArray();
+
+        var pairMax = Math.Max(1, current.Concat(previous).Select(b => b.Cents).DefaultIfEmpty(0).Max());
+        ComparisonBars = current.Select((b, i) =>
+        {
+            var before = i < previous.Count ? previous[i] : null;
+            var tip = $"{Span(b)}: {Plural(b.Sales, "venta", "ventas")} · {Format(new(b.Cents))}"
+                + (before is null ? "" : $"\nAntes, {Span(before)}: {Plural(before.Sales, "venta", "ventas")} · {Format(new(before.Cents))}");
+            return new PairBarView(BarLabel(b, i, current.Count), BarHeight(b.Cents, pairMax), BarHeight(before?.Cents ?? 0, pairMax), tip);
+        }).ToArray();
+
+        var top = report.Data.Products.Take(10).ToList();
+        var topMax = Math.Max(1, top.Select(p => p.Net.Cents).DefaultIfEmpty(0).Max());
+        TopProductBars = top.Select(p => new BarView(p.ProductName, $"{Format(p.Net)} · {p.QuantitySold - p.QuantityRefunded} pzs",
+            Math.Max(0, (double)p.Net.Cents / topMax), $"{p.QuantitySold} vendidas · {p.QuantityRefunded} devueltas · neto {Format(p.Net)}")).ToArray();
+
+        var methods = report.Data.ByMethod;
+        var netTotal = methods.Sum(m => m.Net.Cents);
+        var methodMax = Math.Max(1, methods.Select(m => m.Net.Cents).DefaultIfEmpty(0).Max());
+        PaymentBars = methods.Select(m => new BarView(Payment.Label(m.Method),
+            $"{Format(m.Net)} · {Percent(netTotal <= 0 ? 0 : m.Net.Cents * 100m / netTotal)}", Math.Max(0, (double)m.Net.Cents / methodMax),
+            $"{Plural(m.Sales, "venta", "ventas")} · vendido {Format(m.Sold)} · devuelto {Format(m.Refunded)}")).ToArray();
+
+        var reasonMax = Math.Max(1, control.Reasons.Select(r => r.Count).DefaultIfEmpty(0).Max());
+        ReasonBars = control.Reasons.Select(r => new BarView(r.Reason, $"{r.Count} · {Format(r.Amount)}", (double)r.Count / reasonMax,
+            $"{Plural(r.Count, "devolución", "devoluciones")} · {Format(r.Amount)}")).ToArray();
+    }
+
     private void ShowCashControl(CashControlReport report)
     {
         CashControl = report;
@@ -302,6 +387,7 @@ public sealed class ReportsViewModel(ReportService service, Action<string, strin
         Heatmap = null; HeatHours = []; HeatRows = []; HeatTotals = [];
         CashControl = null; CashierControl = []; RefundReasons = [];
         Forecast = null; ForecastRows = [];
+        DailyBars = []; PaymentBars = []; TopProductBars = []; ComparisonBars = []; ReasonBars = []; GeneratedLabel = "";
         Tab = ReportTab.Summary; Message = ""; Notify();
     }
 }

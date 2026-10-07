@@ -36,7 +36,10 @@ public sealed record ComparisonRow(string ProductName, long Quantity, Money Net,
     public decimal? QuantityChange => Analytics.Change(Quantity, PreviousQuantity);
     public decimal? NetChange => Analytics.Change(Net.Cents, PreviousNet.Cents);
 }
-public sealed record PeriodComparison(SalesReport Current, SalesReport Previous, IReadOnlyList<ComparisonRow> Products)
+/// <summary>Ventas de un día local (sin canceladas) para las gráficas por día.</summary>
+public sealed record DaySales(DateOnly Day, int Sales, Money Amount);
+public sealed record PeriodComparison(SalesReport Current, SalesReport Previous, IReadOnlyList<ComparisonRow> Products,
+    IReadOnlyList<DaySales>? CurrentDays = null, IReadOnlyList<DaySales>? PreviousDays = null)
 {
     public decimal? SalesChange => Analytics.Change(Current.Data.SaleCount, Previous.Data.SaleCount);
     public decimal? NetChange => Analytics.Change(Current.Net.Cents, Previous.Net.Cents);
@@ -92,6 +95,15 @@ public static class Analytics
             return new HeatCell(hour, bucket.Count(), new Money(bucket.Sum(s => s.TotalCents)));
         }).ToList())).ToList();
         return new(from, through, first, last, rows);
+    }
+
+    /// <summary>Una entrada por cada día del periodo, también los días sin ventas.</summary>
+    public static IReadOnlyList<DaySales> Daily(DateOnly from, DateOnly through, IEnumerable<SaleFact> sales, TimeZoneInfo zone)
+    {
+        var byDay = sales.GroupBy(s => DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(s.At, zone).DateTime))
+            .ToDictionary(g => g.Key, g => (Sales: g.Count(), Cents: g.Sum(s => s.TotalCents)));
+        return Enumerable.Range(0, through.DayNumber - from.DayNumber + 1).Select(from.AddDays)
+            .Select(day => byDay.TryGetValue(day, out var v) ? new DaySales(day, v.Sales, new(v.Cents)) : new DaySales(day, 0, new(0))).ToList();
     }
 
     public static IReadOnlyList<ComparisonRow> CompareProducts(SalesReportData current, SalesReportData previous)

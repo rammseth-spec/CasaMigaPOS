@@ -85,6 +85,27 @@ public sealed class AnalyticsTests
     }
 
     [TestMethod]
+    public void DailySeriesIncludesEmptyDaysInLocalTime()
+    {
+        SaleFact[] sales = [new(Local(10, 5, 9), 1900), new(Local(10, 5, 21, 30), 3800), new(Local(10, 7, 8), 500)];
+        var days = Analytics.Daily(new(2026, 10, 4), new(2026, 10, 7), sales, Mexico);
+        CollectionAssert.AreEqual(new[] { 0, 2, 0, 1 }, days.Select(d => d.Sales).ToArray(), "La venta de las 21:30 sigue siendo del día 5 local.");
+        Assert.AreEqual(5700L, days[1].Amount.Cents);
+        Assert.AreEqual(new DateOnly(2026, 10, 4), days[0].Day);
+    }
+
+    [TestMethod]
+    public void ShiftColumnJoinsOpeningAndClosingTimes()
+    {
+        static DateTimeOffset At(int day, int hour) { var local = new DateTime(2026, 10, day, hour, 0, 0); return new(local, TimeZoneInfo.Local.GetUtcOffset(local)); }
+        SessionReportView Shift(DateTimeOffset opened, DateTimeOffset? closed) =>
+            new(new SessionReportRow(Guid.NewGuid(), "Ana", opened, closed, closed is not null, new(50000), new(0), new(0), null, null));
+        Assert.AreEqual("05/10 07:00 – 21:00", Shift(At(5, 7), At(5, 21)).Shift);
+        Assert.AreEqual("05/10 22:00 – 06/10 01:00", Shift(At(5, 22), At(6, 1)).Shift, "Si cierra otro día se muestra la fecha.");
+        Assert.AreEqual("05/10 07:00 – abierta", Shift(At(5, 7), null).Shift);
+    }
+
+    [TestMethod]
     public void CashControlSplitsShortagesOveragesAndGroupsRefundReasons()
     {
         ShiftFact[] shifts = [new("Ana", true, -2000), new("Ana", true, 0), new("Ana", false, null), new("Luis", true, 500)];
@@ -188,6 +209,12 @@ public sealed class AnalyticsReportServiceTests : SalesFixture
         Assert.IsTrue(model.HasReport);
         Assert.HasCount(3, model.ComparisonKpis);
         Assert.HasCount(7, model.HeatRows);
+        StringAssert.StartsWith(model.GeneratedLabel, "Actualizado a las ", "Generar debe confirmar que corrió aunque las cifras no cambien.");
+        Assert.HasCount(1, model.DailyBars); Assert.IsTrue(model.HasDailyBars); Assert.AreEqual("Ventas por día", model.DailyTitle);
+        Assert.AreEqual(ReportsViewModel.ChartHeight, model.DailyBars[0].Height);
+        Assert.AreEqual("Concha", model.TopProductBars.Single().Label);
+        StringAssert.Contains(model.PaymentBars.Single().Value, "100.0 %");
+        Assert.HasCount(1, model.ComparisonBars); Assert.AreEqual(0, model.ComparisonBars[0].Previous);
         Assert.IsTrue(model.HasHeatmap);
         StringAssert.Contains(model.HeatPeak, "1 venta");
         Assert.IsTrue(model.HasCashierControl);
@@ -199,6 +226,13 @@ public sealed class AnalyticsReportServiceTests : SalesFixture
         model.FromSelected = model.ThroughSelected = DateTime.Today.AddDays(1);
         await model.GenerateAsync();                                   // mañana (sin turnos) contra hoy (un turno)
         StringAssert.Contains(model.ComparisonCoverage, "0 turnos de caja y el anterior 1 turno de caja");
+        Assert.IsFalse(model.HasDailyBars, "Sin ventas no se dibuja la gráfica.");
+        Assert.AreEqual(ReportsViewModel.ChartHeight, model.ComparisonBars.Single().Previous, "La barra del periodo anterior sí aparece.");
+        model.FromSelected = DateTime.Today.AddDays(-39); model.ThroughSelected = DateTime.Today;
+        await model.GenerateAsync();                                   // 40 días: barras por semana
+        Assert.AreEqual("Ventas por semana", model.DailyTitle);
+        Assert.HasCount(6, model.DailyBars);
+        Assert.IsTrue(model.DailyBars[^1].Height > 0);
         await model.ShowAsync(ReportTab.Heatmap);
         StringAssert.StartsWith(model.Csv()!, "Ventas por hora");
         await model.ShowAsync(ReportTab.CashControl);

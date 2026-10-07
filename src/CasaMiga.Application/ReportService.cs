@@ -58,7 +58,9 @@ public sealed class ReportService(ILocalReadUnitOfWork database, UserSession ide
             Authorize(store);
             var current = new SalesReport(from, through, store.QuerySalesReport(fromUtc, untilUtc));
             var previous = new SalesReport(previousFrom, from.AddDays(-1), store.QuerySalesReport(previousUtc, fromUtc));
-            return new PeriodComparison(current, previous, Analytics.CompareProducts(current.Data, previous.Data));
+            return new PeriodComparison(current, previous, Analytics.CompareProducts(current.Data, previous.Data),
+                Analytics.Daily(from, through, store.QuerySaleFacts(fromUtc, untilUtc), timeZone),
+                Analytics.Daily(previousFrom, from.AddDays(-1), store.QuerySaleFacts(previousUtc, fromUtc), timeZone));
         });
     }
 
