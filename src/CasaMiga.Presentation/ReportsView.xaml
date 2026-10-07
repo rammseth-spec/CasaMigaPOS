@@ -22,8 +22,8 @@
    <Style.Triggers><DataTrigger Binding="{Binding Hot}" Value="True"><Setter Property="Foreground" Value="White"/></DataTrigger></Style.Triggers></Style>
   <DataTemplate x:Key="HeatCellTemplate">
    <Grid Height="38" Margin="2" ToolTip="{Binding Tip}" Background="Transparent" AutomationProperties.Name="{Binding Tip}">
-    <Border CornerRadius="6" Background="{DynamicResource SurfaceSecondaryBrush}"/>
-    <Border CornerRadius="6" Background="{DynamicResource PrimaryBrush}" Opacity="{Binding Intensity}"/>
+    <Border CornerRadius="6" Background="{DynamicResource ChartTrackBrush}"/>
+    <Border CornerRadius="6" Background="{DynamicResource ChartBrush}" Opacity="{Binding Intensity}"/>
     <TextBlock Text="{Binding Text}" Style="{StaticResource HeatText}"/>
    </Grid>
   </DataTemplate>
@@ -37,8 +37,8 @@
     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" SharedSizeGroup="BarLabel"/><ColumnDefinition Width="*" MinWidth="60"/><ColumnDefinition Width="Auto" SharedSizeGroup="BarValue"/></Grid.ColumnDefinitions>
     <TextBlock Text="{Binding Label}" FontSize="15" VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" MaxWidth="260" Margin="0,0,12,0"/>
     <Grid Grid.Column="1" Height="20" VerticalAlignment="Center">
-     <Border CornerRadius="5" Background="{DynamicResource SurfaceSecondaryBrush}"/>
-     <Border CornerRadius="5" Background="{DynamicResource PrimaryBrush}" RenderTransformOrigin="0,0.5"><Border.RenderTransform><ScaleTransform ScaleX="{Binding Ratio}"/></Border.RenderTransform></Border>
+     <Border CornerRadius="5" Background="{DynamicResource ChartTrackBrush}"/>
+     <Border CornerRadius="5" Background="{DynamicResource ChartBrush}" RenderTransformOrigin="0,0.5"><Border.RenderTransform><ScaleTransform ScaleX="{Binding Ratio}"/></Border.RenderTransform></Border>
     </Grid>
     <TextBlock Grid.Column="2" Text="{Binding Value}" FontSize="14" FontWeight="SemiBold" TextAlignment="Right" VerticalAlignment="Center" TextWrapping="NoWrap" Margin="12,0,0,0"/>
    </Grid>
@@ -48,7 +48,7 @@
     <Grid.RowDefinitions><RowDefinition Height="170"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <StackPanel VerticalAlignment="Bottom">
      <TextBlock Text="{Binding Value}" Style="{StaticResource ChartAxis}" Margin="0,0,0,2"/>
-     <Border Height="{Binding Height}" MaxWidth="56" CornerRadius="4,4,0,0" Background="{DynamicResource PrimaryBrush}" Margin="3,0"/>
+     <Border Height="{Binding Height}" MaxWidth="56" CornerRadius="4,4,0,0" Background="{DynamicResource ChartBrush}" Margin="3,0"/>
     </StackPanel>
     <Border Height="1" VerticalAlignment="Bottom" Background="{DynamicResource BorderBrush}"/>
     <TextBlock Grid.Row="1" Text="{Binding Label}" Style="{StaticResource ChartAxis}" Margin="0,5,0,0"/>
@@ -59,8 +59,8 @@
     <Grid.RowDefinitions><RowDefinition Height="160"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <Grid VerticalAlignment="Bottom" MaxWidth="84" Margin="3,0">
      <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-     <Border Height="{Binding Previous}" VerticalAlignment="Bottom" CornerRadius="3,3,0,0" Background="{DynamicResource WheatBrush}" Opacity="0.6" Margin="0,0,1,0"/>
-     <Border Grid.Column="1" Height="{Binding Current}" VerticalAlignment="Bottom" CornerRadius="3,3,0,0" Background="{DynamicResource PrimaryBrush}" Margin="1,0,0,0"/>
+     <Border Height="{Binding Previous}" VerticalAlignment="Bottom" CornerRadius="3,3,0,0" Background="{DynamicResource ChartSoftBrush}" Margin="0,0,1,0"/>
+     <Border Grid.Column="1" Height="{Binding Current}" VerticalAlignment="Bottom" CornerRadius="3,3,0,0" Background="{DynamicResource ChartBrush}" Margin="1,0,0,0"/>
     </Grid>
     <Border Height="1" VerticalAlignment="Bottom" Background="{DynamicResource BorderBrush}"/>
     <TextBlock Grid.Row="1" Text="{Binding Label}" Style="{StaticResource ChartAxis}" Margin="0,5,0,0"/>
@@ -226,8 +226,8 @@
      <StackPanel>
       <DockPanel Margin="0,0,0,10">
        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-        <Border Width="14" Height="14" CornerRadius="3" Background="{DynamicResource WheatBrush}" Opacity="0.6" Margin="0,0,6,0"/><TextBlock Text="Periodo anterior" Style="{StaticResource KpiLabel}" VerticalAlignment="Center" Margin="0,0,16,0"/>
-        <Border Width="14" Height="14" CornerRadius="3" Background="{DynamicResource PrimaryBrush}" Margin="0,0,6,0"/><TextBlock Text="Este periodo" Style="{StaticResource KpiLabel}" VerticalAlignment="Center"/>
+        <Border Width="14" Height="14" CornerRadius="3" Background="{DynamicResource ChartSoftBrush}" Margin="0,0,6,0"/><TextBlock Text="Periodo anterior" Style="{StaticResource KpiLabel}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+        <Border Width="14" Height="14" CornerRadius="3" Background="{DynamicResource ChartBrush}" Margin="0,0,6,0"/><TextBlock Text="Este periodo" Style="{StaticResource KpiLabel}" VerticalAlignment="Center"/>
        </StackPanel>
        <StackPanel>
         <TextBlock Text="Día por día" Style="{StaticResource ChartTitle}"/>
@@ -288,12 +288,12 @@
      </DockPanel>
      <StackPanel Orientation="Horizontal" Margin="58,12,0,0">
       <TextBlock Text="Menos" Style="{StaticResource KpiLabel}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource SurfaceSecondaryBrush}"/>
-      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource PrimaryBrush}" Opacity="0.12"/>
-      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource PrimaryBrush}" Opacity="0.34"/>
-      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource PrimaryBrush}" Opacity="0.56"/>
-      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource PrimaryBrush}" Opacity="0.78"/>
-      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource PrimaryBrush}"/>
+      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource ChartTrackBrush}"/>
+      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource ChartBrush}" Opacity="0.12"/>
+      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource ChartBrush}" Opacity="0.34"/>
+      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource ChartBrush}" Opacity="0.56"/>
+      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource ChartBrush}" Opacity="0.78"/>
+      <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource ChartBrush}"/>
       <TextBlock Text="Más" Style="{StaticResource KpiLabel}" VerticalAlignment="Center" Margin="8,0,0,0"/>
      </StackPanel>
      <TextBlock Text="El número es la cantidad de ventas en esa hora; pasa el cursor para ver el monto. No incluye ventas canceladas." Style="{StaticResource KpiLabel}" TextWrapping="Wrap" Margin="58,8,0,0"/>
@@ -352,8 +352,8 @@
         <Grid>
          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto" MinWidth="44"/></Grid.ColumnDefinitions>
          <Grid Height="10" VerticalAlignment="Center">
-          <Border CornerRadius="5" Background="{DynamicResource PrimarySoftBrush}"/>
-          <Border CornerRadius="5" Background="{DynamicResource WheatBrush}" RenderTransformOrigin="0,0.5"><Border.RenderTransform><ScaleTransform ScaleX="{Binding Ratio}"/></Border.RenderTransform></Border>
+          <Border CornerRadius="5" Background="{DynamicResource ChartTrackBrush}"/>
+          <Border CornerRadius="5" Background="{DynamicResource ChartBrush}" RenderTransformOrigin="0,0.5"><Border.RenderTransform><ScaleTransform ScaleX="{Binding Ratio}"/></Border.RenderTransform></Border>
          </Grid>
          <TextBlock Grid.Column="1" Text="{Binding Suggested}" FontWeight="Bold" FontSize="18" Foreground="{DynamicResource PrimaryBrush}" TextAlignment="Right" VerticalAlignment="Center" Margin="10,0,0,0"/>
         </Grid>

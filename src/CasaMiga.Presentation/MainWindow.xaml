@@ -4,7 +4,7 @@
   <ScrollViewer Visibility="{Binding IsSignedOut,Converter={StaticResource VisibleWhen}}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
    <Grid MinHeight="{Binding ViewportHeight,RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
     <Grid.ColumnDefinitions><ColumnDefinition Width="2*" MinWidth="340"/><ColumnDefinition Width="3*"/></Grid.ColumnDefinitions>
-    <Border Background="{DynamicResource PrimaryBrush}">
+    <Border Background="{StaticResource AvocadoLeafBrush}">
      <Grid Margin="44,40,44,36">
       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
       <Border Background="{DynamicResource NaturalBackgroundBrush}" CornerRadius="18" Padding="22,14" HorizontalAlignment="Left">
