@@ -198,7 +198,7 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
     public string ActionTitle => Action switch
     {
         ConsignmentAction.Deliver => $"Entregar charola a {Selected?.Name}",
-        ConsignmentAction.Collect when Collecting is { } t => $"Recoger charola de {Selected?.Name} · {Day(t.DeliveredAt)}",
+        ConsignmentAction.Collect => $"Recoger charola · {Selected?.Name}",
         ConsignmentAction.Pay => $"Cobrar a {Selected?.Name}",
         _ => "",
     };
@@ -248,6 +248,13 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
     public string Reference { get; set; } = "";
     public string CollectNote { get; set; } = "";
     public string VoidReason { get; set; } = "";
+    public string CollectHint => Collecting is { } tray ? $"Dejada el {Day(tray.DeliveredAt).ToLower(Spanish)}. Toca la foto por cada pieza que regresó." : "";
+    /// <summary>El panel de la derecha cobra o, si se pidió, anula la charola (con su motivo).</summary>
+    public bool IsVoidOpen { get; private set; }
+    public bool IsChargeOpen => !IsVoidOpen;
+    public string CollectPanelTitle => IsVoidOpen ? "Anular charola" : "Cobro";
+    public void OpenVoid() { IsVoidOpen = true; VoidReason = ""; Notify(); }
+    public void CloseVoid() { IsVoidOpen = false; Notify(); }
     public string PayAmountText { get; set; } = "";
     public string PayNote { get; set; } = "";
     public void MethodChanged() => Notify();
@@ -403,7 +410,7 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
         Selected = store; Collecting = tray; Action = ConsignmentAction.Collect; Message = "";
         CollectLines = tray.Items.Select(i => new CollectLineView(i, CollectChanged)).ToArray();
         StartPhotoLoad(CollectLines.Select(l => (l.ProductId, (Action<ProductPhotoVisual>)l.SetPhoto)));
-        SelectedMethod = Methods[0]; Reference = ""; CollectNote = ""; VoidReason = "";
+        SelectedMethod = Methods[0]; Reference = ""; CollectNote = ""; VoidReason = ""; IsVoidOpen = false;
         paidEdited = false; paidText = (CollectAmount.Cents / 100m).ToString("0.00", CultureInfo.InvariantCulture);
         Notify();
     }
@@ -435,7 +442,7 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
     {
         if (Collecting is not { } tray) return;
         await Task.Run(() => service.Void(tray.Id, VoidReason));
-        Action = ConsignmentAction.None; Collecting = null;
+        Action = ConsignmentAction.None; Collecting = null; IsVoidOpen = false;
         await LoadRouteAsync();
         Message = "Charola anulada. No se cobra ni cuenta en los reportes."; MessageIsSuccess = true;
     });
@@ -458,7 +465,7 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
         Message = $"Cobro de {Format(payment.Amount)} registrado a {store.Name}."; MessageIsSuccess = true;
     });
 
-    public void CancelAction() { Action = ConsignmentAction.None; Collecting = null; photoLoad.Cancel(); Message = ""; Notify(); }
+    public void CancelAction() { Action = ConsignmentAction.None; Collecting = null; IsVoidOpen = false; photoLoad.Cancel(); Message = ""; Notify(); }
 
     // ---------- Tiendas ----------
     private async Task LoadStoresAsync(Guid? select) => await RunAsync(async () =>

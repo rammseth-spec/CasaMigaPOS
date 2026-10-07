@@ -120,7 +120,7 @@
     </Border>
 
     <Grid Grid.Row="1" Margin="{Binding ShellContentMargin}">
-     <ScrollViewer Visibility="{Binding IsNotPos,Converter={StaticResource VisibleWhen}}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+     <ScrollViewer Visibility="{Binding IsNotPos,Converter={StaticResource VisibleWhen}}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" FocusVisualStyle="{x:Null}">
       <Border Style="{StaticResource CardStyle}" HorizontalAlignment="Stretch">
        <StackPanel>
         <local:CatalogView DataContext="{Binding Catalog}" Visibility="{Binding DataContext.IsCatalog,RelativeSource={RelativeSource AncestorType=Window},Converter={StaticResource VisibleWhen}}"/>
@@ -191,7 +191,7 @@
          <TextBlock Text="{Binding ClosingOwner}" Margin="0,0,0,16"/><TextBlock Text="{Binding ClosingDetails}" FontSize="21" Margin="0,0,0,20"/><TextBlock Text="La sesión quedará cerrada y auditada. No podrá volver a abrirse. Volver conserva el conteo confirmado." Margin="0,0,0,24"/>
          <WrapPanel><Button x:Name="BackResult" Content="Volver" Click="BackClosingClick" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8"/><Button Content="Confirmar cierre" Click="ConfirmCloseClick" Style="{StaticResource DestructiveButton}" Margin="0,0,0,8"/></WrapPanel>
         </StackPanel>
-        <TextBlock Text="{Binding Message}" Margin="0,18,0,0" AutomationProperties.LiveSetting="Polite"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
+        <TextBlock Text="{Binding Message}" Margin="0,18,0,0" AutomationProperties.LiveSetting="Polite"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/></DataTrigger><DataTrigger Binding="{Binding Message}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger><DataTrigger Binding="{Binding Message}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
        </StackPanel>
       </Border>
      </ScrollViewer>

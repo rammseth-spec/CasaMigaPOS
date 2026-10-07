@@ -8,6 +8,8 @@ namespace CasaMiga.Presentation;
 public partial class ConsignmentView : UserControl
 {
     private ScrollViewer? page;
+    /// <summary>Relleno (28 + 28) y borde (1 + 1) de la tarjeta de la página que contiene la vista.</summary>
+    public const double WorkspaceInset = 58;
 
     public ConsignmentView()
     {
@@ -27,8 +29,8 @@ public partial class ConsignmentView : UserControl
 
     private void FitWorkspace(double pageHeight)
     {
-        DeliverWorkspace.Height = Math.Max(DeliverWorkspace.MinHeight, pageHeight - 96);
-        CollectWorkspace.Height = Math.Max(CollectWorkspace.MinHeight, pageHeight - 96);
+        DeliverWorkspace.Height = Math.Max(DeliverWorkspace.MinHeight, pageHeight - WorkspaceInset);
+        CollectWorkspace.Height = Math.Max(CollectWorkspace.MinHeight, pageHeight - WorkspaceInset);
     }
     private ConsignmentViewModel Model => (ConsignmentViewModel)DataContext;
     private static T? Item<T>(object sender) where T : class => (sender as FrameworkElement)?.DataContext as T;
@@ -55,12 +57,10 @@ public partial class ConsignmentView : UserControl
     private async void ConfirmDeliverClick(object sender, RoutedEventArgs e) => await Model.ConfirmDeliverAsync();
     private async void ConfirmCollectClick(object sender, RoutedEventArgs e) => await Model.ConfirmCollectAsync();
     private async void ConfirmPayClick(object sender, RoutedEventArgs e) => await Model.ConfirmPayAsync();
-    private async void VoidClick(object sender, RoutedEventArgs e)
-    {
-        if (MessageBox.Show(Window.GetWindow(this), "¿Anular esta charola? No se cobrará ni contará en los reportes.", "Anular charola",
-            MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes)
-            await Model.VoidAsync();
-    }
+    // Anular es un paso aparte con su motivo: el formulario es la confirmación.
+    private void OpenVoidClick(object sender, RoutedEventArgs e) => Model.OpenVoid();
+    private void CloseVoidClick(object sender, RoutedEventArgs e) => Model.CloseVoid();
+    private async void VoidClick(object sender, RoutedEventArgs e) => await Model.VoidAsync();
 
     private void NewStoreClick(object sender, RoutedEventArgs e) => Model.NewStore();
     private async void StoreSelected(object sender, SelectionChangedEventArgs e)
