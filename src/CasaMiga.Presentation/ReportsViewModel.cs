@@ -42,6 +42,8 @@ public sealed record SessionReportView(SessionReportRow Row)
     public string Opening => ReportsViewModel.Format(Row.Opening);
     public string CashSales => ReportsViewModel.Format(Row.CashSales);
     public string Refunds => Row.Refunds.Cents == 0 ? "—" : ReportsViewModel.Format(Row.Refunds);
+    // Gastos, retiros y entradas del turno (neto con signo).
+    public string Movements => Row.Movements.Cents == 0 ? "—" : (Row.Movements.Cents > 0 ? "+" : "−") + ReportsViewModel.Format(new(Math.Abs(Row.Movements.Cents)));
     public string Expected => ReportsViewModel.Format(Row.Expected);
     public string Counted => Row.Counted is { } c ? ReportsViewModel.Format(c) : "Sin conteo";
     public string Difference => Row.Difference is not { } d ? "—" : d.Cents == 0 ? "Exacta" : d.Cents > 0 ? "Sobrante " + ReportsViewModel.Format(d) : "Faltante " + ReportsViewModel.Format(new(-d.Cents));

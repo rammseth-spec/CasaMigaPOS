@@ -24,6 +24,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ReportsViewModel? Reports { get; private set; }
     public SyncViewModel? Sync { get; private set; }
     public ConsignmentViewModel? Consignment { get; private set; }
+    public CashMovementsViewModel? CashMovements { get; private set; }
+    // Movimientos de efectivo: sólo con caja abierta y permiso (cajero: gastos y entradas; encargado: también retiros).
+    public bool ShowCashMovements => opened is not null && CashMovements is { CanRecord: true };
     public bool IsConsignment => screen == "consignment";
     public bool CanViewConsignment { get; private set; }
     public bool IsSync => screen == "sync";
@@ -81,7 +84,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool HasOpenCash => opened is not null;
     public string CountedAmount { get; set; } = "";
     public string ClosingOwner => opened is null ? "" : $"Abierta por: {opened.OpenedByName}" + (opened.Session.OpenedBy != user?.Current?.Id ? " · Cierre por otro usuario" : " · Tu sesión");
-    public string ClosingDetails => closingResult is not { } r ? "" : $"Fondo inicial: {Format(r.Session.OpeningFund)}\n" + (r.Refunds.Cents > 0 ? $"Devoluciones en efectivo: −{Format(r.Refunds)}\n" : "") + $"Efectivo esperado: {Format(r.Expected)}\nEfectivo contado: {Format(r.Count.Counted)}\n{DifferenceLabel(r.Difference)}";
+    public string ClosingDetails => closingResult is not { } r ? "" : $"Fondo inicial: {Format(r.Session.OpeningFund)}\n" + (r.Refunds.Cents > 0 ? $"Devoluciones en efectivo: −{Format(r.Refunds)}\n" : "") + MovementLines(r.Movements) + $"Efectivo esperado: {Format(r.Expected)}\nEfectivo contado: {Format(r.Count.Counted)}\n{DifferenceLabel(r.Difference)}";
+    private static string MovementLines(CashMovementTotals? totals) => totals is not { Any: true } t ? "" :
+        (t.Expenses.Cents > 0 ? $"Gastos: −{Format(t.Expenses)}\n" : "") + (t.Withdrawals.Cents > 0 ? $"Retiros: −{Format(t.Withdrawals)}\n" : "") + (t.Deposits.Cents > 0 ? $"Entradas: +{Format(t.Deposits)}\n" : "");
     private static string Format(Money value) => (value.Cents/100m).ToString("C2",CultureInfo.GetCultureInfo("es-MX"));
     private static string DifferenceLabel(Money value) => value.Cents==0 ? "Diferencia: $0.00 · Caja exacta" : value.Cents>0 ? $"SOBRANTE {Format(value)}" : $"FALTANTE {Format(new Money(checked(-value.Cents)))}";
     public bool IsOpening => screen == "opening";
@@ -107,7 +112,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         return string.Concat(words.Take(2).Select(w => char.ToUpper(w[0], CultureInfo.GetCultureInfo("es-MX"))));
     }
     public string CashDetails => opened is null ? "Captura el fondo inicial para comenzar." :
-        $"Abierta por: {opened.OpenedByName}\nHora de apertura: {opened.Session.OpenedAt.ToLocalTime():dd/MM/yyyy HH:mm:ss zzz}\n\nImportes ocultos hasta confirmar el conteo ciego. Las ventas confirmadas en efectivo se incluyen en el cierre.";
+        $"Abierta por: {opened.OpenedByName}\nHora de apertura: {opened.Session.OpenedAt.ToLocalTime():dd/MM/yyyy HH:mm:ss zzz}\n\nImportes ocultos hasta confirmar el conteo ciego. Las ventas en efectivo, los gastos, los retiros y las entradas se incluyen en el cierre.";
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Notify() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
 
@@ -156,6 +161,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                     catalogService, (eventName,errorType)=>runtime.TryLog(eventName,errorType),new ConsumptionViewModel(new SaleConsumptionService(database,database,user,clock,terminal.Id)));
                 Reports = new(new ReportService(database,user,TimeZoneInfo.Local),(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 Consignment = new(new ConsignmentService(database,user,clock,terminal.Id,TimeZoneInfo.Local),(eventName,errorType)=>runtime.TryLog(eventName,errorType),photoUi);
+                CashMovements = new(new CashMovementService(database,user,clock,terminal.Id),(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 var syncOutbox = new SqliteSyncOutbox(sqlite);
                 Sync = new(new SyncEngine(syncOutbox, new HttpSyncTransport(new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(30) }), options.DataDirectory),
                     syncOutbox, terminal.Id, terminal.Name, (eventName,errorType)=>runtime.TryLog(eventName,errorType));
@@ -273,7 +279,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             !u.Active ? "Inactivo" : u.MustChangePassword ? "Debe cambiar contraseña" : "Activo", u.Role, u.Active)).ToList();
         SelectedUser = Users.FirstOrDefault(u => u.Id == keep);
     }
-    public void Logout() { if (Busy) return; user?.SignOut(); Users = []; SelectedUser = null; TemporaryPasswordNotice = ""; CanManageUsers = false; Pos?.ForgetView(); SalesHistory?.Forget(); Reports?.Forget(); Consignment?.Forget(); Inventory?.Forget(); opened = null; closingResult = null; CountedAmount = ""; CanViewSales=false; CanViewInventory=false;CanViewRecipes=false;CanViewProduction=false;CanViewConsignment=false;CurrentRoleLabel=""; screen = "login"; Message = ""; Notify(); RefreshSignInStatus(); }
+    public void Logout() { if (Busy) return; user?.SignOut(); Users = []; SelectedUser = null; TemporaryPasswordNotice = ""; CanManageUsers = false; Pos?.ForgetView(); SalesHistory?.Forget(); Reports?.Forget(); Consignment?.Forget(); CashMovements?.Forget(); Inventory?.Forget(); opened = null; closingResult = null; CountedAmount = ""; CanViewSales=false; CanViewInventory=false;CanViewRecipes=false;CanViewProduction=false;CanViewConsignment=false;CurrentRoleLabel=""; screen = "login"; Message = ""; Notify(); RefreshSignInStatus(); }
     public void ShowOpening() { if (Busy || !CanOpen) return; Amount = "0.00"; screen = "opening"; Message = ""; Notify(); }
     public void CancelOpening() { if (Busy) return; screen = "dashboard"; Message = ""; Notify(); }
     public Task OpenAsync() => Execute(async () =>
@@ -284,6 +290,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         try { opened = await Task.Run(() => cash!.Open(terminal!.Id, fund)); }
         catch (CashAlreadyOpenException) { await RefreshAsync(); screen = "dashboard"; throw; }
         runtime!.TryLog("cash.opened"); CanOpen = false; screen = "dashboard";
+        if (CashMovements is { } movements) await movements.LoadAsync();
     });
     public Task ShowPosAsync() => Execute(async () => {await Pos!.EnterAsync();screen="pos";});
     public Task ShowCatalogAsync() => Execute(async () => {await Catalog!.LoadAsync();screen="catalog";});
@@ -337,6 +344,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         var canConfigureRecipes=await Task.Run(()=>catalogService!.Can("recipe.configure"));
         CurrentRoleLabel=canConfigureRecipes?"Administrador":CanViewProduction?"Manager":"Cajero";
         CanManageUsers=await Task.Run(()=>login!.CanManageUsers());
+        if (opened is null) CashMovements?.Forget(); else if (CashMovements is { } movements) await movements.LoadAsync();
     }
     private async Task Execute(Func<Task> action)
     {

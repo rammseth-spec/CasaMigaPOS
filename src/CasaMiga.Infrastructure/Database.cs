@@ -131,6 +131,12 @@ public sealed class Database(string path)
                     + " AND (SELECT count(*) FROM role_permission WHERE permission_name LIKE 'consignment.%')=4";
                 if (Convert.ToInt64(command.ExecuteScalar()) != 1) throw new InvalidOperationException("La migración de charolas no creó sus estructuras.");
             }
+            if (i + 1 == 22)
+            {
+                command.CommandText = "SELECT (SELECT count(*) FROM sqlite_master WHERE name IN ('cash_movement','ix_cash_movement_session','cash_movement_valid','cash_movement_no_update','cash_movement_no_delete','ux_audit_cash_movement','sale_refund_complete'))=7"
+                    + " AND (SELECT count(*) FROM role_permission WHERE permission_name='cash.movement')=3 AND (SELECT count(*) FROM role_permission WHERE permission_name='cash.withdrawal')=2";
+                if (Convert.ToInt64(command.ExecuteScalar()) != 1) throw new InvalidOperationException("La migración de movimientos de caja no creó sus estructuras.");
+            }
             command.CommandText = "INSERT INTO schema_migration VALUES($v,$hash,$at)";
             command.Parameters.AddWithValue("$hash", hash);
             command.Parameters.AddWithValue("$at", DateTimeOffset.UtcNow.ToString("O"));

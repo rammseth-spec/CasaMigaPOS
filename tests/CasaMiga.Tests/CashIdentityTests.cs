@@ -162,7 +162,7 @@ public sealed class CashIdentityTests
         Assert.ThrowsExactly<InvalidOperationException>(()=>identity.Bootstrap("other","Other",password));
         Assert.AreEqual(1L,Scalar("SELECT count(*) FROM app_user"));
         Assert.AreEqual(3L,Scalar("SELECT count(*) FROM app_role"));
-        Assert.AreEqual(31L,Scalar("SELECT count(*) FROM permission"));
+        Assert.AreEqual(33L,Scalar("SELECT count(*) FROM permission"));
         Execute("UPDATE app_user SET role_name='Cashier'");
         Assert.IsTrue(cash.CanOpen());
         Assert.IsFalse(work.Run(s=>s.HasPermission(user.Current!.Id,"cash.close")));

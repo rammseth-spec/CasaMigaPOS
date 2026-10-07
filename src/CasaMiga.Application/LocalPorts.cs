@@ -89,6 +89,10 @@ public interface ILocalStore
     Sale? FindSaleByOperation(Guid operation);
     Money CashSalesTotal(Guid session);
     Money CashRefundsTotal(Guid session);
+    void AddCashMovement(CashMovement movement);
+    CashMovement? FindCashMovementByOperation(Guid operation);
+    IReadOnlyList<CashMovement> ListCashMovements(Guid session);
+    CashMovementTotals CashMovementTotals(Guid session);
     SalesReportData QuerySalesReport(DateTimeOffset fromUtc, DateTimeOffset untilUtc);
     IReadOnlyList<SaleLineFact> QuerySaleLines(DateTimeOffset fromUtc, DateTimeOffset untilUtc);
     IReadOnlyList<SaleFact> QuerySaleFacts(DateTimeOffset fromUtc, DateTimeOffset untilUtc);

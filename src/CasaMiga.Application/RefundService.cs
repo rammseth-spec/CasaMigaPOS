@@ -66,7 +66,7 @@ public sealed class RefundService(ILocalUnitOfWork database, UserSession identit
                 if (total.Cents <= 0) throw new RefundException("La devolución debe tener un importe mayor que cero.");
 
                 var session = store.FindOpenSession(terminalId)!.Session;
-                var available = session.OpeningFund + store.CashSalesTotal(session.Id) - store.CashRefundsTotal(session.Id);
+                var available = session.OpeningFund + store.CashSalesTotal(session.Id) - store.CashRefundsTotal(session.Id) + store.CashMovementTotals(session.Id).Net;
                 if (options.Detail.Sale.Payment.Kind == PaymentMethod.Cash && total.Cents > available.Cents)
                     throw new RefundException($"No hay suficiente efectivo esperado en caja para devolver {Format(total)}.");
 

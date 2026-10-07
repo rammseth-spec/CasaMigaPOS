@@ -72,10 +72,10 @@ public sealed partial class SqliteLocalUnitOfWork
 
             var sessionRows = sessions.Select(s =>
             {
-                var cashSales = CashSalesTotal(s.Id); var refunds = CashRefundsTotal(s.Id);
-                var expected = new Money(s.Opening) + cashSales - refunds;
+                var cashSales = CashSalesTotal(s.Id); var refunds = CashRefundsTotal(s.Id); var movements = CashMovementTotals(s.Id).Net;
+                var expected = new Money(s.Opening) + cashSales - refunds + movements;
                 return new SessionReportRow(s.Id, s.By, s.Opened, s.Closed, s.IsClosed, new(s.Opening), cashSales, refunds,
-                    s.Counted is { } c ? new Money(c) : null, s.Counted is { } k ? new Money(checked(k - expected.Cents)) : null);
+                    s.Counted is { } c ? new Money(c) : null, s.Counted is { } k ? new Money(checked(k - expected.Cents)) : null, movements);
             }).ToList();
 
             var productRows = products.Select(p => new ProductReportRow(p.Key, p.Value.Name, p.Value.Qty, new(p.Value.Sold), p.Value.RQty, new(p.Value.Refunded)))

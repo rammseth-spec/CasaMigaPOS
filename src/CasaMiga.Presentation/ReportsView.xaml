@@ -190,6 +190,7 @@
       <DataGridTextColumn Header="Fondo" Binding="{Binding Opening}" Width="Auto" MinWidth="92" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
       <DataGridTextColumn Header="Efectivo" Binding="{Binding CashSales}" Width="Auto" MinWidth="100" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
       <DataGridTextColumn Header="Devol." Binding="{Binding Refunds}" Width="Auto" MinWidth="80" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Mov." Binding="{Binding Movements}" Width="Auto" MinWidth="84" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
       <DataGridTextColumn Header="Esperado" Binding="{Binding Expected}" Width="Auto" MinWidth="104" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
       <DataGridTextColumn Header="Contado" Binding="{Binding Counted}" Width="Auto" MinWidth="104" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
       <DataGridTextColumn Header="Diferencia" Binding="{Binding Difference}" Width="Auto" MinWidth="124"/>

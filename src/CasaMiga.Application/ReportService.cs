@@ -14,9 +14,10 @@ public sealed record PaymentReportRow(PaymentMethod Method, int Sales, Money Sol
     public Money Net => Sold - Refunded;
 }
 public sealed record SessionReportRow(Guid SessionId, string OpenedBy, DateTimeOffset OpenedAt, DateTimeOffset? ClosedAt, bool Closed,
-    Money Opening, Money CashSales, Money Refunds, Money? Counted, Money? Difference)
+    Money Opening, Money CashSales, Money Refunds, Money? Counted, Money? Difference, Money Movements = default)
 {
-    public Money Expected => Opening + CashSales - Refunds;
+    // Movements: entradas menos gastos y retiros de efectivo del turno.
+    public Money Expected => Opening + CashSales - Refunds + Movements;
 }
 public sealed record SalesReportData(int SaleCount, Money Gross, Money Refunded, IReadOnlyList<ProductReportRow> Products,
     IReadOnlyList<CashierReportRow> Cashiers, IReadOnlyList<SessionReportRow> Sessions, IReadOnlyList<PaymentReportRow>? Payments = null)
@@ -109,10 +110,10 @@ public sealed class ReportService(ILocalReadUnitOfWork database, UserSession ide
         csv.Row("Cajero", "Ventas", "Vendido");
         foreach (var c in report.Data.Cashiers) csv.Row(c.Name, c.Sales, Csv.Amount(c.Sold));
         csv.Row();
-        csv.Row("Apertura", "Cierre", "Abrió", "Estado", "Fondo", "Ventas efectivo", "Devoluciones", "Esperado", "Contado", "Diferencia");
+        csv.Row("Apertura", "Cierre", "Abrió", "Estado", "Fondo", "Ventas efectivo", "Devoluciones", "Movimientos", "Esperado", "Contado", "Diferencia");
         foreach (var s in report.Data.Sessions)
             csv.Row(Local(s.OpenedAt, timeZone), s.ClosedAt is { } c ? Local(c, timeZone) : "", s.OpenedBy, s.Closed ? "Cerrada" : "Abierta",
-                Csv.Amount(s.Opening), Csv.Amount(s.CashSales), Csv.Amount(s.Refunds), Csv.Amount(s.Expected), s.Counted is { } n ? Csv.Amount(n) : "", s.Difference is { } d ? Csv.Amount(d) : "");
+                Csv.Amount(s.Opening), Csv.Amount(s.CashSales), Csv.Amount(s.Refunds), Csv.Amount(s.Movements), Csv.Amount(s.Expected), s.Counted is { } n ? Csv.Amount(n) : "", s.Difference is { } d ? Csv.Amount(d) : "");
         return csv.ToString();
 
         static string Local(DateTimeOffset at, TimeZoneInfo zone) => TimeZoneInfo.ConvertTime(at, zone).ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);

@@ -1,0 +1,67 @@
+<UserControl x:Class="CasaMiga.Presentation.CashMovementsView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <!-- Gastos, entradas y retiros de la caja abierta: tipo como control segmentado, categoría como píldoras, importe y nota; abajo, lo registrado en el turno. -->
+ <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource HairlineBrush}" BorderThickness="1" CornerRadius="16" Padding="20,18">
+  <StackPanel IsEnabled="{Binding Ready}">
+   <TextBlock Text="Movimientos de efectivo" Style="{StaticResource SectionTitleText}"/>
+   <TextBlock Text="Cambian el efectivo esperado del corte. Un error se corrige con el movimiento contrario." Style="{StaticResource CaptionText}" Margin="0,2,0,14"/>
+   <Border Style="{StaticResource SegmentedTrack}" Margin="0,0,0,10">
+    <ItemsControl ItemsSource="{Binding Kinds}" Focusable="False" AutomationProperties.Name="Tipo de movimiento">
+     <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+     <ItemsControl.ItemTemplate><DataTemplate><Button Content="{Binding Label}" Tag="{Binding Selected}" Style="{StaticResource SegmentButton}" Click="KindClick" AutomationProperties.Name="{Binding Label,StringFormat='Movimiento: {0}'}"/></DataTemplate></ItemsControl.ItemTemplate>
+    </ItemsControl>
+   </Border>
+   <TextBlock Text="{Binding Hint}" Style="{StaticResource CaptionText}" Margin="0,0,0,12"/>
+   <StackPanel Visibility="{Binding IsExpense,Converter={StaticResource VisibleWhen}}">
+    <TextBlock Text="Categoría" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,6"/>
+    <ItemsControl ItemsSource="{Binding Categories}" Focusable="False" AutomationProperties.Name="Categoría del gasto" Margin="0,0,0,8">
+     <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+     <ItemsControl.ItemTemplate><DataTemplate><Button Content="{Binding Label}" Tag="{Binding Selected}" Style="{StaticResource SectionTabButton}" Click="CategoryClick" Margin="0,0,8,8" AutomationProperties.Name="{Binding Label,StringFormat='Categoría: {0}'}"/></DataTemplate></ItemsControl.ItemTemplate>
+    </ItemsControl>
+   </StackPanel>
+   <Grid Margin="0,0,0,12">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="160"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+    <StackPanel><TextBlock Text="Importe" FontSize="14" FontWeight="SemiBold"/><TextBox x:Name="AmountBox" Text="{Binding AmountText,UpdateSourceTrigger=PropertyChanged}" MaxLength="12" FontSize="18" Margin="0,6,0,0" AutomationProperties.Name="Importe del movimiento"/></StackPanel>
+    <StackPanel Grid.Column="2"><TextBlock Text="Nota" FontSize="14" FontWeight="SemiBold"/>
+     <Grid Margin="0,6,0,0">
+      <TextBox x:Name="NoteBox" Text="{Binding Note,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" AutomationProperties.Name="Nota del movimiento"/>
+      <TextBlock Text="{Binding NotePlaceholder}" Margin="14,0" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" IsHitTestVisible="False" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis">
+       <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Text,ElementName=NoteBox}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+      </TextBlock>
+     </Grid>
+    </StackPanel>
+   </Grid>
+   <Button Content="{Binding ActionText}" Click="RecordClick" HorizontalAlignment="Left" MinWidth="200" AutomationProperties.Name="Registrar movimiento"/>
+   <TextBlock Text="{Binding Message}" Margin="0,10,0,0" AutomationProperties.LiveSetting="Polite">
+    <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/></DataTrigger><DataTrigger Binding="{Binding Message}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+   </TextBlock>
+
+   <Border BorderBrush="{DynamicResource HairlineBrush}" BorderThickness="0,1,0,0" Margin="0,16,0,0" Padding="0,14,0,0">
+    <StackPanel>
+     <DockPanel Margin="0,0,0,6">
+      <TextBlock DockPanel.Dock="Right" Text="{Binding TotalsText}" Style="{StaticResource CaptionText}" VerticalAlignment="Center" Visibility="{Binding HasMovements,Converter={StaticResource VisibleWhen}}"/>
+      <TextBlock Text="En este turno" FontSize="15" FontWeight="SemiBold"/>
+     </DockPanel>
+     <TextBlock Text="Sin gastos, retiros ni entradas todavía.">
+      <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource CaptionText}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasMovements}" Value="False"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+     </TextBlock>
+     <ItemsControl ItemsSource="{Binding Movements}" Focusable="False" AutomationProperties.Name="Movimientos del turno">
+      <ItemsControl.ItemTemplate><DataTemplate>
+       <Border BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,0,0,1" Padding="0,8">
+        <Grid>
+         <Grid.ColumnDefinitions><ColumnDefinition Width="52"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+         <TextBlock Text="{Binding Time}" Style="{StaticResource CaptionText}" VerticalAlignment="Center" Typography.NumeralAlignment="Tabular"/>
+         <Border Grid.Column="1" CornerRadius="10" Padding="8,2" Margin="0,0,10,0" VerticalAlignment="Center">
+          <Border.Style><Style TargetType="Border"><Setter Property="Background" Value="{DynamicResource WarningSoftBrush}"/><Style.Triggers><DataTrigger Binding="{Binding IsIncome}" Value="True"><Setter Property="Background" Value="{DynamicResource PrimarySoftBrush}"/></DataTrigger></Style.Triggers></Style></Border.Style>
+          <TextBlock Text="{Binding Kind}" FontSize="12.5" FontWeight="SemiBold"/>
+         </Border>
+         <TextBlock Grid.Column="2" Text="{Binding Detail}" FontSize="14" VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Detail}"/>
+         <TextBlock Grid.Column="3" Text="{Binding Amount}" FontWeight="Bold" VerticalAlignment="Center" Typography.NumeralAlignment="Tabular" Margin="12,0,0,0"/>
+        </Grid>
+       </Border>
+      </DataTemplate></ItemsControl.ItemTemplate>
+     </ItemsControl>
+    </StackPanel>
+   </Border>
+  </StackPanel>
+ </Border>
+</UserControl>
