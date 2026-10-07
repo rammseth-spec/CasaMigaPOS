@@ -57,6 +57,35 @@
     </Grid>
    </Button>
   </DataTemplate>
+  <!-- Tarjeta para recoger: tocar la foto suma una pieza que regresó; la burbuja trigo muestra cuántas regresan para Piedra. -->
+  <DataTemplate x:Key="CollectCardTemplate">
+   <Border Width="176" Margin="0,0,10,10" Padding="8" CornerRadius="12" BorderThickness="1" Background="{DynamicResource SurfaceBrush}">
+    <Border.Style><Style TargetType="Border"><Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/><Style.Triggers><DataTrigger Binding="{Binding HasReturns}" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource WarningBrush}"/></DataTrigger></Style.Triggers></Style></Border.Style>
+    <StackPanel>
+     <Button Click="ReturnTileClick" MinWidth="0" MinHeight="0" Height="130" Padding="0" Cursor="Hand" ToolTip="Toca una vez por cada pieza que regresó" AutomationProperties.Name="{Binding Name,StringFormat='Regresó una pieza de {0}'}">
+      <Button.Template><ControlTemplate TargetType="Button"><ContentPresenter/></ControlTemplate></Button.Template>
+      <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="10" ClipToBounds="True">
+       <Grid>
+        <Image Source="{Binding Photo}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" Visibility="{Binding HasPhoto,Converter={StaticResource VisibleWhen}}"/>
+        <Path Data="M4,5 L16,5 18,8 18,17 2,17 2,8 Z M7,5 L8.5,2 11.5,2 13,5 M10,9 A3,3 0 1 1 9.99,9" Stroke="{DynamicResource WheatBrush}" StrokeThickness="1.6" Stretch="Uniform" Width="44" Height="44" Visibility="{Binding IsFallback,Converter={StaticResource VisibleWhen}}"/>
+        <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="6" MinWidth="30" Height="30" CornerRadius="15" Background="{DynamicResource WarningBrush}" Visibility="{Binding HasReturns,Converter={StaticResource VisibleWhen}}">
+         <TextBlock Text="{Binding Returned}" Foreground="White" FontSize="15" FontWeight="Bold" TextWrapping="NoWrap" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="8,0"/>
+        </Border>
+       </Grid>
+      </Border>
+     </Button>
+     <TextBlock Text="{Binding Name}" ToolTip="{Binding Name}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Height="40" Margin="2,6,2,0"/>
+     <TextBlock Text="{Binding DeliveredText}" Style="{StaticResource Note}" Margin="2,0"/>
+     <TextBlock Text="Regresaron" Style="{StaticResource Note}" Margin="2,6,2,2"/>
+     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+      <Button Content="−" Style="{StaticResource Step}" Click="ReturnMinusClick" AutomationProperties.Name="{Binding Name,StringFormat='Una pieza menos regresó de {0}'}"/>
+      <TextBox Text="{Binding ReturnedText,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Count}" AutomationProperties.Name="{Binding Name,StringFormat='Piezas que regresaron de {0}'}"/>
+      <Button Content="+" Style="{StaticResource Step}" Click="ReturnPlusClick" AutomationProperties.Name="{Binding Name,StringFormat='Una pieza más regresó de {0}'}"/>
+     </StackPanel>
+     <TextBlock Text="{Binding SoldText}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}" TextAlignment="Center" Margin="2,8,2,0"/>
+    </StackPanel>
+   </Border>
+  </DataTemplate>
  </UserControl.Resources>
  <StackPanel IsEnabled="{Binding Ready}">
   <WrapPanel Margin="0,0,0,8" Visibility="{Binding ShowTabs,Converter={StaticResource VisibleWhen}}">
@@ -76,7 +105,7 @@
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
     <DockPanel Margin="0,0,0,8">
      <Button DockPanel.Dock="Right" Content="Volver a la ruta" Click="CancelClick" Style="{StaticResource SecondaryButton}" MinWidth="0" MinHeight="38" Padding="14,6" VerticalAlignment="Center"/>
-     <TextBlock Text="{Binding ActionTitle}" Style="{StaticResource SectionTitleText}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,12,0"/>
+     <TextBlock Text="{Binding ActionTitle}" Style="{StaticResource SectionTitleText}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"/>
     </DockPanel>
     <Grid Grid.Row="1" Margin="0,0,0,8">
      <TextBox x:Name="DeliverSearchBox" Text="{Binding DeliverSearch,UpdateSourceTrigger=PropertyChanged}" MaxLength="80" AutomationProperties.Name="Buscar pan o SKU"/>
@@ -146,6 +175,64 @@
    </Border>
   </Grid>
 
+  <!-- ===== Recoger: una tarjeta por pan dejado; el cobro a la derecha ===== -->
+  <Grid x:Name="CollectWorkspace" MinHeight="460" Visibility="{Binding IsCollectWorkspace,Converter={StaticResource VisibleWhen}}">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="7*" MinWidth="420"/><ColumnDefinition Width="3*" MinWidth="300"/></Grid.ColumnDefinitions>
+   <Grid Margin="0,0,12,0">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+    <DockPanel Margin="0,0,0,4">
+     <Button DockPanel.Dock="Right" Content="Volver a la ruta" Click="CancelClick" Style="{StaticResource SecondaryButton}" MinWidth="0" MinHeight="38" Padding="14,6" VerticalAlignment="Center"/>
+     <TextBlock Text="{Binding ActionTitle}" Style="{StaticResource SectionTitleText}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"/>
+    </DockPanel>
+    <TextBlock Grid.Row="1" Text="Toca la foto de un pan por cada pieza que regresó. Lo demás se vendió y se cobra a la tienda." Style="{StaticResource Note}" FontSize="14" Margin="0,0,0,10"/>
+    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+     <ItemsControl ItemsSource="{Binding DataContext.CollectLines,RelativeSource={RelativeSource AncestorType=UserControl}}" ItemTemplate="{StaticResource CollectCardTemplate}" Focusable="False" AutomationProperties.Name="Piezas que regresaron">
+      <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+     </ItemsControl>
+    </ScrollViewer>
+   </Grid>
+   <Border Grid.Column="1" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource AvocadoLeafBrush}" BorderThickness="1" CornerRadius="12" Padding="14,12">
+    <Grid>
+     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+     <TextBlock Text="Cobro" FontSize="24" FontWeight="SemiBold"/>
+     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Margin="0,8,6,0">
+       <DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding CollectSoldText}" FontWeight="SemiBold"/><TextBlock Text="Vendidas"/></DockPanel>
+       <DockPanel Margin="0,4,0,0"><TextBlock DockPanel.Dock="Right" Text="{Binding CollectReturnedText}" FontWeight="SemiBold" Foreground="{DynamicResource WarningBrush}"/><TextBlock Text="Regresan para Piedra"/></DockPanel>
+       <DockPanel Margin="0,4,0,0"><TextBlock DockPanel.Dock="Right" Text="{Binding CollectAmountText}" FontWeight="SemiBold"/><TextBlock Text="Importe de la charola"/></DockPanel>
+       <DockPanel Margin="0,4,0,0" Visibility="{Binding HasPreviousBalance,Converter={StaticResource VisibleWhen}}"><TextBlock DockPanel.Dock="Right" Text="{Binding PreviousBalanceText}" FontWeight="SemiBold"/><TextBlock Text="Saldo anterior"/></DockPanel>
+       <DockPanel Margin="0,8,0,0"><TextBlock DockPanel.Dock="Right" Text="{Binding TotalOwedText}" FontSize="26" FontWeight="Bold"/><TextBlock Text="Total a pagar" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
+       <TextBlock Text="Cobrado ahora" Margin="0,12,0,0"/>
+       <TextBox Text="{Binding PaidText,UpdateSourceTrigger=PropertyChanged}" MaxLength="12" Margin="0,6,0,8" AutomationProperties.Name="Importe cobrado ahora"/>
+       <TextBlock Text="Forma de pago"/>
+       <ComboBox ItemsSource="{Binding Methods}" DisplayMemberPath="Label" SelectedItem="{Binding SelectedMethod}" SelectionChanged="MethodChanged" Margin="0,6,0,8" AutomationProperties.Name="Forma de pago"/>
+       <StackPanel Visibility="{Binding NeedsReference,Converter={StaticResource VisibleWhen}}"><TextBlock Text="Referencia (opcional)"/><TextBox Text="{Binding Reference,UpdateSourceTrigger=PropertyChanged}" MaxLength="60" Margin="0,6,0,8" AutomationProperties.Name="Referencia del pago"/></StackPanel>
+       <TextBlock Text="Si la tienda paga después, deja 0 y queda como saldo pendiente." Style="{StaticResource Note}"/>
+       <Grid Margin="0,8,0,0">
+        <TextBox x:Name="CollectNoteBox" Text="{Binding CollectNote,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" AutomationProperties.Name="Nota de la recolección"/>
+        <TextBlock Text="Nota (opcional)" Margin="14,0" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" IsHitTestVisible="False">
+         <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Text,ElementName=CollectNoteBox}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+        </TextBlock>
+       </Grid>
+       <Border BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,1,0,0" Margin="0,14,0,0" Padding="0,10,0,0">
+        <StackPanel>
+         <TextBlock Text="¿Se capturó mal la entrega? Anúlala; no se cobra ni cuenta en los reportes." Style="{StaticResource Note}"/>
+         <Grid Margin="0,8,0,0">
+          <TextBox x:Name="VoidReasonBox" Text="{Binding VoidReason,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" AutomationProperties.Name="Motivo para anular la charola"/>
+          <TextBlock Text="Motivo" Margin="14,0" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" IsHitTestVisible="False">
+           <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Text,ElementName=VoidReasonBox}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+          </TextBlock>
+         </Grid>
+         <Button Content="Anular charola" Click="VoidClick" Style="{StaticResource DestructiveButton}" HorizontalAlignment="Left" Margin="0,8,0,0"/>
+        </StackPanel>
+       </Border>
+      </StackPanel>
+     </ScrollViewer>
+     <Button Grid.Row="2" Content="Confirmar recolección" Click="ConfirmCollectClick" Margin="0,10,0,0"/>
+    </Grid>
+   </Border>
+  </Grid>
+
   <!-- ===== Ruta del día ===== -->
   <Grid Visibility="{Binding IsRouteBoard,Converter={StaticResource VisibleWhen}}">
    <Grid.ColumnDefinitions><ColumnDefinition Width="4*" MinWidth="280"/><ColumnDefinition Width="20"/><ColumnDefinition Width="8*"/></Grid.ColumnDefinitions>
@@ -188,59 +275,6 @@
       </TextBlock>
      </StackPanel>
      <TextBlock Text="{Binding ActionTitle}" Style="{StaticResource SectionTitleText}" TextWrapping="Wrap" Margin="0,0,0,10" Visibility="{Binding HasAction,Converter={StaticResource VisibleWhen}}"/>
-
-     <!-- Recoger -->
-     <StackPanel Visibility="{Binding IsCollecting,Converter={StaticResource VisibleWhen}}">
-      <Grid Margin="0,0,0,4">
-       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="64"/><ColumnDefinition Width="146"/><ColumnDefinition Width="70"/><ColumnDefinition Width="84"/></Grid.ColumnDefinitions>
-       <TextBlock Text="Pan" Style="{StaticResource HeaderCell}"/>
-       <TextBlock Grid.Column="1" Text="Dejadas" Style="{StaticResource HeaderCell}" TextAlignment="Right" Margin="0,0,8,0"/>
-       <TextBlock Grid.Column="2" Text="Regresaron" Style="{StaticResource HeaderCell}" TextAlignment="Center"/>
-       <TextBlock Grid.Column="3" Text="Vendidas" Style="{StaticResource HeaderCell}" TextAlignment="Right"/>
-       <TextBlock Grid.Column="4" Text="Importe" Style="{StaticResource HeaderCell}" TextAlignment="Right"/>
-      </Grid>
-      <ItemsControl ItemsSource="{Binding CollectLines}" Focusable="False" AutomationProperties.Name="Piezas que regresaron">
-       <ItemsControl.ItemTemplate><DataTemplate>
-        <Grid Margin="0,3">
-         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="64"/><ColumnDefinition Width="146"/><ColumnDefinition Width="70"/><ColumnDefinition Width="84"/></Grid.ColumnDefinitions>
-         <TextBlock Text="{Binding Name}" ToolTip="{Binding Name}" FontSize="15" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
-         <TextBlock Grid.Column="1" Text="{Binding Delivered}" FontSize="15" VerticalAlignment="Center" TextAlignment="Right" Margin="0,0,8,0"/>
-         <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center">
-          <Button Content="−" Style="{StaticResource Step}" Click="ReturnMinusClick" AutomationProperties.Name="{Binding Name,StringFormat='Una pieza menos regresó de {0}'}"/>
-          <TextBox Text="{Binding ReturnedText,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Count}" AutomationProperties.Name="{Binding Name,StringFormat='Piezas que regresaron de {0}'}"/>
-          <Button Content="+" Style="{StaticResource Step}" Click="ReturnPlusClick" AutomationProperties.Name="{Binding Name,StringFormat='Una pieza más regresó de {0}'}"/>
-         </StackPanel>
-         <TextBlock Grid.Column="3" Text="{Binding Sold}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" TextAlignment="Right"/>
-         <TextBlock Grid.Column="4" Text="{Binding Amount}" FontSize="15" VerticalAlignment="Center" TextAlignment="Right"/>
-        </Grid>
-       </DataTemplate></ItemsControl.ItemTemplate>
-      </ItemsControl>
-      <TextBlock Text="{Binding CollectSummary}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,12,0,2"/>
-      <TextBlock Text="{Binding OwedSummary}" Style="{StaticResource Note}" FontSize="14" Margin="0,0,0,12"/>
-      <Grid>
-       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-       <StackPanel><TextBlock Text="Cobrado ahora"/><TextBox Text="{Binding PaidText,UpdateSourceTrigger=PropertyChanged}" MaxLength="12" Margin="0,6,0,12" AutomationProperties.Name="Importe cobrado ahora"/></StackPanel>
-       <StackPanel Grid.Column="2"><TextBlock Text="Forma de pago"/><ComboBox ItemsSource="{Binding Methods}" DisplayMemberPath="Label" SelectedItem="{Binding SelectedMethod}" SelectionChanged="MethodChanged" Margin="0,6,0,12" AutomationProperties.Name="Forma de pago"/></StackPanel>
-      </Grid>
-      <StackPanel Visibility="{Binding NeedsReference,Converter={StaticResource VisibleWhen}}"><TextBlock Text="Referencia (opcional)"/><TextBox Text="{Binding Reference,UpdateSourceTrigger=PropertyChanged}" MaxLength="60" Margin="0,6,0,12" AutomationProperties.Name="Referencia del pago"/></StackPanel>
-      <TextBlock Text="Si la tienda paga después, deja 0 y queda como saldo pendiente." Style="{StaticResource Note}" Margin="0,-6,0,10"/>
-      <TextBlock Text="Nota (opcional)"/>
-      <TextBox Text="{Binding CollectNote,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" Margin="0,6,0,12" AutomationProperties.Name="Nota de la recolección"/>
-      <WrapPanel>
-       <Button Content="Confirmar recolección" Click="ConfirmCollectClick" Margin="0,0,12,8"/>
-       <Button Content="Cancelar" Click="CancelClick" Style="{StaticResource SecondaryButton}" Margin="0,0,0,8"/>
-      </WrapPanel>
-      <Border BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,1,0,0" Margin="0,12,0,0" Padding="0,12,0,0">
-       <StackPanel>
-        <TextBlock Text="¿Se capturó mal la entrega? Anúlala; no se cobra ni cuenta en los reportes." Style="{StaticResource Note}"/>
-        <Grid Margin="0,8,0,0">
-         <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-         <TextBox Text="{Binding VoidReason,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" AutomationProperties.Name="Motivo para anular la charola"/>
-         <Button Grid.Column="1" Content="Anular charola" Click="VoidClick" Style="{StaticResource DestructiveButton}" Margin="12,0,0,0"/>
-        </Grid>
-       </StackPanel>
-      </Border>
-     </StackPanel>
 
      <!-- Cobrar -->
      <StackPanel Visibility="{Binding IsPaying,Converter={StaticResource VisibleWhen}}">

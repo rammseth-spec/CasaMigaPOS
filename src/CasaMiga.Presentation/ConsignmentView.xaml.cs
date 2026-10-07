@@ -25,7 +25,11 @@ public partial class ConsignmentView : UserControl
         };
     }
 
-    private void FitWorkspace(double pageHeight) => DeliverWorkspace.Height = Math.Max(DeliverWorkspace.MinHeight, pageHeight - 96);
+    private void FitWorkspace(double pageHeight)
+    {
+        DeliverWorkspace.Height = Math.Max(DeliverWorkspace.MinHeight, pageHeight - 96);
+        CollectWorkspace.Height = Math.Max(CollectWorkspace.MinHeight, pageHeight - 96);
+    }
     private ConsignmentViewModel Model => (ConsignmentViewModel)DataContext;
     private static T? Item<T>(object sender) where T : class => (sender as FrameworkElement)?.DataContext as T;
 
@@ -44,6 +48,7 @@ public partial class ConsignmentView : UserControl
     private void CategoryClick(object sender, RoutedEventArgs e) { if (Item<TrayCategory>(sender) is { } category) Model.SelectCategory(category.Name); }
     private void TrayMinusClick(object sender, RoutedEventArgs e) { if (Item<TrayLineView>(sender) is { } line) line.Quantity--; }
     private void TrayPlusClick(object sender, RoutedEventArgs e) { if (Item<TrayLineView>(sender) is { } line) line.Quantity++; }
+    private void ReturnTileClick(object sender, RoutedEventArgs e) { if (Item<CollectLineView>(sender) is { } line) line.Returned++; }
     private void ReturnMinusClick(object sender, RoutedEventArgs e) { if (Item<CollectLineView>(sender) is { } line) line.Returned--; }
     private void ReturnPlusClick(object sender, RoutedEventArgs e) { if (Item<CollectLineView>(sender) is { } line) line.Returned++; }
     private void MethodChanged(object sender, SelectionChangedEventArgs e) => Model.MethodChanged();

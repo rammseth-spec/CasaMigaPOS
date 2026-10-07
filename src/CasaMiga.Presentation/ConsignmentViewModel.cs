@@ -41,10 +41,19 @@ public sealed class TrayLineView(Guid productId, string name, string category, s
     private void Notify() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
 }
 
-/// <summary>Una partida al recoger: cuántas piezas regresaron; las demás se vendieron.</summary>
+/// <summary>Una partida al recoger: cuántas piezas regresaron; las demás se vendieron. Con foto para la tarjeta.</summary>
 public sealed class CollectLineView(ConsignmentDeliveryItem item, Action changed) : INotifyPropertyChanged
 {
     private int returned;
+    private ProductPhotoVisual photo = new(0, null, null, "Sin foto", null, null);
+    public Guid ProductId => item.ProductId;
+    public bool HasPhoto => photo.HasPhoto;
+    public bool IsFallback => photo.IsFallback;
+    public System.Windows.Media.Imaging.BitmapSource? Photo => photo.Image;
+    public void SetPhoto(ProductPhotoVisual value) { photo = value; Notify(); }
+    public bool HasReturns => returned > 0;
+    public string DeliveredText => $"Dejadas {item.Quantity}";
+    public string SoldText => $"Vendidas {Sold} · {Amount}";
     public int Position => item.Position;
     public string Name => item.ProductName;
     public int Delivered => item.Quantity;
@@ -165,9 +174,10 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
     public ConsignmentTab Tab { get; private set; } = ConsignmentTab.Route;
     public bool IsRoute => Tab == ConsignmentTab.Route;
     // Al entregar, la charola ocupa toda la pantalla, como el Punto de venta.
-    public bool IsRouteBoard => IsRoute && !IsDelivering;
+    public bool IsRouteBoard => IsRoute && !IsDelivering && !IsCollecting;
     public bool IsDeliverWorkspace => IsRoute && IsDelivering;
-    public bool ShowTabs => !IsDeliverWorkspace;
+    public bool IsCollectWorkspace => IsRoute && IsCollecting;
+    public bool ShowTabs => !IsDeliverWorkspace && !IsCollectWorkspace;
     public bool IsStores => Tab == ConsignmentTab.Stores;
     public bool IsPrices => Tab == ConsignmentTab.Prices;
     public bool IsReport => Tab == ConsignmentTab.Report;
@@ -221,6 +231,12 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
     public int CollectReturned => CollectLines.Sum(l => l.Returned);
     public Money CollectAmount => new(CollectLines.Sum(l => l.SoldAmount.Cents));
     public string CollectSummary => $"Vendidas {CollectSold} · Regresan {CollectReturned} para Piedra · Importe {Format(CollectAmount)}";
+    public string CollectSoldText => CollectSold == 1 ? "1 pieza" : $"{CollectSold} piezas";
+    public string CollectReturnedText => CollectReturned == 1 ? "1 pieza" : $"{CollectReturned} piezas";
+    public string CollectAmountText => Format(CollectAmount);
+    public bool HasPreviousBalance => Selected is { Status.Balance.Cents: > 0 };
+    public string PreviousBalanceText => Format(Selected?.Status.Balance ?? new(0));
+    public string TotalOwedText => Format((Selected?.Status.Balance ?? new(0)) + CollectAmount);
     public string OwedSummary => Selected is not { } s ? "" : s.Status.Balance.Cents == 0
         ? $"Total a pagar: {Format(CollectAmount)}"
         : $"Saldo anterior {Format(s.Status.Balance)} + esta charola {Format(CollectAmount)} = {Format(s.Status.Balance + CollectAmount)}";
@@ -326,7 +342,7 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
         deliverCategory = null; deliverSearch = "";
         UseTemplate();
         ApplyDeliverFilter();
-        StartPhotoLoad(DeliverLines);
+        StartPhotoLoad(DeliverLines.Select(l => (l.ProductId, (Action<ProductPhotoVisual>)l.SetPhoto)));
         if (DeliverLines.Count == 0) Message = "Ningún pan tiene precio de charola. Defínelos en la pestaña Precios.";
     });
 
@@ -357,14 +373,14 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
         Notify();
     }
 
-    private void StartPhotoLoad(IReadOnlyList<TrayLineView> lines)
+    private void StartPhotoLoad(IEnumerable<(Guid ProductId, Action<ProductPhotoVisual> Set)> targets)
     {
         photoLoad.Cancel(); photoLoad.Dispose(); photoLoad = new();
         if (photos is null) return;
         var token = photoLoad.Token;
-        _ = Task.WhenAll(lines.Select(async line =>
+        _ = Task.WhenAll(targets.Select(async target =>
         {
-            try { line.SetPhoto(await photos.LoadAsync(line.ProductId, token)); }
+            try { target.Set(await photos.LoadAsync(target.ProductId, token)); }
             catch (OperationCanceledException) { }
             catch (Exception error) { log("consignment.photo.load.failed", error.GetType().Name); }
         }));
@@ -386,6 +402,7 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
         if (store.Tray is not { } tray) return;
         Selected = store; Collecting = tray; Action = ConsignmentAction.Collect; Message = "";
         CollectLines = tray.Items.Select(i => new CollectLineView(i, CollectChanged)).ToArray();
+        StartPhotoLoad(CollectLines.Select(l => (l.ProductId, (Action<ProductPhotoVisual>)l.SetPhoto)));
         SelectedMethod = Methods[0]; Reference = ""; CollectNote = ""; VoidReason = "";
         paidEdited = false; paidText = (CollectAmount.Cents / 100m).ToString("0.00", CultureInfo.InvariantCulture);
         Notify();

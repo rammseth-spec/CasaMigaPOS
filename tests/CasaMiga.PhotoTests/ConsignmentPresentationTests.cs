@@ -113,6 +113,40 @@ public sealed class ConsignmentPresentationTests
         finally { window.Close(); }
     });
 
+    [TestMethod]
+    public Task CollectingUsesCardsAndTappingAPhotoCountsAReturn() => WpfTestHost.OnUi(async () =>
+    {
+        using var fixture = new Fixture(); await fixture.InitializeAsync();
+        var model = fixture.Model.Consignment!;
+        var view = new ConsignmentView { DataContext = model };
+        var page = new ScrollViewer { Content = view, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+        var window = OffscreenWindow(new Window { Content = page });
+        try
+        {
+            window.Show(); Settle(window);
+            await model.StartDeliverAsync(model.Route.Single()); await model.ConfirmDeliverAsync();
+            model.StartCollect(model.Route.Single()); Settle(window);
+            Assert.IsTrue(model.IsCollectWorkspace); Assert.IsFalse(model.ShowTabs); Assert.IsFalse(model.IsRouteBoard);
+            var workspace = (Grid)view.FindName("CollectWorkspace");
+            Assert.AreEqual(page.ActualHeight - 96, workspace.ActualHeight, 1, "La zona de recolección llena la ventana.");
+            var cards = List(view, "Piezas que regresaron");
+            Assert.AreEqual(3, cards.Items.Count); Assert.IsTrue(cards.ActualHeight > 0);
+
+            // Dos piezas de un pan regresaron: dos toques en su foto.
+            var photo = Descendants<Button>(cards).Single(b => AutomationProperties.GetName(b) == "Regresó una pieza de Pan de prueba 04");
+            for (var i = 0; i < 2; i++) ((IInvokeProvider)new ButtonAutomationPeer(photo).GetPattern(PatternInterface.Invoke)!).Invoke();
+            Settle(window);
+            Assert.AreEqual(2, model.CollectReturned); Assert.AreEqual(10, model.CollectSold);
+            Assert.AreEqual("$105.00", model.CollectAmountText); Assert.AreEqual("105.00", model.PaidText, "El cobro sigue al importe vendido.");
+
+            await model.ConfirmCollectAsync(); Settle(window);
+            Assert.IsTrue(model.MessageIsSuccess, model.Message);
+            StringAssert.Contains(model.Message, "2 regresan para Piedra");
+            Assert.IsTrue(model.IsRouteBoard); Assert.IsFalse(model.Route.Single().HasTray);
+        }
+        finally { window.Close(); }
+    });
+
     private static void Settle(Window window)
     {
         window.UpdateLayout();
