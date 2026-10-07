@@ -195,6 +195,10 @@ public sealed class AnalyticsReportServiceTests : SalesFixture
         await model.ShowAsync(ReportTab.Comparison);
         StringAssert.StartsWith(model.Csv()!, "Comparativo");
         StringAssert.StartsWith(model.SuggestedFileName, "CasaMiga-comparativo-");
+        Assert.IsFalse(model.HasComparisonCoverage, "Sin ventas antes no hay comparación que advertir.");
+        model.FromSelected = model.ThroughSelected = DateTime.Today.AddDays(1);
+        await model.GenerateAsync();                                   // mañana (sin turnos) contra hoy (un turno)
+        StringAssert.Contains(model.ComparisonCoverage, "0 turnos de caja y el anterior 1 turno de caja");
         await model.ShowAsync(ReportTab.Heatmap);
         StringAssert.StartsWith(model.Csv()!, "Ventas por hora");
         await model.ShowAsync(ReportTab.CashControl);

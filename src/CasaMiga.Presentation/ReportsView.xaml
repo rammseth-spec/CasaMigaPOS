@@ -146,6 +146,7 @@
    <StackPanel Visibility="{Binding HasReport,Converter={StaticResource VisibleWhen}}">
     <TextBlock Text="{Binding ComparisonLabel}" FontSize="15" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,10,0,10"/>
     <TextBlock Text="El periodo anterior no tiene ventas: los productos aparecen como «Nuevo»." Style="{StaticResource Empty}" Visibility="{Binding NoPreviousData,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,8"/>
+    <TextBlock Text="{Binding ComparisonCoverage}" Style="{StaticResource Empty}" TextWrapping="Wrap" Foreground="{DynamicResource WarningBrush}" Visibility="{Binding HasComparisonCoverage,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,8"/>
     <ItemsControl ItemsSource="{Binding ComparisonKpis}" Margin="0,0,-12,0" AutomationProperties.Name="Indicadores contra el periodo anterior">
      <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
      <ItemsControl.ItemTemplate><DataTemplate>
@@ -220,9 +221,9 @@
       <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource PrimaryBrush}" Opacity="0.56"/>
       <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource PrimaryBrush}" Opacity="0.78"/>
       <Border Width="26" Height="16" CornerRadius="4" Margin="1,0" Background="{DynamicResource PrimaryBrush}"/>
-      <TextBlock Text="Más" Style="{StaticResource KpiLabel}" VerticalAlignment="Center" Margin="8,0,20,0"/>
-      <TextBlock Text="El número es la cantidad de ventas en esa hora; pasa el cursor para ver el monto. No incluye ventas canceladas." Style="{StaticResource KpiLabel}" VerticalAlignment="Center"/>
+      <TextBlock Text="Más" Style="{StaticResource KpiLabel}" VerticalAlignment="Center" Margin="8,0,0,0"/>
      </StackPanel>
+     <TextBlock Text="El número es la cantidad de ventas en esa hora; pasa el cursor para ver el monto. No incluye ventas canceladas." Style="{StaticResource KpiLabel}" TextWrapping="Wrap" Margin="58,8,0,0"/>
     </StackPanel>
    </StackPanel>
   </StackPanel>

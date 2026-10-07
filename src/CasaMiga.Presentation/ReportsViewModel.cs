@@ -135,6 +135,10 @@ public sealed class ReportsViewModel(ReportService service, Action<string, strin
     public bool NoComparisonProducts => Comparison is not null && !HasComparisonProducts;
     public string ComparisonLabel => Comparison is not { } c ? "" : $"{Period(c.Current.From, c.Current.Through)} contra {Period(c.Previous.From, c.Previous.Through).ToLower(Spanish)}";
     public bool NoPreviousData => Comparison is { Previous.Data.SaleCount: 0 };
+    // Aviso cuando los periodos no tienen los mismos turnos de caja (p. ej. días cerrados o historial incompleto).
+    public string ComparisonCoverage => Comparison is not { Previous.Data.SaleCount: > 0 } c || c.Current.Data.Sessions.Count == c.Previous.Data.Sessions.Count ? ""
+        : $"Ojo: este periodo tiene {Plural(c.Current.Data.Sessions.Count, "turno de caja", "turnos de caja")} y el anterior {Plural(c.Previous.Data.Sessions.Count, "turno de caja", "turnos de caja")}; si la sucursal abrió días distintos, la comparación no es pareja.";
+    public bool HasComparisonCoverage => ComparisonCoverage.Length > 0;
 
     // Ventas por hora
     public SalesHeatmap? Heatmap { get; private set; }
