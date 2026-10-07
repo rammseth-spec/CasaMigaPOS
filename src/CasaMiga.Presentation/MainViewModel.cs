@@ -25,8 +25,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public SyncViewModel? Sync { get; private set; }
     public ConsignmentViewModel? Consignment { get; private set; }
     public CashMovementsViewModel? CashMovements { get; private set; }
-    // Movimientos de efectivo: sólo con caja abierta y permiso (cajero: gastos y entradas; encargado: también retiros).
-    public bool ShowCashMovements => opened is not null && CashMovements is { CanRecord: true };
+    // Movimientos de efectivo: con caja abierta, antes del conteo ciego y con permiso (cajero: gastos y entradas; encargado: también retiros).
+    public bool ShowCashMovements => opened is not null && closingResult is null && CashMovements is { CanRecord: true };
     public bool IsConsignment => screen == "consignment";
     public bool CanViewConsignment { get; private set; }
     public bool IsSync => screen == "sync";

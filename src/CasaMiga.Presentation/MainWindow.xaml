@@ -162,7 +162,7 @@
         <!-- Caja: estado grande con punto de color, detalle y la acción que corresponde. -->
         <!-- Con caja abierta, a la derecha (o debajo si no cabe) van los gastos, entradas y retiros del turno. -->
         <WrapPanel Visibility="{Binding IsDashboard,Converter={StaticResource VisibleWhen}}">
-        <StackPanel IsEnabled="{Binding IsReady}" Width="520" Margin="0,0,32,24">
+        <StackPanel IsEnabled="{Binding IsReady}" Width="420" Margin="0,0,28,24">
          <TextBlock Text="{Binding CashLabel}" Style="{StaticResource EyebrowText}" Margin="0,0,0,4"/>
          <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
           <Ellipse Width="14" Height="14" VerticalAlignment="Center" Margin="0,4,12,0"><Ellipse.Style><Style TargetType="Ellipse"><Setter Property="Fill" Value="{DynamicResource StatusIdleBrush}"/><Style.Triggers><DataTrigger Binding="{Binding HasOpenCash}" Value="True"><Setter Property="Fill" Value="{DynamicResource SuccessBrush}"/></DataTrigger></Style.Triggers></Style></Ellipse.Style></Ellipse>
@@ -173,7 +173,7 @@
          <Button Content="Cerrar caja" Click="BeginClosingClick" Visibility="{Binding HasOpenCash,Converter={StaticResource VisibleWhen}}" Style="{StaticResource DestructiveButton}" HorizontalAlignment="Left" MinWidth="220" MinHeight="52" Margin="0,0,0,12"/>
          <TextBlock Text="Salir del usuario o cerrar la aplicación no cierra la caja." Style="{StaticResource CaptionText}" Margin="0,4,0,0"/>
         </StackPanel>
-        <local:CashMovementsView DataContext="{Binding CashMovements}" Width="580" Margin="0,0,0,24" Visibility="{Binding DataContext.ShowCashMovements,RelativeSource={RelativeSource AncestorType=Window},Converter={StaticResource VisibleWhen}}"/>
+        <local:CashMovementsView DataContext="{Binding CashMovements}" Width="600" Margin="0,0,0,24" Visibility="{Binding DataContext.ShowCashMovements,RelativeSource={RelativeSource AncestorType=Window},Converter={StaticResource VisibleWhen}}"/>
         </WrapPanel>
         <StackPanel Visibility="{Binding IsUsers,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
          <TextBlock Text="Usuarios registrados" Style="{StaticResource SectionTitleText}" Margin="0,0,0,10"/>

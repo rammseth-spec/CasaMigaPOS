@@ -73,6 +73,14 @@ public sealed class CashMovementsPresentationTests
             CollectionAssert.AreEqual(new[] { "Gasto", "Entrada" }, cashierModel.Kinds.Select(k => k.Label).ToArray());
             Assert.HasCount(2, cashierModel.Movements, "Ve lo registrado en la caja abierta de la terminal.");
 
+            await model.BeginClosingAsync(); model.CountedAmount = "400.00"; await model.SubmitCountAsync();
+            Assert.IsTrue(model.IsClosingResult, model.Message);
+            StringAssert.Contains(model.ClosingDetails, "Gastos: −$150.00");
+            StringAssert.Contains(model.ClosingDetails, "Entradas: +$50.00");
+            StringAssert.Contains(model.ClosingDetails, "Efectivo esperado: $400.00");
+            model.BackFromClosing();
+            Assert.IsFalse(model.ShowCashMovements, "Después del conteo ciego ya no se registran movimientos.");
+
             model.Logout();
             Assert.IsEmpty(movements.Movements, "Salir del usuario olvida la lista.");
         }
