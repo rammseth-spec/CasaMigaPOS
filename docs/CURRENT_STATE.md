@@ -1,3 +1,7 @@
+# Copia de revisión con fotos y ventas de prueba — 06/10/2026
+
+`C:\Users\jalex\CasaMiga-Revision\demo-QAv1-447f004` (fuera de AppData), preparada con `seed-review … --photos assets\catalog-provisional-ia --demo-days 7`: 26 productos con foto `PROVISIONAL`, 267 ventas del 29/09 al 05/10 (efectivo, tarjeta y transferencia), 1 cancelación y 4 devoluciones, 7 cortes (uno con faltante de $20 y otro con sobrante de $5), cajeros `ana` y `luis` además de `admin` y `cajero1`. Para comprobar las fotos en Punto de venta se abrió la caja de hoy como admin con fondo de $500. Build `src/CasaMiga.Presentation/bin/Review-QAv1-3eebacf`, launcher `work/Abrir-Casa-Miga-QAv1-3eebacf.cmd`, con `dev-autologin.json` (entra como admin). Credenciales entregadas en la conversación; no se versionan. Smoke manual pendiente.
+
 # Pantalla de acceso rediseñada — 06/10/2026
 
 **Implementado; smoke manual pendiente.** Opción B: panel café a la izquierda con el logo oficial sobre crema, hora grande, fecha, «Cada día, un buen comienzo.» y fichas de estado (caja abierta/cerrada de esta terminal, nube y nombre de terminal; sin importes ni quién abrió). A la derecha, saludo según la hora («Buenos días/tardes/noches») y el formulario; mismo diseño para primer administrador y cambio de contraseña. Reloj cada 15 s sólo con la sesión cerrada. Probado a 1280×820 y al mínimo 960×640. Suite **813/813** (646 + 167), Release 0/0.
