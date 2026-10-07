@@ -36,20 +36,118 @@
     </StackPanel>
    </Grid>
   </DataTemplate>
+  <!-- Tarjeta de pan como en el Punto de venta: tocar suma una pieza; la burbuja verde muestra las piezas en la charola. -->
+  <Style x:Key="TrayTile" TargetType="Button" BasedOn="{StaticResource ProductTile}"><Setter Property="Width" Value="158"/><Setter Property="Height" Value="232"/><Setter Property="Padding" Value="8"/>
+   <Style.Triggers><DataTrigger Binding="{Binding HasPieces}" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource ChartBrush}"/></DataTrigger></Style.Triggers></Style>
+  <DataTemplate x:Key="TrayTileTemplate">
+   <Button Style="{StaticResource TrayTile}" Click="TileClick" ToolTip="{Binding Name}" AutomationProperties.Name="{Binding Name,StringFormat='Agregar {0} a la charola'}">
+    <Grid>
+     <Grid.RowDefinitions><RowDefinition Height="136"/><RowDefinition Height="42"/><RowDefinition Height="26"/></Grid.RowDefinitions>
+     <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="10" ClipToBounds="True">
+      <Grid>
+       <Image Source="{Binding Photo}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" Visibility="{Binding HasPhoto,Converter={StaticResource VisibleWhen}}"/>
+       <Path Data="M4,5 L16,5 18,8 18,17 2,17 2,8 Z M7,5 L8.5,2 11.5,2 13,5 M10,9 A3,3 0 1 1 9.99,9" Stroke="{DynamicResource WheatBrush}" StrokeThickness="1.6" Stretch="Uniform" Width="44" Height="44" Visibility="{Binding IsFallback,Converter={StaticResource VisibleWhen}}"/>
+       <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="6" MinWidth="30" Height="30" CornerRadius="15" Background="{DynamicResource ChartBrush}" Visibility="{Binding HasPieces,Converter={StaticResource VisibleWhen}}">
+        <TextBlock Text="{Binding Quantity}" Foreground="White" FontSize="15" FontWeight="Bold" TextWrapping="NoWrap" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="8,0"/>
+       </Border>
+      </Grid>
+     </Border>
+     <TextBlock Grid.Row="1" Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="40" Margin="2,6,2,0" VerticalAlignment="Top"/>
+     <TextBlock Grid.Row="2" Text="{Binding Price}" FontSize="17" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" Margin="2,0" VerticalAlignment="Center"/>
+    </Grid>
+   </Button>
+  </DataTemplate>
  </UserControl.Resources>
  <StackPanel IsEnabled="{Binding Ready}">
-  <WrapPanel Margin="0,0,0,8">
+  <WrapPanel Margin="0,0,0,8" Visibility="{Binding ShowTabs,Converter={StaticResource VisibleWhen}}">
    <Button Content="Ruta del día" Style="{StaticResource Tab}" Tag="{Binding IsRoute}" Click="RouteClick"/>
    <Button Content="Tiendas" Style="{StaticResource Tab}" Tag="{Binding IsStores}" Click="StoresClick"/>
    <Button Content="Precios de charola" Style="{StaticResource Tab}" Tag="{Binding IsPrices}" Click="PricesClick"/>
    <Button Content="Reporte" Style="{StaticResource Tab}" Tag="{Binding IsReport}" Click="ReportClick"/>
   </WrapPanel>
   <TextBlock Text="{Binding Message}" TextWrapping="Wrap" FontSize="15" Margin="0,0,0,10" AutomationProperties.LiveSetting="Polite">
-   <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource ValidBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+   <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource ValidBrush}"/></DataTrigger><DataTrigger Binding="{Binding Message}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
   </TextBlock>
 
+  <!-- ===== Entregar: tarjetas y filtros como en el Punto de venta; la charola a la derecha como el carrito ===== -->
+  <Grid x:Name="DeliverWorkspace" MinHeight="460" Visibility="{Binding IsDeliverWorkspace,Converter={StaticResource VisibleWhen}}">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="7*" MinWidth="420"/><ColumnDefinition Width="3*" MinWidth="300"/></Grid.ColumnDefinitions>
+   <Grid Margin="0,0,12,0">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+    <DockPanel Margin="0,0,0,8">
+     <Button DockPanel.Dock="Right" Content="Volver a la ruta" Click="CancelClick" Style="{StaticResource SecondaryButton}" MinWidth="0" MinHeight="38" Padding="14,6" VerticalAlignment="Center"/>
+     <TextBlock Text="{Binding ActionTitle}" Style="{StaticResource SectionTitleText}" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,12,0"/>
+    </DockPanel>
+    <Grid Grid.Row="1" Margin="0,0,0,8">
+     <TextBox x:Name="DeliverSearchBox" Text="{Binding DeliverSearch,UpdateSourceTrigger=PropertyChanged}" MaxLength="80" AutomationProperties.Name="Buscar pan o SKU"/>
+     <TextBlock Text="Buscar pan o SKU" Margin="14,0" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" IsHitTestVisible="False">
+      <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Text,ElementName=DeliverSearchBox}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+     </TextBlock>
+    </Grid>
+    <ScrollViewer Grid.Row="2" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0,0,0,8">
+     <ItemsControl ItemsSource="{Binding DataContext.DeliverCategories,RelativeSource={RelativeSource AncestorType=UserControl}}" Focusable="False" AutomationProperties.Name="Categorías">
+      <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+      <ItemsControl.ItemTemplate><DataTemplate><Button Content="{Binding Label}" Tag="{Binding Selected}" Style="{StaticResource SectionTabButton}" Click="CategoryClick" Margin="0,0,8,4"/></DataTemplate></ItemsControl.ItemTemplate>
+     </ItemsControl>
+    </ScrollViewer>
+    <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+     <ItemsControl ItemsSource="{Binding DataContext.DeliverTiles,RelativeSource={RelativeSource AncestorType=UserControl}}" ItemTemplate="{StaticResource TrayTileTemplate}" Focusable="False" AutomationProperties.Name="Panes para la charola">
+      <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+     </ItemsControl>
+    </ScrollViewer>
+    <TextBlock Grid.Row="3" Text="Ningún pan con precio de charola coincide con la búsqueda." Style="{StaticResource Note}" FontSize="15" VerticalAlignment="Top" Margin="0,12,0,0" Visibility="{Binding NoTiles,Converter={StaticResource VisibleWhen}}"/>
+   </Grid>
+   <Border Grid.Column="1" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource AvocadoLeafBrush}" BorderThickness="1" CornerRadius="12" Padding="14,12">
+    <Grid>
+     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+     <TextBlock Text="Charola" FontSize="24" FontWeight="SemiBold"/>
+     <WrapPanel Grid.Row="1" Margin="0,0,0,6">
+      <Button Content="Charola habitual" Style="{StaticResource Chip}" Click="UseTemplateClick" Visibility="{Binding HasTemplate,Converter={StaticResource VisibleWhen}}"/>
+      <Button Content="Vaciar" Style="{StaticResource Chip}" Click="ClearTrayClick"/>
+     </WrapPanel>
+     <Grid Grid.Row="2">
+      <TextBlock Text="Toca los panes para agregarlos a la charola." Style="{StaticResource Note}" FontSize="15" Margin="4,12" Visibility="{Binding TrayIsEmpty,Converter={StaticResource VisibleWhen}}"/>
+      <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+       <ItemsControl ItemsSource="{Binding DataContext.TrayLines,RelativeSource={RelativeSource AncestorType=UserControl}}" Focusable="False" AutomationProperties.Name="Piezas de la charola">
+        <ItemsControl.ItemTemplate><DataTemplate>
+         <Border BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,0,0,1" Padding="0,4,0,8" Margin="0,0,6,4">
+          <StackPanel>
+           <TextBlock Text="{Binding Name}" ToolTip="{Binding Name}" FontSize="15" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"/>
+           <DockPanel Margin="0,4,0,0">
+            <StackPanel DockPanel.Dock="Right" VerticalAlignment="Center">
+             <TextBlock Text="{Binding LineAmount}" FontSize="15" FontWeight="SemiBold" TextAlignment="Right"/>
+             <TextBlock Text="{Binding Price,StringFormat='{}{0} c/u'}" Style="{StaticResource Note}" TextAlignment="Right"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+             <Button Content="−" Style="{StaticResource Step}" Click="TrayMinusClick" AutomationProperties.Name="{Binding Name,StringFormat='Quitar una pieza de {0}'}"/>
+             <TextBox Text="{Binding QuantityText,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource Count}" AutomationProperties.Name="{Binding Name,StringFormat='Piezas de {0}'}"/>
+             <Button Content="+" Style="{StaticResource Step}" Click="TrayPlusClick" AutomationProperties.Name="{Binding Name,StringFormat='Agregar una pieza de {0}'}"/>
+            </StackPanel>
+           </DockPanel>
+          </StackPanel>
+         </Border>
+        </DataTemplate></ItemsControl.ItemTemplate>
+       </ItemsControl>
+      </ScrollViewer>
+     </Grid>
+     <StackPanel Grid.Row="3" Margin="0,8,0,0">
+      <DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding DeliverPiecesText}" FontWeight="SemiBold"/><TextBlock Text="Piezas"/></DockPanel>
+      <DockPanel Margin="0,4,0,0"><TextBlock DockPanel.Dock="Right" Text="{Binding DeliverValue}" FontSize="26" FontWeight="Bold"/><TextBlock Text="Precio de charola" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
+      <TextBlock Text="{Binding DeliverRetail}" Style="{StaticResource Note}" TextAlignment="Right"/>
+      <Grid Margin="0,8,0,8">
+       <TextBox x:Name="DeliverNoteBox" Text="{Binding DeliverNote,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" AutomationProperties.Name="Nota de la entrega"/>
+       <TextBlock Text="Nota (opcional)" Margin="14,0" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" IsHitTestVisible="False">
+        <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Text,ElementName=DeliverNoteBox}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+       </TextBlock>
+      </Grid>
+      <Button Content="Confirmar entrega" Click="ConfirmDeliverClick" IsEnabled="{Binding CanDeliver}"/>
+     </StackPanel>
+    </Grid>
+   </Border>
+  </Grid>
+
   <!-- ===== Ruta del día ===== -->
-  <Grid Visibility="{Binding IsRoute,Converter={StaticResource VisibleWhen}}">
+  <Grid Visibility="{Binding IsRouteBoard,Converter={StaticResource VisibleWhen}}">
    <Grid.ColumnDefinitions><ColumnDefinition Width="4*" MinWidth="280"/><ColumnDefinition Width="20"/><ColumnDefinition Width="8*"/></Grid.ColumnDefinitions>
    <StackPanel>
     <TextBlock Text="{Binding RouteSummary}" Style="{StaticResource Note}" Margin="0,0,0,8"/>
@@ -90,27 +188,6 @@
       </TextBlock>
      </StackPanel>
      <TextBlock Text="{Binding ActionTitle}" Style="{StaticResource SectionTitleText}" TextWrapping="Wrap" Margin="0,0,0,10" Visibility="{Binding HasAction,Converter={StaticResource VisibleWhen}}"/>
-
-     <!-- Entregar -->
-     <StackPanel Visibility="{Binding IsDelivering,Converter={StaticResource VisibleWhen}}">
-      <DockPanel Margin="0,0,0,6">
-       <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-        <Button Content="Charola habitual" Style="{StaticResource Chip}" Click="UseTemplateClick" Visibility="{Binding HasTemplate,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,0"/>
-        <Button Content="Vaciar" Style="{StaticResource Chip}" Click="ClearTrayClick" Margin="0"/>
-       </StackPanel>
-       <TextBlock Text="Pan · precio de charola · piezas" Style="{StaticResource Note}" VerticalAlignment="Center"/>
-      </DockPanel>
-      <ScrollViewer MaxHeight="430" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-       <ItemsControl ItemsSource="{Binding DataContext.DeliverLines,RelativeSource={RelativeSource AncestorType=UserControl}}" ItemTemplate="{StaticResource TrayLineTemplate}" Focusable="False" Margin="0,0,8,0" AutomationProperties.Name="Piezas de la charola"/>
-      </ScrollViewer>
-      <TextBlock Text="{Binding DeliverSummary}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,10,0,8"/>
-      <TextBlock Text="Nota (opcional)"/>
-      <TextBox Text="{Binding DeliverNote,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" Margin="0,6,0,12" AutomationProperties.Name="Nota de la entrega"/>
-      <WrapPanel>
-       <Button Content="Confirmar entrega" Click="ConfirmDeliverClick" IsEnabled="{Binding CanDeliver}" Margin="0,0,12,8"/>
-       <Button Content="Cancelar" Click="CancelClick" Style="{StaticResource SecondaryButton}" Margin="0,0,0,8"/>
-      </WrapPanel>
-     </StackPanel>
 
      <!-- Recoger -->
      <StackPanel Visibility="{Binding IsCollecting,Converter={StaticResource VisibleWhen}}">

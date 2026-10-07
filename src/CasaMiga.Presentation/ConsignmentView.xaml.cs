@@ -1,12 +1,33 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using CasaMiga.Application;
 
 namespace CasaMiga.Presentation;
 
 public partial class ConsignmentView : UserControl
 {
-    public ConsignmentView() => InitializeComponent();
+    private ScrollViewer? page;
+
+    public ConsignmentView()
+    {
+        InitializeComponent();
+        // Al entregar, tarjetas y charola llenan la ventana como en el Punto de venta; cada lista se desplaza por su cuenta.
+        Loaded += (_, _) =>
+        {
+            if (page is not null) return;
+            for (DependencyObject? parent = VisualTreeHelper.GetParent(this); parent is not null; parent = VisualTreeHelper.GetParent(parent))
+                if (parent is ScrollViewer viewer) { page = viewer; break; }
+            if (page is null) return;
+            page.SizeChanged += (_, _) => FitWorkspace();
+            FitWorkspace();
+        };
+    }
+
+    private void FitWorkspace()
+    {
+        if (page is not null) DeliverWorkspace.Height = Math.Max(DeliverWorkspace.MinHeight, page.ViewportHeight - 96);
+    }
     private ConsignmentViewModel Model => (ConsignmentViewModel)DataContext;
     private static T? Item<T>(object sender) where T : class => (sender as FrameworkElement)?.DataContext as T;
 
@@ -21,6 +42,8 @@ public partial class ConsignmentView : UserControl
     private void CancelClick(object sender, RoutedEventArgs e) => Model.CancelAction();
     private void UseTemplateClick(object sender, RoutedEventArgs e) => Model.UseTemplate();
     private void ClearTrayClick(object sender, RoutedEventArgs e) => Model.ClearTray();
+    private void TileClick(object sender, RoutedEventArgs e) { if (Item<TrayLineView>(sender) is { } line) line.Quantity++; }
+    private void CategoryClick(object sender, RoutedEventArgs e) { if (Item<TrayCategory>(sender) is { } category) Model.SelectCategory(category.Name); }
     private void TrayMinusClick(object sender, RoutedEventArgs e) { if (Item<TrayLineView>(sender) is { } line) line.Quantity--; }
     private void TrayPlusClick(object sender, RoutedEventArgs e) { if (Item<TrayLineView>(sender) is { } line) line.Quantity++; }
     private void ReturnMinusClick(object sender, RoutedEventArgs e) { if (Item<CollectLineView>(sender) is { } line) line.Returned--; }

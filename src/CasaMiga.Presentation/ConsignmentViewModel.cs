@@ -9,12 +9,20 @@ public enum ConsignmentTab { Route, Stores, Prices, Report }
 public enum ConsignmentAction { None, Deliver, Collect, Pay }
 public sealed record MethodOption(PaymentMethod Method, string Label);
 
-/// <summary>Una línea editable de charola (entregar o charola habitual): piezas de un pan.</summary>
-public sealed class TrayLineView(Guid productId, string name, Money unitPrice, Money retailPrice, Action changed) : INotifyPropertyChanged
+/// <summary>Una línea editable de charola (entregar o charola habitual): piezas de un pan, con su foto para la tarjeta.</summary>
+public sealed class TrayLineView(Guid productId, string name, string category, string? sku, Money unitPrice, Money retailPrice, Action changed) : INotifyPropertyChanged
 {
     private int quantity;
+    private ProductPhotoVisual photo = new(0, null, null, "Sin foto", null, null);
     public Guid ProductId => productId;
     public string Name => name;
+    public string CategoryName => category;
+    public string? Sku => sku;
+    public bool HasPhoto => photo.HasPhoto;
+    public bool IsFallback => photo.IsFallback;
+    public System.Windows.Media.Imaging.BitmapSource? Photo => photo.Image;
+    public void SetPhoto(ProductPhotoVisual value) { photo = value; Notify(); }
+    public string LineAmount => ConsignmentViewModel.Format(unitPrice.Multiply(quantity));
     public Money UnitPrice => unitPrice;
     public Money RetailPrice => retailPrice;
     public string Price => ConsignmentViewModel.Format(unitPrice);
@@ -123,7 +131,9 @@ public sealed record ProductReportRowView(ConsignmentProductRow Row)
     public string Charged => ConsignmentViewModel.Format(Row.Charged);
 }
 
-public sealed class ConsignmentViewModel(ConsignmentService service, Action<string, string?> log) : INotifyPropertyChanged
+public sealed record TrayCategory(string? Name, string Label, bool Selected);
+
+public sealed class ConsignmentViewModel(ConsignmentService service, Action<string, string?> log, IProductPhotoUiGateway? photos = null) : INotifyPropertyChanged
 {
     private static readonly CultureInfo Spanish = CultureInfo.GetCultureInfo("es-MX");
     internal static string Format(Money value) => (value.Cents / 100m).ToString("C2", Spanish);
@@ -154,6 +164,10 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
 
     public ConsignmentTab Tab { get; private set; } = ConsignmentTab.Route;
     public bool IsRoute => Tab == ConsignmentTab.Route;
+    // Al entregar, la charola ocupa toda la pantalla, como el Punto de venta.
+    public bool IsRouteBoard => IsRoute && !IsDelivering;
+    public bool IsDeliverWorkspace => IsRoute && IsDelivering;
+    public bool ShowTabs => !IsDeliverWorkspace;
     public bool IsStores => Tab == ConsignmentTab.Stores;
     public bool IsPrices => Tab == ConsignmentTab.Prices;
     public bool IsReport => Tab == ConsignmentTab.Report;
@@ -180,11 +194,24 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
     };
 
     public IReadOnlyList<TrayLineView> DeliverLines { get; private set; } = [];
+    /// <summary>Tarjetas visibles con el filtro actual; misma instancia mientras no cambie el filtro (no se regeneran al sumar piezas).</summary>
+    public IReadOnlyList<TrayLineView> DeliverTiles { get; private set; } = [];
+    /// <summary>Panes con piezas, como el carrito del Punto de venta.</summary>
+    public IReadOnlyList<TrayLineView> TrayLines { get; private set; } = [];
+    public bool TrayIsEmpty => TrayLines.Count == 0;
+    public IReadOnlyList<TrayCategory> DeliverCategories { get; private set; } = [];
+    public bool NoTiles => IsDelivering && DeliverTiles.Count == 0;
+    private string? deliverCategory;
+    private string deliverSearch = "";
+    public string DeliverSearch { get => deliverSearch; set { deliverSearch = value; ApplyDeliverFilter(); } }
     public string DeliverNote { get; set; } = "";
     public int DeliverPieces => DeliverLines.Sum(l => l.Quantity);
-    public string DeliverSummary => DeliverPieces == 0 ? "Agrega piezas a la charola." :
-        $"{DeliverPieces} piezas · {Format(new(DeliverLines.Sum(l => l.UnitPrice.Cents * l.Quantity)))} a precio de charola (en mostrador {Format(new(DeliverLines.Sum(l => l.RetailPrice.Cents * l.Quantity)))})";
+    public string DeliverPiecesText => DeliverPieces == 1 ? "1 pieza" : $"{DeliverPieces} piezas";
+    public string DeliverValue => Format(new(DeliverLines.Sum(l => l.UnitPrice.Cents * l.Quantity)));
+    public string DeliverRetail => $"En mostrador valdrían {Format(new(DeliverLines.Sum(l => l.RetailPrice.Cents * l.Quantity)))}";
+    public string DeliverSummary => DeliverPieces == 0 ? "Agrega piezas a la charola." : $"{DeliverPiecesText} · {DeliverValue} a precio de charola";
     public bool CanDeliver => DeliverPieces > 0;
+    private CancellationTokenSource photoLoad = new();
     private IReadOnlyList<ConsignmentTemplateLine> template = [];
     public bool HasTemplate => template.Count > 0;
 
@@ -295,17 +322,53 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
         Selected = store; Action = ConsignmentAction.Deliver; DeliverNote = "";
         // Primero los panes de la charola habitual, en su orden; después el resto del catálogo.
         DeliverLines = prices.Where(p => p.Price is not null).OrderBy(p => lines.Any(t => t.ProductId == p.ProductId) ? 0 : 1)
-            .Select(p => new TrayLineView(p.ProductId, p.ProductName, p.Price!.Value, p.RetailPrice, Notify)).ToArray();
+            .Select(p => new TrayLineView(p.ProductId, p.ProductName, p.CategoryName, p.Sku, p.Price!.Value, p.RetailPrice, TrayChanged)).ToArray();
+        deliverCategory = null; deliverSearch = "";
         UseTemplate();
+        ApplyDeliverFilter();
+        StartPhotoLoad(DeliverLines);
         if (DeliverLines.Count == 0) Message = "Ningún pan tiene precio de charola. Defínelos en la pestaña Precios.";
     });
 
     public void UseTemplate()
     {
         foreach (var line in DeliverLines) line.Quantity = template.FirstOrDefault(t => t.ProductId == line.ProductId)?.Quantity ?? 0;
+        TrayChanged();
+    }
+    public void ClearTray() { foreach (var line in DeliverLines) line.Quantity = 0; TrayChanged(); }
+
+    public void SelectCategory(string? name) { deliverCategory = name; ApplyDeliverFilter(); }
+
+    private void ApplyDeliverFilter()
+    {
+        // Búsqueda sin distinguir mayúsculas ni acentos («azucar» encuentra «azúcar»), por nombre o SKU.
+        var text = deliverSearch.Trim();
+        bool Matches(string? value) => value is not null && Spanish.CompareInfo.IndexOf(value, text, CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace) >= 0;
+        DeliverTiles = DeliverLines.Where(l => (deliverCategory is null || l.CategoryName == deliverCategory) && (text.Length == 0 || Matches(l.Name) || Matches(l.Sku))).ToArray();
+        DeliverCategories = new[] { new TrayCategory(null, "Todos", deliverCategory is null) }
+            .Concat(DeliverLines.Select(l => l.CategoryName).Distinct().Select(c => new TrayCategory(c, c, c == deliverCategory))).ToArray();
         Notify();
     }
-    public void ClearTray() { foreach (var line in DeliverLines) line.Quantity = 0; Notify(); }
+
+    private void TrayChanged()
+    {
+        var current = DeliverLines.Where(l => l.Quantity > 0).ToArray();
+        if (!current.SequenceEqual(TrayLines)) TrayLines = current;
+        Notify();
+    }
+
+    private void StartPhotoLoad(IReadOnlyList<TrayLineView> lines)
+    {
+        photoLoad.Cancel(); photoLoad.Dispose(); photoLoad = new();
+        if (photos is null) return;
+        var token = photoLoad.Token;
+        _ = Task.WhenAll(lines.Select(async line =>
+        {
+            try { line.SetPhoto(await photos.LoadAsync(line.ProductId, token)); }
+            catch (OperationCanceledException) { }
+            catch (Exception error) { log("consignment.photo.load.failed", error.GetType().Name); }
+        }));
+    }
 
     public Task ConfirmDeliverAsync() => RunAsync(async () =>
     {
@@ -378,7 +441,7 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
         Message = $"Cobro de {Format(payment.Amount)} registrado a {store.Name}."; MessageIsSuccess = true;
     });
 
-    public void CancelAction() { Action = ConsignmentAction.None; Collecting = null; Message = ""; Notify(); }
+    public void CancelAction() { Action = ConsignmentAction.None; Collecting = null; photoLoad.Cancel(); Message = ""; Notify(); }
 
     // ---------- Tiendas ----------
     private async Task LoadStoresAsync(Guid? select) => await RunAsync(async () =>
@@ -395,7 +458,7 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
         StoreName = store?.Name ?? ""; StoreContact = store?.Contact ?? ""; StorePhone = store?.Phone ?? ""; StoreAddress = store?.Address ?? "";
         if (store is null) { TemplateLines = []; Account = null; Movements = []; return; }
         var (prices, lines, account) = await Task.Run(() => (service.Prices(), service.Template(store.Id), service.Account(store.Id)));
-        TemplateLines = prices.Where(p => p.Price is not null).Select(p => new TrayLineView(p.ProductId, p.ProductName, p.Price!.Value, p.RetailPrice, Notify)).ToArray();
+        TemplateLines = prices.Where(p => p.Price is not null).Select(p => new TrayLineView(p.ProductId, p.ProductName, p.CategoryName, p.Sku, p.Price!.Value, p.RetailPrice, Notify)).ToArray();
         foreach (var line in TemplateLines) line.Quantity = lines.FirstOrDefault(t => t.ProductId == line.ProductId)?.Quantity ?? 0;
         Account = account; Movements = account.Movements.Select(m => new MovementView(m)).ToArray();
     }
@@ -460,7 +523,8 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
 
     public void Forget()
     {
-        Route = []; Selected = null; Action = ConsignmentAction.None; Collecting = null; DeliverLines = []; CollectLines = [];
+        photoLoad.Cancel();
+        Route = []; Selected = null; Action = ConsignmentAction.None; Collecting = null; DeliverLines = []; DeliverTiles = []; TrayLines = []; DeliverCategories = []; CollectLines = [];
         Stores = []; SelectedStore = null; TemplateLines = []; Account = null; Movements = []; Prices = [];
         Report = null; StoreRows = []; ProductRows = []; SellThroughBars = []; GeneratedLabel = "";
         Tab = ConsignmentTab.Route; Message = ""; Notify();

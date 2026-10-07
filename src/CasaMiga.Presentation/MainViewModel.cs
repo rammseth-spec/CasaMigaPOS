@@ -154,7 +154,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 Inventory = new(new InventoryService(new SqliteInventoryStore(sqlite, clock), database, user, clock, terminal.Id),
                     catalogService, (eventName,errorType)=>runtime.TryLog(eventName,errorType),new ConsumptionViewModel(new SaleConsumptionService(database,database,user,clock,terminal.Id)));
                 Reports = new(new ReportService(database,user,TimeZoneInfo.Local),(eventName,errorType)=>runtime.TryLog(eventName,errorType));
-                Consignment = new(new ConsignmentService(database,user,clock,terminal.Id,TimeZoneInfo.Local),(eventName,errorType)=>runtime.TryLog(eventName,errorType));
+                Consignment = new(new ConsignmentService(database,user,clock,terminal.Id,TimeZoneInfo.Local),(eventName,errorType)=>runtime.TryLog(eventName,errorType),photoUi);
                 var syncOutbox = new SqliteSyncOutbox(sqlite);
                 Sync = new(new SyncEngine(syncOutbox, new HttpSyncTransport(new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(30) }), options.DataDirectory),
                     syncOutbox, terminal.Id, terminal.Name, (eventName,errorType)=>runtime.TryLog(eventName,errorType));

@@ -1,6 +1,8 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Automation;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Media;
 using CasaMiga.Application;
@@ -29,16 +31,34 @@ public sealed class ConsignmentPresentationTests
             WpfTestHost.Layout(view);
             Assert.AreEqual("", model.Message);
             var template = List(view, "Charola habitual");
-            Assert.AreEqual(22, template.Items.Count, "La charola habitual muestra cada pan con precio de charola.");
+            Assert.AreEqual(23, template.Items.Count, "La charola habitual muestra cada pan con precio de charola.");
             Assert.IsTrue(template.ActualHeight > 0, "Las filas de la charola habitual se dibujan.");
             Assert.AreEqual(12, template.Items.Cast<TrayLineView>().Sum(l => l.Quantity));
 
             await model.ShowAsync(ConsignmentTab.Route);
             await model.StartDeliverAsync(model.Route.Single());
             WpfTestHost.Layout(view);
+            // Como el Punto de venta: tarjetas para todos los panes con precio y, a la derecha, sólo los que van en la charola.
+            Assert.IsTrue(model.IsDeliverWorkspace); Assert.IsFalse(model.ShowTabs);
+            var tiles = List(view, "Panes para la charola");
+            Assert.AreEqual(23, tiles.Items.Count); Assert.IsTrue(tiles.ActualHeight > 0);
             var tray = List(view, "Piezas de la charola");
-            Assert.AreEqual(22, tray.Items.Count); Assert.IsTrue(tray.ActualHeight > 0);
+            Assert.AreEqual(3, tray.Items.Count, "La charola habitual llega precargada."); Assert.IsTrue(tray.ActualHeight > 0);
             StringAssert.Contains(model.DeliverSummary, "12 piezas");
+
+            model.DeliverSearch = "AZUCAR"; WpfTestHost.Layout(view);
+            Assert.AreEqual("Dona de azúcar", ((TrayLineView)tiles.Items.Cast<object>().Single()).Name, "Busca sin mayúsculas ni acentos.");
+            model.DeliverSearch = "P12"; Assert.AreEqual("Pan de prueba 12", model.DeliverTiles.Single().Name, "También por SKU.");
+            model.DeliverSearch = ""; model.SelectCategory("Dona"); WpfTestHost.Layout(view);
+            Assert.AreEqual(1, tiles.Items.Count); Assert.IsTrue(model.DeliverCategories.Single(c => c.Name == "Dona").Selected);
+
+            // Tocar la tarjeta suma una pieza y aparece en la charola con su burbuja.
+            var tile = Descendants<Button>(tiles).Single(b => AutomationProperties.GetName(b) == "Agregar Dona de azúcar a la charola");
+            for (var i = 0; i < 3; i++) ((IInvokeProvider)new ButtonAutomationPeer(tile).GetPattern(PatternInterface.Invoke)!).Invoke();
+            WpfTestHost.Layout(view);
+            Assert.AreEqual(4, tray.Items.Count); Assert.AreEqual(15, model.DeliverPieces);
+            Assert.AreEqual(3, model.TrayLines.Single(l => l.Name == "Dona de azúcar").Quantity);
+            model.SelectCategory(null); Assert.AreEqual(23, tiles.Items.Count);
         }
         finally { window.Close(); }
     });
@@ -64,7 +84,7 @@ public sealed class ConsignmentPresentationTests
             WpfTestHost.Layout(window, 1280, 820);
             Assert.IsNotNull(model.SelectedStore, model.Message);
             var template = List(window, "Charola habitual");
-            Assert.AreEqual(22, template.Items.Count, "Al elegir la tienda en la lista se ve su charola habitual.");
+            Assert.AreEqual(23, template.Items.Count, "Al elegir la tienda en la lista se ve su charola habitual.");
             Assert.IsTrue(template.ActualHeight > 0);
         }
         finally { window.Close(); }
@@ -111,6 +131,7 @@ public sealed class ConsignmentPresentationTests
             var trays = new ConsignmentService(work, session, clock, terminal.Id, TimeZoneInfo.Local);
             // Como el catálogo real: muchos panes con precio de charola y una charola habitual de varios panes.
             var breads = Enumerable.Range(1, 22).Select(i => catalog.CreateProduct(category, $"P{i}", $"Pan de prueba {i:00}", "", new Money(1300))).ToList();
+            breads.Add(catalog.CreateProduct(catalog.CreateCategory("Dona").Id, "D1", "Dona de azúcar", "", new Money(1300)));
             foreach (var bread in breads) trays.SetPrice(bread.Id, new Money(1050));
             var store = trays.SaveStore(null, "Abarrotes Lupita", "Lupita", "", "");
             trays.SaveTemplate(store.Id, [new(breads[3].Id, 4), new(breads[9].Id, 4), new(breads[15].Id, 4)]);

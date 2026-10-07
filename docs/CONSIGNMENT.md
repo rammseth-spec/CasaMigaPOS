@@ -13,7 +13,7 @@ Casa Miga deja charolas de 12 o 15 panes surtidos en tiendas cliente. Al día si
 
 ## Flujo
 
-1. **Entregar**: elige la tienda; se propone su charola habitual. Se guarda la entrega con sus piezas y precios congelados.
+1. **Entregar**: elige la tienda. La pantalla funciona como el Punto de venta: tarjetas con foto y precio de charola, buscador (sin acentos, por nombre o SKU) y filtros por categoría; tocar una tarjeta suma una pieza y la burbuja verde muestra cuántas lleva. A la derecha, la charola como el carrito, precargada con la charola habitual. Se guarda la entrega con sus piezas y precios congelados.
 2. **Recoger**: captura cuántas piezas regresaron de cada pan; las demás se vendieron. El importe vendido se carga a la tienda y se puede cobrar en el momento (total, parcial o nada).
 3. **Cobrar**: registra pagos posteriores contra el saldo. No se acepta cobrar más de lo que la tienda debe.
 4. **Anular**: sólo una charola que sigue en la tienda (captura equivocada), con motivo. No cuenta en reportes ni se cobra.

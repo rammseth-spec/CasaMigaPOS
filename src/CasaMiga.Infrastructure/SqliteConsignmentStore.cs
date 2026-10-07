@@ -69,12 +69,12 @@ public sealed partial class SqliteLocalUnitOfWork
         // ---------- Precios de charola ----------
         public IReadOnlyList<ConsignmentPrice> ConsignmentPrices()
         {
-            using var query = Command("SELECT p.id,p.name,c.name,p.price_cents,cp.price_cents FROM product p JOIN category c ON c.id=p.category_id"
+            using var query = Command("SELECT p.id,p.name,c.name,p.price_cents,cp.price_cents,p.sku FROM product p JOIN category c ON c.id=p.category_id"
                 + " LEFT JOIN consignment_price cp ON cp.product_id=p.id WHERE p.active=1 ORDER BY c.name COLLATE NOCASE,p.name COLLATE NOCASE");
             using var r = query.ExecuteReader();
             var prices = new List<ConsignmentPrice>();
             while (r.Read())
-                prices.Add(new(Guid.Parse(r.GetString(0)), r.GetString(1), r.GetString(2), new(r.GetInt64(3)), r.IsDBNull(4) ? null : new Money(r.GetInt64(4))));
+                prices.Add(new(Guid.Parse(r.GetString(0)), r.GetString(1), r.GetString(2), new(r.GetInt64(3)), r.IsDBNull(4) ? null : new Money(r.GetInt64(4)), r.IsDBNull(5) ? null : r.GetString(5)));
             return prices;
         }
 

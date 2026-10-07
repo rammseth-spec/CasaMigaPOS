@@ -4,7 +4,7 @@ namespace CasaMiga.Application;
 
 // Charolas a consignación (docs/CONSIGNMENT.md).
 public sealed record ConsignmentStore(Guid Id, string Name, string Contact, string Phone, string Address, bool Active);
-public sealed record ConsignmentPrice(Guid ProductId, string ProductName, string CategoryName, Money RetailPrice, Money? Price);
+public sealed record ConsignmentPrice(Guid ProductId, string ProductName, string CategoryName, Money RetailPrice, Money? Price, string? Sku = null);
 public sealed record ConsignmentLine(Guid ProductId, int Quantity);
 public sealed record ConsignmentTemplateLine(Guid ProductId, string ProductName, int Quantity);
 
