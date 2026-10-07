@@ -2,7 +2,9 @@
 
 **Implementado; smoke manual pendiente.** En **Caja**, con la caja abierta, tarjeta «Movimientos de efectivo» (migración 022): **Gasto** con categoría fija (Insumos, Gas, Limpieza, Transporte, Mantenimiento, Otro con nota obligatoria), **Entrada** (efectivo que entra y no es venta) y **Retiro** (a resguardo; sólo encargado y administrador, el cajero no lo ve). Cambian el efectivo esperado del corte; sólo antes del conteo ciego; nunca se saca más de lo que debe haber, y las devoluciones en efectivo también lo respetan. Registros inmutables con operación idempotente y auditoría `cash.expense`/`cash.withdrawal`/`cash.deposit`; la base repite las reglas. El cierre desglosa gastos, retiros y entradas, y Reportes → Cortes muestra la columna «Mov.» (también en el CSV). Sólo registro, sin comprobante impreso (elección del usuario). Ver [CASH_MOVEMENTS.md](CASH_MOVEMENTS.md).
 
-Suite **853/853** (673 + 180), Release 0/0.
+Probado en pantalla sobre una copia aparte de los datos: gasto «Otro» rechazado sin nota y registrado con nota, entrada, retiro mayor al efectivo rechazado, y el cierre desglosado (fondo $200 − gasto $45.50 + entrada $200 = esperado $354.50). La tarjeta va junto al estado de la caja a 1280 px y se oculta después del conteo ciego.
+
+Build `src/CasaMiga.Presentation/bin/Review-QAv1-5958a90` sobre la copia `demo-charolas-QAv1-7c33343` (ya migrada a 022; la caja de hoy tiene fondo de $200 y sin ventas en efectivo, así que no deja sacar más de eso), launcher `work/Abrir-Casa-Miga-QAv1-5958a90.cmd`, con `dev-autologin.json` (entra como admin). Suite **853/853** (673 + 180), Release 0/0. Credenciales en la conversación.
 
 # Rediseño A «Claro y cálido» y folios cortos — 07/10/2026
 
