@@ -11,11 +11,12 @@
      <Viewbox Width="18" Height="18" HorizontalAlignment="Left" Margin="15,0,0,0" IsHitTestVisible="False"><Canvas Width="24" Height="24"><Path Data="{StaticResource IconSearch}" Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/></Canvas></Viewbox>
      <TextBlock Text="Buscar pan o SKU" Margin="44,0,12,0" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" IsHitTestVisible="False"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding Search}" Value=""><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
     </Grid>
-    <Button Grid.Column="1" Content="Buscar" Click="SearchClick" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" MinWidth="96"/>
+    <StackPanel Grid.Column="1" Orientation="Horizontal"><Button Content="Buscar" Click="SearchClick" Style="{StaticResource SecondaryButton}" Margin="8,0,0,0" MinWidth="96"/><Button Content="× Limpiar" Click="ClearSearchClick" Margin="8,0,0,0" MinWidth="104" Style="{StaticResource GhostButton}" Visibility="{Binding HasSearch,Converter={StaticResource VisibleWhen}}"/></StackPanel>
    </Grid>
    <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0,0,0,10">
     <ItemsControl ItemsSource="{Binding Categories}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel><ItemsControl.ItemTemplate><DataTemplate><Button Content="{Binding Label}" Tag="{Binding Selected}" CommandParameter="{Binding Id}" Style="{StaticResource SectionTabButton}" Click="CategoryClick" Margin="0,0,8,4"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
    </ScrollViewer>
+   <TextBlock Grid.Row="2" Text="{Binding EmptyProductsMessage}" Foreground="{DynamicResource MutedBrush}" FontSize="16" TextAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24" Visibility="{Binding HasNoProducts,Converter={StaticResource VisibleWhen}}"/>
    <ScrollViewer x:Name="ProductCatalogScroll" Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" FocusVisualStyle="{x:Null}">
     <ItemsControl ItemsSource="{Binding Products}" IsEnabled="{Binding CanOperate}" Margin="0,0,4,4">
      <ItemsControl.ItemsPanel><ItemsPanelTemplate><local:TileGrid MinItemWidth="146" Spacing="12"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
@@ -28,7 +29,7 @@
           <Image Source="{Binding Photo}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" Visibility="{Binding HasPhoto,Converter={StaticResource VisibleWhen}}"/>
           <Grid Visibility="{Binding IsFallback,Converter={StaticResource VisibleWhen}}">
            <Path Data="M4,5 L16,5 18,8 18,17 2,17 2,8 Z M7,5 L8.5,2 11.5,2 13,5 M10,9 A3,3 0 1 1 9.99,9" Stroke="{DynamicResource WheatBrush}" StrokeThickness="1.6" Stretch="Uniform" Width="44" Height="44" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-           <TextBlock Text="Sin foto" Style="{StaticResource CaptionText}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,14"/>
+           <TextBlock Text="Sin imagen" Style="{StaticResource CaptionText}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,14"/>
           </Grid>
           <!-- Piezas de este pan en el ticket. -->
           <Border Style="{StaticResource CountBadge}" Visibility="{Binding InCart,Converter={StaticResource VisibleWhen}}"><TextBlock Text="{Binding CartQuantity}" Style="{StaticResource CountBadgeText}"/></Border>

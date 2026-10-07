@@ -21,6 +21,7 @@ public partial class PosView : UserControl
     private void ProductionClick(object s,RoutedEventArgs e)=>ProductionRequested?.Invoke(this,EventArgs.Empty);
     private void LogoutClick(object s,RoutedEventArgs e)=>LogoutRequested?.Invoke(this,EventArgs.Empty);
     private async void SearchClick(object s,RoutedEventArgs e){await Model.SearchAsync();ProductCatalogScroll.ScrollToTop();}
+    private async void ClearSearchClick(object s,RoutedEventArgs e){await Model.ClearSearchAsync();ProductCatalogScroll.ScrollToTop();SearchInput.Focus();}
     private async void CategoryClick(object s,RoutedEventArgs e){await Model.CategoryAsync(((Button)s).CommandParameter as Guid?);ProductCatalogScroll.ScrollToTop();}
     private async void ProductClick(object s,RoutedEventArgs e)=>await Model.AddAsync((Guid)((Button)s).Tag);
     private async void IncreaseClick(object s,RoutedEventArgs e)=>await Model.IncrementAsync((Guid)((Button)s).Tag);
@@ -53,7 +54,8 @@ public partial class PosView : UserControl
     }
     private async void PosKeyDown(object s,KeyEventArgs e)
     {
+        if(PopupEscape.TryHandle(e))return;
         if(e.Key==Key.Enter && Keyboard.FocusedElement==SearchInput){e.Handled=true;await Model.SearchAsync();ProductCatalogScroll.ScrollToTop();}
-        else if(e.Key==Key.Escape){e.Handled=true;SearchInput.Focus();SearchInput.SelectAll();}
+        else if(e.Key==Key.Escape&&Keyboard.FocusedElement==SearchInput&&Model.HasSearch){e.Handled=true;await Model.ClearSearchAsync();ProductCatalogScroll.ScrollToTop();SearchInput.Focus();}
     }
 }

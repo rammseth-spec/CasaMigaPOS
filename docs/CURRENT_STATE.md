@@ -89,6 +89,26 @@ Clon limpio de GitHub (`6ec695a`): restore `--locked-mode`, Release 0/0, **780/7
 
 ## Registro anterior — FASE 1K ABIERTA — 1K.3D, 06/10/2026
 
+# FASE 1K ABIERTA — 1K.4A, 06/10/2026
+
+**FASE 1K.4A técnicamente completada; smoke manual pendiente.** POS y Catálogo incorporan búsqueda en vivo por nombre/SKU con debounce de 250 ms, cancelación de consultas obsoletas, × Limpiar, Escape contextual, categoría preservada y estados vacíos humanos. El filtro administrativo conserva selecciones válidas y responde correctamente a cambios rápidos. El editor de producto permite crear una categoría inline sin perder el borrador y presenta `Origen de la imagen` con REAL/PROVISIONAL intactos; el placeholder visible es `Sin imagen`. Cards mantienen foto, dos líneas de nombre y precio reservado.
+
+La base protegida permanece SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. En ella Pan salado no existe; Bolillo mantequilla `CM-003` sí existe a $8 MXN y no fue mutado. La copia aislada `work/phase1k4a-smoke-20261006` agrega Pan salado, vincula allí el bolillo y añade casos sintéticos largo/sin imagen/inactivo. Conserva schema 16, 25 fotos PROVISIONAL, 3 REAL y conteos operativos antes/después. No hubo ventas, caja, inventario, impresión o producción.
+
+Pruebas focales **14/14**, incluida regresión exacta de Producción 1K.3D. Suite completa `scripts/verify.ps1`: **725/725** (560 generales + 165 WPF/Presentation), 0 fallidas/omitidas. Release Phase1K4A: 0 errores/advertencias. Domain/Application/Infrastructure y migraciones intactos; sin 017. Revisión: `src/CasaMiga.Presentation/bin/Phase1K4A/`, `work/Abrir-Casa-Miga-1K4A.cmd`, DataDirectory `work/phase1k4a-smoke-20261006`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4A`. Ver `PHASE_1K4A_REPORT.md`. No iniciar 1K.4B.
+
+## Registro anterior — 1K.3D-R1
+
+**FASE 1K.3D-R1 técnicamente completada; smoke final corto pendiente.** El pulido de Producción corrige pluralización de piezas, presenta MASS/VOLUME en forma compuesta exacta cuando mejora la lectura, amplía la columna Planeado / real, reemplaza el checkbox «Sin producto» por un resultado textual y diferencia claramente el lenguaje de borrador frente al historial confirmado. El plan conserva su inmutabilidad y ahora se explica como «ya quedó fijado». La comparación del resultado real cuantifica piezas de diferencia.
+
+La ayuda de vista previa conserva que calcular no reserva ni descuenta y ahora explica Necesario, Disponible, Faltante y Estado con un ejemplo 500/350/150. La ayuda de Resultado real mantiene su semántica aprobada: el consumo depende de lo planeado y la entrada terminada de lo realmente obtenido, incluido cero. No cambió el motor, la persistencia ni las reglas de Producción.
+
+Pruebas focales: **7/7** generales y **4/4** WPF/ContextHelp. Suite completa `scripts/verify.ps1`: **719/719** (560 generales + 159 WPF), 0 fallidas/omitidas. Release: 0 errores/advertencias. Schema 16, sin 017; Domain/Application/Infrastructure y migraciones intactos. Base protegida SHA-256 inicial/final `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Revisión: `src/CasaMiga.Presentation/bin/Phase1K3D-R1/`, `work/Abrir-Casa-Miga-1K3D-R1.cmd`, DataDirectory `work/phase1k3d-r1-smoke-20261006`, título `Casa Miga POS · Caja · DESARROLLO · 1K.3D-R1`. Ver `PHASE_1K3D_R1_REPORT.md`.
+
+El baseline real fue `bd6771ec05b35fde505020f872c6e878f09ddfe9`, no el `cfcd80c5...` previsto en la autorización: entre ambos el usuario pidió conectar y subir QA a GitHub, lo que produjo el merge documentado de las historias. R1 no realiza push ni modifica ramas/remotos.
+
+## Registro anterior — 1K.3D
+
 **FASE 1K.3D técnicamente completada; smoke manual pendiente.** Producción conserva el motor y los contratos de FASE 1J, pero ahora presenta un flujo operativo en tres pasos: producto/perfil/versión y piezas planeadas; vista previa de preparaciones, insumos, disponibilidad y faltante; y captura del resultado real antes de registrar. La cantidad planeada sigue controlando el consumo y la cantidad real sólo controla la entrada de producto terminado. El botón final se deshabilita si alguna cantidad real no es un entero mayor o igual que cero. ContextHelp R3 explica cantidad planeada, preview y resultado real sin mover el layout.
 
 La fixture aislada `work/phase1k3d-smoke-20261006` contiene exclusivamente datos SMOKE/NO COMERCIAL. Una ejecución automatizada autorizada registró 5 piezas planeadas y 4 reales: consumió 312.5 g de masa, 125 ml de volumen, 6 piezas y 5 g de la alternativa A; agregó 4 piezas terminadas. Un segundo borrador de 1,000 piezas reprodujo un faltante de 1,106 piezas y su confirmación fallida no cambió balances, ledger ni producto terminado. Preview, ventas y caja permanecieron sin mutación; no hubo impresión.

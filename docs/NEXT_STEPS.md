@@ -1,4 +1,31 @@
-# Próximo paso — smoke manual corto de 1K.3D
+# Próximo paso — smoke manual de 1K.4A
+
+Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4A`, abierta desde `work/Abrir-Casa-Miga-1K4A.cmd`, con DataDirectory `work/phase1k4a-smoke-20261006`. No usar el acceso anclado ni builds anteriores.
+
+1. Login y POS: elegir Pan salado; buscar `Bolillo mantequilla`, luego `CM-003`; comprobar respuesta breve, $8 y categoría preservada.
+2. Pulsar × Limpiar; buscar un texto sin coincidencias; con texto, pulsar Esc y confirmar que limpia sin navegar. Repetir en F11.
+3. Revisar `SMOKE-1K4A-LARGO`: nombre hasta dos líneas y precio visible. Revisar `SMOKE-1K4A-SINFOTO`: placeholder `Sin imagen`.
+4. Catálogo: cambiar rápidamente Todos/Pan dulce/Pan salado, activar Mostrar inactivos y probar búsqueda por nombre/SKU; confirmar que no reaparecen resultados de un filtro anterior.
+5. Nuevo producto: llenar datos sintéticos, elegir categoría existente y abrir `+ Nueva categoría`; confirmar que el borrador se conserva y la categoría nueva queda seleccionada. Cancelar cualquier alta que no deba persistir.
+6. Editar un producto con foto provisional; confirmar `Origen de la imagen` y `Foto provisional`. No reemplazar ni quitar fotos durante este smoke.
+7. Revisar 1280×820, 1920×1080 y F11; salir.
+
+No ejecutar ventas, caja, impresión, inventario o producción. No modificar la base protegida para crear Pan salado. Después del smoke, esperar confirmación explícita del usuario; no iniciar 1K.4B, Historial, Carrito, Pedidos/Tiendas ni migración 017.
+
+## Registro anterior — smoke final corto de 1K.3D-R1
+
+Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.3D-R1`, abierta desde `work/Abrir-Casa-Miga-1K3D-R1.cmd`, con DataDirectory `work/phase1k3d-r1-smoke-20261006`. No usar el acceso anclado ni builds anteriores.
+
+1. Iniciar sesión, entrar en Producción y abrir Historial.
+2. Confirmar que `5 planeadas · 4 reales` es legible; abrir el detalle y revisar `Plan de producción`, `Preparaciones del plan`, `Ingredientes consumidos` y cantidades pluralizadas.
+3. Nueva producción: elegir el perfil sintético, capturar 5 piezas y calcular necesidades. Revisar cantidades MASS/VOLUME exactas y piezas en singular/plural.
+4. Abrir la ayuda de Vista previa y confirmar Necesario/Disponible/Faltante/Estado, además de que calcular no modifica inventario.
+5. Preparar el borrador, cambiar el resultado real de 5 a 4 y comprobar `1 pieza menos de lo planeado`.
+6. No registrar esa producción; volver y salir.
+
+Si este recorrido pasa, cerrar formalmente FASE 1K.3D. No iniciar Pedidos, Tiendas, migración 017 ni cambios en POS/Carrito/ticket.
+
+## Registro anterior — smoke manual corto de 1K.3D
 
 Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.3D`, abierta desde `work/Abrir-Casa-Miga-1K3D.cmd`, con DataDirectory `work/phase1k3d-smoke-20261006`. No usar el acceso anclado ni builds anteriores.
 

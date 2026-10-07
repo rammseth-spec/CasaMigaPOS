@@ -163,8 +163,19 @@ public sealed class UsabilityPresentationTests
             Assert.IsTrue(Visible(Button(view,"Calcular necesidades")));
             Assert.IsTrue(Visible(Button(view,"Preparar registro de producción")));
         }
+        StringAssert.Contains(vm.PreviewHelpText,"Necesario");StringAssert.Contains(vm.PreviewHelpText,"Disponible");StringAssert.Contains(vm.PreviewHelpText,"Faltante");StringAssert.Contains(vm.PreviewHelpText,"Estado");StringAssert.Contains(vm.PreviewHelpText,"no reserva ni descuenta");StringAssert.Contains(vm.PreviewHelpText,"no registra movimientos ni modifica el ledger");
+        StringAssert.Contains(vm.ActualHelpText,"5 planeadas y 4 reales");StringAssert.Contains(vm.ActualHelpText,"insumos de 5");StringAssert.Contains(vm.ActualHelpText,"Registrar cero");
         Assert.IsFalse(Button(view,"Calcular necesidades").IsEnabled);
         Assert.IsFalse(Button(view,"Preparar registro de producción").IsEnabled);
+        await vm.ShowHistoryAsync();
+        foreach(var size in new[]{new Size(1280,820),new Size(1920,1080)})
+        {
+            WpfTestHost.Layout(view,size.Width,size.Height);
+            var history=Descendants<DataGrid>(view).Single(x=>AutomationProperties.GetName(x)=="Historial de producción"&&Visible(x));
+            CollectionAssert.Contains(history.Columns.Select(x=>x.Header?.ToString()).ToArray(),"Planeado / real");
+            CollectionAssert.Contains(history.Columns.Select(x=>x.Header?.ToString()).ToArray(),"Resultado obtenido");
+            Assert.IsFalse(history.Columns.Any(x=>x is DataGridCheckBoxColumn));
+        }
         fixture.AssertNoOperations();
     });
 

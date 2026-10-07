@@ -57,14 +57,14 @@ public sealed partial class RecipePersistenceTests
     {
         ProductionSetup();var vm=ProductionVm();await vm.LoadAsync();var profile=vm.Profiles.Single(x=>x.VersionId==profileVersion.Id);StringAssert.Contains(profile.ToString(),"Versión 1");vm.NewProduction();vm.Plan[0].Profile=profile;vm.Plan[0].Planned="2";var beforePreview=AllRows(true);await vm.PreviewAsync();
         Assert.AreEqual(beforePreview,AllRows(true),"La vista previa debe ser de sólo lectura.");Assert.IsTrue(vm.PreviewReady);Assert.IsTrue(vm.PreviewConfirmable,vm.PreviewState);Assert.IsNotEmpty(vm.FormulaRows);Assert.IsTrue(vm.FormulaRows.All(x=>x.VersionLabel.StartsWith("Versión ",StringComparison.Ordinal)));Assert.IsTrue(vm.RequirementRows.All(x=>!x.Required.Contains("mg")&&!x.Required.Contains("µL")));Assert.IsTrue(vm.RequirementRows.All(x=>x.State=="Suficiente"&&x.Shortage=="—"));Assert.IsNotEmpty(vm.Alternatives);
-        await vm.CreateDraftAsync();Assert.IsTrue(vm.DetailIsDraft);StringAssert.Contains(vm.ConfirmationRestriction,"bloqueado");vm.Actuals[0].Actual="3";Assert.AreEqual("Mayor que lo planeado",vm.Actuals[0].Difference);
+        await vm.CreateDraftAsync();Assert.IsTrue(vm.DetailIsDraft);StringAssert.Contains(vm.ConfirmationRestriction,"quedó fijado");Assert.AreEqual("Plan de producción",vm.DetailPlanTitle);Assert.AreEqual("Preparaciones del plan",vm.DetailFormulasTitle);Assert.AreEqual("Ingredientes que se descontarán",vm.DetailInputsTitle);vm.Actuals[0].Actual="3";Assert.AreEqual("1 pieza más de lo planeado",vm.Actuals[0].Difference);
         await Task.WhenAll(vm.ConfirmAsync(),vm.ConfirmAsync());Assert.IsTrue(vm.DetailIsConfirmed);Assert.AreEqual(1L,Sql("SELECT count(*) FROM audit_entry WHERE action='production.confirmed'"));
-        await vm.ShowHistoryAsync();Assert.HasCount(1,vm.Rows);Assert.AreEqual("Confirmada",vm.Rows.Single().State);StringAssert.Contains(vm.Rows.Single().Result,"planeadas");StringAssert.Contains(vm.Rows.Single().Result,"reales");Assert.IsFalse(vm.Rows.Single().Result.Contains(profileVersion.Id.ToString(),StringComparison.Ordinal));vm.SelectedRow=vm.Rows.Single();await vm.OpenDetailAsync();Assert.IsNotEmpty(vm.DetailInputs);Assert.IsFalse(vm.DetailContext.Contains("OperationId",StringComparison.Ordinal));StringAssert.Contains(vm.DetailContext,"Registrada:");
+        Assert.AreEqual("Ingredientes consumidos",vm.DetailInputsTitle);await vm.ShowHistoryAsync();Assert.HasCount(1,vm.Rows);Assert.AreEqual("Confirmada",vm.Rows.Single().State);StringAssert.Contains(vm.Rows.Single().Result,"2 planeadas");StringAssert.Contains(vm.Rows.Single().Result,"3 reales");StringAssert.Contains(vm.Rows.Single().OutputResult,"3 piezas obtenidas");Assert.IsFalse(vm.Rows.Single().Result.Contains(profileVersion.Id.ToString(),StringComparison.Ordinal));vm.SelectedRow=vm.Rows.Single();await vm.OpenDetailAsync();Assert.IsNotEmpty(vm.DetailInputs);Assert.IsFalse(vm.DetailContext.Contains("OperationId",StringComparison.Ordinal));StringAssert.Contains(vm.DetailContext,"Registrada:");Assert.AreEqual("Ingredientes consumidos",vm.DetailInputsTitle);
     }
 
     [TestMethod] public async Task ProductionUiAcceptsZeroAndShowsHumanErrors()
     {
-        ProductionSetup();var vm=ProductionVm();await vm.LoadAsync();Assert.IsTrue(vm.Profiles.Any(x=>x.VersionId==profileVersion.Id),vm.Message);vm.NewProduction();vm.Plan[0].Profile=vm.Profiles.Single(x=>x.VersionId==profileVersion.Id);vm.Plan[0].Planned="2";await vm.PreviewAsync();Assert.IsTrue(vm.PreviewConfirmable,vm.PreviewState);await vm.CreateDraftAsync();Assert.IsTrue(vm.DetailIsDraft,vm.Message);vm.Actuals[0].Actual="0";Assert.IsTrue(vm.TotalZero);await vm.ConfirmAsync();Assert.IsTrue(vm.DetailIsConfirmed,vm.Message);Assert.AreEqual(0L,Sql("SELECT count(*) FROM inventory_operation WHERE kind='PRODUCTION_OUTPUT'"));
+        ProductionSetup();var vm=ProductionVm();await vm.LoadAsync();Assert.IsTrue(vm.Profiles.Any(x=>x.VersionId==profileVersion.Id),vm.Message);vm.NewProduction();vm.Plan[0].Profile=vm.Profiles.Single(x=>x.VersionId==profileVersion.Id);vm.Plan[0].Planned="2";await vm.PreviewAsync();Assert.IsTrue(vm.PreviewConfirmable,vm.PreviewState);await vm.CreateDraftAsync();Assert.IsTrue(vm.DetailIsDraft,vm.Message);vm.Actuals[0].Actual="0";Assert.IsTrue(vm.TotalZero);Assert.AreEqual("2 piezas menos de lo planeado",vm.Actuals[0].Difference);await vm.ConfirmAsync();Assert.IsTrue(vm.DetailIsConfirmed,vm.Message);Assert.AreEqual(0L,Sql("SELECT count(*) FROM inventory_operation WHERE kind='PRODUCTION_OUTPUT'"));await vm.ShowHistoryAsync();StringAssert.Contains(vm.Rows.Single().OutputResult,"sin producto terminado");
         Assert.AreEqual("No hay existencia suficiente para registrar esta producción.",ProductionViewModel.ErrorMessage(new(ProductionFailure.InsufficientStock)));
         Assert.AreEqual("La producción cambió o ya fue registrada desde otra operación. Actualiza la información.",ProductionViewModel.ErrorMessage(new(ProductionFailure.ConcurrencyConflict)));
         Assert.AreEqual("Un insumo o producto terminado ya no está activo.",ProductionViewModel.ErrorMessage(new(ProductionFailure.InactiveItem)));
@@ -72,9 +72,21 @@ public sealed partial class RecipePersistenceTests
 
     [TestMethod] public void ProductionActualComparisonNotifiesAfterEditing()
     {
-        var row=new ProductionActualEdit{Planned=2,Actual="2"};var changed=new List<string>();row.PropertyChanged+=(_,e)=>changed.Add(e.PropertyName!);
-        row.Actual="3";Assert.AreEqual("Mayor que lo planeado",row.Difference);CollectionAssert.Contains(changed,nameof(ProductionActualEdit.Difference));
-        row.Actual="1";Assert.AreEqual("Menor que lo planeado",row.Difference);row.Actual="2";Assert.AreEqual("Igual a lo planeado",row.Difference);
+        var row=new ProductionActualEdit{Planned=5,Actual="5"};var changed=new List<string>();row.PropertyChanged+=(_,e)=>changed.Add(e.PropertyName!);
+        Assert.AreEqual("Igual a lo planeado",row.Difference);row.Actual="4";Assert.AreEqual("1 pieza menos de lo planeado",row.Difference);CollectionAssert.Contains(changed,nameof(ProductionActualEdit.Difference));
+        row.Actual="3";Assert.AreEqual("2 piezas menos de lo planeado",row.Difference);row.Actual="6";Assert.AreEqual("1 pieza más de lo planeado",row.Difference);row.Actual="7";Assert.AreEqual("2 piezas más de lo planeado",row.Difference);row.Actual="0";Assert.AreEqual("5 piezas menos de lo planeado",row.Difference);
+    }
+
+    [TestMethod] public void ProductionFormattingKeepsExactHumanMassVolumeAndCount()
+    {
+        Assert.AreEqual("1 pieza",InventoryDisplay.FormatProduction(1,InventoryDimension.Count));
+        Assert.AreEqual("2 piezas",InventoryDisplay.FormatProduction(2,InventoryDimension.Count));
+        Assert.AreEqual("6 piezas",InventoryDisplay.FormatProduction(6,InventoryDimension.Count));
+        Assert.AreEqual("99 kg 687.5 g",InventoryDisplay.FormatProduction(99_687_500,InventoryDimension.Mass));
+        Assert.AreEqual("9 kg 995 g",InventoryDisplay.FormatProduction(9_995_000,InventoryDimension.Mass));
+        Assert.AreEqual("312.5 g",InventoryDisplay.FormatProduction(312_500,InventoryDimension.Mass));
+        Assert.AreEqual("99 L 875 ml",InventoryDisplay.FormatProduction(99_875_000,InventoryDimension.Volume));
+        Assert.AreEqual("125 ml",InventoryDisplay.FormatProduction(125_000,InventoryDimension.Volume));
     }
 
     [TestMethod] public async Task ProductionUiDisablesRegistrationUntilEveryActualIsValid()
@@ -90,7 +102,7 @@ public sealed partial class RecipePersistenceTests
         var item=Guid.NewGuid();var rows=new[]{
             new StoredProductionInput(item,"Insumo",new(InventoryDimension.Count,6),null,Guid.NewGuid(),null,null,IngredientCountPolicy.ExactWholeCount,new(6,1)),
             new StoredProductionInput(item,"Insumo",new(InventoryDimension.Count,2),null,Guid.NewGuid(),null,null,IngredientCountPolicy.ExactWholeCount,new(2,1))};
-        CollectionAssert.AreEqual(new[]{"Insumo: 8 pieza"},ProductionViewModel.InputLines(rows).ToArray());
+        CollectionAssert.AreEqual(new[]{"Insumo: 8 piezas"},ProductionViewModel.InputLines(rows).ToArray());
     }
 
     [TestMethod] public void RecipeProductionXamlHidesTechnicalConceptsAndKeepsModules()
@@ -98,7 +110,7 @@ public sealed partial class RecipePersistenceTests
         var root=Path.Combine(AppContext.BaseDirectory,"Presentation");var recipe=File.ReadAllText(Path.Combine(root,"RecipeView.xaml"));var production=File.ReadAllText(Path.Combine(root,"ProductionView.xaml"))+File.ReadAllText(Path.Combine(root,"ProductionView.xaml.cs"));var main=File.ReadAllText(Path.Combine(root,"MainWindow.xaml"));
         foreach(var forbidden in new[]{"canonical hash","OperationId","numerator","denominator","µL"," mg"})Assert.IsFalse((recipe+production).Contains(forbidden,StringComparison.OrdinalIgnoreCase),forbidden);
         foreach(var required in new[]{"Caja","Catálogo","Historial de ventas","Inventario","Recetas","Producción","Punto de venta"})StringAssert.Contains(main,required);
-        StringAssert.Contains(production,"Esta producción no generará producto terminado");StringAssert.Contains(production,"Piezas planeadas");StringAssert.Contains(production,"Resultado real obtenido");StringAssert.Contains(production,"Registrar producción");StringAssert.Contains(production,"ContextHelp");
+        StringAssert.Contains(production,"Esta producción no generará producto terminado");StringAssert.Contains(production,"Piezas planeadas");StringAssert.Contains(production,"Resultado real obtenido");StringAssert.Contains(production,"Resultado obtenido");StringAssert.Contains(production,"Registrar producción");StringAssert.Contains(production,"ContextHelp");Assert.IsFalse(production.Contains("DataGridCheckBoxColumn Header=\"Sin producto",StringComparison.Ordinal));
     }
 
     [TestMethod] public async Task RecipeUiExplainsInvalidDraftFields()

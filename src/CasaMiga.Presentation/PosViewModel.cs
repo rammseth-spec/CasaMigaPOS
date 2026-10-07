@@ -20,6 +20,9 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
     private Guid? category;
     private int page;
     private Cart? cart;
+    private long searchRevision;
+    private CancellationTokenSource? searchCancellation;
+    private bool entered;
     public bool Busy { get; private set; }
     public bool Ready => !Busy;
     public CheckoutService Checkout => checkout;
@@ -40,8 +43,12 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
             if (search == value) return;
             search = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Search)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasSearch)));
+            if(entered&&Ready)_=StartSearchAsync(debounce:true);
         }
     }
+    public bool HasSearch=>!string.IsNullOrWhiteSpace(Search);
+    public bool IsSearching {get;private set;}
     public string Message { get; private set; } = "";
     public IReadOnlyList<PosCategory> Categories { get; private set; } = [];
     private CancellationTokenSource photoLoad = new();
@@ -71,6 +78,10 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
     }
     public bool HasLines => cart is { IsEmpty:false };
     public bool IsEmpty => !HasLines;
+    public bool HasNoProducts=>Products.Count==0&&!RecoveryRequired;
+    public string EmptyProductsMessage=>HasSearch
+        ?"No encontramos productos con esa búsqueda."
+        :category is null?"No hay productos disponibles.":"No hay productos disponibles en esta categoría.";
     public string Subtotal => Format(cart?.Subtotal ?? new Money(0));
     public string Total => Format(cart?.PreliminaryTotal ?? new Money(0));
     public string PageLabel { get; private set; } = "";
@@ -81,12 +92,12 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
     public static string Format(Money money)=>(money.Cents/100m).ToString("C2",CultureInfo.GetCultureInfo("es-MX"));
     public async Task EnterAsync()
     {
-        Search="";category=null;page=0;Products=[];Categories=[];cart=null;Message="";Notify();
+        CancelSearch();entered=false;Search="";category=null;page=0;Products=[];Categories=[];cart=null;Message="";Notify();
         try { RecoveryRequired=checkout.HasPending; }
         catch { RecoveryRequired=true; }
         if(RecoveryRequired){Message="Verifica el cobro pendiente antes de continuar.";Notify();return;}
         // Propagate refusal to the shell: a closed cash session must not enter POS.
-        var result=await Task.Run(()=>service.Load()); Apply(result);Notify();
+        var result=await Task.Run(()=>service.Load()); Apply(result);entered=true;Notify();
     }
     private void Apply(PosPage result)
     {
@@ -110,15 +121,43 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
         catch(Exception error){log("pos.photo.load.failed",error.GetType().Name);}
     }
     private async Task Refresh()=>Apply(await Task.Run(()=>service.Load(Search,category,page)));
-    public Task SearchAsync()=>Run(async()=>{page=0;await Refresh();});
-    public Task CategoryAsync(Guid? id)=>Run(async()=>{category=id;page=0;await Refresh();});
+    private void CancelSearch()
+    {
+        searchRevision++;searchCancellation?.Cancel();searchCancellation?.Dispose();searchCancellation=null;IsSearching=false;
+    }
+    private async Task StartSearchAsync(bool debounce)
+    {
+        CancelSearch();var revision=searchRevision;var cancellation=new CancellationTokenSource();searchCancellation=cancellation;var token=cancellation.Token;
+        var query=Search;var selectedCategory=category;IsSearching=true;Notify();
+        try
+        {
+            if(debounce)await Task.Delay(250,token);
+            var result=await Task.Run(()=>service.Load(query,selectedCategory,0),token);
+            if(token.IsCancellationRequested||revision!=searchRevision||!entered)return;
+            page=0;Apply(result);Message="";
+        }
+        catch(OperationCanceledException) when(token.IsCancellationRequested){ }
+        catch(Exception error)
+        {
+            if(token.IsCancellationRequested||revision!=searchRevision)return;
+            log("pos.search.failed",error.GetType().Name);Message="No se pudo completar la búsqueda. Intenta nuevamente.";Products=[];
+        }
+        finally
+        {
+            if(revision==searchRevision){searchCancellation=null;IsSearching=false;Notify();}
+            cancellation.Dispose();
+        }
+    }
+    public Task SearchAsync()=>entered&&Ready?StartSearchAsync(debounce:false):Task.CompletedTask;
+    public Task ClearSearchAsync(){Search="";return SearchAsync();}
+    public Task CategoryAsync(Guid? id)=>Run(async()=>{CancelSearch();category=id;page=0;await Refresh();});
     public Task PageAsync(int delta)=>Run(async()=>{page=Math.Max(0,page+delta);await Refresh();});
     public Task AddAsync(Guid id)=>Run(async()=>cart=await Task.Run(()=>service.Add(id)));
     public Task IncrementAsync(Guid id)=>Run(async()=>cart=await Task.Run(()=>service.Increment(id)));
     public Task DecrementAsync(Guid id)=>Run(async()=>cart=await Task.Run(()=>service.Decrement(id)));
     public Task RemoveAsync(Guid id)=>Run(async()=>cart=await Task.Run(()=>service.Remove(id)));
     public void Discard(bool confirmed){service.Discard(confirmed);cart=null;Message="";Notify();}
-    public void ForgetView(){photoLoad.Cancel();cart=null;Products=[];Categories=[];Search="";Message="";Notify();}
+    public void ForgetView(){CancelSearch();entered=false;photoLoad.Cancel();cart=null;Products=[];Categories=[];Search="";Message="";Notify();}
     public Task AfterCheckoutAsync()=>Run(EnterAsync);
     private async Task Run(Func<Task> operation)
     {

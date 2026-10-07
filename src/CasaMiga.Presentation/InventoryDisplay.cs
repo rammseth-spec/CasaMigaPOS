@@ -55,4 +55,21 @@ public static class InventoryDisplay
 
     public static string Format(long atomic, InventoryDimension dimension) =>
         $"{Number(atomic, dimension)} {Unit(atomic, dimension)}";
+
+    public static string FormatProduction(long atomic, InventoryDimension dimension)
+    {
+        if (dimension == InventoryDimension.Count)
+            return $"{atomic} {(atomic == 1 ? "pieza" : "piezas")}";
+
+        var absolute = Math.Abs((decimal)atomic);
+        if (absolute < 1_000_000m || absolute % 1_000_000m == 0)
+            return Format(atomic, dimension);
+
+        var major = decimal.Truncate(absolute / 1_000_000m);
+        var minor = (absolute - major * 1_000_000m) / 1_000m;
+        var sign = atomic < 0 ? "-" : "";
+        var majorUnit = dimension == InventoryDimension.Mass ? "kg" : "L";
+        var minorUnit = dimension == InventoryDimension.Mass ? "g" : "ml";
+        return $"{sign}{major:0} {majorUnit} {minor.ToString("0.###", CultureInfo.InvariantCulture)} {minorUnit}";
+    }
 }
