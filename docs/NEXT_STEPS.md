@@ -1,10 +1,10 @@
-# Próximo paso — smoke manual de 1K.4C-R1
+# Próximo paso — smoke manual de 1K.4C-R2
 
-Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4C-R1`, abierta desde `work/Abrir-Casa-Miga-1K4C-R1.cmd`, con DataDirectory `work/phase1k4c-r1-smoke-20261007`. No usar el acceso anclado ni builds anteriores.
+Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4C-R2`, abierta desde `work/Abrir-Casa-Miga-1K4C-R2.cmd`, con DataDirectory `work/phase1k4c-r2-smoke-20261007`. No usar el acceso anclado ni builds anteriores.
 
 1. Iniciar sesión y entrar en Historial de ventas.
-2. Confirmar que ambos DatePicker muestran `dd/mm/aaaa` en una línea y conservan calendario. Escribir `06/10/2026`–`07/10/2026` y aplicar.
-3. Probar `32/10/2026`, `31/02/2026`, texto y Desde posterior a Hasta: debe aparecer un mensaje humano y conservarse el filtro ya aplicado.
+2. Confirmar que ambos campos muestran completo `dd/mm/aaaa`, conservan el botón de calendario y permiten escribir completo `06/10/2026`–`07/10/2026` antes de aplicar.
+3. Probar `32/10/2026`, `31/02/2026`, `abc`, `07/13/2026`, `7-10-2026` y Desde posterior a Hasta: el texto debe permanecer visible, con borde/mensaje humano, y el filtro previo debe conservarse.
 4. Revisar Todos, Hoy, Ayer y Rango; comprobar fechas `dd/MM/yyyy · HH:mm`, conteos y día final inclusivo.
 5. Elegir Sesión actual. Debe indicar 57 ventas; la primera página debe decir `Página 1 de 2 · 57 ventas · 50 por página` y mostrar únicamente `Venta #NNNNNN`, con la caja en su propia columna.
 6. Ir a la segunda página: debe decir `Página 2 de 2`, contener siete filas y deshabilitar Siguiente. No deben aparecer caja auxiliar, GUID, folio técnico, CashSessionId, `CASH` ni «Aplicado».
@@ -13,6 +13,10 @@ Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4C-R1`, abierta desd
 9. Revisar 1280×820, 1920×1080 y F11/Escape. Salir sin operar.
 
 No vender, cobrar, abrir/cerrar/contar caja, modificar inventario/producción ni imprimir. Después del smoke, esperar confirmación explícita. No iniciar 1K.4D ni publicar: el siguiente checkpoint GitHub permanece después de 1K.4D.
+
+## Registro anterior — smoke de 1K.4C-R1
+
+R1 fue sustituida porque el smoke humano confirmó clipping real y borrado silencioso de fechas inválidas. No usar ese build para aprobar fechas.
 
 ## Registro anterior — smoke corto de 1K.4B-R1
 

@@ -1,8 +1,12 @@
-# FASE 1K ABIERTA — 1K.4C-R1, 07/10/2026
+# FASE 1K ABIERTA — 1K.4C-R2, 07/10/2026
 
-**FASE 1K.4C-R1 técnicamente completada; smoke humano pendiente.** Historial presenta fechas con DatePicker y entrada manual estricta `dd/MM/yyyy`, ayuda de una línea `dd/mm/aaaa` y mensajes humanos sin reemplazar el filtro activo ante fechas inválidas o rangos invertidos. El listado separa `Venta #NNNNNN` de la columna Caja y el detalle evita repetir la terminal en el título. La paginación informa página actual/total, total real de ventas y singular/plural; un resultado vacío no presenta una página ficticia.
+**FASE 1K.4C-R2 técnicamente completada; smoke humano pendiente.** El `DatePicker` estándar fue sustituido sólo en Presentation por un editor compuesto: `TextBox` normal, botón de calendario de 42 px y `Calendar` emergente. El buffer conserva literalmente entradas inválidas, valida de forma estricta e invariante `dd/MM/yyyy` al salir o aplicar, presenta borde/mensaje cercano y no cambia el filtro activo si falta una fecha, es inválida o Desde supera Hasta.
 
-Focales **28/28**; suite final **739/739** (561 generales + 178 WPF/Presentation), 0 fallidas/omitidas; Release Phase1K4C-R1 0 errores/advertencias. Sólo Presentation, pruebas y documentación; Domain/Application/Infrastructure/SQLite/migraciones intactos. Schema 16, sin 017. Base protegida SHA-256 inicial/final `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Revisión: `src/CasaMiga.Presentation/bin/Phase1K4C-R1/`, `work/Abrir-Casa-Miga-1K4C-R1.cmd`, DataDirectory `work/phase1k4c-r1-smoke-20261007`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4C-R1`. Ver `PHASE_1K4C_R1_REPORT.md`. No iniciar 1K.4D; no publicar hasta después de su cierre.
+Focales **29/29**; suite final **740/740** (561 generales + 179 WPF/Presentation), 0 fallidas/omitidas; Release Phase1K4C-R2 0 errores/advertencias. Sólo Presentation, pruebas y documentación; Domain/Application/Infrastructure/SQLite/migraciones intactos. Schema 16, sin 017. Base protegida SHA-256 inicial/final `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Revisión: `src/CasaMiga.Presentation/bin/Phase1K4C-R2/`, `work/Abrir-Casa-Miga-1K4C-R2.cmd`, DataDirectory `work/phase1k4c-r2-smoke-20261007`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4C-R2`. Ver `PHASE_1K4C_R2_REPORT.md`. No iniciar 1K.4D; no publicar hasta después de su cierre.
+
+## Registro anterior — 1K.4C-R1
+
+R1 conservó el DatePicker estándar; el smoke humano detectó que su botón interno heredaba el `MinWidth=116` global y reducía el viewport de texto a 38 px. También confirmó que WPF borraba la entrada inválida al intentar sincronizarla con `SelectedDate`. R2 reemplaza únicamente esa superficie.
 
 ## Registro anterior — 1K.4C
 

@@ -33,6 +33,11 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
     private int page;
     private Guid? cashSessionId;
     private SalesHistoryMode mode=SalesHistoryMode.Recent;
+    private string fromDateText="";
+    private string throughDateText="";
+    private string fromDateError="";
+    private string throughDateError="";
+    private string dateRangeError="";
     public bool Busy {get;private set;}
     public bool Ready=>!Busy;
     public bool IsList=>Detail is null;
@@ -44,6 +49,13 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
     public string Folio {get;set;}="";
     public DateTime? FromDate {get;set;}
     public DateTime? ThroughDate {get;set;}
+    public string FromDateText {get=>fromDateText;set{if(fromDateText==value)return;fromDateText=value??"";FromDateError="";DateRangeError="";Notify();}}
+    public string ThroughDateText {get=>throughDateText;set{if(throughDateText==value)return;throughDateText=value??"";ThroughDateError="";DateRangeError="";Notify();}}
+    public string FromDateError {get=>fromDateError;private set{fromDateError=value;}}
+    public string ThroughDateError {get=>throughDateError;private set{throughDateError=value;}}
+    public string DateRangeError {get=>dateRangeError;private set{dateRangeError=value;}}
+    public bool HasFromDateError=>FromDateError.Length>0;
+    public bool HasThroughDateError=>ThroughDateError.Length>0;
     public IReadOnlyList<SalesHistoryRowView> Sales {get;private set;}=[];
     public SalesHistoryRowView? SelectedSale {get;set;}
     public SalesHistoryDetail? Detail {get;private set;}
@@ -92,26 +104,39 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
     private Task ApplyDay(DateOnly day)=>Run(async()=>
     {
         Folio="";cashSessionId=null;page=0;mode=SalesHistoryMode.DateRange;
-        FromDate=day.ToDateTime(TimeOnly.MinValue);ThroughDate=FromDate;await Refresh();
+        FromDate=day.ToDateTime(TimeOnly.MinValue);ThroughDate=FromDate;FromDateText=FormatDate(day);ThroughDateText=FormatDate(day);ClearDateErrors();await Refresh();
     });
-    public Task SearchFolioAsync()=>Run(async()=>{FromDate=null;ThroughDate=null;cashSessionId=null;mode=SalesHistoryMode.Folio;page=0;await Refresh();});
-    public Task SearchDatesAsync()=>FromDate is { } from&&ThroughDate is { } through
-        ? ApplyDateRangeAsync(DateOnly.FromDateTime(from),DateOnly.FromDateTime(through))
-        : RejectDateRange("Captura las fechas desde y hasta con formato dd/mm/aaaa.");
-    public Task SearchDatesAsync(string fromText,string throughText)
+    public Task SearchFolioAsync()=>Run(async()=>{ClearDates();cashSessionId=null;mode=SalesHistoryMode.Folio;page=0;await Refresh();});
+    public Task SearchDatesAsync()
     {
-        if(!TryParseDate(fromText,out var from)||!TryParseDate(throughText,out var through))
-            return RejectDateRange("Captura fechas válidas con formato dd/mm/aaaa, por ejemplo 07/10/2026.");
+        ClearDateErrors();
+        var fromValid=TryParseDate(FromDateText,out var from);
+        var throughValid=TryParseDate(ThroughDateText,out var through);
+        if(!fromValid)FromDateError=DateError(FromDateText);
+        if(!throughValid)ThroughDateError=DateError(ThroughDateText);
+        if(!fromValid||!throughValid)return RejectDateRange("Revisa las fechas indicadas.");
+        if(from>through)
+        {
+            DateRangeError="La fecha desde no puede ser posterior a la fecha hasta.";
+            return RejectDateRange(DateRangeError);
+        }
         return ApplyDateRangeAsync(from,through);
     }
-    public void ReportDateInputError()
+    public Task SearchDatesAsync(string fromText,string throughText)
     {
-        if(Busy)return;
-        Message="Captura fechas válidas con formato dd/mm/aaaa, por ejemplo 07/10/2026.";Notify();
+        FromDateText=fromText;ThroughDateText=throughText;return SearchDatesAsync();
+    }
+    public void ValidateFromDateText()
+    {
+        if(Busy)return;FromDateError=string.IsNullOrWhiteSpace(FromDateText)||TryParseDate(FromDateText,out _)?"":DateError(FromDateText);Notify();
+    }
+    public void ValidateThroughDateText()
+    {
+        if(Busy)return;ThroughDateError=string.IsNullOrWhiteSpace(ThroughDateText)||TryParseDate(ThroughDateText,out _)?"":DateError(ThroughDateText);Notify();
     }
     public Task CurrentSessionAsync()=>Run(async()=>
     {
-        Folio="";FromDate=null;ThroughDate=null;page=0;mode=SalesHistoryMode.CashSession;cashSessionId=currentCashSession();
+        Folio="";ClearDates();page=0;mode=SalesHistoryMode.CashSession;cashSessionId=currentCashSession();
         if(cashSessionId is null)
         {
             Sales=[];SelectedSale=null;HasNext=false;PageLabel="";FilterSummary="Sesión actual · 0 ventas";ClearDetail();
@@ -183,7 +208,7 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
         return Run(async()=>
         {
             Folio="";cashSessionId=null;mode=SalesHistoryMode.DateRange;page=0;
-            FromDate=from.ToDateTime(TimeOnly.MinValue);ThroughDate=through.ToDateTime(TimeOnly.MinValue);await Refresh();
+            FromDate=from.ToDateTime(TimeOnly.MinValue);ThroughDate=through.ToDateTime(TimeOnly.MinValue);FromDateText=FormatDate(from);ThroughDateText=FormatDate(through);ClearDateErrors();await Refresh();
         });
     }
     private Task RejectDateRange(string message)
@@ -193,7 +218,11 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
     }
     private static bool TryParseDate(string? text,out DateOnly value)=>DateOnly.TryParseExact(
         text?.Trim(),"dd/MM/yyyy",CultureInfo.InvariantCulture,DateTimeStyles.None,out value);
-    private void ResetFilters(){Folio="";FromDate=null;ThroughDate=null;cashSessionId=null;page=0;}
+    private static string FormatDate(DateOnly value)=>value.ToString("dd/MM/yyyy",CultureInfo.InvariantCulture);
+    private static string DateError(string value)=>string.IsNullOrWhiteSpace(value)?"Captura una fecha en formato dd/mm/aaaa.":"Fecha inválida. Usa dd/mm/aaaa.";
+    private void ClearDateErrors(){FromDateError="";ThroughDateError="";DateRangeError="";}
+    private void ClearDates(){FromDate=null;ThroughDate=null;fromDateText="";throughDateText="";ClearDateErrors();}
+    private void ResetFilters(){Folio="";ClearDates();cashSessionId=null;page=0;}
     private void ClearDetail()
     {
         Detail=null;DetailItems=[];ReprintAllowed=false;ReprintResult=null;ReprintMessage="";
