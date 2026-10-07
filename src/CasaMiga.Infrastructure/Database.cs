@@ -122,6 +122,15 @@ public sealed class Database(string path)
                 command.CommandText = "SELECT (SELECT count(*) FROM pragma_table_info('payment') WHERE name='reference')=1 AND (SELECT count(*) FROM sqlite_master WHERE name IN ('payment','payment_no_update','payment_no_delete','payment_no_append','sale_refund_complete','sale_complete'))=6 AND (SELECT count(*) FROM sqlite_master WHERE name='payment_020')=0";
                 if (Convert.ToInt64(command.ExecuteScalar()) != 1) throw new InvalidOperationException("La migración de formas de pago no creó sus estructuras.");
             }
+            if (i + 1 == 21)
+            {
+                command.CommandText = "SELECT (SELECT count(*) FROM sqlite_master WHERE name IN ('consignment_price','consignment_store','ux_consignment_store_name','consignment_store_no_delete',"
+                    + "'consignment_template_item','consignment_delivery','consignment_delivery_item','consignment_delivery_item_valid','consignment_delivery_complete','consignment_void',"
+                    + "'consignment_settlement','consignment_settlement_item','consignment_settlement_item_valid','consignment_settlement_complete','consignment_void_valid',"
+                    + "'consignment_payment','consignment_delivery_no_update','consignment_delivery_no_delete','consignment_payment_no_update','consignment_payment_no_delete'))=20"
+                    + " AND (SELECT count(*) FROM role_permission WHERE permission_name LIKE 'consignment.%')=4";
+                if (Convert.ToInt64(command.ExecuteScalar()) != 1) throw new InvalidOperationException("La migración de charolas no creó sus estructuras.");
+            }
             command.CommandText = "INSERT INTO schema_migration VALUES($v,$hash,$at)";
             command.Parameters.AddWithValue("$hash", hash);
             command.Parameters.AddWithValue("$at", DateTimeOffset.UtcNow.ToString("O"));

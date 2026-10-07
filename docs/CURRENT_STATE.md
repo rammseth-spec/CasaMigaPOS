@@ -1,3 +1,7 @@
+# Charolas a consignación — 06/10/2026
+
+**Implementado; smoke manual pendiente.** Nueva pantalla **Charolas** (Administrator y Manager) con migración 021: precio de charola por producto, tiendas cliente con charola habitual, entregar, recoger (lo que regresa se aparta para Piedra), cobros por tienda aparte de la caja con saldo pendiente, anulación de charolas sin recoger y reporte (% de venta, Piedra, cargado, pagado, saldo y margen que se queda en tiendas). Registros inmutables y validados por la base; auditoría `consignment.*`. `seed-review --demo-days` ahora también crea 3 tiendas con charolas diarias, recolecciones y cobros. Corregido un enlace de WPF que dejaba vacía la lista de la charola habitual cuando la pantalla nacía sin datos; prueba de regresión con el orden real de arranque. Ver [CONSIGNMENT.md](CONSIGNMENT.md).
+
 # Gráficas en Reportes y copia con 4 semanas — 06/10/2026
 
 **Implementado; smoke manual pendiente.** El usuario reportó que «Generar» no hacía nada y que no había gráficas. Generar sí recalculaba, pero con el mismo periodo las cifras no cambiaban y no había ninguna señal; ahora muestra «Actualizado a las hh:mm:ss» y «Generando…». Gráficas de barras en Resumen (ventas por día o semana, 10 productos más vendidos, formas de pago), Comparativo (día por día contra el periodo anterior), Control de caja (motivos) y Producción (barra junto a lo sugerido). Tablas ajustadas para no desplazarse a lo ancho a 1280 px; Cortes junta apertura y cierre en «Turno». Ver [REPORTS.md](REPORTS.md).

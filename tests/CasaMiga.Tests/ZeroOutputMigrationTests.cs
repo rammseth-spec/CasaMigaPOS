@@ -76,7 +76,7 @@ public sealed partial class RecipePersistenceTests
         var tables=new List<string>();using(var r=q.ExecuteReader())while(r.Read())tables.Add(r.GetString(0));
         var result=new List<string>();
         // Historical business snapshot excludes new photo-only tables when comparing pre-photo upgrades.
-        foreach(var table in tables.Where(x=>(migrations||x!="schema_migration") && (!excludeProductionPermissions || x is not ("product_photo" or "product_photo_asset" or "branch" or "sync_outbox" or "sale_refund" or "sale_refund_item"))))
+        foreach(var table in tables.Where(x=>(migrations||x!="schema_migration") && (!excludeProductionPermissions || x is not ("product_photo" or "product_photo_asset" or "branch" or "sync_outbox" or "sale_refund" or "sale_refund_item") && !x.StartsWith("consignment_", StringComparison.Ordinal))))
         {
             q.CommandText="SELECT * FROM \""+table+"\"";
             // Migration 017 only adds must_change_password and users.manage; compare the historical columns/rows.
@@ -85,7 +85,7 @@ public sealed partial class RecipePersistenceTests
             if(excludeProductionPermissions && table=="payment")
                 q.CommandText="SELECT id,sale_id,method,applied_cents,received_cents,change_cents FROM payment";
             if(excludeProductionPermissions && table is "permission" or "role_permission")
-                q.CommandText+=" WHERE "+(table=="permission"?"name":"permission_name")+" NOT IN ('recipe.view','recipe.configure','production.view','production.create','production.confirm','users.manage','sales.refund')";
+                q.CommandText+=" WHERE "+(table=="permission"?"name":"permission_name")+" NOT IN ('recipe.view','recipe.configure','production.view','production.create','production.confirm','users.manage','sales.refund','consignment.view','consignment.manage')";
             using var r=q.ExecuteReader();var rows=new List<string>();
             while(r.Read()){var values=new object[r.FieldCount];r.GetValues(values);rows.Add(JsonSerializer.Serialize(values));}
             result.Add(table+string.Join("\n",rows.Order(StringComparer.Ordinal)));

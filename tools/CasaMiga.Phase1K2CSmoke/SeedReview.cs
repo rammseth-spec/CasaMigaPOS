@@ -72,15 +72,89 @@ internal static class SeedReview
         }
 
         var demo = demoDays > 0 ? SeedSales(unit, journal, session, identity, adminPassword, terminal, products, demoDays) : null;
+        var trays = demoDays > 0 ? SeedConsignment(unit, session, identity, adminPassword, terminal, products, demoDays) : null;
         if (session.Current is not null) session.SignOut();
 
         Console.WriteLine(JsonSerializer.Serialize(new
         {
             Target = target, Terminal = terminal.Name, Categories = categories.Count, Products = rows.Count, Photos = imported,
             Admin = "admin", AdminPassword = adminPassword, Cashier = "cajero1", CashierTemporaryPassword = cashierTemporary,
-            DemoSales = demo?.Sales ?? 0, DemoRefunds = demo?.Refunds ?? 0, DemoShifts = demo?.Shifts ?? 0, DemoCashiers = demo?.Cashiers
+            DemoSales = demo?.Sales ?? 0, DemoRefunds = demo?.Refunds ?? 0, DemoShifts = demo?.Shifts ?? 0, DemoCashiers = demo?.Cashiers,
+            DemoTrayStores = trays?.Stores ?? 0, DemoTrays = trays?.Deliveries ?? 0, DemoTraysCollected = trays?.Collected ?? 0, DemoTrayPayments = trays?.Payments ?? 0
         }));
         return 0;
+    }
+
+    private sealed record TrayDemoResult(int Stores, int Deliveries, int Collected, int Payments);
+
+    /// <summary>
+    /// Charolas deterministas con el servicio real: tres tiendas, entrega diaria y recolección al día siguiente.
+    /// Una tienda paga completo, otra a veces deja saldo y otra paga cada semana; la charola de ayer sigue en la tienda.
+    /// </summary>
+    private static TrayDemoResult SeedConsignment(SqliteLocalUnitOfWork unit, UserSession session, IdentityService identity, string adminPassword,
+        TerminalIdentity terminal, List<(Row Row, Product Product)> products, int days)
+    {
+        var random = new Random(4012);
+        var clock = new DemoClock { UtcNow = DateTimeOffset.UtcNow };
+        if (session.Current is not null) session.SignOut();
+        if (!identity.Login("admin", adminPassword)) throw new InvalidOperationException("No se pudo iniciar sesión como admin.");
+        var service = new ConsignmentService(unit, session, clock, terminal.Id, TimeZoneInfo.Local);
+
+        // Precio de charola: 80 % del de mostrador, redondeado a 50 centavos. Las bebidas no van en charola.
+        var bread = products.Where(p => !p.Row.Category.Equals("Bebida", StringComparison.OrdinalIgnoreCase)).Select(p => p.Product).ToList();
+        foreach (var product in bread)
+            service.SetPrice(product.Id, new Money((long)(Math.Round(product.SalePrice.Cents * 0.8m / 50m, MidpointRounding.AwayFromZero) * 50)));
+
+        var plans = new[]
+        {
+            (Name: "Abarrotes Lupita", Contact: "Lupita Hernández", Phone: "55 1234 5678", Address: "Av. Juárez 120", Kinds: 3, Each: 4, Pays: 0),
+            (Name: "Tienda Don Pepe", Contact: "José Ramírez", Phone: "55 8765 4321", Address: "Calle Hidalgo 45", Kinds: 5, Each: 3, Pays: 1),
+            (Name: "Miscelánea La Esquina", Contact: "Rosa Martínez", Phone: "55 2468 1357", Address: "Esquina Morelos y 5 de Mayo", Kinds: 4, Each: 3, Pays: 2),
+        };
+        var stores = new List<(ConsignmentStore Store, int Pays)>();
+        foreach (var plan in plans)
+        {
+            var store = service.SaveStore(null, plan.Name, plan.Contact, plan.Phone, plan.Address);
+            var picks = bread.OrderBy(_ => random.Next()).Take(plan.Kinds).Select(p => new ConsignmentLine(p.Id, plan.Each)).ToList();
+            service.SaveTemplate(store.Id, picks);
+            stores.Add((store, plan.Pays));
+        }
+
+        DateTimeOffset At(DateOnly day, int hour, int minute) =>
+            new(TimeZoneInfo.ConvertTimeToUtc(day.ToDateTime(new TimeOnly(hour, minute), DateTimeKind.Unspecified), TimeZoneInfo.Local), TimeSpan.Zero);
+        int deliveries = 0, collected = 0, payments = 0;
+        var today = DateOnly.FromDateTime(DateTime.Now);
+        for (var offset = days; offset >= 1; offset--)
+        {
+            var day = today.AddDays(-offset);
+            for (int s = 0; s < stores.Count; s++)
+            {
+                var (store, pays) = stores[s];
+                // Primero se recoge la charola de ayer y después se deja la nueva.
+                clock.UtcNow = At(day, 7, 0).AddMinutes(10 + s * 25);
+                if (service.Route().Single(r => r.Store.Id == store.Id).AtStore.FirstOrDefault() is { } tray)
+                {
+                    var returned = tray.Items.ToDictionary(i => i.Position, i => Math.Min(i.Quantity, random.Next(100) < 70 ? 0 : random.Next(1, 3)));
+                    var sold = new Money(tray.Items.Sum(i => i.UnitPrice.Cents * (i.Quantity - returned[i.Position])));
+                    var owed = service.Route().Single(r => r.Store.Id == store.Id).Balance + sold;
+                    var paid = pays switch
+                    {
+                        0 => owed,                                                        // paga todo
+                        1 => offset % 3 == 0 ? new Money(sold.Cents / 2 / 100 * 100) : sold, // a veces deja la mitad
+                        _ => offset % 7 == 0 ? owed : new Money(0),                       // paga cada semana
+                    };
+                    var method = random.Next(100) < 80 ? PaymentMethod.Cash : PaymentMethod.Transfer;
+                    var result = service.Collect(tray.Id, returned, paid, method, method == PaymentMethod.Transfer ? $"SPEI {random.Next(10000, 99999)}" : null, "");
+                    collected++;
+                    if (result.Payment is not null) payments++;
+                }
+                clock.UtcNow = At(day, 7, 0).AddMinutes(20 + s * 25);
+                service.Deliver(store.Id, service.Template(store.Id).Select(l => new ConsignmentLine(l.ProductId, l.Quantity)).ToList(), "");
+                deliveries++;
+            }
+        }
+        session.SignOut();
+        return new(stores.Count, deliveries, collected, payments);
     }
 
     private static int ImageEdge(string file)

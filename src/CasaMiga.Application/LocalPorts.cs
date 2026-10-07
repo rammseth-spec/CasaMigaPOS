@@ -93,6 +93,28 @@ public interface ILocalStore
     IReadOnlyList<SaleLineFact> QuerySaleLines(DateTimeOffset fromUtc, DateTimeOffset untilUtc);
     IReadOnlyList<SaleFact> QuerySaleFacts(DateTimeOffset fromUtc, DateTimeOffset untilUtc);
     IReadOnlyList<RefundFact> QueryRefundFacts(DateTimeOffset fromUtc, DateTimeOffset untilUtc);
+    // Charolas a consignación
+    IReadOnlyList<ConsignmentStore> ListConsignmentStores(bool includeInactive);
+    ConsignmentStore? FindConsignmentStore(Guid id);
+    bool ConsignmentStoreNameTaken(string name, Guid? except);
+    void SaveConsignmentStore(ConsignmentStore store, bool create, DateTimeOffset at);
+    IReadOnlyList<ConsignmentTemplateLine> ConsignmentTemplate(Guid storeId);
+    void ReplaceConsignmentTemplate(Guid storeId, IReadOnlyList<ConsignmentLine> lines);
+    IReadOnlyList<ConsignmentPrice> ConsignmentPrices();
+    Money? FindConsignmentPrice(Guid productId);
+    void SetConsignmentPrice(Guid productId, Money? price, DateTimeOffset at);
+    void AddConsignmentDelivery(ConsignmentDelivery delivery);
+    ConsignmentDelivery? FindConsignmentDelivery(Guid id);
+    ConsignmentDelivery? FindConsignmentDeliveryByOperation(Guid operation);
+    ConsignmentDelivery? FindConsignmentDeliveryBySettlement(Guid operation);
+    IReadOnlyList<ConsignmentDelivery> QueryConsignmentDeliveries(DateTimeOffset? fromUtc, DateTimeOffset? untilUtc, Guid? storeId, bool openOnly);
+    DateTimeOffset? LastConsignmentDelivery(Guid storeId);
+    void AddConsignmentSettlement(ConsignmentSettlement settlement);
+    void AddConsignmentVoid(ConsignmentVoid cancellation);
+    void AddConsignmentPayment(ConsignmentPayment payment);
+    ConsignmentPayment? FindConsignmentPaymentByOperation(Guid operation);
+    IReadOnlyList<ConsignmentPayment> QueryConsignmentPayments(DateTimeOffset? fromUtc, DateTimeOffset? untilUtc, Guid? storeId);
+    Money ConsignmentBalance(Guid storeId);
     void AddRefund(SaleRefundRecord refund);
     IReadOnlyList<SaleRefundRecord> ListRefunds(Guid saleId);
     SaleRefundRecord? FindRefundByOperation(Guid operation);

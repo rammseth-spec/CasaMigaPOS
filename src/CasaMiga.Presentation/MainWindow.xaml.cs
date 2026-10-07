@@ -110,6 +110,7 @@ public partial class MainWindow : Window
     private async void CatalogNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowCatalogAsync();
     private async void SalesNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowSalesHistoryAsync();
     private async void ReportsNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowReportsAsync();
+    private async void ConsignmentNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowConsignmentAsync();
     private async void SyncNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowSyncAsync();
     private async void SyncNowClick(object sender,RoutedEventArgs e){ if (Model.Sync is { } sync) await sync.RunAsync(); }
     private async void RegisterTerminalClick(object sender,RoutedEventArgs e)
