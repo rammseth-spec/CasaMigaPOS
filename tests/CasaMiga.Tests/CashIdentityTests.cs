@@ -177,7 +177,8 @@ public sealed class CashIdentityTests
     {
         var first=TerminalConfiguration.LoadOrCreate(directory);
         Assert.AreEqual(first,TerminalConfiguration.LoadOrCreate(directory));
-        using(var lease=new DirectoryLease(directory)) Assert.ThrowsExactly<IOException>(()=>new DirectoryLease(directory));
+        // Una segunda ventana con la misma carpeta se distingue de una falla de disco: la app sólo muestra la que ya está abierta.
+        using(var lease=new DirectoryLease(directory)) Assert.ThrowsExactly<DataDirectoryInUseException>(()=>new DirectoryLease(directory));
         using var next=new DirectoryLease(directory);
     }
     [TestMethod] public void UpgradeFromVersionOnePreservesCatalogAndCreatesIdentity()

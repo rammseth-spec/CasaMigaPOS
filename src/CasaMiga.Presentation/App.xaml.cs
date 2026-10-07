@@ -61,6 +61,14 @@ public partial class App : System.Windows.Application
             if (options.IsDevelopment && options.DiagnosticCrashOnStartup)
                 _ = Dispatcher.BeginInvoke(new Action(() => throw new InvalidOperationException("DEMO-SECRET-MUST-NOT-BE-LOGGED")));
         }
+        catch (DataDirectoryInUseException)
+        {
+            // No es una falla: Casa Miga ya está abierta (doble clic en el ícono). Se muestra esa ventana y ésta se cierra sin registrar incidente.
+            if (!RunningInstance.TryActivateOther())
+                MessageBox.Show("Casa Miga ya está abierta en esta computadora. Búscala en la barra de tareas.", "Casa Miga",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+            Shutdown(0);
+        }
         catch (Exception error) { FatalOnUi(FailureOrigin.Startup, error); }
     }
     protected override void OnExit(ExitEventArgs e) { lease?.Dispose(); base.OnExit(e); }

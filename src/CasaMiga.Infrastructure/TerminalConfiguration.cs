@@ -31,13 +31,18 @@ public static class TerminalConfiguration
     }
 }
 
+/// <summary>Otra ventana de Casa Miga ya tiene abierta esta carpeta de datos (por ejemplo, doble clic en el ícono). No es una falla.</summary>
+public sealed class DataDirectoryInUseException(Exception inner) : IOException("La carpeta de datos ya está abierta en otra ventana de Casa Miga.", inner);
+
 public sealed class DirectoryLease : IDisposable
 {
+    private const int SharingViolation = 32, LockViolation = 33;
     private readonly FileStream stream;
     public DirectoryLease(string directory)
     {
         Directory.CreateDirectory(directory);
-        stream = new FileStream(Path.Combine(directory, "casamiga.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+        try { stream = new FileStream(Path.Combine(directory, "casamiga.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None); }
+        catch (IOException error) when ((error.HResult & 0xFFFF) is SharingViolation or LockViolation) { throw new DataDirectoryInUseException(error); }
     }
     public void Dispose() => stream.Dispose();
 }
