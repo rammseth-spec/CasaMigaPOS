@@ -15,19 +15,17 @@ public partial class ConsignmentView : UserControl
         // Al entregar, tarjetas y charola llenan la ventana como en el Punto de venta; cada lista se desplaza por su cuenta.
         Loaded += (_, _) =>
         {
-            if (page is not null) return;
+            if (page is not null) { FitWorkspace(page.ActualHeight); return; }
             for (DependencyObject? parent = VisualTreeHelper.GetParent(this); parent is not null; parent = VisualTreeHelper.GetParent(parent))
                 if (parent is ScrollViewer viewer) { page = viewer; break; }
             if (page is null) return;
-            page.SizeChanged += (_, _) => FitWorkspace();
-            FitWorkspace();
+            // Usar la altura nueva del evento: ViewportHeight todavía conserva la anterior cuando cambia el tamaño (F11, maximizar).
+            page.SizeChanged += (_, e) => FitWorkspace(e.NewSize.Height);
+            FitWorkspace(page.ActualHeight);
         };
     }
 
-    private void FitWorkspace()
-    {
-        if (page is not null) DeliverWorkspace.Height = Math.Max(DeliverWorkspace.MinHeight, page.ViewportHeight - 96);
-    }
+    private void FitWorkspace(double pageHeight) => DeliverWorkspace.Height = Math.Max(DeliverWorkspace.MinHeight, pageHeight - 96);
     private ConsignmentViewModel Model => (ConsignmentViewModel)DataContext;
     private static T? Item<T>(object sender) where T : class => (sender as FrameworkElement)?.DataContext as T;
 

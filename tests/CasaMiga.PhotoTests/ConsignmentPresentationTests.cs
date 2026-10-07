@@ -90,6 +90,36 @@ public sealed class ConsignmentPresentationTests
         finally { window.Close(); }
     });
 
+    [TestMethod]
+    public Task DeliveryWorkspaceFollowsTheWindowHeight() => WpfTestHost.OnUi(async () =>
+    {
+        using var fixture = new Fixture(); await fixture.InitializeAsync();
+        var model = fixture.Model.Consignment!;
+        var view = new ConsignmentView { DataContext = model };
+        var page = new ScrollViewer { Content = view, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
+        var window = OffscreenWindow(new Window { Content = page });
+        try
+        {
+            window.Show(); Settle(window);
+            await model.StartDeliverAsync(model.Route.Single()); Settle(window);
+            var workspace = (Grid)view.FindName("DeliverWorkspace");
+            Assert.AreEqual(page.ActualHeight - 96, workspace.ActualHeight, 1, "La zona de entrega llena la ventana.");
+            // Pantalla completa o ventana más alta: la zona crece con ella (antes conservaba la altura anterior).
+            window.Height = 1080; Settle(window);
+            Assert.AreEqual(page.ActualHeight - 96, workspace.ActualHeight, 1, "Al agrandar la ventana, la zona de entrega crece.");
+            window.Height = 820; Settle(window);
+            Assert.AreEqual(page.ActualHeight - 96, workspace.ActualHeight, 1, "Y se encoge al volver.");
+        }
+        finally { window.Close(); }
+    });
+
+    private static void Settle(Window window)
+    {
+        window.UpdateLayout();
+        window.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.ContextIdle);
+        window.UpdateLayout();
+    }
+
     private static ItemsControl List(DependencyObject root, string name) =>
         Descendants<ItemsControl>(root).Single(i => i is not ListBox && AutomationProperties.GetName(i) == name);
 
