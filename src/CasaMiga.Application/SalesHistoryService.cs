@@ -3,25 +3,28 @@ using CasaMiga.Domain;
 
 namespace CasaMiga.Application;
 
-public enum SalesHistoryMode { Recent, Folio, DateRange }
+public enum SalesHistoryMode { Recent, Folio, DateRange, CashSession }
 
 public sealed record SalesHistoryQuery(
     SalesHistoryMode Mode = SalesHistoryMode.Recent,
     string Folio = "",
     DateOnly? From = null,
     DateOnly? Through = null,
-    int Page = 0);
+    int Page = 0,
+    Guid? CashSessionId = null);
 
 public sealed record SalesHistoryFilter(
     Guid? TerminalId,
     long? Sequence,
     DateTimeOffset? FromUtc,
     DateTimeOffset? UntilUtc,
-    int Page);
+    int Page,
+    Guid? CashSessionId = null);
 
 public sealed record SalesHistoryRow(
     Guid SaleId,
     string Folio,
+    long Sequence,
     DateTimeOffset ConfirmedAt,
     Money Total,
     string PaymentMethod,
@@ -69,12 +72,15 @@ public sealed class SalesHistoryService(
         var filter = query.Mode switch
         {
             SalesHistoryMode.Recent when string.IsNullOrWhiteSpace(query.Folio)
-                && query.From is null && query.Through is null
+                && query.From is null && query.Through is null && query.CashSessionId is null
                 => new SalesHistoryFilter(null, null, null, null, query.Page),
-            SalesHistoryMode.Folio when query.From is null && query.Through is null
+            SalesHistoryMode.Folio when query.From is null && query.Through is null && query.CashSessionId is null
                 => FolioFilter(query.Folio, query.Page),
-            SalesHistoryMode.DateRange when string.IsNullOrWhiteSpace(query.Folio)
+            SalesHistoryMode.DateRange when string.IsNullOrWhiteSpace(query.Folio) && query.CashSessionId is null
                 => DateFilter(query.From, query.Through, query.Page),
+            SalesHistoryMode.CashSession when string.IsNullOrWhiteSpace(query.Folio)
+                && query.From is null && query.Through is null && query.CashSessionId is { } session && session != Guid.Empty
+                => new SalesHistoryFilter(null, null, null, null, query.Page, session),
             _ => throw new SalesHistoryException("Usa la búsqueda por folio o por fechas, no ambas.")
         };
         return store.QuerySales(filter);

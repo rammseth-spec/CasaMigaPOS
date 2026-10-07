@@ -105,7 +105,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 Pos = new(new PosService(database,user,terminal.Id),checkout,receipts,photoUi,()=>UserLabel + " · " + TerminalLabel,(eventName,errorType)=>runtime.TryLog(eventName,errorType)){IsDevelopment=options.IsDevelopment};
                 catalogService = new CatalogService(database,user,clock,terminal.Id,options.IsDevelopment);
                 Catalog = new(catalogService,photoUi,options.IsDevelopment,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
-                SalesHistory = new(new SalesHistoryService(database,user,TimeZoneInfo.Local),receipts,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
+                SalesHistory = new(new SalesHistoryService(database,user,TimeZoneInfo.Local),receipts,TimeZoneInfo.Local,clock,
+                    ()=>opened?.Session.Id,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 Inventory = new(new InventoryService(new SqliteInventoryStore(sqlite, clock), database, user, clock, terminal.Id),
                     catalogService, (eventName,errorType)=>runtime.TryLog(eventName,errorType),new ConsumptionViewModel(new SaleConsumptionService(database,database,user,clock,terminal.Id)));
                 var inventoryService=new InventoryService(new SqliteInventoryStore(sqlite,clock),database,user,clock,terminal.Id);

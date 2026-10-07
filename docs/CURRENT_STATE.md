@@ -1,4 +1,10 @@
-# FASE 1K ABIERTA — 1K.4B-R1, 07/10/2026
+# FASE 1K ABIERTA — 1K.4C, 07/10/2026
+
+**FASE 1K.4C técnicamente completada; smoke humano pendiente.** Historial usa `Sale.Sequence` persistido como `Nombre de caja · Venta #NNNNNN`, fechas locales y `Efectivo`; oculta GUID, folio técnico, CashSessionId y «Aplicado». Incorpora filtros Todos/Hoy/Ayer/Rango/Sesión actual. El filtro opcional de CashSessionId se aplica en SQLite antes de count/LIMIT/OFFSET y `null` conserva el comportamiento previo. El resumen muestra sólo el total completo y fiable de ventas.
+
+Focales **26/26**; suite final **737/737** (561 generales + 176 WPF/Presentation), 0 fallidas/omitidas; Release Phase1K4C 0 errores/advertencias. Domain y migraciones intactos; Application/Infrastructure sólo amplían la consulta de lectura. Schema 16, sin 017. Base protegida SHA-256 inicial/final `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Revisión: `src/CasaMiga.Presentation/bin/Phase1K4C/`, `work/Abrir-Casa-Miga-1K4C.cmd`, DataDirectory `work/phase1k4c-smoke-20261007`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4C`. Ver `PHASE_1K4C_REPORT.md`. No iniciar 1K.4D; no publicar hasta después de su cierre.
+
+## Registro anterior — 1K.4B-R1
 
 **FASE 1K.4B-R1 técnicamente completada; smoke humano del parpadeo pendiente.** La causa fue el uso de `Busy` y una notificación global en cada mutación del carrito: WPF deshabilitaba y habilitaba nuevamente el árbol completo del POS, incluido el catálogo, y el estilo de las tarjetas cambiaba su opacidad. Las mutaciones ahora notifican sólo propiedades del carrito, conservan la referencia de `Products`, `ItemsSource`, contenedores, imágenes, búsqueda, categoría, página y scroll. Un estado ocupado específico protege carrito, checkout y cierre sin deshabilitar el catálogo.
 

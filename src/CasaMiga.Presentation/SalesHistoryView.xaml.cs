@@ -8,7 +8,10 @@ public partial class SalesHistoryView : UserControl
 {
     public SalesHistoryView()=>InitializeComponent();
     private SalesHistoryViewModel Model=>(SalesHistoryViewModel)DataContext;
-    private async void SearchFolioClick(object sender,RoutedEventArgs e)=>await Model.SearchFolioAsync();
+    private async void AllClick(object sender,RoutedEventArgs e)=>await Model.ShowAllAsync();
+    private async void TodayClick(object sender,RoutedEventArgs e)=>await Model.TodayAsync();
+    private async void YesterdayClick(object sender,RoutedEventArgs e)=>await Model.YesterdayAsync();
+    private async void CurrentSessionClick(object sender,RoutedEventArgs e)=>await Model.CurrentSessionAsync();
     private async void SearchDatesClick(object sender,RoutedEventArgs e)=>await Model.SearchDatesAsync();
     private async void ClearClick(object sender,RoutedEventArgs e)=>await Model.ClearAsync();
     private async void PreviousClick(object sender,RoutedEventArgs e)=>await Model.PageAsync(-1);
@@ -19,6 +22,5 @@ public partial class SalesHistoryView : UserControl
     private async void HistoryKeyDown(object sender,KeyEventArgs e)
     {
         if(e.Key==Key.Escape&&Model.IsDetail){e.Handled=true;Model.Back();}
-        else if(e.Key==Key.Enter&&Keyboard.FocusedElement==FolioBox){e.Handled=true;await Model.SearchFolioAsync();}
     }
 }

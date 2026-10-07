@@ -17,10 +17,16 @@ public sealed class SalesHistoryTests : SalesFixture
         => new(reader ?? work, actor ?? user, zone ?? TimeZoneInfo.Utc);
 
     private Sale PersistAt(DateTimeOffset at, string? name = null, long? price = null)
+        => PersistAt(cash.Id,at,name,price);
+
+    private Sale PersistAt(Guid cashSessionId, DateTimeOffset at, string? name = null, long? price = null)
+        => PersistAt(cashSessionId,terminal.Id,at,name,price);
+
+    private Sale PersistAt(Guid cashSessionId, Guid saleTerminalId, DateTimeOffset at, string? name = null, long? price = null)
         => work.Run(store =>
         {
-            var sale = new Sale(Guid.NewGuid(), Guid.NewGuid(), user.Current!.Id, terminal.Id, cash.Id,
-                store.NextSaleSequence(terminal.Id), at,
+            var sale = new Sale(Guid.NewGuid(), Guid.NewGuid(), user.Current!.Id, saleTerminalId, cashSessionId,
+                store.NextSaleSequence(saleTerminalId), at,
                 [new SaleItem(product.Id, name ?? product.Name, new Money(price ?? product.SalePrice.Cents), 1)],
                 Guid.NewGuid(), new Money(price ?? product.SalePrice.Cents));
             store.AddSale(sale); return sale;
@@ -72,6 +78,28 @@ public sealed class SalesHistoryTests : SalesFixture
         Assert.AreEqual(created[^1].Id,first.Items[0].SaleId);
         Assert.IsFalse(first.Items.Select(x=>x.SaleId).Intersect(second.Items.Select(x=>x.SaleId)).Any());
         Assert.IsTrue(first.Items.Zip(first.Items.Skip(1)).All(pair=>pair.First.ConfirmedAt>=pair.Second.ConfirmedAt));
+    }
+
+    [TestMethod] public void OptionalCashSessionFilterIsAppliedBeforePagingAndNullKeepsPriorBehavior()
+    {
+        var otherTerminal=new TerminalIdentity(Guid.NewGuid(),"CAJA HISTORIAL");
+        var prior=CashSession.Open(Guid.NewGuid(),otherTerminal.Id,user.Current!.Id,clock.UtcNow.AddHours(-2),new Money(0));
+        work.Run(store=>{store.EnsureTerminal(otherTerminal,clock.UtcNow);store.AddCashSession(prior);return true;});
+        var at=new DateTimeOffset(2027,1,10,12,0,0,TimeSpan.Zero);var currentSales=new List<Sale>();
+        for(var index=0;index<55;index++)PersistAt(prior.Id,otherTerminal.Id,at.AddMinutes(index));
+        for(var index=0;index<65;index++)currentSales.Add(PersistAt(cash.Id,at.AddHours(-3).AddMinutes(index)));
+
+        var unfiltered=History().Search(new());
+        Assert.AreEqual(120,unfiltered.Total,"Null must retain the complete historical query.");
+        Assert.IsFalse(unfiltered.Items.Any(x=>x.CashSessionId==cash.Id),"The newest global page intentionally contains only the other session.");
+
+        var first=History().Search(new(SalesHistoryMode.CashSession,Page:0,CashSessionId:cash.Id));
+        var second=History().Search(new(SalesHistoryMode.CashSession,Page:1,CashSessionId:cash.Id));
+        Assert.AreEqual(65,first.Total);Assert.HasCount(50,first.Items);Assert.HasCount(15,second.Items);
+        Assert.IsTrue(first.Items.Concat(second.Items).All(x=>x.CashSessionId==cash.Id));
+        CollectionAssert.AreEquivalent(currentSales.Select(x=>x.Id).ToArray(),first.Items.Concat(second.Items).Select(x=>x.SaleId).ToArray());
+        Assert.AreEqual(0,History().Search(new(SalesHistoryMode.CashSession,CashSessionId:Guid.NewGuid())).Total);
+        Assert.ThrowsExactly<SalesHistoryException>(()=>History().Search(new(SalesHistoryMode.CashSession,CashSessionId:Guid.Empty)));
     }
 
     [TestMethod] public void ThousandsOfSalesRemainBoundedAndUseOneStorePageCall()

@@ -1,4 +1,18 @@
-# Próximo paso — smoke corto de 1K.4B-R1
+# Próximo paso — smoke manual de 1K.4C
+
+Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4C`, abierta desde `work/Abrir-Casa-Miga-1K4C.cmd`, con DataDirectory `work/phase1k4c-smoke-20261007`. No usar el acceso anclado ni builds anteriores.
+
+1. Iniciar sesión y entrar en Historial de ventas.
+2. Revisar Todos, Hoy, Ayer y un rango 06/10/2026–07/10/2026; comprobar fechas `dd/MM/yyyy · HH:mm` y conteos humanos.
+3. Elegir Sesión actual. Debe indicar 57 ventas, habilitar Siguiente y mostrar exclusivamente `CASA-MIGA-CAJA-01 · Venta #NNNNNN`.
+4. Ir a la segunda página y volver; no deben aparecer caja auxiliar, GUID, folio técnico, CashSessionId, `CASH` ni «Aplicado».
+5. Abrir una venta de varias piezas. Revisar productos históricos, precio unitario, cantidad, importe, subtotal, total, Efectivo, recibido, cambio, responsable y caja.
+6. Confirmar que Reimprimir ticket aparece según permiso, sin pulsarlo.
+7. Revisar 1280×820, 1920×1080 y F11/Escape. Salir sin operar.
+
+No vender, cobrar, abrir/cerrar/contar caja, modificar inventario/producción ni imprimir. Después del smoke, esperar confirmación explícita. No iniciar 1K.4D ni publicar: el siguiente checkpoint GitHub permanece después de 1K.4D.
+
+## Registro anterior — smoke corto de 1K.4B-R1
 
 Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4B-R1`, abierta desde `work/Abrir-Casa-Miga-1K4B-R1.cmd`, con DataDirectory `work/phase1k4b-r1-smoke-20261007`. No usar el acceso anclado ni builds anteriores.
 
