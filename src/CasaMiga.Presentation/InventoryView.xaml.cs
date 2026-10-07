@@ -18,7 +18,7 @@ public partial class InventoryView : UserControl
         var message=action==CasaMiga.Application.ConsumptionAction.Pause
             ?"Durante la pausa, las ventas continuarán registrándose pero no descontarán inventario. ¿Confirmas la pausa?"
             :"Al activar esta función, las ventas de productos configurados descontarán existencias automáticamente. ¿Deseas continuar?";
-        var confirmed=MessageBox.Show(Window.GetWindow(this),message,"Consumo automático por ventas",MessageBoxButton.YesNo,MessageBoxImage.Question,MessageBoxResult.No)==MessageBoxResult.Yes;
+        var confirmed=AppDialog.Show(Window.GetWindow(this),message,"Consumo automático por ventas",MessageBoxButton.YesNo,MessageBoxImage.Question,MessageBoxResult.No)==MessageBoxResult.Yes;
         await Model.Consumption!.ChangeAsync(action,confirmed);
     }
     private async void SearchClick(object sender, RoutedEventArgs e) => await Model.SearchAsync();

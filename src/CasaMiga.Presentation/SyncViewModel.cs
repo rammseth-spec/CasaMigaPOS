@@ -37,7 +37,10 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
         SyncState.NeedsAttention => "Nube: requiere atención",
         _ => "Nube: sin registrar"
     };
-    public string StatusDetail => Status.Detail + (Status.LastSuccess is { } at ? $"\nÚltimo envío confirmado: {at.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture)}" : "");
+    // Punto de color en la barra superior: verde al día, ámbar sin conexión o con algo por revisar, gris sin registrar o pendiente.
+    public bool IsUpToDate => Status.State == SyncState.UpToDate;
+    public bool NeedsCheck => Status.State is SyncState.Offline or SyncState.NeedsAttention;
+    public string StatusDetail => Status.Detail +(Status.LastSuccess is { } at ? $"\nÚltimo envío confirmado: {at.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture)}" : "");
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Notify()
     {

@@ -100,6 +100,18 @@ public sealed class SalesHistoryTests : SalesFixture
         Assert.ThrowsExactly<SalesHistoryException>(()=>History().Search(new(SalesHistoryMode.Folio,sale.Folio,new DateOnly(2026,1,1))));
     }
 
+    [TestMethod] public void VisibleFolioSearchFindsTheSaleByCashRegisterAndNumber()
+    {
+        var sale=PersistAt(clock.UtcNow);PersistAt(clock.UtcNow.AddSeconds(1));
+        var row=History().Search(new(SalesHistoryMode.Folio,sale.Folio)).Items.Single();
+        var visible=CasaMiga.Domain.DisplayFolio.FromInternal(sale.Folio,row.TerminalName);
+        StringAssert.Matches(visible,new System.Text.RegularExpressions.Regex(@"^C\d{2}-\d{6}$"));
+        Assert.AreEqual(sale.Id,History().Search(new(SalesHistoryMode.Folio,visible)).Items.Single().SaleId,"Folio del ticket.");
+        Assert.AreEqual(sale.Id,History().Search(new(SalesHistoryMode.Folio,visible.ToLowerInvariant())).Items.Single().SaleId);
+        Assert.AreEqual(sale.Id,History().Search(new(SalesHistoryMode.Folio,sale.Sequence.ToString(System.Globalization.CultureInfo.InvariantCulture))).Items.Single().SaleId,"Sólo el número.");
+        Assert.AreEqual(0,History().Search(new(SalesHistoryMode.Folio,"C98-"+sale.Sequence.ToString("D6",System.Globalization.CultureInfo.InvariantCulture))).Total,"Otra caja.");
+    }
+
     [TestMethod] public void LocalDateRangeUsesInclusiveStartAndExclusiveNextDay()
     {
         var zone=TimeZoneInfo.CreateCustomTimeZone("HistoryTest",TimeSpan.FromHours(-6),"HistoryTest","HistoryTest");

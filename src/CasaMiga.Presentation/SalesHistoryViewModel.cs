@@ -8,7 +8,8 @@ namespace CasaMiga.Presentation;
 public sealed record SalesHistoryRowView(SalesHistoryRow Row)
 {
     public Guid SaleId => Row.SaleId;
-    public string Folio => Row.Folio;
+    // Folio visible (C01-001061); el interno sigue en Row.Folio.
+    public string Folio => DisplayFolio.FromInternal(Row.Folio, Row.TerminalName);
     public string Date => Row.ConfirmedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss zzz", CultureInfo.InvariantCulture);
     public string Total => Format(Row.Total);
     public string Method => Payment.Label(Payment.Parse(Row.PaymentMethod));
@@ -56,7 +57,7 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
     public string RefundMediumNote=>CashSale
         ?"El efectivo sale de la caja abierta de esta terminal. El inventario no se modifica."
         :$"Venta pagada con {Payment.Label(Detail!.Sale.Payment.Kind).ToLowerInvariant()}: se reembolsa por el mismo medio y no sale efectivo de la caja. El inventario no se modifica.";
-    public string CancelConfirmation=>Detail is null?"":$"Se cancelará la venta {Detail.Sale.Folio}. {RefundService.CustomerInstruction(Detail.Sale.Payment.Kind,Detail.Sale.Total)} No se puede deshacer. ¿Continuar?";
+    public string CancelConfirmation=>Detail is null?"":$"Se cancelará la venta {DisplayFolio.For(Detail.TerminalName,Detail.Sale.Sequence)}. {RefundService.CustomerInstruction(Detail.Sale.Payment.Kind,Detail.Sale.Total)} No se puede deshacer. ¿Continuar?";
     public string ReturnConfirmation=>(CashSale
         ?"Se registrará la devolución de las piezas indicadas y se entregará el efectivo correspondiente."
         :$"Se registrará la devolución de las piezas indicadas y se reembolsará por {Payment.Label(Detail!.Sale.Payment.Kind).ToLowerInvariant()}; no sale efectivo de la caja.")+" No se puede deshacer. ¿Continuar?";
@@ -87,8 +88,8 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
     public string ReprintMessage {get;private set;}="";
     public string ReprintButtonText=>ReprintResult?.State is ReceiptPrintState.Failed or ReceiptPrintState.Unknown
         ? "REINTENTAR REIMPRESIÓN":"REIMPRIMIR TICKET";
-    public string DetailTitle=>Detail is null?"":$"Venta {Detail.Sale.Folio}";
-    public string DetailContext=>Detail is null?"":$"Fecha: {Detail.Sale.ConfirmedAt.ToLocalTime():dd/MM/yyyy HH:mm:ss zzz}\nCajero actual: {Detail.CashierName}\nUserId: {Detail.Sale.UserId:D}\nTerminal actual: {Detail.TerminalName}\nTerminalId: {Detail.Sale.TerminalId:D}\nCashSessionId: {Detail.Sale.CashSessionId:D}\nSaleId: {Detail.Sale.Id:D}";
+    public string DetailTitle=>Detail is null?"":$"Venta {DisplayFolio.For(Detail.TerminalName,Detail.Sale.Sequence)}";
+    public string DetailContext=>Detail is null?"":$"Fecha: {Detail.Sale.ConfirmedAt.ToLocalTime():dd/MM/yyyy HH:mm:ss zzz}\nFolio interno: {Detail.Sale.Folio}\nCajero actual: {Detail.CashierName}\nUserId: {Detail.Sale.UserId:D}\nTerminal actual: {Detail.TerminalName}\nTerminalId: {Detail.Sale.TerminalId:D}\nCashSessionId: {Detail.Sale.CashSessionId:D}\nSaleId: {Detail.Sale.Id:D}";
     public string DetailPayment=>Detail is null?"":$"Subtotal: {Format(Detail.Sale.Subtotal)}\nTotal: {Format(Detail.Sale.Total)}\nMétodo: {Payment.Label(Detail.Sale.Payment.Kind)}{(Detail.Sale.Payment.Reference is { } reference ? $" · Ref. {reference}" : "")}\nAplicado: {Format(Detail.Sale.Payment.Applied)}\nRecibido: {Format(Detail.Sale.Payment.Received)}\nCambio: {Format(Detail.Sale.Payment.Change)}";
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Notify()=>PropertyChanged?.Invoke(this,new PropertyChangedEventArgs(null));

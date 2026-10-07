@@ -37,7 +37,7 @@ public partial class PosView : UserControl
         checkoutOpen=true;
         try
         {
-            new CheckoutDialog(Window.GetWindow(this),Model.Checkout,Model.Receipts,Model.TotalMoney,Model.RecoveryRequired,printSelected).ShowDialog();
+            new CheckoutDialog(Window.GetWindow(this),Model.Checkout,Model.Receipts,Model.TotalMoney,Model.RecoveryRequired,printSelected,Model.TerminalName).ShowDialog();
             await Model.AfterCheckoutAsync();
         }
         finally{checkoutOpen=false;}

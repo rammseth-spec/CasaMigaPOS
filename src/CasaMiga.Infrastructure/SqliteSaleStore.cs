@@ -84,6 +84,12 @@ public sealed partial class SqliteLocalUnitOfWork
                 predicate = " WHERE s.terminal_id=$terminal AND s.sequence=$sequence";
                 parameters = [("$terminal", Id(terminal)), ("$sequence", sequence)];
             }
+            else if (filter.Sequence is { } visible)
+            {
+                // Folio visible: el consecutivo; la clave de caja la filtra el servicio.
+                predicate = " WHERE s.sequence=$sequence";
+                parameters = [("$sequence", visible)];
+            }
             else
             {
                 var parts = new List<string>();

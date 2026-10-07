@@ -95,7 +95,8 @@ public sealed class ReceiptDocument
     {
         ArgumentNullException.ThrowIfNull(detail); ArgumentNullException.ThrowIfNull(timeZone);
         var sale = detail.Sale;
-        return new(CurrentVersion, sale.Folio, TimeZoneInfo.ConvertTime(sale.ConfirmedAt, timeZone), sale.UserId,
+        // El ticket lleva el folio visible (C01-001061); el interno queda en la venta y la auditoría.
+        return new(CurrentVersion, DisplayFolio.For(detail.TerminalName, sale.Sequence), TimeZoneInfo.ConvertTime(sale.ConfirmedAt, timeZone), sale.UserId,
             detail.CashierName, sale.TerminalId, detail.TerminalName,
             sale.Items.Select(item => new ReceiptLine(item.ProductId, item.ProductName, item.UnitPrice, item.Quantity, item.LineTotal)).ToArray(),
             sale.Subtotal, sale.Total, sale.Payment.Method, sale.Payment.Applied, sale.Payment.Received, sale.Payment.Change, profile);

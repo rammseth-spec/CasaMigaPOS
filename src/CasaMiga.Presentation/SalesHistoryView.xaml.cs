@@ -19,14 +19,14 @@ public partial class SalesHistoryView : UserControl
     private async void CancelSaleClick(object sender,RoutedEventArgs e)
     {
         if(Model.Detail is null)return;
-        if(MessageBox.Show(Window.GetWindow(this),Model.CancelConfirmation,
+        if(AppDialog.Show(Window.GetWindow(this),Model.CancelConfirmation,
             "Cancelar venta",MessageBoxButton.YesNo,MessageBoxImage.Warning)!=MessageBoxResult.Yes)return;
         await Model.CancelSaleAsync();
     }
     private async void ReturnItemsClick(object sender,RoutedEventArgs e)
     {
         if(Model.Detail is null)return;
-        if(MessageBox.Show(Window.GetWindow(this),Model.ReturnConfirmation,
+        if(AppDialog.Show(Window.GetWindow(this),Model.ReturnConfirmation,
             "Devolver productos",MessageBoxButton.YesNo,MessageBoxImage.Warning)!=MessageBoxResult.Yes)return;
         await Model.ReturnItemsAsync();
     }

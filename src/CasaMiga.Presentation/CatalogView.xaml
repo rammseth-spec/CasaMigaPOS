@@ -7,26 +7,26 @@
    <DataGrid x:Name="CategoryList" ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" Height="190" AutomationProperties.Name="Categorías">
     <DataGrid.Columns><DataGridTextColumn Header="Nombre" Binding="{Binding Name,Mode=OneWay}" Width="*"/><DataGridTextColumn Header="Orden" Binding="{Binding SortOrder,Mode=OneWay}" Width="100"/><DataGridCheckBoxColumn Header="Activa" Binding="{Binding IsActive,Mode=OneWay}" Width="90"/></DataGrid.Columns>
    </DataGrid>
-   <WrapPanel Margin="0,16,0,0"><Button Content="Nueva categoría" Click="NewCategoryClick" IsEnabled="{Binding CanCreateCategory}" Margin="0,0,12,8"/><Button Content="Editar categoría" Click="EditCategoryClick" IsEnabled="{Binding CanEditCategory}" Margin="0,0,12,8"/><Button Content="Activar / desactivar" Click="ToggleCategoryClick" IsEnabled="{Binding CanToggleCategory}" Margin="0,0,0,8"/></WrapPanel>
+   <WrapPanel Margin="0,16,0,0"><Button Content="Nueva categoría" Click="NewCategoryClick" IsEnabled="{Binding CanCreateCategory}" Margin="0,0,12,8"/><Button Style="{StaticResource SecondaryButton}" Content="Editar categoría" Click="EditCategoryClick" IsEnabled="{Binding CanEditCategory}" Margin="0,0,12,8"/><Button Style="{StaticResource SecondaryButton}" Content="Activar / desactivar" Click="ToggleCategoryClick" IsEnabled="{Binding CanToggleCategory}" Margin="0,0,0,8"/></WrapPanel>
   </StackPanel>
   <StackPanel Visibility="{Binding IsProducts,Converter={StaticResource VisibleWhen}}">
    <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
     <StackPanel Margin="0,0,12,0"><TextBlock Text="Buscar nombre o SKU" FontSize="16"/><TextBox x:Name="SearchBox" Text="{Binding Search,UpdateSourceTrigger=PropertyChanged}" MaxLength="160" AutomationProperties.Name="Buscar nombre o SKU"/></StackPanel>
     <StackPanel Grid.Column="1"><TextBlock Text="Filtrar por categoría" FontSize="16"/><ComboBox ItemsSource="{Binding Filters}" SelectedValuePath="Id" DisplayMemberPath="Name" SelectedValue="{Binding FilterCategoryId}" AutomationProperties.Name="Filtrar por categoría"/></StackPanel>
    </Grid>
-   <WrapPanel Margin="0,0,0,10"><CheckBox Content="Mostrar inactivos" IsChecked="{Binding ShowInactive}" Margin="0,0,16,0"/><Button Content="Buscar / aplicar" Click="SearchClick"/></WrapPanel>
+   <WrapPanel Margin="0,0,0,10"><CheckBox Content="Mostrar inactivos" IsChecked="{Binding ShowInactive}" Margin="0,0,16,0"/><Button Style="{StaticResource SecondaryButton}" Content="Buscar / aplicar" Click="SearchClick"/></WrapPanel>
    <DataGrid x:Name="ProductList" ItemsSource="{Binding Products}" SelectedItem="{Binding SelectedProduct}" Height="300" AutomationProperties.Name="Productos">
     <DataGrid.Columns><DataGridTextColumn Header="Producto" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="100"/><DataGridTextColumn Header="Categoría" Binding="{Binding CategoryName}" Width="150"/><DataGridTextColumn Header="Precio" Binding="{Binding Price}" Width="110" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/><DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="90"/></DataGrid.Columns>
    </DataGrid>
-   <WrapPanel Margin="0,12,0,0"><Button Content="Nuevo producto" Click="NewProductClick" IsEnabled="{Binding CanCreateProduct}" Margin="0,0,12,8"/><Button Content="Administrar foto" Click="ManagePhotoClick" IsEnabled="{Binding CanEditProduct}" Margin="0,0,12,8"/><Button Content="Editar producto" Click="EditProductClick" IsEnabled="{Binding CanEditProduct}" Margin="0,0,12,8"/><Button Content="Activar / desactivar" Click="ToggleProductClick" IsEnabled="{Binding CanToggleProduct}" Margin="0,0,0,8"/></WrapPanel>
-   <TextBlock Text="{Binding PageLabel}" FontSize="15" Margin="0,6,0,8"/><WrapPanel><Button Content="Anterior" Click="PreviousClick" IsEnabled="{Binding HasPrevious}" Margin="0,0,12,8"/><Button Content="Siguiente" Click="NextClick" IsEnabled="{Binding HasNext}" Margin="0,0,0,8"/></WrapPanel>
+   <WrapPanel Margin="0,12,0,0"><Button Content="Nuevo producto" Click="NewProductClick" IsEnabled="{Binding CanCreateProduct}" Margin="0,0,12,8"/><Button Style="{StaticResource SecondaryButton}" Content="Administrar foto" Click="ManagePhotoClick" IsEnabled="{Binding CanEditProduct}" Margin="0,0,12,8"/><Button Style="{StaticResource SecondaryButton}" Content="Editar producto" Click="EditProductClick" IsEnabled="{Binding CanEditProduct}" Margin="0,0,12,8"/><Button Style="{StaticResource SecondaryButton}" Content="Activar / desactivar" Click="ToggleProductClick" IsEnabled="{Binding CanToggleProduct}" Margin="0,0,0,8"/></WrapPanel>
+   <TextBlock Text="{Binding PageLabel}" FontSize="15" Margin="0,6,0,8"/><WrapPanel><Button Style="{StaticResource SecondaryButton}" Content="Anterior" Click="PreviousClick" IsEnabled="{Binding HasPrevious}" Margin="0,0,12,8"/><Button Style="{StaticResource SecondaryButton}" Content="Siguiente" Click="NextClick" IsEnabled="{Binding HasNext}" Margin="0,0,0,8"/></WrapPanel>
   </StackPanel>
   <StackPanel Visibility="{Binding IsCategoryEditor,Converter={StaticResource VisibleWhen}}">
    <TextBlock Text="{Binding EditorTitle}" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,12"/>
    <TextBlock Text="Nombre"/><TextBox x:Name="CategoryName" Text="{Binding Name,UpdateSourceTrigger=PropertyChanged}" MaxLength="100" AutomationProperties.Name="Nombre de categoría" Margin="0,4,0,12"/>
    <TextBlock Text="Descripción opcional"/><TextBox Text="{Binding Description,UpdateSourceTrigger=PropertyChanged}" MaxLength="1000" AutomationProperties.Name="Descripción de categoría" Margin="0,4,0,12"/>
    <TextBlock Text="Orden"/><TextBox Text="{Binding SortOrder,UpdateSourceTrigger=PropertyChanged}" MaxLength="11" AutomationProperties.Name="Orden de categoría" Margin="0,4,0,16"/>
-   <WrapPanel><Button Content="Cancelar" Click="CancelClick" Margin="0,0,12,8"/><Button Content="Guardar categoría" Click="SaveClick" IsEnabled="{Binding CanSave}" Margin="0,0,0,8"/></WrapPanel>
+   <WrapPanel><Button Style="{StaticResource SecondaryButton}" Content="Cancelar" Click="CancelClick" Margin="0,0,12,8"/><Button Content="Guardar categoría" Click="SaveClick" IsEnabled="{Binding CanSave}" Margin="0,0,0,8"/></WrapPanel>
   </StackPanel>
   <StackPanel Visibility="{Binding IsProductEditor,Converter={StaticResource VisibleWhen}}">
    <TextBlock Text="{Binding EditorTitle}" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,12"/>
@@ -56,9 +56,9 @@
    <TextBlock Text="SKU opcional"/><TextBox Text="{Binding Sku,UpdateSourceTrigger=PropertyChanged}" MaxLength="80" AutomationProperties.Name="SKU" Margin="0,4,0,12"/>
    <TextBlock Text="Descripción opcional"/><TextBox Text="{Binding Description,UpdateSourceTrigger=PropertyChanged}" MaxLength="1000" AutomationProperties.Name="Descripción de producto" Margin="0,4,0,8"/>
    <CheckBox Content="Controlar inventario en el futuro (sólo metadato)" IsChecked="{Binding TrackInventory}" Margin="0,0,0,12"/>
-   <WrapPanel><Button Content="Cancelar" Click="CancelClick" Margin="0,0,12,8"/><Button Content="Guardar producto" Click="SaveClick" IsEnabled="{Binding CanSave}" Margin="0,0,0,8"/></WrapPanel>
+   <WrapPanel><Button Style="{StaticResource SecondaryButton}" Content="Cancelar" Click="CancelClick" Margin="0,0,12,8"/><Button Content="Guardar producto" Click="SaveClick" IsEnabled="{Binding CanSave}" Margin="0,0,0,8"/></WrapPanel>
   </StackPanel>
   <TextBlock Text="{Binding Message}" Foreground="{DynamicResource ErrorBrush}" AutomationProperties.LiveSetting="Polite" Margin="0,12,0,0"/>
-  <Button Content="Cargar catálogo DEMO (requiere vacío)" Click="DemoClick" Visibility="{Binding IsDevelopment,Converter={StaticResource VisibleWhen}}" Margin="0,20,0,0"/>
+  <Button Style="{StaticResource SecondaryButton}" Content="Cargar catálogo DEMO (requiere vacío)" Click="DemoClick" Visibility="{Binding IsDevelopment,Converter={StaticResource VisibleWhen}}" Margin="0,20,0,0"/>
  </StackPanel>
 </UserControl>

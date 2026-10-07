@@ -6,6 +6,8 @@ namespace CasaMiga.Presentation;
 
 public sealed class CheckoutViewModel(CheckoutService service, ReceiptService receipts, Money total, bool recovery) : INotifyPropertyChanged
 {
+    /// <summary>Nombre de la caja: da la clave del folio visible (C01-001061).</summary>
+    public string TerminalName { get; init; } = "";
     private string received="";
     private CheckoutRequest? attempt;
     private bool printRequested;
@@ -35,8 +37,8 @@ public sealed class CheckoutViewModel(CheckoutService service, ReceiptService re
     public ReceiptPrintResult? PrintResult { get; private set; }
     public bool CanRetryPrint=>!Busy && Result is not null && PrintResult?.State is ReceiptPrintState.Requested or ReceiptPrintState.Failed or ReceiptPrintState.Unknown;
     public string ResultText=>Result is not { } sale ? "" : sale.Payment.Kind==PaymentMethod.Cash
-        ? $"Venta confirmada\nFolio: {sale.Folio}\nTotal: {PosViewModel.Format(sale.Total)}\nRecibido: {PosViewModel.Format(sale.Payment.Received)}\nCambio: {PosViewModel.Format(sale.Payment.Change)}"
-        : $"Venta confirmada\nFolio: {sale.Folio}\nTotal: {PosViewModel.Format(sale.Total)}\nPago: {Payment.Label(sale.Payment.Kind)}{(sale.Payment.Reference is { } r ? $" · Ref. {r}" : "")}";
+        ? $"Venta confirmada\nFolio: {DisplayFolio.For(TerminalName,sale.Sequence)}\nTotal: {PosViewModel.Format(sale.Total)}\nRecibido: {PosViewModel.Format(sale.Payment.Received)}\nCambio: {PosViewModel.Format(sale.Payment.Change)}"
+        : $"Venta confirmada\nFolio: {DisplayFolio.For(TerminalName,sale.Sequence)}\nTotal: {PosViewModel.Format(sale.Total)}\nPago: {Payment.Label(sale.Payment.Kind)}{(sale.Payment.Reference is { } r ? $" · Ref. {r}" : "")}";
     public bool HasResult=>Result is not null;
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Notify()=>PropertyChanged?.Invoke(this,new PropertyChangedEventArgs(null));

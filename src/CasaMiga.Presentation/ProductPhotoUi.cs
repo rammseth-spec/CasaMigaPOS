@@ -155,4 +155,12 @@ public sealed class ProductCardViewModel(CasaMiga.Application.ProductRow row) : 
     {
         photo = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
     }
+    private int cartQuantity;
+    /// <summary>Piezas de este pan en el ticket actual: la tarjeta del Punto de venta muestra la burbuja.</summary>
+    public int CartQuantity
+    {
+        get => cartQuantity;
+        set { if (cartQuantity == value) return; cartQuantity = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null)); }
+    }
+    public bool InCart => cartQuantity > 0;
 }

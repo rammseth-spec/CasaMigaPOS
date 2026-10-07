@@ -8,8 +8,17 @@ namespace CasaMiga.Presentation;
 public partial class ConsignmentView : UserControl
 {
     private ScrollViewer? page;
-    /// <summary>Relleno (28 + 28) y borde (1 + 1) de la tarjeta de la página que contiene la vista.</summary>
-    public const double WorkspaceInset = 58;
+    /// <summary>Lo que la página agrega alrededor de la vista: márgenes, rellenos y bordes de sus contenedores (la tarjeta de la ventana).</summary>
+    public static double InsetWithin(FrameworkElement view, ScrollViewer page)
+    {
+        var inset = view.Margin.Top + view.Margin.Bottom;
+        for (var parent = VisualTreeHelper.GetParent(view); parent is not null && parent != page && parent is not ScrollContentPresenter; parent = VisualTreeHelper.GetParent(parent))
+        {
+            if (parent is FrameworkElement element) inset += element.Margin.Top + element.Margin.Bottom;
+            if (parent is Border border) inset += border.Padding.Top + border.Padding.Bottom + border.BorderThickness.Top + border.BorderThickness.Bottom;
+        }
+        return inset;
+    }
 
     public ConsignmentView()
     {
@@ -29,8 +38,9 @@ public partial class ConsignmentView : UserControl
 
     private void FitWorkspace(double pageHeight)
     {
-        DeliverWorkspace.Height = Math.Max(DeliverWorkspace.MinHeight, pageHeight - WorkspaceInset);
-        CollectWorkspace.Height = Math.Max(CollectWorkspace.MinHeight, pageHeight - WorkspaceInset);
+        var inset = page is null ? 0 : InsetWithin(this, page);
+        DeliverWorkspace.Height = Math.Max(DeliverWorkspace.MinHeight, pageHeight - inset);
+        CollectWorkspace.Height = Math.Max(CollectWorkspace.MinHeight, pageHeight - inset);
     }
     private ConsignmentViewModel Model => (ConsignmentViewModel)DataContext;
     private static T? Item<T>(object sender) where T : class => (sender as FrameworkElement)?.DataContext as T;

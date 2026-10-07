@@ -30,7 +30,6 @@ internal static class R2VisualEvidence
                     await model.Pos.AddAsync(model.Pos.Products[0].Id);
                     Save(content,1400,900,Path.Combine(output,"pos-compact.png"));
                     Save(content,1024,768,Path.Combine(output,"pos-1024.png"));
-                    model.TogglePosSidebar();Save(content,1400,900,Path.Combine(output,"pos-expanded.png"));
                     model.DiscardCart();await model.ShowCatalogAsync();
                     Save(content,1400,900,Path.Combine(output,"catalog-list.png"));
                     model.Catalog!.SelectedProduct=model.Catalog.Products[0];model.Catalog.EditProduct();
@@ -40,7 +39,7 @@ internal static class R2VisualEvidence
                     Console.WriteLine("Constructing crop preview...");
                     _=new System.Windows.Interop.WindowInteropHelper(window).EnsureHandle();
                     var crop=new PhotoCropDialog(window,bytes);Console.WriteLine("Rendering crop preview...");Save((FrameworkElement)crop.Content,850,650,Path.Combine(output,"crop-preview.png"));
-                    model.Logout();Console.WriteLine("Rendered: POS compact/expanded/1024, catalog list/photo, crop preview; 26 photos loaded.");
+                    model.Logout();Console.WriteLine("Rendered: POS 1400/1024 (menú de íconos fijo), catalog list/photo, crop preview; 26 photos loaded.");
                 }
                 catch(Exception error){failure=error;Console.Error.WriteLine(error);}
                 finally{app.Dispatcher.InvokeShutdown();}

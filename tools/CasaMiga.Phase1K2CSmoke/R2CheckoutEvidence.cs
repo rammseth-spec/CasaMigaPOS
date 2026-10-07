@@ -64,7 +64,8 @@ internal static class R2CheckoutEvidence
         {
             // A separate read connection sees only committed sales.
             var history=work.Read(s=>s.QuerySales(new(null,null,null,null,0)));
-            CommittedBeforeEverySubmission &= history.Items.Any(sale=>submission.JobName.Contains(sale.Folio,StringComparison.Ordinal));
+            // El ticket (y el nombre del trabajo) lleva el folio visible, p. ej. C01-000001.
+            CommittedBeforeEverySubmission &= history.Items.Any(sale=>submission.JobName.Contains(CasaMiga.Domain.DisplayFolio.FromInternal(sale.Folio,sale.TerminalName),StringComparison.Ordinal));
             if(!CommittedBeforeEverySubmission)throw new InvalidOperationException("Impresión anterior al commit.");
             File.WriteAllBytes(Path.Combine(output,Name+".bin"),submission.Payload);
             File.WriteAllText(Path.Combine(output,Name+".sha256"),Convert.ToHexString(SHA256.HashData(submission.Payload)));

@@ -20,6 +20,14 @@ public sealed class ReceiptTests : SalesFixture
     }
     private static PrintingSettings Settings()=>new(1,true,"QIAN TEST",48,"windows-1252","Disabled",false,Profile(),16);
 
+    [TestMethod] public void ReceiptPrintsTheVisibleFolio()
+    {
+        var sale=Persist();var detail=work.Run(s=>s.FindSaleDetail(sale.Id))!;
+        var document=ReceiptDocument.FromSale(detail,Profile(),TimeZoneInfo.Utc);
+        Assert.AreEqual(CasaMiga.Domain.DisplayFolio.For(detail.TerminalName,sale.Sequence),document.Folio);
+        StringAssert.Matches(document.Folio,new System.Text.RegularExpressions.Regex(@"^C\d{2}-\d{6}$"));
+    }
+
     [TestMethod] public void ReceiptUsesSaleSnapshotsAndStableCanonicalHash()
     {
         var document=Document();var json=ReceiptDocumentCodec.Serialize(document);var restored=ReceiptDocumentCodec.Deserialize(json);

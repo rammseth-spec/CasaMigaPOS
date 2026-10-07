@@ -83,14 +83,14 @@ public partial class MainWindow : Window
     private async void ToggleUserClick(object sender, RoutedEventArgs e)
     {
         if (Model.SelectedUser is not { } target) return;
-        if (target.Active && MessageBox.Show(this, $"{target.Username} ya no podrá iniciar sesión hasta que lo reactives. ¿Continuar?",
+        if (target.Active && AppDialog.Show(this, $"{target.Username} ya no podrá iniciar sesión hasta que lo reactives. ¿Continuar?",
             "Desactivar usuario", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         await Model.ToggleUserAsync();
     }
     private async void ResetPasswordClick(object sender, RoutedEventArgs e)
     {
         if (Model.SelectedUser is not { } target) { await Model.ResetPasswordAsync(); return; }
-        if (MessageBox.Show(this, $"Se asignará una contraseña temporal a {target.Username} y deberá cambiarla al entrar. ¿Continuar?",
+        if (AppDialog.Show(this, $"Se asignará una contraseña temporal a {target.Username} y deberá cambiarla al entrar. ¿Continuar?",
             "Restablecer contraseña", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         await Model.ResetPasswordAsync();
     }
@@ -99,7 +99,6 @@ public partial class MainWindow : Window
     private void CancelOpeningClick(object sender, RoutedEventArgs e) => Model.CancelOpening();
     private async void OpenClick(object sender, RoutedEventArgs e) => await Model.OpenAsync();
     private async void PosNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowPosAsync();
-    private void TogglePosSidebarClick(object sender,RoutedEventArgs e)=>Model.TogglePosSidebar();
     private async void PosCashRequested(object? sender,EventArgs e)=>await Model.ShowCashAsync();
     private async void PosCatalogRequested(object? sender,EventArgs e)=>await Model.ShowCatalogAsync();
     private async void PosSalesRequested(object? sender,EventArgs e)=>await Model.ShowSalesHistoryAsync();
@@ -165,7 +164,8 @@ public partial class MainWindow : Window
         ResizeMode = ResizeMode.NoResize;
         WindowState = WindowState.Maximized;
         isFullScreen = true;
-        FullScreenButton.Content = "Salir de pantalla completa · F11";
+        FullScreenButton.ToolTip = "Salir de pantalla completa · F11";
+        FullScreenButton.Tag = FindResource("IconCollapse");
     }
     private void ExitFullScreen()
     {
@@ -175,11 +175,12 @@ public partial class MainWindow : Window
         ResizeMode = resizeModeBeforeFullScreen;
         WindowState = windowStateBeforeFullScreen;
         isFullScreen = false;
-        FullScreenButton.Content = "Pantalla completa · F11";
+        FullScreenButton.ToolTip = "Pantalla completa · F11";
+        FullScreenButton.Tag = FindResource("IconExpand");
     }
     private bool DiscardBefore(string action)
     {
-        if(Model.HasPendingCheckout){MessageBox.Show(this,"Verifica el cobro pendiente en el POS antes de continuar.","Cobro pendiente");return false;}
+        if(Model.HasPendingCheckout){AppDialog.Show(this,"Verifica el cobro pendiente en el POS antes de continuar.","Cobro pendiente");return false;}
         if(!Model.HasCart)return true;
         if(!DiscardDialog.Confirm(this,action))return false;
         Model.DiscardCart();return true;

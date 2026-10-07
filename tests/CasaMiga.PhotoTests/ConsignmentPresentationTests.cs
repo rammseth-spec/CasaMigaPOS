@@ -103,12 +103,12 @@ public sealed class ConsignmentPresentationTests
             window.Show(); Settle(window);
             await model.StartDeliverAsync(model.Route.Single()); Settle(window);
             var workspace = (Grid)view.FindName("DeliverWorkspace");
-            Assert.AreEqual(page.ActualHeight - ConsignmentView.WorkspaceInset, workspace.ActualHeight, 1, "La zona de entrega llena la ventana.");
+            Assert.AreEqual(page.ActualHeight - ConsignmentView.InsetWithin(view, page), workspace.ActualHeight, 1, "La zona de entrega llena la ventana.");
             // Pantalla completa o ventana más alta: la zona crece con ella (antes conservaba la altura anterior).
             window.Height = 1080; Settle(window);
-            Assert.AreEqual(page.ActualHeight - ConsignmentView.WorkspaceInset, workspace.ActualHeight, 1, "Al agrandar la ventana, la zona de entrega crece.");
+            Assert.AreEqual(page.ActualHeight - ConsignmentView.InsetWithin(view, page), workspace.ActualHeight, 1, "Al agrandar la ventana, la zona de entrega crece.");
             window.Height = 820; Settle(window);
-            Assert.AreEqual(page.ActualHeight - ConsignmentView.WorkspaceInset, workspace.ActualHeight, 1, "Y se encoge al volver.");
+            Assert.AreEqual(page.ActualHeight - ConsignmentView.InsetWithin(view, page), workspace.ActualHeight, 1, "Y se encoge al volver.");
         }
         finally { window.Close(); }
     });
@@ -128,7 +128,7 @@ public sealed class ConsignmentPresentationTests
             model.StartCollect(model.Route.Single()); Settle(window);
             Assert.IsTrue(model.IsCollectWorkspace); Assert.IsFalse(model.ShowTabs); Assert.IsFalse(model.IsRouteBoard);
             var workspace = (Grid)view.FindName("CollectWorkspace");
-            Assert.AreEqual(page.ActualHeight - ConsignmentView.WorkspaceInset, workspace.ActualHeight, 1, "La zona de recolección llena la ventana.");
+            Assert.AreEqual(page.ActualHeight - ConsignmentView.InsetWithin(view, page), workspace.ActualHeight, 1, "La zona de recolección llena la ventana.");
             var cards = List(view, "Piezas que regresaron");
             Assert.AreEqual(3, cards.Items.Count); Assert.IsTrue(cards.ActualHeight > 0);
             Assert.AreEqual(0, Ancestor<ScrollViewer>(cards).ScrollableHeight, "Las tarjetas de una charola caben sin desplazarse.");
@@ -169,7 +169,7 @@ public sealed class ConsignmentPresentationTests
             var workspace = (Grid)view.FindName("CollectWorkspace");
             // Sin mensaje, el aviso de la ventana no ocupa lugar; antes dejaba 39 px que desplazaban la página al tocar una foto.
             Assert.AreEqual(0, page.ScrollableHeight, 0.5, $"Al recoger, la página no se desplaza ({page.ExtentHeight:0} de {page.ViewportHeight:0}; zona {workspace.ActualHeight:0}).");
-            Assert.AreEqual(page.ViewportHeight - ConsignmentView.WorkspaceInset, workspace.ActualHeight, 1, "La zona llena la página hasta abajo.");
+            Assert.AreEqual(page.ViewportHeight - ConsignmentView.InsetWithin(view, page), workspace.ActualHeight, 1, "La zona llena la página hasta abajo.");
             var cards = List(view, "Piezas que regresaron");
             var first = (FrameworkElement)cards.ItemContainerGenerator.ContainerFromIndex(0);
             var second = (FrameworkElement)cards.ItemContainerGenerator.ContainerFromIndex(1);

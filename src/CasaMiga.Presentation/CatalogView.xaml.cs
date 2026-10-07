@@ -38,12 +38,12 @@ public partial class CatalogView:UserControl
             if(dialog.ShowDialog()!=true)return;
             await Model.SetPhotoAsync(Path.GetFileName(picker.FileName),bytes,dialog.Crop);
         }
-        catch(CasaMiga.Application.ProductPhotoException error){MessageBox.Show(Window.GetWindow(this),error.Message,"Casa Miga · Fotografía",MessageBoxButton.OK,MessageBoxImage.Warning);}
-        catch(IOException){MessageBox.Show(Window.GetWindow(this),"No se pudo leer la fotografía. Revisa el archivo y vuelve a intentar.","Casa Miga · Fotografía",MessageBoxButton.OK,MessageBoxImage.Warning);}
+        catch(CasaMiga.Application.ProductPhotoException error){AppDialog.Show(Window.GetWindow(this),error.Message,"Casa Miga · Fotografía",MessageBoxButton.OK,MessageBoxImage.Warning);}
+        catch(IOException){AppDialog.Show(Window.GetWindow(this),"No se pudo leer la fotografía. Revisa el archivo y vuelve a intentar.","Casa Miga · Fotografía",MessageBoxButton.OK,MessageBoxImage.Warning);}
     }
     private async void RemovePhotoClick(object s,RoutedEventArgs e)
     {
-        if(MessageBox.Show(Window.GetWindow(this),"¿Quitar la fotografía de este producto? El producto y su historial se conservarán.","Casa Miga · Quitar foto",MessageBoxButton.YesNo,MessageBoxImage.Question)!=MessageBoxResult.Yes)return;
+        if(AppDialog.Show(Window.GetWindow(this),"¿Quitar la fotografía de este producto? El producto y su historial se conservarán.","Casa Miga · Quitar foto",MessageBoxButton.YesNo,MessageBoxImage.Question)!=MessageBoxResult.Yes)return;
         await Model.RemovePhotoAsync();
     }
     private async void CatalogKeyDown(object s,KeyEventArgs e)

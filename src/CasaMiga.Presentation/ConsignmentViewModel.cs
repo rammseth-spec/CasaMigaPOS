@@ -63,6 +63,7 @@ public sealed class CollectLineView(ConsignmentDeliveryItem item, Action changed
         get => returned;
         set { var next = Math.Clamp(value, 0, item.Quantity); if (next == returned) return; returned = next; Notify(); changed(); }
     }
+    public string ReturnedLabel => returned == 1 ? "Regresó 1" : $"Regresaron {returned}";
     public string ReturnedText
     {
         get => returned.ToString(CultureInfo.InvariantCulture);

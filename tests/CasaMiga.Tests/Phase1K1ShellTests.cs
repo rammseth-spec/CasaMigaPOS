@@ -29,10 +29,11 @@ public sealed class Phase1K1ShellTests
                      "CasaMigaArtisanBread", "CasaMigaNaturalBackground", "CasaMigaSoftWheat", "CasaMigaAvocadoLeafGreen" })
             StringAssert.Contains(theme, $"x:Key=\"{resource}\"");
 
-        foreach (var section in new[] { "OPERACIÓN", "GESTIÓN", "CONSULTA", "Punto de venta", "Historial de ventas",
+        // Rediseño A (07-10-2026): riel de íconos con nombres cortos; el nombre completo queda en AutomationProperties.Name.
+        foreach (var section in new[] { "Ir a Punto de venta", "Ir a Caja", "Ir a Charolas", "Ir a Historial de ventas", "Ir a Reportes", "Ir a Catálogo",
                      "CurrentUserName", "CurrentRoleLabel", "CurrentTerminalName", "IsSignedOut", "IsNotPos" })
             StringAssert.Contains(shell, section);
-        Assert.AreEqual(1, Count(shell, "Content=\"Salir de mi usuario\""));
+        Assert.AreEqual(1, Count(shell, "AutomationProperties.Name=\"Salir de mi usuario\""));
         Assert.AreEqual(0, Count(pos, "Salir de usuario"));
         StringAssert.Contains(shell, "CanViewInventory"); StringAssert.Contains(shell, "CanViewRecipes");
         StringAssert.Contains(shell, "CanViewProduction"); StringAssert.Contains(shell, "CanViewSales");
@@ -57,13 +58,13 @@ public sealed class Phase1K1ShellTests
         StringAssert.Contains(pos,"ProductTile");StringAssert.Contains(pos,"{Binding Photo}");StringAssert.Contains(pos,"{Binding IsFallback");
         Assert.IsFalse(pos.Contains("{Binding CategoryName}",StringComparison.Ordinal));StringAssert.Contains(pos,"{Binding Price}");StringAssert.Contains(pos,"CommandParameter=\"{Binding Id}\"");
         StringAssert.Contains(pos,"ProductCatalogScroll");StringAssert.Contains(pos,"Width=\"7*\"");StringAssert.Contains(pos,"Width=\"3*\"");
-        StringAssert.Contains(pos,"Height=\"48\"");StringAssert.Contains(pos,"Height=\"32\"");StringAssert.Contains(pos,"IsVisibleChanged=\"PosVisibilityChanged\"");
+        StringAssert.Contains(pos,"local:TileGrid");StringAssert.Contains(pos,"{Binding CartQuantity}");StringAssert.Contains(pos,"IsVisibleChanged=\"PosVisibilityChanged\"");
         Assert.IsFalse(pos.Contains("PhotoStatus",StringComparison.Ordinal));
         StringAssert.Contains(catalog,"IMAGEN DEL PRODUCTO");StringAssert.Contains(catalog,"CurrentPhotoStatus");StringAssert.Contains(catalog,"Foto provisional");StringAssert.Contains(catalog,"Foto real");
         StringAssert.Contains(catalog,"ChangePhotoClick");StringAssert.Contains(catalog,"RemovePhotoClick");
         StringAssert.Contains(crop,"CropRectangle");StringAssert.Contains(crop,"OverlayMouseDown");StringAssert.Contains(crop,"ResizeHandle");StringAssert.Contains(crop,"Ajuste avanzado por coordenadas");
-        StringAssert.Contains(shell,"SidebarWidth");StringAssert.Contains(shell,"IsPosSidebarCompact");StringAssert.Contains(shell,"SidebarScrollBarVisibility");
-        StringAssert.Contains(theme,"x:Name=\"NavLabel\"");StringAssert.Contains(theme,"x:Name=\"NavIcon\"");StringAssert.Contains(theme,"Value=\"276\"");
+        StringAssert.Contains(shell,"SidebarNavButton");StringAssert.Contains(shell,"CashStatusLabel");StringAssert.Contains(shell,"UserInitials");StringAssert.Contains(shell,"StatusPill");
+        StringAssert.Contains(theme,"x:Name=\"NavLabel\"");StringAssert.Contains(theme,"x:Name=\"NavIcon\"");StringAssert.Contains(theme,"x:Key=\"ProductTile\"");StringAssert.Contains(theme,"TargetType=\"ScrollBar\"");
         var smoke=File.ReadAllText(Presentation("Phase1K2CSmoke.Program.cs"));
         Assert.AreEqual(26,Count(smoke,"new AssetSource("));StringAssert.Contains(smoke,"mapping.json");StringAssert.Contains(smoke,"Provenance=\"PROVISIONAL\"");
     }

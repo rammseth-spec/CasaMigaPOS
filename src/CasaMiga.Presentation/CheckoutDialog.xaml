@@ -1,33 +1,40 @@
-<Window x:Class="CasaMiga.Presentation.CheckoutDialog" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Cobro" Width="640" SizeToContent="Height" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" Background="{DynamicResource CanvasBrush}" Closing="DialogClosing">
- <StackPanel Margin="28">
-  <TextBlock Text="Cobro" FontSize="26" FontWeight="SemiBold" Margin="0,0,0,16"/>
-  <StackPanel Visibility="{Binding IsCapture,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding Ready}">
-   <TextBlock Text="Total a cobrar"/><TextBlock Text="{Binding Total}" FontSize="28" FontWeight="Bold" Margin="0,4,0,16"/>
-   <TextBlock Text="Forma de pago"/>
-   <WrapPanel Margin="0,6,0,14">
-    <RadioButton Content="Efectivo" IsChecked="{Binding IsCash}" GroupName="PaymentMethod" FontSize="17" Margin="0,0,24,0" AutomationProperties.Name="Pago en efectivo"/>
-    <RadioButton Content="Tarjeta" IsChecked="{Binding IsCard}" GroupName="PaymentMethod" FontSize="17" Margin="0,0,24,0" AutomationProperties.Name="Pago con tarjeta"/>
-    <RadioButton Content="Transferencia" IsChecked="{Binding IsTransfer}" GroupName="PaymentMethod" FontSize="17" AutomationProperties.Name="Pago por transferencia"/>
-   </WrapPanel>
-   <StackPanel Visibility="{Binding ShowCashFields,Converter={StaticResource VisibleWhen}}">
-    <TextBlock Text="Efectivo recibido (MXN)"/><TextBox x:Name="ReceivedInput" Text="{Binding Received,UpdateSourceTrigger=PropertyChanged}" MaxLength="24" Margin="0,4,0,12" AutomationProperties.Name="Efectivo recibido"/>
-    <DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Change}" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="Cambio"/></DockPanel>
+<Window x:Class="CasaMiga.Presentation.CheckoutDialog" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Cobro" Width="660" SizeToContent="Height" ResizeMode="NoResize" WindowStartupLocation="CenterOwner" ShowInTaskbar="False" WindowStyle="None" AllowsTransparency="True" Background="Transparent" FontFamily="{StaticResource TextFont}" Foreground="{DynamicResource TextPrimaryBrush}" UseLayoutRounding="True" Closing="DialogClosing">
+ <!-- Rediseño A: tarjeta con el total grande, forma de pago como control segmentado y el cambio a la vista. -->
+ <Border Style="{StaticResource DialogCard}">
+  <StackPanel>
+   <TextBlock Text="Cobro" Style="{StaticResource SectionTitleText}" FontSize="24" Margin="0,0,0,16"/>
+   <StackPanel Visibility="{Binding IsCapture,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding Ready}">
+    <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="14" Padding="18,12" Margin="0,0,0,18">
+     <DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Total}" Style="{StaticResource AmountText}" FontSize="36"/><TextBlock Text="Total a cobrar" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
+    </Border>
+    <TextBlock Text="Forma de pago" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,6"/>
+    <Border Style="{StaticResource SegmentedTrack}" HorizontalAlignment="Stretch" Margin="0,0,0,18">
+     <UniformGrid Columns="3">
+      <RadioButton Content="Efectivo" IsChecked="{Binding IsCash}" GroupName="PaymentMethod" Style="{StaticResource SegmentRadio}" AutomationProperties.Name="Pago en efectivo"/>
+      <RadioButton Content="Tarjeta" IsChecked="{Binding IsCard}" GroupName="PaymentMethod" Style="{StaticResource SegmentRadio}" AutomationProperties.Name="Pago con tarjeta"/>
+      <RadioButton Content="Transferencia" IsChecked="{Binding IsTransfer}" GroupName="PaymentMethod" Style="{StaticResource SegmentRadio}" AutomationProperties.Name="Pago por transferencia"/>
+     </UniformGrid>
+    </Border>
+    <StackPanel Visibility="{Binding ShowCashFields,Converter={StaticResource VisibleWhen}}">
+     <TextBlock Text="Efectivo recibido (MXN)" FontSize="14" FontWeight="SemiBold"/><TextBox x:Name="ReceivedInput" Text="{Binding Received,UpdateSourceTrigger=PropertyChanged}" MaxLength="24" FontSize="22" Margin="0,6,0,14" AutomationProperties.Name="Efectivo recibido"/>
+     <DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Change}" Style="{StaticResource AmountText}" FontSize="28"/><TextBlock Text="Cambio" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
+    </StackPanel>
+    <StackPanel Visibility="{Binding ShowReference,Converter={StaticResource VisibleWhen}}">
+     <TextBlock Text="Referencia (opcional) · últimos 4 dígitos, autorización o folio" FontSize="14" FontWeight="SemiBold"/><TextBox Text="{Binding Reference,UpdateSourceTrigger=PropertyChanged}" MaxLength="40" Margin="0,6,0,12" AutomationProperties.Name="Referencia del pago"/>
+    </StackPanel>
+    <TextBlock Text="{Binding Instructions}" Style="{StaticResource CaptionText}" FontSize="14" TextWrapping="Wrap" Margin="0,12,0,0"/>
    </StackPanel>
-   <StackPanel Visibility="{Binding ShowReference,Converter={StaticResource VisibleWhen}}">
-    <TextBlock Text="Referencia (opcional) · últimos 4 dígitos, autorización o folio"/><TextBox Text="{Binding Reference,UpdateSourceTrigger=PropertyChanged}" MaxLength="40" Margin="0,4,0,12" AutomationProperties.Name="Referencia del pago"/>
-   </StackPanel>
-   <TextBlock Text="{Binding Instructions}" FontSize="15" TextWrapping="Wrap" Margin="0,12,0,0"/>
+   <TextBlock Text="Resultado pendiente: verifica este intento antes de volver a cobrar." Visibility="{Binding Recovery,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,16"/>
+   <TextBlock Text="{Binding ResultText}" Visibility="{Binding HasResult,Converter={StaticResource VisibleWhen}}" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16"/>
+   <TextBlock Text="{Binding PrintMessage}" Visibility="{Binding HasResult,Converter={StaticResource VisibleWhen}}" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,12" AutomationProperties.LiveSetting="Polite"/>
+   <Button Style="{StaticResource SecondaryButton}" Content="Reintentar ticket" Click="RetryPrintClick" IsEnabled="{Binding CanRetryPrint}" Visibility="{Binding HasResult,Converter={StaticResource VisibleWhen}}" HorizontalAlignment="Left" Margin="0,0,0,12"/>
+   <TextBlock Text="{Binding Message}" Foreground="{DynamicResource ErrorBrush}" Margin="0,12,0,16" AutomationProperties.LiveSetting="Polite"/>
+   <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
+    <Button Content="Volver al POS" Click="BackClick" IsEnabled="{Binding Ready}" Style="{StaticResource SecondaryButton}" MinHeight="52"/>
+    <Button x:Name="WithoutPrintButton" Grid.Column="2" Content="Cobrar" Click="ConfirmWithoutPrintClick" IsEnabled="{Binding CanConfirm}" Visibility="{Binding IsCapture,Converter={StaticResource VisibleWhen}}" MinHeight="52" FontSize="16" AutomationProperties.Name="Cobrar sin imprimir ticket"/>
+    <Button x:Name="AndPrintButton" Grid.Column="4" Content="Cobrar + imprimir ticket" Click="ConfirmAndPrintClick" IsEnabled="{Binding CanConfirm}" Visibility="{Binding IsCapture,Converter={StaticResource VisibleWhen}}" MinHeight="52" AutomationProperties.Name="Cobrar e imprimir ticket"/>
+    <Button Grid.Column="2" Grid.ColumnSpan="3" Content="Verificar resultado" Click="ResolveClick" IsEnabled="{Binding Ready}" Visibility="{Binding Recovery,Converter={StaticResource VisibleWhen}}" MinHeight="52"/>
+   </Grid>
   </StackPanel>
-  <TextBlock Text="Resultado pendiente: verifica este intento antes de volver a cobrar." Visibility="{Binding Recovery,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,16"/>
-  <TextBlock Text="{Binding ResultText}" Visibility="{Binding HasResult,Converter={StaticResource VisibleWhen}}" FontSize="20" Margin="0,0,0,16"/>
-  <TextBlock Text="{Binding PrintMessage}" Visibility="{Binding HasResult,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,12" AutomationProperties.LiveSetting="Polite"/>
-  <Button Content="Reintentar ticket" Click="RetryPrintClick" IsEnabled="{Binding CanRetryPrint}" Visibility="{Binding HasResult,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,12"/>
-  <TextBlock Text="{Binding Message}" Foreground="{DynamicResource ErrorBrush}" Margin="0,12,0,16" AutomationProperties.LiveSetting="Polite"/>
-  <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
-   <Button Content="Volver al POS" Click="BackClick" IsEnabled="{Binding Ready}" Style="{StaticResource SecondaryButton}"/>
-   <Button x:Name="WithoutPrintButton" Grid.Column="2" Content="Cobrar" Click="ConfirmWithoutPrintClick" IsEnabled="{Binding CanConfirm}" Visibility="{Binding IsCapture,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Cobrar sin imprimir ticket"/>
-   <Button x:Name="AndPrintButton" Grid.Column="4" Content="Cobrar + imprimir ticket" Click="ConfirmAndPrintClick" IsEnabled="{Binding CanConfirm}" Visibility="{Binding IsCapture,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Cobrar e imprimir ticket"/>
-   <Button Grid.Column="2" Grid.ColumnSpan="3" Content="Verificar resultado" Click="ResolveClick" IsEnabled="{Binding Ready}" Visibility="{Binding Recovery,Converter={StaticResource VisibleWhen}}"/>
-  </Grid>
- </StackPanel>
+ </Border>
 </Window>

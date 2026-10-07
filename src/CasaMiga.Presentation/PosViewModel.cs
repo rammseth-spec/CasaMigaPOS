@@ -4,8 +4,9 @@ using CasaMiga.Application;
 using CasaMiga.Domain;
 namespace CasaMiga.Presentation;
 public sealed record PosCategory(Guid? Id, string Label, bool Selected);
-public sealed record PosCartLine(CartLine Line)
+public sealed record PosCartLine(CartLine Line, System.Windows.Media.Imaging.BitmapSource? Photo = null)
 {
+    public bool HasPhoto => Photo is not null;
     public Guid Id => Line.ProductId;
     public string Name => Line.ProductName;
     public string UnitPrice => PosViewModel.Format(Line.UnitPrice) + " / pieza";
@@ -28,6 +29,7 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
     public bool CanOperate => Ready && !RecoveryRequired;
     public bool CanCheckout => CanOperate && HasLines;
     public bool IsDevelopment { get; init; }
+    public string TerminalName { get; init; } = "";
     public string OperatorLabel => operatorLabel();
     private string search = "";
     public string Search
@@ -44,7 +46,29 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
     public IReadOnlyList<PosCategory> Categories { get; private set; } = [];
     private CancellationTokenSource photoLoad = new();
     public IReadOnlyList<ProductCardViewModel> Products { get; private set; } = [];
-    public IReadOnlyList<PosCartLine> Lines => cart?.Lines.Select(l=>new PosCartLine(l)).ToArray() ?? [];
+    public IReadOnlyList<PosCartLine> Lines => cart?.Lines.Select(l=>new PosCartLine(l,Thumb(l.ProductId))).ToArray() ?? [];
+    // Foto chica de cada renglón del ticket: se carga una vez por pan y se reutiliza.
+    private readonly Dictionary<Guid,System.Windows.Media.Imaging.BitmapSource?> thumbs=new();
+    private readonly HashSet<Guid> thumbsLoading=new();
+    private System.Windows.Media.Imaging.BitmapSource? Thumb(Guid id)
+    {
+        if(thumbs.TryGetValue(id,out var image))return image;
+        if(thumbsLoading.Add(id))_=LoadThumbAsync(id);
+        return null;
+    }
+    private async Task LoadThumbAsync(Guid id)
+    {
+        try{thumbs[id]=(await photos.LoadAsync(id,CancellationToken.None)).Image;}
+        catch(Exception error){thumbs[id]=null;log("pos.photo.load.failed",error.GetType().Name);}
+        finally{thumbsLoading.Remove(id);}
+        PropertyChanged?.Invoke(this,new PropertyChangedEventArgs(nameof(Lines)));
+    }
+    // Burbuja de cada tarjeta: cuántas piezas de ese pan lleva el ticket.
+    private void SyncCartBadges()
+    {
+        var counts=cart?.Lines.GroupBy(l=>l.ProductId).ToDictionary(g=>g.Key,g=>g.Sum(l=>l.Quantity));
+        foreach(var card in Products)card.CartQuantity=counts is not null && counts.TryGetValue(card.Id,out var n)?n:0;
+    }
     public bool HasLines => cart is { IsEmpty:false };
     public bool IsEmpty => !HasLines;
     public string Subtotal => Format(cart?.Subtotal ?? new Money(0));
@@ -53,7 +77,7 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
     public bool Previous => page>0;
     public bool Next { get; private set; }
     public event PropertyChangedEventHandler? PropertyChanged;
-    private void Notify()=>PropertyChanged?.Invoke(this,new PropertyChangedEventArgs(null));
+    private void Notify(){SyncCartBadges();PropertyChanged?.Invoke(this,new PropertyChangedEventArgs(null));}
     public static string Format(Money money)=>(money.Cents/100m).ToString("C2",CultureInfo.GetCultureInfo("es-MX"));
     public async Task EnterAsync()
     {

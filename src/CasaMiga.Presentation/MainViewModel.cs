@@ -11,15 +11,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public PosViewModel? Pos { get; private set; }
     public bool IsPos => screen == "pos";
     public bool IsNotPos => !IsPos;
-    private bool posSidebarExpanded;
-    public bool IsPosSidebarCompact => IsPos && !posSidebarExpanded;
-    public bool IsPosSidebarExpanded => IsPos && posSidebarExpanded;
-    public double SidebarWidth => IsPosSidebarCompact ? 84 : 248;
-    public System.Windows.Controls.ScrollBarVisibility SidebarScrollBarVisibility => IsPosSidebarCompact
-        ? System.Windows.Controls.ScrollBarVisibility.Hidden
-        : System.Windows.Controls.ScrollBarVisibility.Auto;
-    public System.Windows.Thickness ShellContentMargin => IsPos ? new(14,12,14,12) : new(24,20,24,20);
-    public void TogglePosSidebar(){if(!IsPos)return;posSidebarExpanded=!posSidebarExpanded;Notify();}
+    // Rediseño A: el menú es un riel fijo con íconos en todas las pantallas; el contenido va directo sobre el fondo.
+    public System.Windows.Thickness ShellContentMargin => IsPos ? new(16,0,16,16) : new(24,0,24,24);
     public bool HasCart => user?.Cart is { IsEmpty:false };
     public bool HasPendingCheckout => user?.CheckoutPending==true;
     public void DiscardCart() => Pos?.Discard(true);
@@ -105,6 +98,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string CurrentTerminalName => terminal?.Name ?? "";
     public string CurrentRoleLabel { get; private set; } = "";
     public string CashLabel => opened is null ? "CAJA CERRADA" : "CAJA ABIERTA";
+    // Barra superior: estado corto de la caja y ficha del usuario (iniciales, rol y terminal).
+    public string CashStatusLabel => opened is null ? "Caja cerrada" : "Caja abierta";
+    public string UserInitials => Initials(CurrentUserName);
+    internal static string Initials(string name)
+    {
+        var words = name.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return string.Concat(words.Take(2).Select(w => char.ToUpper(w[0], CultureInfo.GetCultureInfo("es-MX"))));
+    }
     public string CashDetails => opened is null ? "Captura el fondo inicial para comenzar." :
         $"Abierta por: {opened.OpenedByName}\nHora de apertura: {opened.Session.OpenedAt.ToLocalTime():dd/MM/yyyy HH:mm:ss zzz}\n\nImportes ocultos hasta confirmar el conteo ciego. Las ventas confirmadas en efectivo se incluyen en el cierre.";
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -147,7 +148,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                     new SerializedReceiptPrintTransport(new WindowsRawPrintTransport()));
                 var photoService=new ProductPhotoService(new SqliteProductPhotoStore(sqlite),new ProductPhotoFileStore(options.DataDirectory),new WpfProductPhotoProcessor(),user,clock,terminal.Id);
                 var photoUi=new ProductPhotoUiGateway(photoService,new BoundedProductPhotoCache());
-                Pos = new(new PosService(database,user,terminal.Id),checkout,receipts,photoUi,()=>UserLabel + " · " + TerminalLabel,(eventName,errorType)=>runtime.TryLog(eventName,errorType)){IsDevelopment=options.IsDevelopment};
+                Pos = new(new PosService(database,user,terminal.Id),checkout,receipts,photoUi,()=>UserLabel + " · " + TerminalLabel,(eventName,errorType)=>runtime.TryLog(eventName,errorType)){IsDevelopment=options.IsDevelopment,TerminalName=terminal.Name};
                 catalogService = new CatalogService(database,user,clock,terminal.Id,options.IsDevelopment);
                 Catalog = new(catalogService,photoUi,options.IsDevelopment,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 SalesHistory = new(new SalesHistoryService(database,user,TimeZoneInfo.Local),receipts,(eventName,errorType)=>runtime.TryLog(eventName,errorType),new RefundService(database,user,clock,terminal.Id));

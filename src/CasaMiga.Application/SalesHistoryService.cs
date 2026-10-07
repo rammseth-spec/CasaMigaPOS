@@ -67,18 +67,23 @@ public sealed class SalesHistoryService(
         if (query.Page < 0 || query.Page > 100000)
             throw new SalesHistoryException("La página solicitada no es válida.");
 
+        string? terminalCode = null;
         var filter = query.Mode switch
         {
             SalesHistoryMode.Recent when string.IsNullOrWhiteSpace(query.Folio)
                 && query.From is null && query.Through is null
                 => new SalesHistoryFilter(null, null, null, null, query.Page),
             SalesHistoryMode.Folio when query.From is null && query.Through is null
-                => FolioFilter(query.Folio, query.Page),
+                => FolioFilter(query.Folio, query.Page, out terminalCode),
             SalesHistoryMode.DateRange when string.IsNullOrWhiteSpace(query.Folio)
                 => DateFilter(query.From, query.Through, query.Page),
             _ => throw new SalesHistoryException("Usa la búsqueda por folio o por fechas, no ambas.")
         };
-        return store.QuerySales(filter);
+        var result = store.QuerySales(filter);
+        if (terminalCode is null) return result;
+        // Folio visible con clave de caja (C01-001061): sólo las ventas de esa caja.
+        var items = result.Items.Where(row => DisplayFolio.TerminalCode(row.TerminalName) == terminalCode).ToArray();
+        return result with { Items = items, Total = items.Length };
     });
 
     public SalesHistoryDetail? Detail(Guid saleId) => database.Read(store =>
@@ -88,9 +93,12 @@ public sealed class SalesHistoryService(
         return store.FindSaleDetail(saleId);
     });
 
-    private static SalesHistoryFilter FolioFilter(string value, int page)
+    private static SalesHistoryFilter FolioFilter(string value, int page, out string? terminalCode)
     {
         var folio = value.Trim();
+        // Folio visible (C01-001061 o sólo el número) o el interno completo de los tickets anteriores.
+        if (DisplayFolio.TryParse(folio, out terminalCode, out var visible)) return new(null, visible, null, null, page);
+        terminalCode = null;
         if (folio.Length < 41 || folio[32] != '-'
             || !Guid.TryParseExact(folio[..32], "N", out var terminal)
             || !long.TryParse(folio[33..], NumberStyles.None, CultureInfo.InvariantCulture, out var sequence)

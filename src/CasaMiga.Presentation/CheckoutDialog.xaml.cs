@@ -7,9 +7,9 @@ namespace CasaMiga.Presentation;
 public partial class CheckoutDialog : Window
 {
     private CheckoutViewModel Model=>(CheckoutViewModel)DataContext;
-    public CheckoutDialog(Window owner,CheckoutService service,ReceiptService receipts,Money total,bool recovery,bool printSelected=false)
+    public CheckoutDialog(Window owner,CheckoutService service,ReceiptService receipts,Money total,bool recovery,bool printSelected=false,string terminalName="")
     {
-        InitializeComponent();Owner=owner;DataContext=new CheckoutViewModel(service,receipts,total,recovery);
+        InitializeComponent();Owner=owner;DataContext=new CheckoutViewModel(service,receipts,total,recovery){TerminalName=terminalName};
         Title=printSelected?"Cobrar + imprimir ticket":"Cobrar sin imprimir ticket";
         WithoutPrintButton.IsDefault=!printSelected;
         AndPrintButton.IsDefault=printSelected;
