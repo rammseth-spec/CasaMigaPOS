@@ -8,7 +8,16 @@ public partial class MainWindow : Window
     private WindowStyle windowStyleBeforeFullScreen;
     private ResizeMode resizeModeBeforeFullScreen;
 
-    public MainWindow() => InitializeComponent();
+    private readonly System.Windows.Threading.DispatcherTimer signInClock = new() { Interval = TimeSpan.FromSeconds(15) };
+
+    public MainWindow()
+    {
+        InitializeComponent();
+        // Reloj y estado de la pantalla de acceso: sólo se actualizan con la sesión cerrada.
+        signInClock.Tick += (_, _) => { if (DataContext is MainViewModel { IsSignedOut: true } model) model.RefreshSignInStatus(); };
+        signInClock.Start();
+        Closed += (_, _) => signInClock.Stop();
+    }
     private MainViewModel Model => (MainViewModel)DataContext;
     private async void BootstrapClick(object sender, RoutedEventArgs e)
     {

@@ -77,6 +77,11 @@
   </ControlTemplate></Setter.Value></Setter>
  </Style>
 
+ <!-- Pantalla de acceso: fichas de estado sobre el panel café (crema translúcida, sin colores nuevos). Se ocultan si no tienen datos. -->
+ <Style x:Key="SignInChip" TargetType="Border"><Setter Property="Background" Value="#26FDF8EF"/><Setter Property="BorderBrush" Value="#40FDF8EF"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="16"/><Setter Property="Padding" Value="12,5"/><Setter Property="Margin" Value="0,8,6,0"/>
+  <Style.Triggers><DataTrigger Binding="{Binding}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style>
+ <Style x:Key="SignInChipText" TargetType="TextBlock"><Setter Property="Foreground" Value="{DynamicResource NaturalBackgroundBrush}"/><Setter Property="FontSize" Value="13"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="TextWrapping" Value="NoWrap"/></Style>
+
  <Style x:Key="SectionTabButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
   <Setter Property="MinHeight" Value="42"/><Setter Property="FontSize" Value="15"/><Setter Property="Background" Value="{StaticResource SurfaceSecondaryBrush}"/>
   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">

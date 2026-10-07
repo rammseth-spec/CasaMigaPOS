@@ -14,6 +14,7 @@
     <Compile Include="../../src/CasaMiga.Presentation/InventoryDisplay.cs" Link="Presentation/InventoryDisplay.cs" />
     <Compile Include="../../src/CasaMiga.Presentation/UiLabels.cs" Link="Presentation/UiLabels.cs" />
     <Compile Include="../../src/CasaMiga.Presentation/ReportsViewModel.cs" Link="Presentation/ReportsViewModel.cs" />
+    <Compile Include="../../src/CasaMiga.Presentation/SignInClock.cs" Link="Presentation/SignInClock.cs" />
     <Content Include="../../src/CasaMiga.Presentation/ReportsView.xaml" Link="Presentation/ReportsView.xaml" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../src/CasaMiga.Presentation/InventoryView.xaml" Link="Presentation/InventoryView.xaml" CopyToOutputDirectory="PreserveNewest" />
     <Compile Include="../../src/CasaMiga.Presentation/RecipeViewModel.cs" Link="Presentation/RecipeViewModel.cs" />

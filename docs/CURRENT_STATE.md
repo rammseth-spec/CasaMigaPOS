@@ -1,3 +1,7 @@
+# Pantalla de acceso rediseñada — 06/10/2026
+
+**Implementado; smoke manual pendiente.** Opción B: panel café a la izquierda con el logo oficial sobre crema, hora grande, fecha, «Cada día, un buen comienzo.» y fichas de estado (caja abierta/cerrada de esta terminal, nube y nombre de terminal; sin importes ni quién abrió). A la derecha, saludo según la hora («Buenos días/tardes/noches») y el formulario; mismo diseño para primer administrador y cambio de contraseña. Reloj cada 15 s sólo con la sesión cerrada. Probado a 1280×820 y al mínimo 960×640. Suite **813/813** (646 + 167), Release 0/0.
+
 # Reportes analíticos — 06/10/2026
 
 **Implementado; smoke manual pendiente.** Reportes ahora tiene pestañas: Resumen (lo anterior), **Comparativo** contra el periodo anterior de igual duración, **Ventas por hora** (mapa de calor día × hora con hora pico), **Control de caja** (faltantes/sobrantes por quien abrió la caja, devoluciones por quien cobró, motivos) y **Producción** (piezas sugeridas: promedio del mismo día de la semana en 4 semanas + 10 %). Cada pestaña exporta su CSV. Sin migración. Reglas en [REPORTS.md](REPORTS.md). Suite **811/811** (644 + 167), Release 0/0.
