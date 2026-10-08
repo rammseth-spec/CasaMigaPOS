@@ -39,7 +39,8 @@ const port = Number(portText ?? 4173);
 const storage = memoryStorage(`http://localhost:${port}/dev-blob/`);
 
 createServer(async (req, res) => {
-  const url = new URL(req.url ?? '/', `http://localhost:${port}`);
+  // Con el host pedido, para abrirla también desde un celular en la misma red (http://<IP de la PC>:<puerto>).
+  const url = new URL(req.url ?? '/', `http://${req.headers.host ?? `localhost:${port}`}`);
   const chunks: Buffer[] = [];
   for await (const chunk of req) chunks.push(chunk as Buffer);
   let response: Response;
