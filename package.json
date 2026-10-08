@@ -13,7 +13,8 @@
     "dev:web": "node --import tsx scripts/dev-web.ts"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.0.0"
+    "@neondatabase/serverless": "^1.0.0",
+    "@vercel/blob": "^1.1.1"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.3.16",

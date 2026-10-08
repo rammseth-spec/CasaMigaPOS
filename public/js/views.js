@@ -8,6 +8,7 @@ const I = {
   inventory: ['M3 7l9-4 9 4v10l-9 4-9-4z', 'M3 7l9 4 9-4', 'M12 11v10'], recipes: ['M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z', 'M5 17a3 3 0 0 1 3-3h11'],
   production: ['M7 14a4 4 0 1 1 2.5-7.2A4 4 0 0 1 17 7a4 4 0 1 1 0 7v5H7z', 'M7 17h10'], users: ['M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', 'M2 21a7 7 0 0 1 14 0', 'M17 11a3 3 0 1 0 0-6', 'M22 21a6 6 0 0 0-5-6'],
   terminals: ['M3 5h18v11H3z', 'M8 21h8', 'M12 16v5'],
+  backups: ['M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z', 'M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7', 'M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3'],
 };
 const branchName = id => state.branches.find(b => b.id === id)?.name ?? '';
 const multi = () => !state.branch && state.branches.length > 1;
@@ -565,6 +566,32 @@ async function cajas() {
       ], commands, { empty: 'Todavía no hay cambios hechos en la web.' })));
 }
 
+// ---------- Respaldos ----------
+const size = bytes => bytes >= 1_048_576 ? `${(bytes / 1_048_576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+async function respaldos() {
+  const data = await api('backups', { branch: state.branch });
+  const latest = new Map();
+  for (const s of data.sets) if (s.kind === 'terminal' && !latest.has(s.terminal)) latest.set(s.terminal, s);
+  const cloud = data.sets.find(s => s.kind === 'cloud');
+  const age = iso => (Date.now() - new Date(iso).getTime()) / 3_600_000;
+  return h('div', { style: { display: 'grid', gap: '16px' } },
+    h('p', { class: 'notice', text: 'Cada caja sube su base cada hora con la app abierta (sólo si cambió) y sus fotos una vez. Cada noche se copia la base de la nube. Todo va cifrado; se conserva todo lo de 48 h y uno por día hasta 30 días.' }),
+    card('Última copia por caja', data.terminals.length ? h('ul', { class: 'rows' }, data.terminals.map(t => {
+      const last = latest.get(t.name);
+      const fresh = last && age(last.createdAt) < 2;
+      return h('li', {}, h('div', {}, h('strong', { text: t.name }), h('small', { class: 'muted', text: last ? ` ${size(last.bytes)} · ${last.files} fotos` : '' })),
+        h('span', { class: 'pill ' + (!last ? 'bad' : fresh ? 'ok' : 'warn'), text: !last ? 'Sin respaldo' : fresh ? 'Al día' : 'Atrasado' }),
+        h('span', { class: 'muted small', text: last ? at(last.createdAt) : '—' }));
+    })) : h('p', { class: 'empty', text: 'Ninguna caja registrada.' })),
+    card('Copia de la base de la nube', h('p', { text: cloud ? `Última: ${at(cloud.createdAt)} · ${size(cloud.bytes)}` : 'Todavía no hay copia (se hace cada noche a las 3:00).' })),
+    card('Historial', table([
+      { label: 'Fecha', value: s => at(s.createdAt) }, { label: 'Origen', value: s => s.kind === 'cloud' ? 'Base de la nube' : s.terminal ?? 'Caja' },
+      { label: 'Tamaño', num: true, value: s => size(s.bytes) }, { label: 'Fotos', num: true, value: s => s.kind === 'cloud' ? '—' : String(s.files) },
+      { label: 'Identificador', value: s => h('small', { text: s.id }) },
+    ], data.sets, { empty: 'Todavía no hay respaldos.' })),
+    card('Restaurar una caja', h('p', { class: 'small', text: 'En la computadora nueva, con Casa Miga instalado y cerrado: CasaMiga.Maintenance restore-cloud <dirección de la nube> <usuario administrador> <carpeta nueva> [identificador]. Pide la contraseña, baja el respaldo más reciente de esa caja (o el indicado), lo descifra, lo verifica y deja una instalación completa en la carpeta nueva.' })));
+}
+
 export const VIEWS = [
   { id: 'resumen', title: 'Resumen', icon: I.home, permission: 'sales.view', usesRange: true, render: resumen },
   { id: 'ventas', title: 'Ventas', subtitle: 'Toca una venta para ver su ticket', icon: I.sales, permission: 'sales.view', usesRange: true, render: ventas },
@@ -577,4 +604,5 @@ export const VIEWS = [
   { id: 'produccion', title: 'Producción', icon: I.production, permission: 'production.view', usesRange: true, render: produccion },
   { id: 'usuarios', title: 'Usuarios', icon: I.users, permission: 'users.manage', usesRange: false, render: usuarios },
   { id: 'cajas', title: 'Cajas', subtitle: 'Conexión y cambios enviados', icon: I.terminals, permission: 'sales.view', usesRange: false, render: cajas },
+  { id: 'respaldos', title: 'Respaldos', subtitle: 'Copias cifradas en la nube', icon: I.backups, permission: 'users.manage', usesRange: false, render: respaldos },
 ];
