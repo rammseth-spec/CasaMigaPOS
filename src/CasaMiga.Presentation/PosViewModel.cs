@@ -169,7 +169,7 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
         catch(CartDiscardRequiredException e){Message=e.Message;}
         catch(CheckoutException e){Message=e.Message;}
         catch(AccessDeniedException){Message="No tienes permiso para usar el POS.";Products=[];}
-        catch(Exception e){log("pos.operation.failed",e.GetType().Name);Message="No se completó la operación. Revisa el estado del equipo antes de continuar.";}
+        catch(Exception e){log("pos.operation.failed",e.GetType().Name);Message=$"No se completó la operación (código: {e.GetType().Name}). Revisa el estado del equipo antes de continuar.";}
         finally{Busy=false;Notify();}
     }
 }

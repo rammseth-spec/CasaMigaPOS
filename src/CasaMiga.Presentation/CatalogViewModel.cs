@@ -232,7 +232,7 @@ public sealed class CatalogViewModel(CatalogService service,IProductPhotoUiGatew
         catch(CatalogException e){Message=e.Message;}
         catch(ProductPhotoException e){Message=e.Message;}
         catch(AccessDeniedException){Message="No tienes permiso para esta operación de catálogo.";log("catalog.authorization.denied",null);}
-        catch(Exception e){Message="No se completó la operación. Revisa permisos y espacio del equipo.";log("catalog.operation.failed",e.GetType().Name);}
+        catch(Exception e){Message=$"No se completó la operación (código: {e.GetType().Name}). Revisa permisos y espacio del equipo.";log("catalog.operation.failed",e.GetType().Name);}
         finally{Busy=false;Notify();}
     }
 }

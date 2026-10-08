@@ -370,7 +370,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         catch (PosException error) { Message = error.Message; }
         catch (CartDiscardRequiredException error) { Message = error.Message; }
         catch (CheckoutException error) { Message = error.Message; }
-        catch (Exception error) { runtime?.TryLog("operation.failed", error.GetType().Name); Message = "No se completó la operación. Revisa el espacio y permisos del equipo; si persiste, contacta al encargado."; }
+        catch (Exception error) { runtime?.TryLog("operation.failed", error.GetType().Name); Message = $"No se completó la operación (código: {error.GetType().Name}). Revisa el espacio y permisos del equipo; si persiste, contacta al encargado."; }
         finally { Busy = false; Notify(); }
     }
 }
