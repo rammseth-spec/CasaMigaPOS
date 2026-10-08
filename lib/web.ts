@@ -351,7 +351,9 @@ export async function inventory(q: Query, branch: string | null, timeZone: strin
     measures, timeZone,
     items: items.map(x => {
       const p = x.payload as { item: Row; units: Row[]; balances: Row[] };
+      const cost = (p as { cost?: Row | null }).cost;
       return { id: s(p.item.id), branchId: s(x.branch_id), code: s(p.item.code), name: s(p.item.name), kind: s(p.item.kind), dimension: s(p.item.dimension), active: n(p.item.active) === 1,
+        cost: cost ? { cents: n(cost.cost_cents), perAtomic: n(cost.per_atomic), unit: s(cost.unit_label), updatedAt: s(cost.updated_utc) } : null,
         units: p.units.filter(u => n(u.active) === 1).map(u => ({ code: s(u.code), name: s(u.name), atomic: n(u.atomic_units_per_whole_unit) })),
         balances: p.balances.map(b => ({ location: location.get(s(b.location_id)) ?? 'Almacén', atomic: n(b.quantity_atomic), updatedAt: s(b.updated_utc) })) };
     }).sort((a, b) => a.name.localeCompare(b.name)),

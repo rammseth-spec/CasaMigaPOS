@@ -45,7 +45,8 @@ export const ROLE = { Administrator: 'Administrador', Manager: 'Encargado', Cash
 /** Cantidad en unidades atómicas (mg, ml, piezas…) con la unidad más grande que quepa. */
 export function quantity(atomic, dimension, measures) {
   const units = (measures || []).filter(u => u.dimension === dimension).sort((a, b) => b.atomic - a.atomic);
-  const unit = units.find(u => Math.abs(atomic) >= u.atomic) ?? units[units.length - 1];
+  // Cero se muestra en la unidad mayor (0 kg, no 0 mg).
+  const unit = atomic === 0 ? units[0] : units.find(u => Math.abs(atomic) >= u.atomic) ?? units[units.length - 1];
   if (!unit) return String(atomic);
   const value = atomic / unit.atomic;
   return `${value.toLocaleString('es-MX', { maximumFractionDigits: 3 })} ${unit.symbol}`;
