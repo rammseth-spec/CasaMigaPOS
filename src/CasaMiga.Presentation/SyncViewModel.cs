@@ -15,7 +15,9 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
     private readonly Action<string, string?> log;
     private readonly SemaphoreSlim gate = new(1, 1);
     private readonly CancellationTokenSource stop = new();
-    private TimeSpan delay = TimeSpan.FromSeconds(15);
+    /// <summary>Cada cuánto sube lo pendiente y baja los cambios de la web (decisión del usuario, 08/10/2026). «Sincronizar ahora» no espera.</summary>
+    public static readonly TimeSpan Interval = TimeSpan.FromSeconds(60);
+    private TimeSpan delay = Interval;
 
     public SyncViewModel(SyncEngine engine, SqliteSyncOutbox outbox, Guid terminalId, string terminalName, Action<string, string?> log)
     {
@@ -27,9 +29,11 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
     public string ApiUrl { get; set; } = DefaultApiUrl;
     public string BranchName { get; set; }
     public bool Busy { get; private set; }
+    /// <summary>Envío en curso (automático o «sincronizar ahora»).</summary>
+    public bool Syncing { get; private set; }
     public bool Ready => !Busy;
     public string Message { get; private set; } = "";
-    public string StatusLabel => Status.State switch
+    public string StatusLabel => Syncing ? "Nube: sincronizando…" : Status.State switch
     {
         SyncState.UpToDate => "Nube: al día",
         SyncState.Pending => $"Nube: {Status.Pending} pendientes",
@@ -40,7 +44,8 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
     // Punto de color en la barra superior: verde al día, ámbar sin conexión o con algo por revisar, gris sin registrar o pendiente.
     public bool IsUpToDate => Status.State == SyncState.UpToDate;
     public bool NeedsCheck => Status.State is SyncState.Offline or SyncState.NeedsAttention;
-    public string StatusDetail => Status.Detail +(Status.LastSuccess is { } at ? $"\nÚltimo envío confirmado: {at.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture)}" : "");
+    public string StatusDetail => Status.Detail +(Status.LastSuccess is { } at ? $"\nÚltimo envío confirmado: {at.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture)}" : "")
+        + "\nSe sincroniza sola cada minuto; toca la nube para hacerlo ahora.";
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Notify()
     {
@@ -62,7 +67,7 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
                 {
                     SyncState.Offline => TimeSpan.FromSeconds(Math.Min(300, delay.TotalSeconds * 2)),
                     SyncState.NeedsAttention => TimeSpan.FromMinutes(5),
-                    _ => TimeSpan.FromSeconds(15)
+                    _ => Interval
                 };
                 await Task.Delay(delay, stop.Token);
             }
@@ -75,6 +80,7 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
     public async Task RunAsync()
     {
         if (!await gate.WaitAsync(0)) return;
+        Syncing = true; Notify();
         try
         {
             var token = stop.Token;
@@ -87,7 +93,7 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
             Status = Status with { State = SyncState.NeedsAttention, Detail = "No se pudo leer la cola de sincronización." };
             log("sync.failed", error.GetType().Name);
         }
-        finally { gate.Release(); Notify(); }
+        finally { Syncing = false; gate.Release(); Notify(); }
     }
 
     public async Task RegisterAsync(string enrollmentSecret)
@@ -100,7 +106,7 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
             BranchName = await Task.Run(() => engine.RegisterAsync(url, enrollmentSecret, branch, terminalId, terminalName));
             log("sync.registered", null);
             Message = "Terminal registrada. La información pendiente se enviará automáticamente.";
-            delay = TimeSpan.FromSeconds(15);
+            delay = Interval;
             _ = RunAsync();
         }
         catch (ArgumentException error) { Message = error.Message; }

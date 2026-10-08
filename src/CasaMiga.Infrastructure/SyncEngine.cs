@@ -154,7 +154,8 @@ public sealed class HttpSyncTransport(HttpClient http) : ISyncTransport
         if (!response.IsSuccessStatusCode || body?["commands"] is not JsonArray list) throw new HttpRequestException((string?)body?["error"] ?? "Respuesta no válida del servidor.");
         return list.OfType<JsonObject>().Select(c => new CloudCommand(
             Guid.Parse((string)c["id"]!), (long)c["seq"]!, (string)c["kind"]!, c["payload"] as JsonObject ?? [],
-            Guid.TryParse((string?)c["requestedBy"]?["id"], out var by) ? by : Guid.Empty, (string?)c["requestedBy"]?["name"] ?? "web")).ToList();
+            Guid.TryParse((string?)c["requestedBy"]?["id"], out var by) ? by : Guid.Empty, (string?)c["requestedBy"]?["name"] ?? "web",
+            DateTimeOffset.TryParse((string?)c["requestedAt"], System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out var at) ? at : null)).ToList();
     }
 
     public async Task ReportCommandsAsync(Uri api, string terminalKey, IReadOnlyList<CloudCommandResult> results, CancellationToken cancel)

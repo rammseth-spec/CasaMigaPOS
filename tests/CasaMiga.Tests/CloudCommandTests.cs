@@ -106,6 +106,37 @@ public sealed class CloudCommandTests : SalesFixture
         Assert.IsFalse(trays.Stores(includeInactive: true).Single(s => s.Id == store).Active);
     }
 
+    [TestMethod]
+    public void RouteFromThePhoneKeepsTheTimeItHappened()
+    {
+        var trays = new ConsignmentService(work, user, clock, terminal.Id, TimeZoneInfo.Utc);
+        trays.SetPrice(product.Id, new Money(1500));
+        var store = trays.SaveStore(null, "Abarrotes Lupita", "", "", "");
+        var onRoute = DateTimeOffset.UtcNow.AddHours(-3);
+        CloudCommand Route(string kind, JsonObject payload, DateTimeOffset at) => new(Guid.NewGuid(), ++sequence, kind, payload, user.Current!.Id, "Admin en ruta", at);
+
+        var deliver = Route("consignment.deliver", new() { ["storeId"] = store.Id.ToString(), ["lines"] = new JsonArray(new JsonObject { ["productId"] = product.Id.ToString(), ["quantity"] = 6 }), ["note"] = "" }, onRoute);
+        Ok(Commands.Apply(deliver));
+        var delivery = trays.Route().Single(s => s.Store.Id == store.Id).AtStore.Single();
+        Assert.AreEqual(deliver.Id, delivery.OperationId, "The web change id is the operation id: a retry never duplicates the tray.");
+        Assert.IsTrue(Math.Abs((delivery.DeliveredAt - onRoute).TotalSeconds) < 1, "Recorded at the time it happened on the route, not when the till applied it.");
+
+        Ok(Commands.Apply(Route("consignment.collect", new() { ["deliveryId"] = delivery.Id.ToString(), ["returned"] = new JsonArray(new JsonObject { ["position"] = 1, ["quantity"] = 2 }),
+            ["paidCents"] = 3000, ["method"] = "CASH", ["reference"] = null, ["note"] = "" }, onRoute.AddHours(1))));
+        Assert.AreEqual(3000L, trays.Account(store.Id).Balance.Cents, "4 sold × $15 = $60 charged, $30 paid.");
+        Ok(Commands.Apply(Route("consignment.payment", new() { ["storeId"] = store.Id.ToString(), ["amountCents"] = 3000, ["method"] = "TRANSFER", ["reference"] = "SPEI 1", ["note"] = "" }, onRoute.AddHours(2))));
+        Assert.AreEqual(0L, trays.Account(store.Id).Balance.Cents);
+        var tooMuch = Commands.Apply(Route("consignment.payment", new() { ["storeId"] = store.Id.ToString(), ["amountCents"] = 100, ["method"] = "CASH", ["note"] = "" }, onRoute));
+        Assert.AreEqual("rejected", tooMuch.Status, "The till still applies its own rules (no balance left).");
+
+        var second = Route("consignment.deliver", new() { ["storeId"] = store.Id.ToString(), ["lines"] = new JsonArray(new JsonObject { ["productId"] = product.Id.ToString(), ["quantity"] = 3 }), ["note"] = "" }, DateTimeOffset.UtcNow.AddDays(1));
+        Ok(Commands.Apply(second));
+        var future = trays.Route().Single(s => s.Store.Id == store.Id).AtStore.Single();
+        Assert.IsTrue(future.DeliveredAt <= DateTimeOffset.UtcNow, "A time in the future is never recorded.");
+        Ok(Commands.Apply(Route("consignment.void", new() { ["deliveryId"] = future.Id.ToString(), ["reason"] = "Tienda cerrada" }, DateTimeOffset.UtcNow)));
+        Assert.IsEmpty(trays.Route().Single(s => s.Store.Id == store.Id).AtStore);
+    }
+
     private sealed class Transport : ISyncTransport
     {
         public List<CloudCommand> Pending { get; } = [];

@@ -43,7 +43,7 @@ CREATE TABLE branch_command(
   seq bigserial UNIQUE,
   branch_id uuid NOT NULL REFERENCES branch(id),
   kind text NOT NULL CHECK (kind IN ('category.save','product.save','product.active','user.create','user.update','user.active','user.reset_password',
-    'consignment.store.save','consignment.template.save')),
+    'consignment.store.save','consignment.template.save','consignment.deliver','consignment.collect','consignment.payment','consignment.void')),
   payload jsonb NOT NULL,
   requested_by_id text NOT NULL,
   requested_by_name text NOT NULL,

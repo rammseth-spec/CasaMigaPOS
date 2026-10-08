@@ -83,6 +83,8 @@ label.check { display: flex; gap: 10px; align-items: center; font-size: 14px; }
 .topbar .title { flex: 1; min-width: 180px; display: grid; }
 .topbar .title span { font-size: 13px; color: var(--muted); }
 .topbar .menu { display: none; }
+.topbar .refresh { min-height: 36px; padding: 6px 12px; font-size: 13px; white-space: nowrap; }
+.topbar .refresh.busy { opacity: .6; }
 .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .filters .dates { display: flex; gap: 6px; align-items: center; color: var(--muted); font-size: 14px; }
 .filters input[type=date] { width: auto; min-height: 38px; padding: 6px 10px; }
@@ -137,6 +139,24 @@ th.num, td.num { text-align: right; }
 .heat .h { color: var(--muted); text-align: center; }
 .heat .d { color: var(--muted); align-self: center; font-weight: 600; }
 .heat .c { height: 26px; border-radius: 5px; background: var(--surface-2); }
+
+/* Ruta (repartidor en celular) */
+.route { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.route .card { display: grid; gap: 10px; }
+.route .head { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
+.route .head h2 { margin: 0; }
+.route .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.route .actions button { flex: 1 1 140px; min-height: 48px; }
+.route .tray { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 6px; background: var(--surface-2); }
+.route .tray header { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.route .sent { font-size: 13px; color: var(--warn-text); background: var(--warn-soft); border-radius: 10px; padding: 6px 10px; }
+.stepper-list { display: grid; gap: 6px; }
+.stepper-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.stepper-row small { display: block; color: var(--muted); }
+.stepper { display: inline-flex; align-items: center; gap: 6px; }
+.stepper button { width: 44px; min-height: 44px; padding: 0; font-size: 20px; font-weight: 700; border-radius: 12px; }
+.stepper output { min-width: 34px; text-align: center; font-weight: 700; font-size: 18px; font-variant-numeric: tabular-nums; }
+.totals { display: flex; justify-content: space-between; gap: 10px; font-weight: 700; padding-top: 6px; }
 
 /* Catálogo */
 .products { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }

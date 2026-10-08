@@ -251,6 +251,52 @@ export async function consignment(q: Query, r: Range) {
   };
 }
 
+/** Ruta del repartidor: tiendas activas con su charola habitual, charolas por recoger (con partidas), saldo y lo enviado desde la web. */
+export async function route(q: Query, branch: string | null) {
+  const [stores, deliveries, payments, products, prices, sent] = await Promise.all([
+    q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'consignment_store' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
+    q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'consignment_delivery' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
+    q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'consignment_payment' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
+    q(`SELECT branch_id, entity_id AS id, payload->'product'->>'name' AS name, (payload->'product'->>'active')::int AS active FROM entity_state WHERE entity = 'product' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
+    q(`SELECT branch_id, entity_id AS id, (payload->>'price_cents')::bigint AS price FROM entity_state WHERE entity = 'consignment_price' AND NOT deleted AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
+    q(`SELECT c.id, c.kind, c.payload, c.requested_at, c.requested_by_name FROM branch_command c
+       WHERE c.kind LIKE 'consignment.%' AND ($1::uuid IS NULL OR c.branch_id = $1::uuid)
+         AND NOT EXISTS (SELECT 1 FROM command_result r WHERE r.command_id = c.id)
+       ORDER BY c.seq`, [branch]),
+  ]);
+  const key = (b: unknown, x: unknown) => `${s(b)}/${s(x)}`;
+  const productName = new Map(products.map(p => [key(p.branch_id, p.id), s(p.name)]));
+  const price = new Map(prices.map(p => [key(p.branch_id, p.id), n(p.price)]));
+  const charged = new Map<string, number>(); const paid = new Map<string, number>(); const last = new Map<string, string>();
+  const open = new Map<string, unknown[]>();
+  for (const d of deliveries) {
+    const p = d.payload as { delivery: Row; items: Row[]; settlement: Row | null; void: Row | null };
+    const store = s(p.delivery.store_id);
+    if (!p.void && (!last.has(store) || s(p.delivery.delivered_utc) > last.get(store)!)) last.set(store, s(p.delivery.delivered_utc));
+    if (p.settlement) charged.set(store, (charged.get(store) ?? 0) + n(p.settlement.sold_cents));
+    if (!p.settlement && !p.void) {
+      const list = open.get(store) ?? []; open.set(store, list);
+      list.push({ id: s(p.delivery.id), at: s(p.delivery.delivered_utc), note: s(p.delivery.note),
+        items: p.items.map(i => ({ position: n(i.position), name: s(i.product_name), quantity: n(i.quantity), price: n(i.unit_price_cents) })) });
+    }
+  }
+  for (const x of payments) { const p = x.payload as Row; paid.set(s(p.store_id), (paid.get(s(p.store_id)) ?? 0) + n(p.amount_cents)); }
+  const pendingSent = sent.map(c => ({ id: s(c.id), kind: s(c.kind), payload: c.payload as Row, at: c.requested_at instanceof Date ? c.requested_at.toISOString() : s(c.requested_at), by: s(c.requested_by_name) }));
+  return {
+    stores: stores.map(x => {
+      const p = x.payload as { store: Row; template: Row[] };
+      const id = s(p.store.id);
+      return { id, branchId: s(x.branch_id), name: s(p.store.name), contact: s(p.store.contact), phone: s(p.store.phone), address: s(p.store.address),
+        active: n(p.store.active) === 1, balance: (charged.get(id) ?? 0) - (paid.get(id) ?? 0), lastDelivery: last.get(id) ?? null,
+        template: p.template.map(t => ({ productId: s(t.product_id), name: productName.get(key(x.branch_id, t.product_id)) ?? 'Pan', quantity: n(t.quantity) })),
+        atStore: (open.get(id) ?? []).sort((a: any, b: any) => a.at.localeCompare(b.at)),
+        sent: pendingSent.filter(c => s(c.payload.storeId) === id || (open.get(id) ?? []).some((d: any) => d.id === s(c.payload.deliveryId))) };
+    }).filter(st => st.active).sort((a, b) => a.name.localeCompare(b.name)),
+    products: products.filter(p => n(p.active) === 1 && price.has(key(p.branch_id, p.id)))
+      .map(p => ({ id: s(p.id), branchId: s(p.branch_id), name: s(p.name), price: price.get(key(p.branch_id, p.id))! })).sort((a, b) => a.name.localeCompare(b.name)),
+  };
+}
+
 // ---------- Catálogo ----------
 
 export async function catalog(q: Query, branch: string | null) {

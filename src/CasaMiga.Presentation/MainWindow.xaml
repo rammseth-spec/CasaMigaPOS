@@ -116,12 +116,15 @@
         <TextBlock Text="{Binding CashStatusLabel}" FontSize="13" FontWeight="SemiBold" TextWrapping="NoWrap" VerticalAlignment="Center"/>
        </StackPanel>
       </Border>
-      <Border Style="{StaticResource StatusPill}" DataContext="{Binding Sync}" ToolTip="{Binding StatusDetail}">
+      <!-- Tocar la nube sincroniza al momento (además del envío automático cada 60 s). -->
+      <Button DataContext="{Binding Sync}" Click="SyncNowClick" ToolTip="{Binding StatusDetail}" Cursor="Hand" AutomationProperties.Name="Sincronizar ahora con la nube">
+       <Button.Template><ControlTemplate TargetType="Button"><Border x:Name="Pill" Style="{StaticResource StatusPill}"><ContentPresenter/></Border>
+        <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Pill" Property="Background" Value="{DynamicResource FillHoverBrush}"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Button.Template>
        <StackPanel Orientation="Horizontal">
         <Ellipse><Ellipse.Style><Style TargetType="Ellipse" BasedOn="{StaticResource StatusDot}"><Style.Triggers><DataTrigger Binding="{Binding IsUpToDate}" Value="True"><Setter Property="Fill" Value="{DynamicResource SuccessBrush}"/></DataTrigger><DataTrigger Binding="{Binding NeedsCheck}" Value="True"><Setter Property="Fill" Value="#C77C00"/></DataTrigger></Style.Triggers></Style></Ellipse.Style></Ellipse>
         <TextBlock Text="{Binding StatusLabel}" FontSize="13" FontWeight="SemiBold" TextWrapping="NoWrap" VerticalAlignment="Center"/>
        </StackPanel>
-      </Border>
+      </Button>
       <Border Style="{StaticResource StatusPill}" Padding="4,4,14,4">
        <StackPanel Orientation="Horizontal">
         <Border Width="34" Height="34" CornerRadius="17" Background="{DynamicResource PrimaryBrush}"><TextBlock Text="{Binding UserInitials}" Foreground="White" FontSize="13" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="NoWrap"/></Border>

@@ -4,7 +4,7 @@ using CasaMiga.Domain;
 namespace CasaMiga.Application;
 
 /// <summary>Cambio hecho en la versión web para esta sucursal (docs/WEB.md).</summary>
-public sealed record CloudCommand(Guid Id, long Sequence, string Kind, JsonObject Payload, Guid RequestedById, string RequestedByName);
+public sealed record CloudCommand(Guid Id, long Sequence, string Kind, JsonObject Payload, Guid RequestedById, string RequestedByName, DateTimeOffset? RequestedAt = null);
 public sealed record CloudCommandResult(Guid Id, long Sequence, string Status, string? Message)
 {
     public bool Applied => Status == "applied";
@@ -41,7 +41,7 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
             session.SignIn(new UserIdentity(actor.Id, actor.DisplayName));
             Execute(command, session);
         }
-        catch (Exception error) when (error is AccessDeniedException or ArgumentException or CatalogException or ConsignmentException or InvalidCommandException)
+        catch (Exception error) when (error is AccessDeniedException or ArgumentException or CatalogException or ConsignmentException or InvalidCommandException or KeyNotFoundException)
         {
             rejection = error.Message;
         }
@@ -63,6 +63,8 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
         var catalog = new CatalogService(database, session, clock, terminalId);
         var identity = new IdentityService(database, new NoPasswords(), clock, session);
         var trays = new ConsignmentService(database, session, clock, terminalId, timeZone);
+        // Lo registrado en la ruta conserva la hora en que se hizo en el celular, aunque la caja lo aplique después (sin pasar de ahora).
+        var onRoute = new ConsignmentService(database, session, new FixedClock(Earlier(command.RequestedAt, clock.UtcNow)), terminalId, timeZone);
         switch (command.Kind)
         {
             case "category.save":
@@ -96,6 +98,21 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
                 if (p["active"] is not null && database.Run(store => store.FindConsignmentStore(id))!.Active != Bool(p, "active")) trays.SetStoreActive(id, Bool(p, "active"));
                 break;
             }
+            case "consignment.deliver":
+                onRoute.Deliver(Id(p, "storeId"), Lines(p, "lines"), Text(p, "note"), command.Id);
+                break;
+            case "consignment.collect":
+                onRoute.Collect(Id(p, "deliveryId"),
+                    (p["returned"] as JsonArray ?? throw new InvalidCommandException()).Select(r => r as JsonObject ?? throw new InvalidCommandException())
+                        .ToDictionary(r => Int(r, "position"), r => Int(r, "quantity")),
+                    new Money(Long(p, "paidCents")), Method(p), p["reference"] is null ? null : Text(p, "reference"), Text(p, "note"), command.Id);
+                break;
+            case "consignment.payment":
+                onRoute.ReceivePayment(Id(p, "storeId"), new Money(Long(p, "amountCents")), Method(p), p["reference"] is null ? null : Text(p, "reference"), Text(p, "note"), command.Id);
+                break;
+            case "consignment.void":
+                onRoute.Void(Id(p, "deliveryId"), Text(p, "reason"));
+                break;
             case "consignment.template.save":
                 trays.SaveTemplate(Id(p, "storeId"), (p["lines"] as JsonArray ?? throw new InvalidCommandException())
                     .Select(l => new ConsignmentLine(Id(l as JsonObject ?? throw new InvalidCommandException(), "productId"), Int((JsonObject)l!, "quantity"))).ToList());
@@ -105,6 +122,17 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
     }
 
     private sealed class InvalidCommandException(string message = "Cambio con formato inválido.") : Exception(message);
+    private sealed class FixedClock(DateTimeOffset at) : IClock { public DateTimeOffset UtcNow => at; }
+    private static DateTimeOffset Earlier(DateTimeOffset? requested, DateTimeOffset now) => requested is { } at && at < now ? at.ToUniversalTime() : now;
+    private static PaymentMethod Method(JsonObject p)
+    {
+        try { return Payment.Parse(Text(p, "method")); }
+        catch (InvalidDataException) { throw new InvalidCommandException(); }
+    }
+    private static List<ConsignmentLine> Lines(JsonObject p, string name) =>
+        (p[name] as JsonArray ?? throw new InvalidCommandException())
+            .Select(l => l as JsonObject ?? throw new InvalidCommandException())
+            .Select(l => new ConsignmentLine(Id(l, "productId"), Int(l, "quantity"))).ToList();
     /// <summary>Los cambios de la web nunca crean contraseñas aquí: ya traen su hash.</summary>
     private sealed class NoPasswords : IPasswords
     {

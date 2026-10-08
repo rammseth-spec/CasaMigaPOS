@@ -92,12 +92,13 @@ public sealed class ConsignmentService(ILocalUnitOfWork database, UserSession id
             store.ConsignmentTemplate(s.Id).Sum(l => l.Quantity))).ToList();
     });
 
-    public ConsignmentDelivery Deliver(Guid storeId, IReadOnlyList<ConsignmentLine> lines, string note)
+    /// <param name="operationId">Sólo para la versión web: el identificador del cambio, para que reintentarlo no duplique la charola.</param>
+    public ConsignmentDelivery Deliver(Guid storeId, IReadOnlyList<ConsignmentLine> lines, string note, Guid? operationId = null)
     {
         note = note.Trim();
         if (note.Length > 200) throw new ArgumentException("La nota admite hasta 200 caracteres.");
         var normalized = Normalize(lines, allowEmpty: false);
-        var operation = Guid.NewGuid();
+        var operation = operationId ?? Guid.NewGuid();
         return Idempotent(operation, store => store.FindConsignmentDeliveryByOperation(operation), () => Manage((store, actor, at) =>
         {
             var target = store.FindConsignmentStore(storeId) ?? throw new ConsignmentException("No se encontró la tienda.");
@@ -120,13 +121,13 @@ public sealed class ConsignmentService(ILocalUnitOfWork database, UserSession id
     }
 
     /// <summary>Recoge una charola: <paramref name="returned"/> son las piezas que regresan por partida (las demás se vendieron).</summary>
-    public ConsignmentCollection Collect(Guid deliveryId, IReadOnlyDictionary<int, int> returned, Money paidNow, PaymentMethod method, string? reference, string note)
+    public ConsignmentCollection Collect(Guid deliveryId, IReadOnlyDictionary<int, int> returned, Money paidNow, PaymentMethod method, string? reference, string note, Guid? operationId = null)
     {
         note = note.Trim();
         if (note.Length > 200) throw new ArgumentException("La nota admite hasta 200 caracteres.");
         if (paidNow.Cents < 0) throw new ArgumentException("El cobro no puede ser negativo.");
         reference = Reference(paidNow.Cents > 0 ? method : PaymentMethod.Cash, reference);
-        var operation = Guid.NewGuid();
+        var operation = operationId ?? Guid.NewGuid();
         return Idempotent(operation, store => store.FindConsignmentDeliveryBySettlement(operation) is { } done
             ? new ConsignmentCollection(done, store.FindConsignmentPaymentByOperation(operation), store.ConsignmentBalance(done.StoreId)) : null, () => Manage((store, actor, at) =>
         {
@@ -175,13 +176,13 @@ public sealed class ConsignmentService(ILocalUnitOfWork database, UserSession id
         });
     }
 
-    public ConsignmentPayment ReceivePayment(Guid storeId, Money amount, PaymentMethod method, string? reference, string note)
+    public ConsignmentPayment ReceivePayment(Guid storeId, Money amount, PaymentMethod method, string? reference, string note, Guid? operationId = null)
     {
         note = note.Trim();
         if (note.Length > 200) throw new ArgumentException("La nota admite hasta 200 caracteres.");
         if (amount.Cents <= 0) throw new ArgumentException("Escribe el importe cobrado.");
         reference = Reference(method, reference);
-        var operation = Guid.NewGuid();
+        var operation = operationId ?? Guid.NewGuid();
         return Idempotent(operation, store => store.FindConsignmentPaymentByOperation(operation), () => Manage((store, actor, at) =>
         {
             var target = store.FindConsignmentStore(storeId) ?? throw new ConsignmentException("No se encontró la tienda.");

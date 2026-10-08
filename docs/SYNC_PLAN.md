@@ -6,7 +6,7 @@ Estado: **fases 1–3, versión web (fase 5) y cambios desde la web implementado
 |---|---|
 | 1 | Hecha (migraciones 018–019). |
 | 2 | Base central en Neon `casamiga-pos` (`shiny-mouse-28561448`, aws-us-east-1) con `cloud/db/001_init.sql` aplicada. API en `cloud/` (TypeScript, Vercel Functions) probada localmente; **sin desplegar**: el conector de Vercel no tiene permiso para crear proyectos en el equipo. |
-| 3 | Hecha en la app: `SyncEngine` + `HttpSyncTransport`, envío en segundo plano cada 15 s con espera creciente sin conexión (hasta 5 min), llave por terminal cifrada con DPAPI en `sync.json`, pantalla **Nube** (administrador) y estado en el encabezado. |
+| 3 | Hecha en la app: `SyncEngine` + `HttpSyncTransport`, envío en segundo plano cada 60 s (antes 15 s; cambio del 08/10/2026) con espera creciente sin conexión (hasta 5 min), llave por terminal cifrada con DPAPI en `sync.json`, pantalla **Nube** (administrador) y estado en el encabezado. |
 | 4 | Parcial: los cambios hechos en la web (precios, productos, categorías, usuarios, tiendas de charolas) bajan a las cajas. Falta repartir altas hechas en una caja a las demás de la sucursal. |
 | 5 | Versión web completa ([WEB.md](WEB.md)), probada con PGlite y con la cola real de la copia demo; **sin desplegar**. |
 | 6 | Pendiente. |

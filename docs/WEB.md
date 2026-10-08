@@ -27,6 +27,20 @@ Resumen, Ventas (búsqueda por folio C01-001061 o producto, forma de pago, detal
 
 Responsiva: menú lateral en computadora, riel de íconos en tablet (≤1100 px) y menú desplegable en celular (≤720 px), donde las tablas se vuelven tarjetas y los diálogos hojas inferiores.
 
+## Tiempo real
+
+- La caja sube lo pendiente y baja los cambios de la web **cada 60 segundos**; tocar la píldora «Nube» de la barra superior sincroniza al momento (cualquier usuario).
+- La web se actualiza sola cada 60 s con la página visible (sin parpadear ni perder la posición; se pausa mientras escribes o con un formulario abierto) y tiene el botón «Actualizado hh:mm ↻» para hacerlo al momento.
+
+## Ruta del repartidor (Charolas → Ruta)
+
+Pensada para celular: una tarjeta por tienda activa con teléfono, saldo, última entrega, charolas por recoger y botones grandes.
+- **Entregar charola**: viene con la charola habitual; contadores − / + por pan; total de piezas e importe.
+- **Recoger**: por cada pan, cuántos regresan (los demás se vendieron); calcula el cargo y propone cobrarlo; forma de pago; o **anular** la charola con motivo.
+- **Cobrar**: hasta el saldo de la tienda.
+- La caja lo aplica con la **hora en que se hizo en la ruta** (nunca en el futuro) y con el identificador del cambio como operación, así que reintentar no duplica. Mientras la caja no lo aplica, la tarjeta muestra «enviada · esperando a la caja», y no deja recoger o anular dos veces la misma charola desde dos celulares.
+- Por ahora lo usa el administrador (una sucursal); no hay rol de repartidor.
+
 ## Cambios desde la web
 
 | Cambio | Permiso | En la caja |
@@ -36,6 +50,7 @@ Responsiva: menú lateral en computadora, riel de íconos en tablet (≤1100 px)
 | Categoría | `categories.*` | `CreateCategory` / `EditCategory` / `SetCategoryActive` |
 | Usuario: alta, nombre/rol, activar, restablecer contraseña | `users.manage` (administrador) | `CreateUserWithHash` / `UpdateUser` / `SetActive` / `ResetPasswordWithHash`; la contraseña temporal la genera la nube, se muestra una vez y debe cambiarse al entrar. El administrador no se edita desde la web. |
 | Tienda de charolas y charola habitual | `consignment.manage` | `SaveStore` / `SetStoreActive` / `SaveTemplate` |
+| Ruta: entrega, recolección (con cobro), cobro, anulación | `consignment.manage` | `Deliver` / `Collect` / `ReceivePayment` / `Void` con la hora de la ruta |
 
 La caja actúa como quien pidió el cambio si ese usuario existe en ella (con sus permisos locales); si existe pero está desactivado, lo rechaza; si no existe (por ejemplo, el administrador de otra sucursal), actúa como el administrador local. La caja relee los últimos 20 cambios en cada sincronización, porque dos guardados simultáneos en la web pueden hacerse visibles fuera de orden; los ya aplicados no se repiten. Un cambio que las reglas de la caja rechazan queda «Rechazado» con el motivo en Cajas → Cambios; un error inesperado se reintenta en la siguiente sincronización.
 
