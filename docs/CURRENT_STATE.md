@@ -1,3 +1,13 @@
+# FASE 1K ABIERTA — 1K.4D-R1, 08/10/2026
+
+**Pulido visual de Caja implementado y verificado técnicamente; smoke visual pendiente.** El dashboard de Caja ahora ocupa el alto operativo disponible: la tabla de cierres crece dinámicamente, usa filas compactas y mantiene el pie de paginación fijo. A 1280×820 se verifican al menos siete filas visibles; a 1920×1080, al menos nueve. Una página con pocos resultados conserva espacio libre sin estirar filas.
+
+El detalle histórico se presenta en bloques compactos de Identificación, Resumen financiero y Nota, con acción «Volver». Resultado de caja compacta su resumen; cuando la diferencia es cero oculta el editor y muestra «Sin diferencia. No se requiere nota». Con sobrante o faltante conserva nota obligatoria, textarea, contador 500 y bloqueo del cierre sin nota válida. Conteo ciego, importes, signos, permisos, persistencia, atomicidad, concurrencia y Escape/F11 permanecen sin cambios.
+
+Alcance exclusivo: Presentation, pruebas WPF y documentación. Domain/Application/Infrastructure/SQLite/migraciones sin cambios; 017 intacta y sin 018. Fixture aislada `work/phase1k4d-r1-smoke-20261008`, schema 17; base protegida schema 16 y SHA-256 esperado `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Focales 5/5; suite completa **759/759** (572 generales + 187 WPF/Presentation); Release identificado 0 errores/advertencias. El cierre se integra en un único checkpoint local; sin push ni PR. Ver `PHASE_1K4D_R1_REPORT.md`.
+
+## Registro anterior — 1K.4D
+
 # FASE 1K ABIERTA — 1K.4D, 08/10/2026
 
 **Continuación estructural de Caja implementada; verificación técnica completada y smoke humano pendiente.** CashSession persiste la nota normalizada de discrepancia (máximo 500 caracteres, obligatoria si contado − esperado no es cero), junto con cierre y auditoría atómicos. Migración 017 agrega la columna nullable y protección de cierre con diferencia; los cierres antiguos conservan NULL y sus importes originales. Sin migración 018.

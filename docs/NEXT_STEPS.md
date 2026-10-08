@@ -1,3 +1,19 @@
+# Próximo paso — smoke visual final de Caja 1K.4D-R1
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4D-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4D-R1`, DataDirectory `work/phase1k4d-r1-smoke-20261008` (schema 17). No usar accesos anclados ni builds anteriores.
+
+1. Iniciar sesión y abrir Caja. Confirmar CAJA CERRADA y revisar que la tabla aprovecha la altura disponible.
+2. Revisar página 1 y página 2; el pie con total, página, Anterior, Siguiente y Ver cierre debe permanecer visible. La segunda página puede dejar espacio vacío sin estirar sus cinco filas.
+3. Abrir un cierre; revisar los bloques Identificación, Resumen financiero y Nota. Pulsar «Volver».
+4. Abrir una sesión sintética con fondo $500. Confirmar conteo exacto de $500: antes del conteo no deben aparecer esperado, ventas ni diferencia; después no debe aparecer el editor grande de nota.
+5. Volver o cerrar según convenga en la copia. En otro escenario, contar $530 o $450; verificar nota obligatoria, botón deshabilitado sin nota, contador y habilitación al escribir una nota válida.
+6. Revisar F11 y Escape a 1280×820 y 1920×1080.
+7. No imprimir, accionar cajón, vender, modificar inventario ni producción.
+
+Después del smoke, esperar aprobación explícita antes del checkpoint GitHub. Sin push ni PR durante R1; no iniciar la fase siguiente.
+
+## Registro anterior — smoke manual de Caja 1K.4D
+
 # Próximo paso — smoke manual de Caja 1K.4D
 
 Usar exclusivamente `work/Abrir-Casa-Miga-1K4D.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4D`, DataDirectory `work/phase1k4d-smoke-20261008` (schema 17). La base protegida sigue en schema 16, intacta. Las instrucciones antiguas quedan como registro histórico.

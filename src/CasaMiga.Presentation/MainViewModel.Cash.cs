@@ -12,6 +12,14 @@ public sealed record CashClosureDisplay(CashClosureHistoryRow Row)
     public string Expected => MoneyText(Row.Expected);
     public string Counted => MoneyText(Row.Counted);
     public string Difference => Row.Difference is { } d ? MainViewModel.DifferenceLabel(d) : "No disponible";
+    public string OpenedDate => Row.OpenedAt.ToLocalTime().ToString("dd/MM/yyyy · HH:mm");
+    public string OpenedBy => Row.OpenedByName;
+    public string ClosedDate => Date;
+    public string ClosedBy => Owner;
+    public string CountedBy => Row.CountedByName;
+    public string OpeningFund => MoneyText(Row.OpeningFund);
+    public string CashSales => MoneyText(Row.Expected is { } e ? e-Row.OpeningFund : null);
+    public string Note => Row.DiscrepancyNote??"Sin nota registrada";
     public string Details => $"Caja: {Terminal}\nApertura: {Row.OpenedAt.ToLocalTime():dd/MM/yyyy · HH:mm}\nAbierta por: {Row.OpenedByName}\nCierre: {Date}\nCerrada por: {Owner}\nConteo realizado por: {Row.CountedByName}\n\nFondo inicial: {MoneyText(Row.OpeningFund)}\n+ Ventas en efectivo: {MoneyText(Row.Expected is { } e ? e-Row.OpeningFund : null)}\n= Efectivo esperado: {Expected}\nEfectivo contado: {Counted}\n{Difference}\n\nNota de discrepancia:\n{Row.DiscrepancyNote??"Sin nota registrada"}";
 }
 
@@ -23,7 +31,7 @@ public sealed partial class MainViewModel
     private string discrepancyNote="";
     public string DiscrepancyNote { get=>discrepancyNote; set { discrepancyNote=value; if(Message.Contains("nota",StringComparison.OrdinalIgnoreCase))Message=""; Notify(); } }
     public bool RequiresDiscrepancyNote => closingResult?.Difference.Cents is { } difference && difference!=0;
-    public string DiscrepancyNoteLabel => RequiresDiscrepancyNote ? "Nota de discrepancia · obligatoria" : "Nota de discrepancia · opcional";
+    public string DiscrepancyNoteLabel => "Nota de discrepancia · obligatoria";
     public string DiscrepancyNoteCount => $"{DiscrepancyNote.Length}/500 caracteres";
     public bool CanConfirmClose => !Busy && IsClosingResult && DiscrepancyNote.Trim().Length<=500 && (!RequiresDiscrepancyNote || !string.IsNullOrWhiteSpace(DiscrepancyNote));
     public IReadOnlyList<CashClosureDisplay> CashClosures { get; private set; }=[];

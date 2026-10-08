@@ -11,6 +11,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
     public PosViewModel? Pos { get; private set; }
     public bool IsPos => screen == "pos";
     public bool IsNotPos => !IsPos;
+    public bool IsScrollableContent => CanNavigate && !IsPos && !IsDashboard;
     private bool posSidebarExpanded;
     public bool IsPosSidebarCompact => IsPos && !posSidebarExpanded;
     public bool IsPosSidebarExpanded => IsPos && posSidebarExpanded;
