@@ -7,7 +7,10 @@ import { isUuid } from './web.js';
 import type { Query, Row } from './panel.js';
 
 export const KINDS = ['category.save', 'product.save', 'product.active', 'user.create', 'user.update', 'user.active', 'user.reset_password',
-  'consignment.store.save', 'consignment.template.save'] as const;
+  'consignment.store.save', 'consignment.template.save',
+  // Ruta: lo que el repartidor registra en la tienda desde el celular.
+  'consignment.deliver', 'consignment.collect', 'consignment.payment', 'consignment.void'] as const;
+const METHODS = ['CASH', 'CARD', 'TRANSFER'];
 export type Kind = (typeof KINDS)[number];
 
 const s = (v: unknown) => (typeof v === 'string' ? v : '');
@@ -100,6 +103,10 @@ export async function createCommand(q: Query, user: WebUser, branchId: unknown, 
       if (b.active !== undefined) payload.active = bool(b.active, 'Activa');
       break;
     }
+    case 'consignment.deliver': case 'consignment.collect': case 'consignment.payment': case 'consignment.void':
+      requirePermission(user, 'consignment.manage');
+      payload = {};
+      break;
     case 'consignment.template.save': {
       requirePermission(user, 'consignment.manage');
       const store = id(b.storeId, 'Tienda');
@@ -117,10 +124,75 @@ export async function createCommand(q: Query, user: WebUser, branchId: unknown, 
       break;
     }
   }
+  if ((kind as string).startsWith('consignment.') && ['consignment.deliver', 'consignment.collect', 'consignment.payment', 'consignment.void'].includes(kind as string))
+    payload = await route(q, branch, kind as Kind, b);
   const commandId = randomUUID();
   await q(`INSERT INTO branch_command(id, branch_id, kind, payload, requested_by_id, requested_by_name) VALUES ($1, $2, $3, $4::jsonb, $5, $6)`,
     [commandId, branch, kind, JSON.stringify(payload!), user.id, user.name]);
   return { id: commandId, kind: kind as Kind, ...(temporary ? { temporaryPassword: temporary } : {}) };
+}
+
+/** Entregas, recolecciones, cobros y anulaciones de la ruta: se validan contra lo último que subió la caja y contra lo que ya se mandó. */
+async function route(q: Query, branch: string, kind: Kind, b: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const note = text(b.note ?? '', 'Nota', 0, 200);
+  const method = () => { if (!METHODS.includes(s(b.method))) throw new ProtocolError('Forma de pago inválida'); return s(b.method); };
+  const reference = () => (s(b.method) === 'CASH' || !s(b.reference).trim() ? null : text(b.reference, 'Referencia', 1, 60));
+  const pending = async (deliveryId: string) => {
+    const delivery = await state(q, branch, 'consignment_delivery', deliveryId) as (Row & { items: Row[]; settlement: Row | null; void: Row | null }) | null;
+    if (!delivery) throw new ProtocolError('Esa charola todavía no llega a la nube', 404);
+    if (delivery.settlement || delivery.void) throw new ProtocolError(delivery.void ? 'Esa charola se anuló.' : 'Esa charola ya se recogió.');
+    const sent = await q(`SELECT 1 FROM branch_command c WHERE c.branch_id = $1 AND c.kind IN ('consignment.collect','consignment.void') AND c.payload->>'deliveryId' = $2
+      AND NOT EXISTS (SELECT 1 FROM command_result r WHERE r.command_id = c.id AND r.status = 'rejected')`, [branch, deliveryId]);
+    if (sent.length > 0) throw new ProtocolError('Esa charola ya se recogió o anuló desde la web; espera a que la caja lo aplique.');
+    return delivery;
+  };
+  switch (kind) {
+    case 'consignment.deliver': {
+      const store = id(b.storeId, 'Tienda');
+      const target = await state(q, branch, 'consignment_store', store) as (Row & { store: Row }) | null;
+      if (!target || Number(target.store.active) !== 1) throw new ProtocolError('La tienda no existe o está desactivada');
+      if (!Array.isArray(b.lines) || b.lines.length === 0 || b.lines.length > 80) throw new ProtocolError('Agrega al menos una pieza a la charola');
+      const seen = new Set<string>();
+      const lines = [];
+      for (const l of b.lines as unknown[]) {
+        const line = (l ?? {}) as Record<string, unknown>;
+        const product = id(line.productId, 'Producto');
+        if (seen.has(product)) throw new ProtocolError('Producto repetido en la charola');
+        seen.add(product);
+        const quantity = int(line.quantity, 'Cantidad', 1, 999);
+        const [ok] = await q(`SELECT 1 FROM entity_state p JOIN entity_state c ON c.branch_id = p.branch_id AND c.entity = 'consignment_price' AND c.entity_id = p.entity_id AND NOT c.deleted
+          WHERE p.branch_id = $1 AND p.entity = 'product' AND p.entity_id = $2 AND (p.payload->'product'->>'active')::int = 1`, [branch, product]);
+        if (!ok) throw new ProtocolError('Un pan no está activo o no tiene precio de charola');
+        lines.push({ productId: product, quantity });
+      }
+      return { storeId: store, lines, note };
+    }
+    case 'consignment.collect': {
+      const deliveryId = id(b.deliveryId, 'Charola');
+      const delivery = await pending(deliveryId);
+      const items = new Map(delivery.items.map(i => [Number(i.position), Number(i.quantity)]));
+      const returned = (Array.isArray(b.returned) ? b.returned : []).map((r: unknown) => {
+        const x = (r ?? {}) as Record<string, unknown>;
+        const position = int(x.position, 'Partida', 1, 999);
+        if (!items.has(position)) throw new ProtocolError('La partida no pertenece a la charola');
+        return { position, quantity: int(x.quantity, 'Piezas que regresan', 0, items.get(position)!) };
+      });
+      if (new Set(returned.map(r => r.position)).size !== returned.length) throw new ProtocolError('Partida repetida');
+      const paidCents = int(b.paidCents ?? 0, 'Cobro', 0, 10_000_000);
+      return { deliveryId, returned, paidCents, method: paidCents > 0 ? method() : 'CASH', reference: paidCents > 0 ? reference() : null, note };
+    }
+    case 'consignment.payment': {
+      const store = id(b.storeId, 'Tienda');
+      if (!(await state(q, branch, 'consignment_store', store))) throw new ProtocolError('Tienda inexistente', 404);
+      return { storeId: store, amountCents: int(b.amountCents, 'Importe', 1, 10_000_000), method: method(), reference: reference(), note };
+    }
+    case 'consignment.void': {
+      const deliveryId = id(b.deliveryId, 'Charola');
+      await pending(deliveryId);
+      return { deliveryId, reason: text(b.reason, 'Motivo', 3, 200) };
+    }
+  }
+  throw new ProtocolError('Cambio desconocido');
 }
 
 function role(v: unknown): string {

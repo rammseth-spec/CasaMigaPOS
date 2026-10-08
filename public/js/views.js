@@ -193,10 +193,11 @@ async function caja() {
 }
 
 // ---------- Charolas ----------
-let trayTab = 'stores';
+let trayTab = 'route';
 async function charolas(ctx) {
+  const tabs = tabsBar([['route', 'Ruta'], ['stores', 'Tiendas'], ['deliveries', 'Entregas'], ['payments', 'Cobros']], trayTab, id => { trayTab = id; render(); });
+  if (trayTab === 'route') return h('div', { style: { display: 'grid', gap: '16px' } }, tabs, await ruta());
   const data = await api('consignment', range());
-  const tabs = tabsBar([['stores', 'Tiendas'], ['deliveries', 'Entregas'], ['payments', 'Cobros']], trayTab, id => { trayTab = id; render(); });
   const storeName = new Map(data.stores.map(s => [s.id, s.name]));
   const manage = can('consignment.manage');
   let body;
@@ -234,6 +235,116 @@ async function charolas(ctx) {
   }
   return h('div', { style: { display: 'grid', gap: '16px' } }, tabs, ...body);
 }
+// ---------- Ruta del repartidor ----------
+const SENT = { 'consignment.deliver': 'Entrega', 'consignment.collect': 'Recolección', 'consignment.payment': 'Cobro', 'consignment.void': 'Anulación' };
+async function ruta() {
+  const data = await api('route', { branch: state.branch });
+  const manage = can('consignment.manage');
+  if (!data.stores.length) return h('p', { class: 'empty', text: 'Sin tiendas activas.' });
+  return h('div', { style: { display: 'grid', gap: '10px' } },
+    h('p', { class: 'muted small', text: 'Lo que registres aquí se manda a la caja; aparece como hecho cuando la caja lo aplica (se sincroniza cada minuto).' }),
+    h('section', { class: 'route' }, data.stores.map(store => h('article', { class: 'card' },
+      h('div', { class: 'head' },
+        h('div', {}, h('h2', { text: store.name }), h('span', { class: 'muted small', text: [store.contact, store.address].filter(Boolean).join(' · ') || 'Sin datos de contacto' }),
+          store.phone ? h('a', { href: `tel:${store.phone.replace(/[^\d+]/g, '')}`, class: 'small', style: { display: 'block' } }, store.phone) : null),
+        h('strong', { class: store.balance > 0 ? 'over' : 'even', text: store.balance > 0 ? `Debe ${fmt(store.balance)}` : 'Al corriente' })),
+      store.lastDelivery ? h('span', { class: 'muted small', text: `Última entrega: ${at(store.lastDelivery)}` }) : null,
+      store.atStore.map(tray => h('div', { class: 'tray' },
+        h('header', {}, h('strong', { text: `Charola del ${at(tray.at)}` }), h('span', { class: 'pill warn', text: `${tray.items.reduce((a, i) => a + i.quantity, 0)} pz` })),
+        h('span', { class: 'small', text: tray.items.map(i => `${i.quantity} ${i.name}`).join(' · ') }),
+        manage && !store.sent.some(c => c.payload.deliveryId === tray.id) ? h('button', { type: 'button', class: 'primary', onclick: () => collectDialog(store, tray) }, 'Recoger') : null)),
+      store.sent.map(c => h('p', { class: 'sent', text: `${SENT[c.kind] ?? 'Cambio'} enviada ${time(c.at)} · esperando a la caja` })),
+      manage ? h('div', { class: 'actions' },
+        h('button', { type: 'button', class: store.atStore.length ? '' : 'primary', onclick: () => deliverDialog(store, data.products.filter(p => p.branchId === store.branchId)) }, 'Entregar charola'),
+        h('button', { type: 'button', disabled: store.balance <= 0, onclick: () => payDialog(store) }, 'Cobrar')) : null))));
+}
+function stepper(value, max, onchange, label) {
+  const output = h('output', { 'aria-live': 'polite', text: String(value) });
+  const set = next => { value = Math.max(0, Math.min(max, next)); output.textContent = String(value); onchange(value); };
+  return h('span', { class: 'stepper' },
+    h('button', { type: 'button', 'aria-label': `Menos ${label}`, onclick: () => set(value - 1) }, '−'), output,
+    h('button', { type: 'button', 'aria-label': `Más ${label}`, onclick: () => set(value + 1) }, '+'));
+}
+function methodField() {
+  return [field('Forma de pago', h('select', { name: 'method' }, Object.entries(METHOD).map(([v, l]) => h('option', { value: v, text: l })))),
+    field('Referencia (tarjeta o transferencia)', h('input', { name: 'reference', maxlength: '60' }))];
+}
+function deliverDialog(store, products) {
+  const template = new Map(store.template.map(t => [t.productId, t.quantity]));
+  const quantities = new Map(products.map(p => [p.id, template.get(p.id) ?? 0]));
+  const summary = h('div', { class: 'totals wide' });
+  const refresh = () => {
+    const pieces = [...quantities.values()].reduce((a, b) => a + b, 0);
+    const value = products.reduce((a, p) => a + p.price * quantities.get(p.id), 0);
+    summary.replaceChildren(h('span', { text: `${pieces} piezas` }), h('span', { text: fmt(value) }));
+  };
+  dialog(`Entregar a ${store.name}`, body => {
+    body.append(h('p', { class: 'muted small wide', text: store.template.length ? 'Viene con la charola habitual; ajusta lo que cambie.' : 'Sin charola habitual: agrega las piezas.' }),
+      h('div', { class: 'stepper-list wide' }, products.length ? products.map(p => h('div', { class: 'stepper-row' },
+        h('span', {}, p.name, h('small', { text: `${fmt(p.price)} c/u` })), stepper(quantities.get(p.id), 999, v => { quantities.set(p.id, v); refresh(); }, p.name)))
+        : h('p', { class: 'empty', text: 'Ningún pan tiene precio de charola.' })),
+      summary, field('Nota', h('input', { name: 'note', maxlength: '200' }), true));
+    refresh();
+  }, { submit: 'Registrar entrega', onSubmit: async form => {
+    const lines = [...quantities.entries()].filter(([, q]) => q > 0).map(([productId, quantity]) => ({ productId, quantity }));
+    if (!lines.length) throw new Error('Agrega al menos una pieza.');
+    await command(store.branchId, 'consignment.deliver', { storeId: store.id, lines, note: form.elements.note.value });
+    render({ silent: true });
+  } });
+}
+function collectDialog(store, tray) {
+  const back = new Map(tray.items.map(i => [i.position, 0]));
+  const summary = h('div', { class: 'totals wide' });
+  let paidInput;
+  const soldTotal = () => tray.items.reduce((a, i) => a + i.price * (i.quantity - back.get(i.position)), 0);
+  const refresh = () => {
+    const sold = tray.items.reduce((a, i) => a + i.quantity - back.get(i.position), 0);
+    summary.replaceChildren(h('span', { text: `${sold} vendidas` }), h('span', { text: `Cargo ${fmt(soldTotal())}` }));
+    if (paidInput && !paidInput.dataset.touched) paidInput.value = pesos(soldTotal());
+  };
+  dialog(`Recoger en ${store.name}`, body => {
+    paidInput = h('input', { name: 'paid', inputmode: 'decimal', oninput: e => { e.target.dataset.touched = '1'; } });
+    body.append(h('p', { class: 'muted small wide', text: `Charola del ${at(tray.at)}. Marca cuántas piezas regresan; las demás se vendieron.` }),
+      h('div', { class: 'stepper-list wide' }, tray.items.map(i => h('div', { class: 'stepper-row' },
+        h('span', {}, i.name, h('small', { text: `Entregadas ${i.quantity} · ${fmt(i.price)} c/u · regresan:` })),
+        stepper(0, i.quantity, v => { back.set(i.position, v); refresh(); }, `regresan de ${i.name}`)))),
+      summary,
+      field('Cobro ahora (MXN)', paidInput), ...methodField(),
+      field('Nota', h('input', { name: 'note', maxlength: '200' }), true),
+      h('details', { class: 'wide' }, h('summary', { text: 'Anular esta charola' }),
+        h('div', { style: { display: 'grid', gap: '8px', marginTop: '8px' } },
+          h('input', { name: 'reason', maxlength: '200', placeholder: 'Motivo (por ejemplo, la tienda estaba cerrada)', 'aria-label': 'Motivo de anulación' }),
+          h('button', { type: 'button', class: 'danger', onclick: async e => {
+            const reason = e.target.closest('form').elements.reason.value.trim();
+            if (reason.length < 3) return toast('Escribe el motivo.');
+            try { await command(store.branchId, 'consignment.void', { deliveryId: tray.id, reason }); e.target.closest('dialog').close(); e.target.closest('dialog').remove(); render({ silent: true }); }
+            catch (error) { toast(error.message); }
+          } }, 'Anular charola'))));
+    refresh();
+  }, { submit: 'Registrar recolección', onSubmit: async form => {
+    const f = form.elements;
+    const text = String(f.paid.value || '0').trim().replace(',', '.');
+    if (!/^\d{1,7}(\.\d{1,2})?$/.test(text)) throw new Error('Escribe el cobro, por ejemplo 150.00 (o 0).');
+    await command(store.branchId, 'consignment.collect', { deliveryId: tray.id, returned: [...back.entries()].filter(([, q]) => q > 0).map(([position, quantity]) => ({ position, quantity })),
+      paidCents: Math.round(Number(text) * 100), method: f.method.value, reference: f.reference.value, note: f.note.value });
+    render({ silent: true });
+  } });
+}
+function payDialog(store) {
+  dialog(`Cobrar a ${store.name}`, body => {
+    body.append(h('p', { class: 'muted wide', text: `Saldo: ${fmt(store.balance)}` }),
+      field('Importe (MXN)', h('input', { name: 'amount', inputmode: 'decimal', value: pesos(store.balance) })), ...methodField(),
+      field('Nota', h('input', { name: 'note', maxlength: '200' }), true));
+  }, { submit: 'Registrar cobro', onSubmit: async form => {
+    const f = form.elements;
+    const text = String(f.amount.value).trim().replace(',', '.');
+    if (!/^\d{1,7}(\.\d{1,2})?$/.test(text) || Number(text) <= 0) throw new Error('Escribe el importe, por ejemplo 150.00.');
+    if (Math.round(Number(text) * 100) > store.balance) throw new Error(`No puede ser mayor que el saldo (${fmt(store.balance)}).`);
+    await command(store.branchId, 'consignment.payment', { storeId: store.id, amountCents: Math.round(Number(text) * 100), method: f.method.value, reference: f.reference.value, note: f.note.value });
+    render({ silent: true });
+  } });
+}
+
 function branchPicker(current) {
   if (!state.me.admin || state.branches.length < 2) return null;
   return field('Sucursal', h('select', { name: 'branch' }, state.branches.map(b => h('option', { value: b.id, text: b.name, selected: b.id === current }))), true);
@@ -424,7 +535,8 @@ function userDialog(user, branchId) {
 }
 
 // ---------- Cajas y cambios ----------
-const KIND = { 'category.save': 'Categoría', 'product.save': 'Producto', 'product.active': 'Activar/desactivar producto', 'user.create': 'Alta de usuario', 'user.update': 'Usuario',
+const KIND = { 'consignment.deliver': 'Entrega de charola', 'consignment.collect': 'Recolección de charola', 'consignment.payment': 'Cobro de charola', 'consignment.void': 'Anulación de charola',
+  'category.save': 'Categoría', 'product.save': 'Producto', 'product.active': 'Activar/desactivar producto', 'user.create': 'Alta de usuario', 'user.update': 'Usuario',
   'user.active': 'Activar/desactivar usuario', 'user.reset_password': 'Restablecer contraseña', 'consignment.store.save': 'Tienda de charolas', 'consignment.template.save': 'Charola habitual' };
 function describe(c) {
   const p = c.payload;
@@ -433,6 +545,10 @@ function describe(c) {
   if (c.kind === 'user.create') return `${p.username} (${ROLE[p.role]})`;
   if (c.kind === 'user.update') return `${p.displayName} (${ROLE[p.role]})`;
   if (c.kind === 'consignment.template.save') return `${p.lines.length} panes`;
+  if (c.kind === 'consignment.deliver') return `${p.lines.reduce((a, l) => a + l.quantity, 0)} piezas`;
+  if (c.kind === 'consignment.collect') return p.paidCents ? `Cobro ${fmt(p.paidCents)}` : 'Sin cobro';
+  if (c.kind === 'consignment.payment') return fmt(p.amountCents);
+  if (c.kind === 'consignment.void') return p.reason;
   return p.name ?? p.displayName ?? '';
 }
 async function cajas() {

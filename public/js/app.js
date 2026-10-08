@@ -170,7 +170,11 @@ function layout() {
 }
 
 let renderToken = 0;
-export async function render() {
+/**
+ * Dibuja la pantalla actual. En modo silencioso (actualización automática o botón) conserva lo que se ve
+ * hasta tener datos nuevos y la posición de la página, para que no parpadee ni salte.
+ */
+export async function render({ silent = false } = {}) {
   const view = current(); state.view = view;
   if (!view) return;
   for (const a of $('nav-links').children) a.setAttribute('aria-current', a.dataset.view === view.id ? 'page' : 'false');
@@ -180,15 +184,32 @@ export async function render() {
   $('error').hidden = true;
   const token = ++renderToken;
   const container = $('view');
-  container.replaceChildren(h('p', { class: 'muted', text: 'Cargando…' }));
+  const scroll = window.scrollY;
+  if (!silent) container.replaceChildren(h('p', { class: 'muted', text: 'Cargando…' }));
+  $('refresh').classList.add('busy');
   try {
     const node = await view.render({ branchId: () => state.branch || (state.me.admin ? (state.branches[0]?.id ?? '') : state.me.branchId) });
-    if (token === renderToken) container.replaceChildren(node);
+    if (token !== renderToken) return;
+    container.replaceChildren(node);
+    if (silent) window.scrollTo(0, scroll);
+    $('updated').textContent = `Actualizado ${new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })} ↻`;
   } catch (error) {
     if (token !== renderToken || error.status === 401) return;
-    container.replaceChildren();
+    if (!silent) container.replaceChildren();
     $('error').textContent = error.message; $('error').hidden = false;
+  } finally {
+    if (token === renderToken) $('refresh').classList.remove('busy');
   }
+}
+
+/** Cada 60 s con la página visible y sin un formulario abierto; también al volver a la pestaña. */
+const REFRESH_MS = 60_000;
+let lastRefresh = Date.now();
+function autoRefresh() {
+  const typing = document.activeElement?.matches?.('#view input, #view select, #view textarea');
+  if (!state.me || document.hidden || typing || document.querySelector('dialog[open]')) return;
+  lastRefresh = Date.now();
+  render({ silent: true });
 }
 
 // ---------- Acceso ----------
@@ -224,5 +245,8 @@ document.addEventListener('DOMContentLoaded', () => {
   $('from').addEventListener('change', custom); $('to').addEventListener('change', custom);
   $('branch').addEventListener('change', () => { state.branch = $('branch').value; remember(); render(); });
   window.addEventListener('hashchange', () => { if (state.me) render(); });
+  $('refresh').addEventListener('click', () => { lastRefresh = Date.now(); render({ silent: true }); });
+  setInterval(() => { if (Date.now() - lastRefresh >= REFRESH_MS) autoRefresh(); }, 5_000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - lastRefresh >= 15_000) autoRefresh(); });
   start().catch(e => showLogin(e.status === 401 ? '' : e.message));
 });

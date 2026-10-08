@@ -5,6 +5,7 @@ import { ProtocolError } from '../lib/protocol.js';
 import { login, verifyIdentityHash } from '../lib/auth.js';
 import { createCommand, listCommands, pendingFor, recordResults } from '../lib/commands.js';
 import { caja1, caja2, centro, database, norte, permissions, send, user } from './helpers.js';
+import { route as routeView } from '../lib/web.js';
 
 const status = (code: number) => (e: unknown) => e instanceof ProtocolError && e.status === code;
 const category = 'c1000000-0000-4000-8000-000000000001';
@@ -82,4 +83,38 @@ test('tray templates are validated before reaching the terminal', async () => {
   await assert.rejects(createCommand(q, ana, centro, 'consignment.template.save', { storeId: store, lines: [{ productId: product, quantity: 0 }] }), /Cantidad/);
   await assert.rejects(createCommand(q, ana, centro, 'consignment.template.save', { storeId: randomUUID(), lines: [] }), status(404));
   await assert.rejects(recordResults(q, { id: caja1, branchId: centro }, { results: [{ id: 'no', status: 'applied' }] }), ProtocolError);
+});
+
+test('route from the phone: deliver, collect once, pay and void are validated against what the terminal uploaded', async () => {
+  const q = await seeded();
+  const ana = await login(q, 'ana', 'Ana#2026centro');
+  const delivery = 'd1000000-0000-4000-8000-000000000001';
+  await send(q, caja1, centro, [
+    { entity: 'consignment_price', id: product, payload: { product_id: product, price_cents: 1500 } },
+    { entity: 'consignment_delivery', id: delivery, payload: { delivery: { id: delivery, store_id: store, delivered_utc: '2026-10-07T14:00:00Z', note: '' },
+      items: [{ position: 1, product_name: 'Concha', quantity: 6, unit_price_cents: 1500 }], settlement: null, settlementItems: [], void: null } },
+  ]);
+  await createCommand(q, ana, centro, 'consignment.deliver', { storeId: store, lines: [{ productId: product, quantity: 6 }], note: '' });
+  await assert.rejects(createCommand(q, ana, centro, 'consignment.deliver', { storeId: store, lines: [] }), /al menos/);
+  await assert.rejects(createCommand(q, ana, centro, 'consignment.deliver', { storeId: store, lines: [{ productId: randomUUID(), quantity: 1 }] }), /precio de charola/);
+
+  await assert.rejects(createCommand(q, ana, centro, 'consignment.collect', { deliveryId: delivery, returned: [{ position: 1, quantity: 7 }], paidCents: 0 }), /regresan/);
+  await assert.rejects(createCommand(q, ana, centro, 'consignment.collect', { deliveryId: delivery, returned: [{ position: 2, quantity: 1 }], paidCents: 0 }), /partida/);
+  const collect = await createCommand(q, ana, centro, 'consignment.collect', { deliveryId: delivery, returned: [{ position: 1, quantity: 2 }], paidCents: 6000, method: 'CASH', note: '' });
+  await assert.rejects(createCommand(q, ana, centro, 'consignment.collect', { deliveryId: delivery, returned: [], paidCents: 0 }), /espera a que la caja/, 'Two phones cannot collect the same tray.');
+  await assert.rejects(createCommand(q, ana, centro, 'consignment.void', { deliveryId: delivery, reason: 'Cerrada' }), /espera a que la caja/);
+
+  const view = await routeView(q, centro);
+  assert.equal(view.stores[0].atStore.length, 1);
+  assert.deepEqual(view.stores[0].sent.map((c: { kind: string }) => c.kind), ['consignment.deliver', 'consignment.collect']);
+  assert.deepEqual(view.products.map(p => p.name), ['Concha']);
+
+  // Si la caja la rechaza, se puede volver a mandar.
+  await recordResults(q, { id: caja1, branchId: centro }, { results: [{ id: collect.id, status: 'rejected', message: 'El cobro no puede ser mayor.' }] });
+  await createCommand(q, ana, centro, 'consignment.collect', { deliveryId: delivery, returned: [], paidCents: 0 });
+  await createCommand(q, ana, centro, 'consignment.payment', { storeId: store, amountCents: 1000, method: 'TRANSFER', reference: 'SPEI 123', note: '' });
+  await assert.rejects(createCommand(q, ana, centro, 'consignment.payment', { storeId: store, amountCents: 0, method: 'CASH' }), /Importe/);
+  await assert.rejects(createCommand(q, ana, centro, 'consignment.payment', { storeId: store, amountCents: 100, method: 'CHEQUE' }), /Forma de pago/);
+  const [pulled] = (await pendingFor(q, { id: caja1, branchId: centro }, 0)).filter(c => c.kind === 'consignment.payment');
+  assert.deepEqual(pulled.payload, { storeId: store, amountCents: 1000, method: 'TRANSFER', reference: 'SPEI 123', note: '' });
 });

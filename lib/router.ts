@@ -11,7 +11,7 @@ export interface Env { SESSION_SECRET?: string; PANEL_TIME_ZONE?: string }
 const VIEW: Record<string, string> = {
   dashboard: 'sales.view', sales: 'sales.view', sale: 'sales.view', compare: 'sales.view', heatmap: 'sales.view', 'cash-control': 'sales.view',
   'production-suggestion': 'sales.view', terminals: 'sales.view', cash: 'cash.view', consignment: 'consignment.view', catalog: 'catalog.view',
-  photo: 'catalog.view', inventory: 'inventory.view', recipes: 'recipe.view', production: 'production.view', users: 'users.manage', commands: 'sales.view',
+  photo: 'catalog.view', route: 'consignment.view', inventory: 'inventory.view', recipes: 'recipe.view', production: 'production.view', users: 'users.manage', commands: 'sales.view',
 };
 
 function me(user: WebUser) {
@@ -91,6 +91,7 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       }
       case 'consignment': return json(200, await web.consignment(q, range()));
       case 'catalog': return json(200, await web.catalog(q, branch));
+      case 'route': return json(200, await web.route(q, branch));
       case 'photo': {
         const image = await web.photo(q, branch, url.searchParams.get('product') ?? '');
         if (!image) return new Response('Sin foto', { status: 404 });
