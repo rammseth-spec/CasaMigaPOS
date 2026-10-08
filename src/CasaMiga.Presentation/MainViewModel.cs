@@ -164,7 +164,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 CashMovements = new(new CashMovementService(database,user,clock,terminal.Id),(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 var syncOutbox = new SqliteSyncOutbox(sqlite);
                 Sync = new(new SyncEngine(syncOutbox, new HttpSyncTransport(new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(30) }), options.DataDirectory,
-                        commands: new CloudCommandService(database, clock, terminal.Id, TimeZoneInfo.Local)),
+                        commands: new CloudCommandService(database, clock, terminal.Id, TimeZoneInfo.Local),
+                        backup: new CloudBackupService(options.DataDirectory, sqlite), backupHttp: new System.Net.Http.HttpClient { Timeout = TimeSpan.FromMinutes(2) }),
                     syncOutbox, terminal.Id, terminal.Name, (eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 Sync.Start();
                 var inventoryService=new InventoryService(new SqliteInventoryStore(sqlite,clock),database,user,clock,terminal.Id);

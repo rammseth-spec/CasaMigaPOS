@@ -11,6 +11,8 @@ import { migrate } from '../lib/migrate.js';
 import { storeBatch } from '../lib/store.js';
 import { handle } from '../lib/router.js';
 import { handleTerminal } from '../lib/terminal.js';
+import { handleBackup, handleDaily } from '../lib/backupRoutes.js';
+import { memoryStorage } from '../lib/storage.js';
 import type { Query } from '../lib/panel.js';
 
 const [file, portText] = process.argv.slice(2);
@@ -28,10 +30,13 @@ await q(`INSERT INTO terminal(id, branch_id, name, key_sha256) VALUES ($1, $2, $
 for (let i = 0; i < data.entries.length; i += 200)
   await storeBatch(q, { id: data.terminal.id, branchId: data.branch.id }, { branchId: data.branch.id, entries: data.entries.slice(i, i + 200) });
 
-const env = { SESSION_SECRET: process.env.SESSION_SECRET ?? randomBytes(32).toString('hex'), ENROLLMENT_SECRET: process.env.ENROLLMENT_SECRET };
+const env = { SESSION_SECRET: process.env.SESSION_SECRET ?? randomBytes(32).toString('hex'), ENROLLMENT_SECRET: process.env.ENROLLMENT_SECRET,
+  BACKUP_SECRET: process.env.BACKUP_SECRET ?? randomBytes(32).toString('hex'), CRON_SECRET: process.env.CRON_SECRET ?? randomBytes(16).toString('hex') };
 const root = fileURLToPath(new URL('../public/', import.meta.url));
 const types: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json' };
 const port = Number(portText ?? 4173);
+// Respaldos en memoria, servidos en /dev-blob/ como lo haría Vercel Blob.
+const storage = memoryStorage(`http://localhost:${port}/dev-blob/`);
 
 createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', `http://localhost:${port}`);
@@ -39,7 +44,15 @@ createServer(async (req, res) => {
   for await (const chunk of req) chunks.push(chunk as Buffer);
   let response: Response;
   const terminalRoute = ({ '/api/terminals/register': 'register', '/api/sync/batch': 'batch', '/api/sync/commands': 'commands' } as const)[url.pathname as '/api/sync/batch'];
-  if (terminalRoute) {
+  if (url.pathname.startsWith('/dev-blob/')) {
+    const data = storage.files.get(url.href);
+    response = data ? new Response(new Uint8Array(data), { headers: { 'content-type': 'application/octet-stream' } }) : new Response('No encontrado', { status: 404 });
+  } else if (url.pathname.startsWith('/api/backup/') || url.pathname === '/api/cron/daily') {
+    const request = new Request(url, { method: req.method, headers: req.headers as Record<string, string>, body: chunks.length ? Buffer.concat(chunks) : undefined });
+    response = url.pathname === '/api/cron/daily'
+      ? await handleDaily(q, () => storage, request, env)
+      : await handleBackup(q, () => storage, request, url.pathname.split('/').pop() ?? '', env);
+  } else if (terminalRoute) {
     // Las cajas de prueba pueden registrarse contra este servidor (http://localhost:<puerto>) con ENROLLMENT_SECRET.
     const request = new Request(url, { method: req.method, headers: req.headers as Record<string, string>, body: chunks.length ? Buffer.concat(chunks) : undefined });
     response = await handleTerminal(q, request, terminalRoute, env);
@@ -54,7 +67,8 @@ createServer(async (req, res) => {
     } catch { response = new Response('No encontrado', { status: 404 }); }
   }
   const headers: [string, string][] = [];
-  response.headers.forEach((value, key) => headers.push([key, value]));
+  // Sólo local (http): sin «Secure» para que herramientas como restore-cloud reenvíen la cookie. En producción siempre es https.
+  response.headers.forEach((value, key) => headers.push([key, key === 'set-cookie' ? value.replace('; Secure', '') : value]));
   res.writeHead(response.status, headers);
   res.end(Buffer.from(await response.arrayBuffer()));
 }).listen(port, () => console.log(`Versión web local en http://localhost:${port} (${data.entries.length} registros)`));

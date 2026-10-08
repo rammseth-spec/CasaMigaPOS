@@ -33,7 +33,13 @@
   "functions": {
     "api/**/*.ts": {
       "includeFiles": "db/**",
-      "maxDuration": 30
+      "maxDuration": 60
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/daily",
+      "schedule": "0 9 * * *"
+    }
+  ]
 }

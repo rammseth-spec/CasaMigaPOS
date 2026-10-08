@@ -75,6 +75,23 @@ public sealed class InstallationBackup(string dataDirectory)
             if (File.Exists(target + ".partial")) File.Delete(target + ".partial");
         }
     }
+    /// <summary>
+    /// Empaqueta como .cmbackup v2 una instalación ya armada en <paramref name="directory"/> (base, terminal.json y fotos con sus rutas).
+    /// Sirve para restaurar desde la nube con las mismas validaciones de <see cref="Restore"/>.
+    /// </summary>
+    public static string Package(string directory, string target)
+    {
+        var terminal = ValidatePair(directory); var schema = Schema(directory);
+        var media = Media(new Database(Path.Combine(directory, "casamiga.db")));
+        foreach (var entry in media) ProductPhotoFileStore.Verify(Path.Combine(directory, entry.Path), entry.Bytes, entry.Sha256);
+        var manifest = new Manifest(2, terminal.Id, SchemaVersion: schema, Files: [Describe(directory, "casamiga.db", "database"), Describe(directory, "terminal.json", "terminal"), .. media]);
+        File.WriteAllText(Path.Combine(directory, "manifest.json"), JsonSerializer.Serialize(manifest));
+        using (var archive = ZipFile.Open(target, ZipArchiveMode.Create))
+            foreach (var path in new[] { "casamiga.db", "terminal.json" }.Concat(media.Select(m => m.Path)).Append("manifest.json"))
+                archive.CreateEntryFromFile(Path.Combine(directory, path), path);
+        return target;
+    }
+
     public string[] History() => Directory.Exists(Path.Combine(dataDirectory, "backups"))
         ? Directory.GetFiles(Path.Combine(dataDirectory, "backups"), "*.cmbackup").OrderDescending().ToArray() : [];
     private static void Extract(ZipArchiveEntry entry, string destination, long maximum)

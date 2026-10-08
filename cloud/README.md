@@ -6,7 +6,7 @@ Versión web de Casa Miga POS: consulta y algunos cambios desde la computadora, 
 - **Pantallas**: Resumen, Ventas (ticket), Reportes, Caja, Charolas (incluida la **Ruta** para registrar entregas, recolecciones y cobros desde el celular), Catálogo con fotos, Inventario, Recetas, Producción, Usuarios y Cajas.
 - **Acceso**: usuario y contraseña de la caja. Administrador: todas las sucursales; encargado: la suya; cajero: no entra.
 - **Cambios** (precios, productos, categorías, usuarios, tiendas, ruta): se validan aquí y cada caja los aplica con sus propias reglas.
-- **API de las cajas**: alta de terminal, recepción de lotes y cambios pendientes.
+- **API de las cajas**: alta de terminal, recepción de lotes, cambios pendientes y **respaldos** (cada hora por caja, copia nocturna de la nube, 30 días; todo cifrado). Restauración: `CasaMiga.Maintenance restore-cloud`.
 
 Detalle completo del funcionamiento: `docs/WEB.md` en el repositorio CasaMigaPOS.
 
@@ -28,7 +28,10 @@ Detalle completo del funcionamiento: `docs/WEB.md` en el repositorio CasaMigaPOS
    - `DATABASE_URL`: cadena de conexión de Neon (consola de Neon → Connect).
    - `ENROLLMENT_SECRET`: 24 caracteres o más; se escribe en la pantalla **Nube** de cada caja para registrarla.
    - `SESSION_SECRET`: 32 caracteres o más; firma las sesiones de la web (cambiarlo cierra todas).
+   - `BACKUP_SECRET`: 32 caracteres o más; cifra los respaldos. **Guárdalo también fuera de Vercel**: sin él no se puede restaurar nada.
+   - `CRON_SECRET`: 16 caracteres o más; protege la copia nocturna (Vercel Cron lo envía solo).
    - Opcional `PANEL_TIME_ZONE` (por omisión `America/Mexico_City`).
+   - En **Storage → Blob**, crea un almacén y conéctalo al proyecto (agrega `BLOB_READ_WRITE_TOKEN`): ahí viven los respaldos cifrados.
 3. Deploy y abrir `/api/health` → `{"ok":true,"schema":N}`.
 4. En cada caja, como administrador → **Nube**: dirección del sitio, nombre de la sucursal y el secreto de alta.
 

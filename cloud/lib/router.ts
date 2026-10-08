@@ -4,14 +4,15 @@ import { clearedCookie, issueSession, login, requirePermission, requireUser, sco
 import { dashboard, DEFAULT_TIME_ZONE, MAX_DAYS, parseRange, terminals, branches, type Query, type Range } from './panel.js';
 import * as web from './web.js';
 import { createCommand, listCommands } from './commands.js';
+import * as backups from './backup.js';
 
-export interface Env { SESSION_SECRET?: string; PANEL_TIME_ZONE?: string }
+export interface Env { SESSION_SECRET?: string; PANEL_TIME_ZONE?: string; BACKUP_SECRET?: string }
 
 /** Permiso que pide cada pantalla (el mismo de la caja). */
 const VIEW: Record<string, string> = {
   dashboard: 'sales.view', sales: 'sales.view', sale: 'sales.view', compare: 'sales.view', heatmap: 'sales.view', 'cash-control': 'sales.view',
   'production-suggestion': 'sales.view', terminals: 'sales.view', cash: 'cash.view', consignment: 'consignment.view', catalog: 'catalog.view',
-  photo: 'catalog.view', route: 'consignment.view', inventory: 'inventory.view', recipes: 'recipe.view', production: 'production.view', users: 'users.manage', commands: 'sales.view',
+  photo: 'catalog.view', route: 'consignment.view', backups: 'users.manage', backup: 'users.manage', inventory: 'inventory.view', recipes: 'recipe.view', production: 'production.view', users: 'users.manage', commands: 'sales.view',
 };
 
 function me(user: WebUser) {
@@ -103,6 +104,14 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       case 'production': return json(200, await web.production(q, range()));
       case 'users': return json(200, await web.users(q, branch));
       case 'commands': return json(200, await listCommands(q, branch));
+      case 'backups': return json(200, { sets: await backups.list(q, branch), terminals: await terminals(q, branch) });
+      case 'backup': {
+        // Para restaurar con CasaMiga.Maintenance restore-cloud: direcciones de cada parte y la llave para descifrarlas.
+        const found = await backups.detail(q, url.searchParams.get('id') ?? '');
+        if (found.branchId && !user.admin && found.branchId !== user.branchId) throw new ProtocolError('Sin acceso a esa sucursal', 403);
+        const secret = backups.backupSecret(env.BACKUP_SECRET);
+        return json(200, { ...found, key: backups.deriveKey(secret, found.kind === 'cloud' ? 'cloud' : `branch:${found.branchId}`).toString('base64') });
+      }
     }
     throw new ProtocolError('Ruta desconocida', 404);
   } catch (error) {

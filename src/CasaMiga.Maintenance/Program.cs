@@ -6,7 +6,7 @@ using CasaMiga.Infrastructure;
 try
 {
     if (args.Length < 2)
-        throw new ArgumentException("Uso: init|backup|list|print-test|reset-admin <directorio absoluto>; restore-installation <cmbackup> <directorio nuevo>; restore <db legado> <archivo nuevo>; export-sync <directorio de copia> <archivo json>.");
+        throw new ArgumentException("Uso: init|backup|list|print-test|reset-admin <directorio absoluto>; restore-installation <cmbackup> <directorio nuevo>; restore <db legado> <archivo nuevo>; export-sync <directorio de copia> <archivo json>; restore-cloud <dirección> <usuario> <directorio nuevo> [id o caja].");
     if (args[0] == "print-test" && args.Length == 2 && Path.IsPathFullyQualified(args[1]) && !args[1].StartsWith(@"\\", StringComparison.Ordinal))
     {
         var test = new ControlledReceiptPrintTest(
@@ -20,6 +20,21 @@ try
         output.Converters.Add(new JsonStringEnumConverter());
         Console.WriteLine(JsonSerializer.Serialize(result, output));
         return result.State == CasaMiga.Application.ReceiptPrintState.Submitted ? 0 : 2;
+    }
+    if (args[0] == "restore-cloud" && args.Length is 4 or 5)
+    {
+        // Restaura una caja desde la nube a una carpeta NUEVA (docs/BACKUPS.md). Pide la contraseña sin mostrarla.
+        Console.Write($"Contraseña de {args[2]}: ");
+        var password = new System.Text.StringBuilder();
+        if (Console.IsInputRedirected) password.Append(Console.ReadLine());
+        else for (ConsoleKeyInfo key; (key = Console.ReadKey(intercept: true)).Key != ConsoleKey.Enter;)
+            if (key.Key == ConsoleKey.Backspace) { if (password.Length > 0) password.Length--; } else password.Append(key.KeyChar);
+        Console.WriteLine();
+        Guid? id = args.Length == 5 && Guid.TryParse(args[4], out var parsed) ? parsed : null;
+        string? terminal = args.Length == 5 && id is null ? args[4] : null;
+        var restored = CloudRestore.FromWebAsync(SyncSettings.ValidateUrl(args[1]), args[2], password.ToString(), args[3], id, terminal).GetAwaiter().GetResult();
+        Console.WriteLine($"Instalación restaurada y validada en {restored}. Ábrela con Casa Miga (carpeta de datos) y registra la caja de nuevo en Nube.");
+        return 0;
     }
     if (args[0] == "export-sync" && args.Length == 3 && Path.IsPathFullyQualified(args[1]))
     {
@@ -76,6 +91,12 @@ try
     }
     else throw new ArgumentException("Argumentos inválidos.");
     return 0;
+}
+catch (Exception error) when (args.Length > 0 && args[0] == "restore-cloud" && error is InvalidOperationException or InvalidDataException or IOException or HttpRequestException or ArgumentException)
+{
+    // Restaurar desde la nube: el motivo ayuda a corregir (contraseña, dirección, carpeta que ya existe…); nunca incluye datos del respaldo.
+    Console.Error.WriteLine($"No se restauró: {error.Message}");
+    return 1;
 }
 catch (InvalidOperationException error) when (args.Length > 0 && args[0] == "reset-admin")
 {

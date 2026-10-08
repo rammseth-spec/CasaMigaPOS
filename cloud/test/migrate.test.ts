@@ -20,7 +20,7 @@ test('upgrading from version 1 keeps received history and builds the latest stat
       ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 1, '11111111-1111-4111-8111-111111111111', 'cash_session', 'c1', 'insert', '2026-10-06T13:00:00Z', '{"state":"OPEN"}'),
       ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 2, '11111111-1111-4111-8111-111111111111', 'cash_session', 'c1', 'update', '2026-10-06T22:00:00Z', '{"state":"CLOSED"}'),
       ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 3, '11111111-1111-4111-8111-111111111111', 'sale', 's1', 'insert', '2026-10-06T14:00:00Z', '{"sale":{}}');`);
-  assert.deepEqual(await migrate(s), [2]);
+  assert.deepEqual(await migrate(s), migrations().slice(1).map(m => m.version));
   assert.equal(await s.scalar(`SELECT payload->>'state' FROM entity_state WHERE entity = 'cash_session'`), 'CLOSED');
   assert.equal(await s.scalar('SELECT count(*)::int FROM entity_state'), 2);
   assert.equal(await s.scalar('SELECT count(*)::int FROM sync_event'), 3, 'History is never rewritten.');

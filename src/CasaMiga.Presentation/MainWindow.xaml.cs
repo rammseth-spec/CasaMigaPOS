@@ -112,6 +112,7 @@ public partial class MainWindow : Window
     private async void ConsignmentNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowConsignmentAsync();
     private async void SyncNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowSyncAsync();
     private async void SyncNowClick(object sender,RoutedEventArgs e){ if (Model.Sync is { } sync) await sync.RunAsync(); }
+    private async void BackupNowClick(object sender,RoutedEventArgs e){ if (Model.Sync is { } sync) await sync.BackupAsync(); }
     private async void RegisterTerminalClick(object sender,RoutedEventArgs e)
     {
         if (Model.Sync is not { } sync) return;

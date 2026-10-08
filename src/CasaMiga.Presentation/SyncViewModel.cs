@@ -23,12 +23,19 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
     {
         this.engine = engine; this.outbox = outbox; this.terminalId = terminalId; this.terminalName = terminalName; this.log = log;
         try { BranchName = outbox.Branch().Name; } catch (Exception) { BranchName = ""; }
+        try { if (engine.RegisteredApi is { } api) ApiUrl = api.ToString(); } catch (Exception) { } // sync.json ilegible: se queda la dirección predeterminada.
     }
 
     public SyncStatus Status { get; private set; } = new(SyncState.NotConfigured, 0, null, "");
     public string ApiUrl { get; set; } = DefaultApiUrl;
     public string BranchName { get; set; }
     public bool Busy { get; private set; }
+    /// <summary>Respaldo en la nube: cada hora con la app abierta (decisión del usuario, 08/10/2026), sólo si la base cambió.</summary>
+    public static readonly TimeSpan BackupInterval = TimeSpan.FromHours(1);
+    private DateTimeOffset? lastBackupAttempt;
+    private bool lastBackupFailed;
+    public string BackupLabel { get; private set; } = "Respaldo en la nube: pendiente (se hace cada hora con la app abierta).";
+    public bool BackingUp { get; private set; }
     /// <summary>Envío en curso (automático o «sincronizar ahora»).</summary>
     public bool Syncing { get; private set; }
     public bool Ready => !Busy;
@@ -63,6 +70,10 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
             while (!stop.IsCancellationRequested)
             {
                 await RunAsync();
+                // Con todo subido, el respaldo cada hora; si falló, se reintenta a los 15 minutos.
+                if (Status.State == SyncState.UpToDate && (lastBackupAttempt is not { } last
+                    || DateTimeOffset.UtcNow - last >= (lastBackupFailed ? TimeSpan.FromMinutes(15) : BackupInterval)))
+                    await BackupAsync();
                 delay = Status.State switch
                 {
                     SyncState.Offline => TimeSpan.FromSeconds(Math.Min(300, delay.TotalSeconds * 2)),
@@ -94,6 +105,35 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
             log("sync.failed", error.GetType().Name);
         }
         finally { Syncing = false; gate.Release(); Notify(); }
+    }
+
+    /// <summary>Respalda ahora en la nube. Nunca lanza excepciones.</summary>
+    public async Task BackupAsync()
+    {
+        if (BackingUp) return;
+        BackingUp = true; BackupLabel = "Respaldo en la nube: subiendo…"; Notify();
+        lastBackupAttempt = DateTimeOffset.UtcNow;
+        try
+        {
+            var token = stop.Token;
+            var result = await Task.Run(() => engine.BackupAsync(token), token);
+            var at = DateTime.Now.ToString("HH:mm", CultureInfo.InvariantCulture);
+            BackupLabel = result is null ? "Respaldo en la nube: registra esta terminal para respaldar."
+                : result.Uploaded ? $"Respaldo en la nube: {at} · base de {result.DatabaseBytes / 1024:N0} KB" + (result.PhotosUploaded > 0 ? $" y {result.PhotosUploaded} fotos nuevas" : "")
+                : $"Respaldo en la nube: {at} · sin cambios desde el anterior";
+            lastBackupFailed = false;
+            if (result is { Uploaded: true }) log("backup.cloud.uploaded", null);
+        }
+        catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
+        catch (Exception error)
+        {
+            lastBackupFailed = true;
+            BackupLabel = error is System.Net.Http.HttpRequestException or SyncUnauthorizedException
+                ? $"Respaldo en la nube: no se pudo ({error.Message}); se reintenta en 15 minutos."
+                : "Respaldo en la nube: no se pudo; se reintenta en 15 minutos.";
+            log("backup.cloud.failed", error.GetType().Name);
+        }
+        finally { BackingUp = false; Notify(); }
     }
 
     public async Task RegisterAsync(string enrollmentSecret)

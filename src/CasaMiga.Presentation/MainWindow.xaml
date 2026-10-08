@@ -117,7 +117,7 @@
        </StackPanel>
       </Border>
       <!-- Tocar la nube sincroniza al momento (además del envío automático cada 60 s). -->
-      <Button DataContext="{Binding Sync}" Click="SyncNowClick" ToolTip="{Binding StatusDetail}" Cursor="Hand" AutomationProperties.Name="Sincronizar ahora con la nube">
+      <Button DataContext="{Binding Sync}" Click="SyncNowClick" ToolTip="{Binding StatusDetail}" Cursor="Hand" Foreground="{DynamicResource TextPrimaryBrush}" AutomationProperties.Name="Sincronizar ahora con la nube">
        <Button.Template><ControlTemplate TargetType="Button"><Border x:Name="Pill" Style="{StaticResource StatusPill}"><ContentPresenter/></Border>
         <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Pill" Property="Background" Value="{DynamicResource FillHoverBrush}"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Button.Template>
        <StackPanel Orientation="Horizontal">
@@ -154,7 +154,8 @@
           <TextBlock Text="Dirección del servidor" FontSize="14" FontWeight="SemiBold"/><TextBox Text="{Binding ApiUrl,UpdateSourceTrigger=PropertyChanged}" MaxLength="200" AutomationProperties.Name="Dirección del servidor" Margin="0,6,0,14"/>
           <TextBlock Text="Nombre de esta sucursal" FontSize="14" FontWeight="SemiBold"/><TextBox Text="{Binding BranchName,UpdateSourceTrigger=PropertyChanged}" MaxLength="100" AutomationProperties.Name="Nombre de la sucursal" Margin="0,6,0,14"/>
           <TextBlock Text="Secreto de alta (lo tiene el administrador)" FontSize="14" FontWeight="SemiBold"/><local:PasswordInput x:Name="EnrollmentSecret" MaxLength="200" AutomationProperties.Name="Secreto de alta" Margin="0,6,0,14"/>
-          <WrapPanel><Button Content="Registrar terminal" Click="RegisterTerminalClick" Margin="0,0,12,8"/><Button Content="Sincronizar ahora" Click="SyncNowClick" Style="{StaticResource SecondaryButton}" Margin="0,0,0,8"/></WrapPanel>
+          <WrapPanel><Button Content="Registrar terminal" Click="RegisterTerminalClick" Margin="0,0,12,8"/><Button Content="Sincronizar ahora" Click="SyncNowClick" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8"/><Button Content="Respaldar ahora" Click="BackupNowClick" Style="{StaticResource SecondaryButton}" Margin="0,0,0,8" AutomationProperties.Name="Respaldar ahora en la nube"/></WrapPanel>
+          <TextBlock Text="{Binding BackupLabel}" Style="{StaticResource CaptionText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
           <TextBlock Text="Volver a registrar genera una llave nueva y desactiva la anterior. Una terminal no puede cambiar de sucursal." Style="{StaticResource CaptionText}" TextWrapping="Wrap"/>
          </StackPanel>
          <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Margin="0,12,0,0" AutomationProperties.LiveSetting="Polite"/>

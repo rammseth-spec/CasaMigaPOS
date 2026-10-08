@@ -32,6 +32,10 @@ Responsiva: menú lateral en computadora, riel de íconos en tablet (≤1100 px)
 - La caja sube lo pendiente y baja los cambios de la web **cada 60 segundos**; tocar la píldora «Nube» de la barra superior sincroniza al momento (cualquier usuario).
 - La web se actualiza sola cada 60 s con la página visible (sin parpadear ni perder la posición; se pausa mientras escribes o con un formulario abierto) y tiene el botón «Actualizado hh:mm ↻» para hacerlo al momento.
 
+## Respaldos
+
+Cada caja sube su base cada hora (si cambió) y sus fotos una vez; la nube se copia cada noche; todo cifrado y 30 días. Pantalla **Respaldos** (administrador) y restauración con `CasaMiga.Maintenance restore-cloud`. Ver [BACKUPS.md](BACKUPS.md).
+
 ## Ruta del repartidor (Charolas → Ruta)
 
 Pensada para celular: una tarjeta por tienda activa con teléfono, saldo, última entrega, charolas por recoger y botones grandes.
@@ -56,7 +60,7 @@ La caja actúa como quien pidió el cambio si ese usuario existe en ella (con su
 
 ## Publicar
 
-Ver [SYNC_PLAN.md](SYNC_PLAN.md#publicar-en-vercel). Variables: `DATABASE_URL` (Neon), `ENROLLMENT_SECRET` (alta de cajas, 24+ caracteres), `SESSION_SECRET` (firma de sesiones web, 32+ caracteres) y opcional `PANEL_TIME_ZONE` (por omisión `America/Mexico_City`).
+Ver [SYNC_PLAN.md](SYNC_PLAN.md#publicar-en-vercel). Variables: `DATABASE_URL` (Neon), `ENROLLMENT_SECRET` (alta de cajas, 24+ caracteres), `SESSION_SECRET` (firma de sesiones web, 32+ caracteres), `BACKUP_SECRET` (cifrado de respaldos, 32+), `CRON_SECRET` (16+), almacén Blob conectado (`BLOB_READ_WRITE_TOKEN`) y opcional `PANEL_TIME_ZONE` (por omisión `America/Mexico_City`).
 
 Revisión local sin Neon ni Vercel:
 

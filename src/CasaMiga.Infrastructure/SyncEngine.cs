@@ -187,8 +187,19 @@ public sealed record SyncStatus(SyncState State, long Pending, DateTimeOffset? L
 /// Envío de la cola local. Sólo marca como enviado lo que la nube confirma; ante un corte, lo pendiente se conserva y se reintenta.
 /// Un conflicto (mismo seq con otro contenido) detiene el envío hasta revisión.
 /// </summary>
-public sealed class SyncEngine(SqliteSyncOutbox outbox, ISyncTransport transport, string dataDirectory, TimeProvider? time = null, CloudCommandService? commands = null)
+public sealed class SyncEngine(SqliteSyncOutbox outbox, ISyncTransport transport, string dataDirectory, TimeProvider? time = null, CloudCommandService? commands = null,
+    CloudBackupService? backup = null, HttpClient? backupHttp = null)
 {
+    /// <summary>Dirección con la que se registró esta caja (null si no está registrada).</summary>
+    public Uri? RegisteredApi => SyncSettings.Load(dataDirectory)?.ApiUrl;
+
+    /// <summary>Sube el respaldo de esta caja a la nube (sólo si la base cambió). Null si la caja no está registrada o no hay respaldo configurado.</summary>
+    public async Task<CloudBackupResult?> BackupAsync(CancellationToken cancel = default)
+    {
+        if (backup is null || backupHttp is null || SyncSettings.Load(dataDirectory) is not { } settings) return null;
+        return await backup.RunAsync(new HttpCloudBackupTransport(backupHttp, settings.ApiUrl, settings.TerminalKey()), cancel);
+    }
+
     public const int BatchSize = 100;
     private readonly TimeProvider clock = time ?? TimeProvider.System;
     public SyncStatus Status { get; private set; } = new(SyncState.NotConfigured, 0, null, "");
