@@ -2,8 +2,8 @@
 // La contraseña sólo se compara contra el hash PBKDF2 que subió la caja; nunca se guarda ni viaja de regreso.
 import { createHash, createHmac, pbkdf2, randomBytes, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
-import { ProtocolError } from './protocol.ts';
-import type { Query, Row } from './panel.ts';
+import { ProtocolError } from './protocol.js';
+import type { Query, Row } from './panel.js';
 
 const derive = promisify(pbkdf2);
 export const COOKIE = 'cm_web';
@@ -83,9 +83,20 @@ export async function login(q: Query, username: unknown, password: unknown, now 
   if (typeof username !== 'string' || typeof password !== 'string' || !username.trim() || username.length > 80 || !password || password.length > 200)
     throw new ProtocolError('Escribe usuario y contraseña');
   const key = normalize(username);
-  const [lock] = await q('SELECT failures, locked_until FROM web_lockout WHERE username = $1', [key]);
-  if (lock?.locked_until && new Date(String(lock.locked_until)) > now)
-    throw new ProtocolError('Usuario bloqueado por intentos fallidos. Intenta en unos minutos.', 429);
+  const at = now.toISOString();
+  const locked = () => new ProtocolError('Usuario bloqueado por intentos fallidos. Intenta en unos minutos.', 429);
+  // El intento se cuenta ANTES de revisar la contraseña y en una sola sentencia: cien intentos simultáneos no pasan de cinco.
+  const [attempt] = await q(`INSERT INTO web_lockout(username, failures, locked_until, updated_at) VALUES ($1, 1, NULL, $2)
+    ON CONFLICT (username) DO UPDATE SET
+      failures = CASE WHEN web_lockout.locked_until IS NOT NULL AND web_lockout.locked_until <= $2 THEN 1 ELSE web_lockout.failures + 1 END,
+      locked_until = CASE WHEN web_lockout.locked_until IS NOT NULL AND web_lockout.locked_until <= $2 THEN NULL ELSE web_lockout.locked_until END,
+      updated_at = $2
+    RETURNING failures, locked_until`, [key, at]);
+  if (attempt.locked_until && new Date(String(attempt.locked_until)) > now) throw locked();
+  if (Number(attempt.failures) > MAX_FAILURES) {
+    await q(`UPDATE web_lockout SET locked_until = $2::timestamptz + make_interval(mins => $3) WHERE username = $1 AND locked_until IS NULL`, [key, at, LOCK_MINUTES]);
+    throw locked();
+  }
 
   const candidates = await q(`SELECT branch_id, payload FROM entity_state
     WHERE entity = 'app_user' AND NOT deleted AND upper(payload->>'username') = $1 AND (payload->>'active')::int = 1`, [key]);
@@ -94,10 +105,8 @@ export async function login(q: Query, username: unknown, password: unknown, now 
   if (candidates.length === 0) await verifyIdentityHash(await dummyHash(), password); // mismo tiempo exista o no el usuario
 
   if (!match) {
-    await q(`INSERT INTO web_lockout(username, failures, locked_until, updated_at) VALUES ($1, 1, NULL, $2)
-      ON CONFLICT (username) DO UPDATE SET failures = CASE WHEN web_lockout.locked_until IS NOT NULL AND web_lockout.locked_until <= $2 THEN 1 ELSE web_lockout.failures + 1 END,
-        locked_until = CASE WHEN (CASE WHEN web_lockout.locked_until IS NOT NULL AND web_lockout.locked_until <= $2 THEN 1 ELSE web_lockout.failures + 1 END) >= $3
-          THEN $2::timestamptz + make_interval(mins => $4) ELSE NULL END, updated_at = $2`, [key, now.toISOString(), MAX_FAILURES, LOCK_MINUTES]);
+    if (Number(attempt.failures) >= MAX_FAILURES)
+      await q(`UPDATE web_lockout SET locked_until = $2::timestamptz + make_interval(mins => $3) WHERE username = $1 AND locked_until IS NULL`, [key, at, LOCK_MINUTES]);
     throw new ProtocolError('Usuario o contraseña incorrectos', 401);
   }
   await q('DELETE FROM web_lockout WHERE username = $1', [key]);
@@ -158,6 +167,8 @@ export async function requireUser(q: Query, request: Request, secret: string): P
 
 /** Sucursales que puede ver: el administrador todas; los demás la suya. */
 export function scopeBranch(user: WebUser, requested: string | null): string | null {
+  if (requested && !new RegExp(`^${UUID}$`, 'i').test(requested)) throw new ProtocolError('Sucursal inválida');
+  requested = requested?.toLowerCase() ?? null;
   if (user.admin) return requested;
   if (requested && requested !== user.branchId) throw new ProtocolError('Sin acceso a esa sucursal', 403);
   return user.branchId;

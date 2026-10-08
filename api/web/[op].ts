@@ -1,6 +1,6 @@
-import { ensureSchema, query } from '../../lib/db.ts';
-import { failure } from '../../lib/protocol.ts';
-import { handle } from '../../lib/router.ts';
+import { ensureSchema, query } from '../../lib/db.js';
+import { failure } from '../../lib/protocol.js';
+import { handle } from '../../lib/router.js';
 
 async function route(request: Request): Promise<Response> {
   try {

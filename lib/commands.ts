@@ -1,10 +1,10 @@
 // Cambios hechos en la versión web (docs/WEB.md). La nube sólo los valida y los guarda en orden;
 // cada caja de la sucursal los aplica con sus propias reglas y reporta si quedaron o por qué no.
 import { randomUUID } from 'node:crypto';
-import { ProtocolError } from './protocol.ts';
-import { identityHash, requirePermission, temporaryPassword, type WebUser } from './auth.ts';
-import { isUuid } from './web.ts';
-import type { Query, Row } from './panel.ts';
+import { ProtocolError } from './protocol.js';
+import { identityHash, requirePermission, temporaryPassword, type WebUser } from './auth.js';
+import { isUuid } from './web.js';
+import type { Query, Row } from './panel.js';
 
 export const KINDS = ['category.save', 'product.save', 'product.active', 'user.create', 'user.update', 'user.active', 'user.reset_password',
   'consignment.store.save', 'consignment.template.save'] as const;

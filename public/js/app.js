@@ -56,7 +56,9 @@ export class ApiError extends Error { constructor(message, status) { super(messa
 async function request(op, init = {}, params = {}) {
   const query = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== '' && v !== null && v !== undefined));
   let response;
-  try { response = await fetch(`/api/web/${op}${query.size ? '?' + query : ''}`, { ...init, headers: { accept: 'application/json', ...(init.body ? { 'content-type': 'application/json' } : {}) } }); }
+  // toString() y no .size: Safari anterior a iOS 17 no tiene URLSearchParams.size.
+  const qs = query.toString();
+  try { response = await fetch(`/api/web/${op}${qs ? '?' + qs : ''}`, { ...init, headers: { accept: 'application/json', ...(init.body ? { 'content-type': 'application/json' } : {}) } }); }
   catch { throw new ApiError('Sin conexión con la nube. Las cajas siguen vendiendo; reintenta en un momento.', 0); }
   const body = await response.json().catch(() => ({}));
   if (response.status === 401 && op !== 'login') { showLogin(''); throw new ApiError('Inicia sesión', 401); }
@@ -127,13 +129,15 @@ export const card = (title, ...children) => h('article', { class: 'card' }, titl
 
 // ---------- Periodo ----------
 const PERIODS = [['today', 'Hoy'], ['yesterday', 'Ayer'], ['7', '7 días'], ['month', 'Este mes'], ['30', '30 días']];
-const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+// «Hoy» es el de la sucursal (hora de México), no el del aparato: alguien de viaje ve los mismos días que la caja.
+const todayThere = () => new Date().toLocaleDateString('en-CA', { timeZone: state.timeZone });
+const shiftDay = (day, days) => { const d = new Date(day + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + days); return d.toISOString().slice(0, 10); };
 function periodRange(period) {
-  const today = new Date(); const start = new Date(today);
-  if (period === 'yesterday') { start.setDate(today.getDate() - 1); return [iso(start), iso(start)]; }
-  if (period === '7' || period === '30') { start.setDate(today.getDate() - Number(period) + 1); return [iso(start), iso(today)]; }
-  if (period === 'month') { start.setDate(1); return [iso(start), iso(today)]; }
-  return [iso(today), iso(today)];
+  const today = todayThere();
+  if (period === 'yesterday') { const y = shiftDay(today, -1); return [y, y]; }
+  if (period === '7' || period === '30') return [shiftDay(today, -Number(period) + 1), today];
+  if (period === 'month') return [today.slice(0, 8) + '01', today];
+  return [today, today];
 }
 function remember() { try { localStorage.setItem('cm-web', JSON.stringify({ period: state.period, branch: state.branch })); } catch { /* sin almacenamiento */ } }
 function recall() { try { const saved = JSON.parse(localStorage.getItem('cm-web') || '{}'); state.period = saved.period || 'today'; state.branch = saved.branch || ''; } catch { /* sin almacenamiento */ } }

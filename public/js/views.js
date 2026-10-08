@@ -176,12 +176,12 @@ async function caja() {
   const data = await api('cash', range());
   const kinds = { EXPENSE: ['Gasto', 'warn'], WITHDRAWAL: ['Retiro', 'warn'], DEPOSIT: ['Entrada', 'info'] };
   const categories = { SUPPLIES: 'Insumos', GAS: 'Gas', CLEANING: 'Limpieza', TRANSPORT: 'Transporte', MAINTENANCE: 'Mantenimiento', OTHER: 'Otro' };
-  const sum = k => data.movements.filter(m => m.kind === k).reduce((a, m) => a + m.amount, 0);
+  const c = data.cash; // totales calculados en la nube: las listas de abajo se recortan
   return h('div', { style: { display: 'grid', gap: '16px' } },
     h('section', { class: 'kpis' },
-      kpi('Cortes', String(data.sessions.length), `${data.sessions.filter(s => s.open).length} abiertos`),
-      kpi('Gastos', fmt(sum('EXPENSE')), `${data.movements.filter(m => m.kind === 'EXPENSE').length} movimientos`),
-      kpi('Retiros', fmt(sum('WITHDRAWAL')), 'Efectivo a resguardo'), kpi('Entradas', fmt(sum('DEPOSIT')), 'Cambio o fondo extra')),
+      kpi('Cortes', String(c.sessions), `${c.open} abiertos`),
+      kpi('Gastos', fmt(c.expenses.amount), `${c.expenses.count} movimientos`),
+      kpi('Retiros', fmt(c.withdrawals.amount), `${c.withdrawals.count} · efectivo a resguardo`), kpi('Entradas', fmt(c.deposits.amount), `${c.deposits.count} · cambio o fondo extra`)),
     card('Cortes de caja', sessionsTable(data.sessions)),
     card('Gastos, retiros y entradas', table([
       { label: 'Fecha', value: m => [at(m.at), multi() ? h('small', { text: m.branch }) : null] },
@@ -316,8 +316,9 @@ function productDialog(product, categories, branchId) {
       } }, product.active ? 'Desactivar producto' : 'Reactivar producto')) : '');
   }, editable ? { onSubmit: async form => {
     const f = form.elements;
-    const price = Math.round(Number(String(f.price.value).replace(',', '.')) * 100);
-    if (!Number.isFinite(price) || price < 0) throw new Error('Escribe el precio, por ejemplo 19.50.');
+    const text = String(f.price.value).trim().replace(',', '.');
+    if (!/^\d{1,6}(\.\d{1,2})?$/.test(text)) throw new Error('Escribe el precio, por ejemplo 19.50.');
+    const price = Math.round(Number(text) * 100);
     await command(product?.branchId ?? f.branch?.value ?? branch, 'product.save', { id: product?.id ?? uuid(), categoryId: f.category.value, sku: f.sku.value.trim() || null, name: f.name.value,
       description: f.description.value, priceCents: price, trackInventory: f.track.checked });
   } } : {});

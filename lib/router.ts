@@ -1,9 +1,9 @@
 // Todas las rutas de la versión web en una sola función (/api/web/<op>), con la base inyectable para pruebas y revisión local.
-import { failure, json, ProtocolError, readJson } from './protocol.ts';
-import { clearedCookie, issueSession, login, requirePermission, requireUser, scopeBranch, sessionCookie, sessionSecret, type WebUser } from './auth.ts';
-import { dashboard, DEFAULT_TIME_ZONE, MAX_DAYS, parseRange, terminals, branches, type Query, type Range } from './panel.ts';
-import * as web from './web.ts';
-import { createCommand, listCommands } from './commands.ts';
+import { failure, json, ProtocolError, readJson } from './protocol.js';
+import { clearedCookie, issueSession, login, requirePermission, requireUser, scopeBranch, sessionCookie, sessionSecret, type WebUser } from './auth.js';
+import { dashboard, DEFAULT_TIME_ZONE, MAX_DAYS, parseRange, terminals, branches, type Query, type Range } from './panel.js';
+import * as web from './web.js';
+import { createCommand, listCommands } from './commands.js';
 
 export interface Env { SESSION_SECRET?: string; PANEL_TIME_ZONE?: string }
 
@@ -29,6 +29,15 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
     const url = new URL(request.url);
     const timeZone = env.PANEL_TIME_ZONE || DEFAULT_TIME_ZONE;
     const secret = sessionSecret(env.SESSION_SECRET);
+    if (request.method === 'POST') {
+      // Sólo desde la propia página: otro sitio no puede iniciar sesión ni mandar cambios a nombre del usuario.
+      const site = request.headers.get('sec-fetch-site');
+      const origin = request.headers.get('origin');
+      let sameOrigin = true;
+      try { sameOrigin = !origin || new URL(origin).host === url.host; } catch { sameOrigin = false; }
+      if (!sameOrigin || (site && site !== 'same-origin' && site !== 'none')) throw new ProtocolError('Origen no permitido', 403);
+      if (!(request.headers.get('content-type') ?? '').toLowerCase().startsWith('application/json')) throw new ProtocolError('Formato no permitido', 415);
+    }
 
     if (op === 'login' && request.method === 'POST') {
       const body = (await readJson(request, 2_000)) as { username?: unknown; password?: unknown } | null;
@@ -75,7 +84,11 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       case 'cash-control': return json(200, await web.cashControl(q, range()));
       case 'production-suggestion': return json(200, await web.productionSuggestion(q, branch, timeZone, day(url.searchParams.get('day'), timeZone)));
       case 'terminals': return json(200, await terminals(q, branch));
-      case 'cash': { const r = range(); const data = await dashboard(q, r); return json(200, { sessions: data.sessions, totals: data.totals, movements: await web.cashMovements(q, r) }); }
+      case 'cash': {
+        const r = range();
+        const [data, movements, totals] = await Promise.all([dashboard(q, r), web.cashMovements(q, r), web.cashTotals(q, r)]);
+        return json(200, { sessions: data.sessions, totals: data.totals, movements, cash: totals });
+      }
       case 'consignment': return json(200, await web.consignment(q, range()));
       case 'catalog': return json(200, await web.catalog(q, branch));
       case 'photo': {

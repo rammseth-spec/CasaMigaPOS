@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ProtocolError } from '../lib/protocol.ts';
-import { dashboard, parseRange, type Query } from '../lib/panel.ts';
-import { caja1, centro, database, norte, seedSales, send, sessionA, sessionB } from './helpers.ts';
+import { ProtocolError } from '../lib/protocol.js';
+import { dashboard, parseRange, type Query } from '../lib/panel.js';
+import { caja1, caja2, centro, database, norte, seedSales, send, sessionA, sessionB } from './helpers.js';
 
 const range = (from: string, to: string, branch?: string) =>
   parseRange(new URL(`https://x/api/web/dashboard?from=${from}&to=${to}${branch ? `&branch=${branch}` : ''}`));
@@ -53,10 +53,14 @@ test('resends do not duplicate, reused sequences conflict and the latest content
   const [state] = await q(`SELECT payload FROM entity_state WHERE entity = 'product' AND entity_id = 'p1'`, []);
   assert.equal((state.payload as any).product.price_cents, 2100, 'Within a batch the last queued change wins.');
 
-  // Una entrada vieja que llega tarde (encolada antes) no pisa el estado más reciente.
-  await send(q, caja1, centro, [{ entity: 'product', id: 'p1', change: 'update', at: '2026-01-01T00:00:00Z', payload: { product: { id: 'p1', name: 'Viejo', price_cents: 1 } } }]);
+  // Misma caja con el reloj atrasado: manda el orden de su cola, no la hora.
+  await send(q, caja1, centro, [{ entity: 'product', id: 'p1', change: 'update', at: '2026-01-01T00:00:00Z', payload: { product: { id: 'p1', name: 'Reloj atrasado', price_cents: 2150 } } }]);
+  const [same] = await q(`SELECT payload FROM entity_state WHERE entity = 'product' AND entity_id = 'p1'`, []);
+  assert.equal((same.payload as any).product.name, 'Reloj atrasado');
+  // Otra caja con un cambio encolado antes: no pisa el estado más reciente.
+  await send(q, caja2, centro, [{ entity: 'product', id: 'p1', change: 'update', at: '2025-12-31T00:00:00Z', payload: { product: { id: 'p1', name: 'Viejo', price_cents: 1 } } }]);
   const [still] = await q(`SELECT payload FROM entity_state WHERE entity = 'product' AND entity_id = 'p1'`, []);
-  assert.equal((still.payload as any).product.name, 'Concha de vainilla');
+  assert.equal((still.payload as any).product.name, 'Reloj atrasado');
 
   await send(q, caja1, centro, [{ entity: 'consignment_price', id: 'p1', change: 'delete', payload: { deleted: true, id: 'p1' } }]);
   const [removed] = await q(`SELECT deleted FROM entity_state WHERE entity = 'consignment_price' AND entity_id = 'p1'`, []);

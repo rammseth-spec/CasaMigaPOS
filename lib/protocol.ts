@@ -1,4 +1,4 @@
-// Contrato entre la app de escritorio y la nube. Sólo sintaxis TypeScript borrable (Node 24 la ejecuta sin compilar).
+// Contrato entre la app de escritorio y la nube. Sólo sintaxis TypeScript borrable; Vercel la compila y localmente corre con tsx.
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 
 export const MAX_BATCH = 200;

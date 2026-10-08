@@ -1,8 +1,8 @@
 // Lado de las cajas: alta de terminal, autenticación por llave y rutas de sincronización, con la base inyectable.
-import { bearer, failure, json, newTerminalKey, parseBatch, parseRegistration, ProtocolError, readJson, secretMatches, sha256Hex } from './protocol.ts';
-import { storeBatch } from './store.ts';
-import { pendingFor, recordResults } from './commands.ts';
-import type { Query } from './panel.ts';
+import { bearer, failure, json, newTerminalKey, parseBatch, parseRegistration, ProtocolError, readJson, secretMatches, sha256Hex } from './protocol.js';
+import { storeBatch } from './store.js';
+import { pendingFor, recordResults } from './commands.js';
+import type { Query } from './panel.js';
 
 /** Resuelve la terminal por su llave; nunca se guarda la llave, sólo su SHA-256. */
 export async function authenticate(q: Query, header: string | null): Promise<{ id: string; branchId: string }> {

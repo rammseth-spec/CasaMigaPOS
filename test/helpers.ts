@@ -1,9 +1,9 @@
 // Base central en memoria (PGlite) con las mismas migraciones que Neon, y lotes como los manda la caja.
 import { PGlite } from '@electric-sql/pglite';
-import { migrate, type Session } from '../lib/migrate.ts';
-import { storeBatch } from '../lib/store.ts';
-import { identityHash } from '../lib/auth.ts';
-import type { Query } from '../lib/panel.ts';
+import { migrate, type Session } from '../lib/migrate.js';
+import { storeBatch } from '../lib/store.js';
+import { identityHash } from '../lib/auth.js';
+import type { Query } from '../lib/panel.js';
 
 export const centro = '11111111-1111-4111-8111-111111111111';
 export const norte = '22222222-2222-4222-8222-222222222222';

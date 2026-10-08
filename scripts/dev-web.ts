@@ -7,11 +7,11 @@ import { readFileSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
-import { migrate } from '../lib/migrate.ts';
-import { storeBatch } from '../lib/store.ts';
-import { handle } from '../lib/router.ts';
-import { handleTerminal } from '../lib/terminal.ts';
-import type { Query } from '../lib/panel.ts';
+import { migrate } from '../lib/migrate.js';
+import { storeBatch } from '../lib/store.js';
+import { handle } from '../lib/router.js';
+import { handleTerminal } from '../lib/terminal.js';
+import type { Query } from '../lib/panel.js';
 
 const [file, portText] = process.argv.slice(2);
 if (!file) throw new Error('Falta el archivo exportado.');
@@ -50,7 +50,7 @@ createServer(async (req, res) => {
     const path = normalize(url.pathname === '/' ? 'index.html' : decodeURIComponent(url.pathname.slice(1)));
     try {
       if (path.startsWith('..')) throw new Error('ruta');
-      response = new Response(readFileSync(join(root, path)), { headers: { 'content-type': types[extname(path)] ?? 'application/octet-stream' } });
+      response = new Response(readFileSync(join(root, path)), { headers: { 'content-type': types[extname(path)] ?? 'application/octet-stream', 'cache-control': 'no-store' } });
     } catch { response = new Response('No encontrado', { status: 404 }); }
   }
   const headers: [string, string][] = [];

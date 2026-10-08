@@ -1,7 +1,7 @@
 // Consultas de cada pantalla de la versión web (docs/WEB.md). Sólo lectura sobre entity_state.
 // `branch` ya viene acotado por el rol (auth.scopeBranch): null = todas las sucursales (sólo administrador).
-import { ProtocolError } from './protocol.ts';
-import { REFUNDS, SALES, type Query, type Range, type Row } from './panel.ts';
+import { ProtocolError } from './protocol.js';
+import { REFUNDS, SALES, type Query, type Range, type Row } from './panel.js';
 
 const n = (v: unknown) => (v === null || v === undefined ? 0 : Number(v));
 const s = (v: unknown) => (v === null || v === undefined ? '' : String(v));
@@ -38,6 +38,10 @@ export const PAGE = 50;
 export async function salesList(q: Query, f: SaleFilter) {
   const search = f.search.trim();
   const folio = /^(?:[Cc](\d{1,4})\s*-\s*)?(\d{1,12})$/.exec(search);
+  const k = await names(q);
+  // Con clave de caja (C02-…) sólo cuentan las cajas con esa clave; se filtra en la consulta para que el total y las páginas cuadren.
+  const code = folio?.[1] ? 'C' + folio[1].padStart(2, '0') : null;
+  const terminals = code ? [...k.terminal.entries()].filter(([, name]) => terminalCode(name) === code).map(([id]) => id) : null;
   const rows = await q(`WITH s AS (${SALES}), r AS (${REFUNDS}),
       refunded AS (SELECT sale_id, sum(total) AS total, bool_or(payload->'refund'->>'kind' = 'CANCELLATION') AS cancelled FROM r GROUP BY sale_id)
     SELECT s.sale_id, s.branch_id, s.terminal_id, s.payload->'sale'->>'confirmed_utc' AS at, (s.payload->'sale'->>'sequence')::bigint AS sequence,
@@ -49,13 +53,11 @@ export async function salesList(q: Query, f: SaleFilter) {
       AND ($5::text IS NULL OR s.method = $5)
       AND ($6::bigint IS NULL OR (s.payload->'sale'->>'sequence')::bigint = $6)
       AND ($7::text IS NULL OR EXISTS (SELECT 1 FROM jsonb_array_elements(s.payload->'items') i WHERE i->>'product_name' ILIKE '%' || $7 || '%'))
+      AND ($9::uuid[] IS NULL OR s.terminal_id = ANY($9::uuid[]))
     ORDER BY (s.payload->'sale'->>'confirmed_utc')::timestamptz DESC, s.sale_id
     LIMIT ${PAGE} OFFSET $8`,
-    [f.timeZone, f.from, f.to, f.branchId, f.method, folio ? Number(folio[2]) : null, !folio && search ? search.slice(0, 80) : null, f.page * PAGE]);
-  const k = await names(q);
-  // Con clave de caja (C02-…) sólo cuenta la caja con esa clave.
-  const code = folio?.[1] ? 'C' + folio[1].padStart(2, '0') : null;
-  const items = rows.filter(r => !code || terminalCode(k.terminal.get(s(r.terminal_id)) ?? '') === code).map(r => {
+    [f.timeZone, f.from, f.to, f.branchId, f.method, folio ? Number(folio[2]) : null, !folio && search ? search.slice(0, 80) : null, f.page * PAGE, terminals]);
+  const items = rows.map(r => {
     const terminal = k.terminal.get(s(r.terminal_id)) ?? 'Caja';
     return {
       id: s(r.sale_id), branchId: s(r.branch_id), branch: k.branch.get(s(r.branch_id)) ?? '', terminal, folio: displayFolio(terminal, n(r.sequence)),
@@ -184,6 +186,20 @@ export async function cashMovements(q: Query, r: Range) {
     return { id: s(p.id), branch: k.branch.get(s(x.branch_id)) ?? '', terminal: k.terminal.get(s(x.terminal_id)) ?? '', at: s(p.occurred_utc),
       kind: s(p.kind), category: p.category === null ? null : s(p.category), amount: n(p.amount_cents), note: s(p.note), user: k.user.get(s(p.user_id)) ?? '' };
   });
+}
+
+/** Totales de caja del periodo calculados en la base (las listas se recortan). */
+export async function cashTotals(q: Query, r: Range) {
+  const [cuts] = await q(`SELECT count(*) AS sessions, count(*) FILTER (WHERE payload->>'state' <> 'CLOSED') AS open
+    FROM entity_state WHERE entity = 'cash_session' AND NOT deleted
+      AND (((payload->>'opened_utc')::timestamptz AT TIME ZONE $1)::date) BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR branch_id = $4::uuid)`,
+    [r.timeZone, r.from, r.to, r.branchId]);
+  const kinds = await q(`SELECT payload->>'kind' AS kind, count(*) AS count, sum((payload->>'amount_cents')::bigint) AS amount
+    FROM entity_state WHERE entity = 'cash_movement' AND NOT deleted
+      AND (((payload->>'occurred_utc')::timestamptz AT TIME ZONE $1)::date) BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR branch_id = $4::uuid)
+    GROUP BY 1`, [r.timeZone, r.from, r.to, r.branchId]);
+  const by = (kind: string) => { const k = kinds.find(x => x.kind === kind); return { count: n(k?.count), amount: n(k?.amount) }; };
+  return { sessions: n(cuts.sessions), open: n(cuts.open), expenses: by('EXPENSE'), withdrawals: by('WITHDRAWAL'), deposits: by('DEPOSIT') };
 }
 
 // ---------- Charolas ----------
