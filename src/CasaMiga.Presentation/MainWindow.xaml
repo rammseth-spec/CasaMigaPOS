@@ -103,24 +103,32 @@
         <local:InventoryView DataContext="{Binding Inventory}" Visibility="{Binding DataContext.IsInventory,RelativeSource={RelativeSource AncestorType=Window},Converter={StaticResource VisibleWhen}}"/>
         <local:RecipeView DataContext="{Binding Recipes}" Visibility="{Binding DataContext.IsRecipes,RelativeSource={RelativeSource AncestorType=Window},Converter={StaticResource VisibleWhen}}"/>
         <local:ProductionView DataContext="{Binding Production}" Visibility="{Binding DataContext.IsProduction,RelativeSource={RelativeSource AncestorType=Window},Converter={StaticResource VisibleWhen}}"/>
-        <StackPanel Visibility="{Binding IsDashboard,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
-         <TextBlock Text="{Binding CashLabel}" FontSize="30" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" Margin="0,0,0,18"/><TextBlock Text="{Binding CashDetails}" Margin="0,0,0,22"/>
-         <Button Content="Abrir caja" Click="ShowOpeningClick" IsEnabled="{Binding CanOpen}" Visibility="{Binding HasNoOpenCash,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,12"/>
-         <Button Content="Cerrar caja" Click="BeginClosingClick" Visibility="{Binding HasOpenCash,Converter={StaticResource VisibleWhen}}" Style="{StaticResource DestructiveButton}" Margin="0,0,0,12"/>
-         <TextBlock Text="Salir del usuario o cerrar la aplicación no cierra la caja." Style="{StaticResource CaptionText}" Margin="0,4,0,0"/>
-        </StackPanel>
-        <StackPanel Visibility="{Binding IsOpening,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
+        <StackPanel Visibility="{Binding IsDashboard,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}" MaxWidth="1120" HorizontalAlignment="Stretch">
+         <Grid Visibility="{Binding ShowsCashDashboard,Converter={StaticResource VisibleWhen}}">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+          <StackPanel>
+           <TextBlock Text="{Binding CashLabel}" FontSize="26" FontWeight="SemiBold" Foreground="{DynamicResource BrandBrush}" Margin="0,0,0,8"/>
+           <TextBlock Text="{Binding CashDetails}" Margin="0,0,16,8"/>
+           <TextBlock Text="Salir del usuario o cerrar la aplicación no cierra la caja." Style="{StaticResource CaptionText}"/>
+          </StackPanel>
+          <StackPanel Grid.Column="1" VerticalAlignment="Center">
+           <Button Content="Abrir caja" Click="ShowOpeningClick" IsEnabled="{Binding CanOpen}" Visibility="{Binding CanOpen,Converter={StaticResource VisibleWhen}}"/>
+           <Button Content="Cerrar caja" Click="BeginClosingClick" Visibility="{Binding CanClose,Converter={StaticResource VisibleWhen}}" Style="{StaticResource DestructiveButton}"/>
+          </StackPanel>
+         </Grid>
+         <local:CashHistoryView/>        </StackPanel>
+        <StackPanel Visibility="{Binding IsOpening,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}" MaxWidth="650" HorizontalAlignment="Left">
          <TextBlock Text="Fondo inicial en MXN"/><TextBox x:Name="OpeningAmount" AutomationProperties.Name="Fondo inicial en MXN" Text="{Binding Amount,UpdateSourceTrigger=PropertyChanged}" MaxLength="20" Margin="0,8,0,8"/>
          <TextBlock Text="Ejemplo: 500.00 · Se permite iniciar con $0.00" Style="{StaticResource CaptionText}" Margin="0,0,0,24"/>
          <WrapPanel><Button Content="Cancelar" Click="CancelOpeningClick" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8"/><Button Content="Confirmar apertura" Click="OpenClick" Margin="0,0,0,8"/></WrapPanel>
         </StackPanel>
-        <StackPanel Visibility="{Binding IsCounting,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
+        <StackPanel Visibility="{Binding IsCounting,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}" MaxWidth="650" HorizontalAlignment="Left">
          <TextBlock Text="{Binding ClosingOwner}" Margin="0,0,0,16"/><TextBlock Text="Efectivo contado en MXN"/><TextBox x:Name="CountedInput" AutomationProperties.Name="Efectivo contado en MXN" Text="{Binding CountedAmount,UpdateSourceTrigger=PropertyChanged}" MaxLength="20" Margin="0,8,0,24"/>
-         <WrapPanel><Button Content="Cancelar" Click="BackClosingClick" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8"/><Button Content="Continuar" Click="SubmitCountClick" Margin="0,0,0,8"/></WrapPanel>
+         <WrapPanel><Button Content="Cancelar" Click="BackClosingClick" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8"/><Button Content="Confirmar conteo" Click="SubmitCountClick" Margin="0,0,0,8"/></WrapPanel>
         </StackPanel>
-        <StackPanel Visibility="{Binding IsClosingResult,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
+        <StackPanel Visibility="{Binding IsClosingResult,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}" MaxWidth="780" HorizontalAlignment="Left">
          <TextBlock Text="{Binding ClosingOwner}" Margin="0,0,0,16"/><TextBlock Text="{Binding ClosingDetails}" FontSize="21" Margin="0,0,0,20"/><TextBlock Text="La sesión quedará cerrada y auditada. No podrá volver a abrirse. Volver conserva el conteo confirmado." Margin="0,0,0,24"/>
-         <WrapPanel><Button x:Name="BackResult" Content="Volver" Click="BackClosingClick" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8"/><Button Content="Confirmar cierre" Click="ConfirmCloseClick" Style="{StaticResource DestructiveButton}" Margin="0,0,0,8"/></WrapPanel>
+         <TextBlock Text="{Binding DiscrepancyNoteLabel}" FontWeight="SemiBold"/><TextBox Text="{Binding DiscrepancyNote,UpdateSourceTrigger=PropertyChanged}" MaxLength="500" AcceptsReturn="True" TextWrapping="Wrap" Height="85" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Nota de discrepancia" Margin="0,6,0,4"/><TextBlock Text="{Binding DiscrepancyNoteCount}" Style="{StaticResource CaptionText}" Margin="0,0,0,12"/><WrapPanel><Button x:Name="BackResult" Content="Volver" Click="BackClosingClick" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8"/><Button Content="Confirmar cierre definitivo" IsEnabled="{Binding CanConfirmClose}" Click="ConfirmCloseClick" Style="{StaticResource DestructiveButton}" Margin="0,0,0,8"/></WrapPanel>
         </StackPanel>
         <TextBlock Text="{Binding Message}" Margin="0,18,0,0" AutomationProperties.LiveSetting="Polite"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
        </StackPanel>

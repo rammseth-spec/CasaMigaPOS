@@ -52,7 +52,7 @@ public sealed class PosTests
         Assert.ThrowsExactly<AccessDeniedException>(()=>pos.Load());Assert.ThrowsExactly<AccessDeniedException>(()=>pos.Increment(concha.Id));pos.Discard(true);Assert.IsNull(user.Cart);
     }
     [TestMethod]public void InactiveUserCannotUsePos(){Sql("UPDATE app_user SET active=0");Assert.ThrowsExactly<AccessDeniedException>(()=>pos.Load());Assert.ThrowsExactly<AccessDeniedException>(()=>pos.Add(concha.Id));}
-    [TestMethod]public void ClosedCashRejectsPosInApplication(){closing.SubmitCount(cash.Id,new Money(0));closing.Close(cash.Id);Assert.ThrowsExactly<PosException>(()=>pos.Load());Assert.ThrowsExactly<PosException>(()=>pos.Add(concha.Id));}
+    [TestMethod]public void ClosedCashRejectsPosInApplication(){closing.SubmitCount(cash.Id,new Money(0));closing.Close(cash.Id,"Diferencia sintética");Assert.ThrowsExactly<PosException>(()=>pos.Load());Assert.ThrowsExactly<PosException>(()=>pos.Add(concha.Id));}
     [TestMethod]public void ConfirmedCountFreezesPosEvenWhileCashIsOpen(){closing.SubmitCount(cash.Id,new Money(0));Assert.ThrowsExactly<PosException>(()=>pos.Load());Assert.ThrowsExactly<PosException>(()=>pos.Add(concha.Id));}
     [TestMethod]public void CartCannotPassThroughLogoutOrLoginWithoutExplicitDiscard()
     {
@@ -104,7 +104,7 @@ public sealed class PosTests
     {
         pos.Add(concha.Id);var other=new TerminalIdentity(Guid.NewGuid(),"Otra");work.Run(s=>{s.EnsureTerminal(other,clock.UtcNow);return true;});new CashService(work,user,clock).Open(other.Id,new Money(0));
         Assert.ThrowsExactly<CartDiscardRequiredException>(()=>new PosService(work,user,other.Id).Load());
-        pos.Discard(true);closing.SubmitCount(cash.Id,new Money(0));closing.Close(cash.Id);var next=new CashService(work,user,clock).Open(terminal.Id,new Money(0));
+        pos.Discard(true);closing.SubmitCount(cash.Id,new Money(0));closing.Close(cash.Id,"Diferencia sintética");var next=new CashService(work,user,clock).Open(terminal.Id,new Money(0));
         Assert.AreEqual(next.Session.Id,pos.Load().Cart.CashSessionId);Assert.IsTrue(user.Cart!.IsEmpty);
     }
     [TestMethod]public void PosPermissionAssignedToAllThreeRolesButNotCatalogEditingToCashier()

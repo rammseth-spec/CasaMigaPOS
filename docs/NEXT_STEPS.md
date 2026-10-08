@@ -1,3 +1,18 @@
+# Próximo paso — smoke manual de Caja 1K.4D
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4D.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4D`, DataDirectory `work/phase1k4d-smoke-20261008` (schema 17). La base protegida sigue en schema 16, intacta. Las instrucciones antiguas quedan como registro histórico.
+
+1. Iniciar sesión con las credenciales verificadas entregadas en la conversación. Confirmar CAJA CERRADA, 30 cierres y paginación 25+5.
+2. Revisar detalles sintéticos: fondo $500 + ventas $1,250 = esperado $1,750; exacto $1,750, sobrante $1,780 (+$30) y faltante $1,700 (−$50). Notas visibles y sólo lectura.
+3. En esta copia, abrir con $500. Contar $500: el esperado no aparece antes de confirmar conteo; después fondo $500 + ventas $0 = esperado $500. Cerrar sin nota.
+4. En sesiones nuevas independientes con fondo $500, contar $530 y $450 respectivamente. Ver obligatoriedad de nota, escribir observación sintética y confirmar cierre definitivo. No intentar cambiar un conteo confirmado.
+5. Consultar los cierres creados, responsables y notas. Revisar 1280×820, 1920×1080, F11 y Escape.
+6. No vender desde UI, imprimir, activar cajón, modificar inventario ni producción. Las ventas requeridas ya se prepararon mediante tooling en históricos sintéticos.
+
+Ver el checklist detallado en `PHASE_1K4D_REPORT.md`. Apertura automática en login no equivale a aprobación humana. Después del smoke esperar aprobación explícita antes del checkpoint GitHub. Sin push durante esta ejecución; no iniciar fase siguiente.
+
+## Registro anterior — 1K.4C-R3
+
 # Próximo paso — smoke manual de 1K.4C-R3
 
 Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4C-R3`, abierta desde `work/Abrir-Casa-Miga-1K4C-R3.cmd`, con DataDirectory `work/phase1k4c-r3-smoke-20261007`. No usar el acceso anclado ni builds anteriores.

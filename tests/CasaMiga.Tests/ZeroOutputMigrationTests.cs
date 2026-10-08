@@ -82,7 +82,15 @@ public sealed partial class RecipePersistenceTests
             if(excludeProductionPermissions && table is "permission" or "role_permission")
                 q.CommandText+=" WHERE "+(table=="permission"?"name":"permission_name")+" NOT IN ('recipe.view','recipe.configure','production.view','production.create','production.confirm')";
             using var r=q.ExecuteReader();var rows=new List<string>();
-            while(r.Read()){var values=new object[r.FieldCount];r.GetValues(values);rows.Add(JsonSerializer.Serialize(values));}
+            while(r.Read())
+            {
+                var values=new object[r.FieldCount];r.GetValues(values);
+                // 017 adds only a nullable note. Include its expected NULL in the legacy
+                // snapshot so equality still checks every old value AND the new NULL.
+                if(table=="cash_session" && !Enumerable.Range(0,r.FieldCount).Any(i=>r.GetName(i)=="discrepancy_note"))
+                    values=[..values,DBNull.Value];
+                rows.Add(JsonSerializer.Serialize(values));
+            }
             result.Add(table+string.Join("\n",rows.Order(StringComparer.Ordinal)));
         }
         return string.Join("\n",result);
@@ -124,7 +132,7 @@ public sealed partial class RecipePersistenceTests
                 Assert.ThrowsExactly<SqliteException>(()=>old.db.Initialize());Assert.AreEqual(before,old.AllRows(true));old.db.Validate();old.Sql("DROP TRIGGER inject_014");
             }
             old.db.Initialize();old.db.Validate();Assert.AreEqual(rows,old.AllRows(excludeProductionPermissions:true));
-            Assert.AreEqual(16L,old.Sql("SELECT max(version) FROM schema_migration"));
+            Assert.AreEqual(17L,old.Sql("SELECT max(version) FROM schema_migration"));
             Assert.AreEqual(opSchema,old.Sql("SELECT sql FROM sqlite_master WHERE name='inventory_operation'"));
             Assert.AreEqual(0L,old.Sql("SELECT count(*) FROM sqlite_master WHERE name LIKE '%_014'"));
             Assert.IsEmpty(new SqliteInventoryStore(old.db,old.clock).Reconcile());

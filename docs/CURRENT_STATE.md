@@ -1,3 +1,15 @@
+# FASE 1K ABIERTA — 1K.4D, 08/10/2026
+
+**Continuación estructural de Caja implementada; verificación técnica completada y smoke humano pendiente.** CashSession persiste la nota normalizada de discrepancia (máximo 500 caracteres, obligatoria si contado − esperado no es cero), junto con cierre y auditoría atómicos. Migración 017 agrega la columna nullable y protección de cierre con diferencia; los cierres antiguos conservan NULL y sus importes originales. Sin migración 018.
+
+Cierres anteriores usa un contrato Application de sólo lectura, permiso cash.view y SQL paginado (25 filas, total real, orden por cierre descendente, nombres humanos). UI conserva apertura, conteo ciego, desglose fondo + pagos CASH aplicados, confirmación definitiva, detalle inmutable y F11/Escape. Se difieren denominaciones, entradas/retiros y cajón físico.
+
+Base protegida intacta, schema 16, SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Sólo la copia `work/phase1k4d-smoke-20261008` migra a 17: 30 cierres, 28 ventas sintéticas preparadas, sin sesión abierta. Sin ventas comerciales, impresión o cambios a inventario/producción. Build `src/CasaMiga.Presentation/bin/Phase1K4D/`; launcher `work/Abrir-Casa-Miga-1K4D.cmd`; título `Casa Miga POS · Caja · DESARROLLO · 1K.4D`.
+
+Validación: focales 76/76 y WPF 3/3; **757/757** (572 generales + 185 WPF/Presentation), 0 fallidas y 0 omitidas. Release identificado: 0 errores/advertencias. Ver `PHASE_1K4D_REPORT.md` y `evidence/phase1k4d-verification.md`. Un único commit local autorizado; sin push. Checkpoint GitHub pendiente del smoke humano y aprobación de 1K.4D. No iniciar fase siguiente.
+
+## Registro anterior — 1K.4C-R3
+
 # FASE 1K ABIERTA — 1K.4C-R3, 07/10/2026
 
 **FASE 1K.4C-R3 técnicamente completada; smoke humano pendiente.** El control compuesto de R2 incorpora una máscara de teclado: recibe hasta ocho dígitos y regenera automáticamente `dd/mm/aaaa`. Backspace y Delete operan sobre dígitos sin dejar barras dobles; selección parcial, Ctrl+A y pegado compacto/formateado conservan una posición coherente del cursor. Letras, espacios, símbolos, guiones y exceso de dígitos no contaminan el valor.

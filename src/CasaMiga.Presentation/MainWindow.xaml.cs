@@ -63,6 +63,8 @@ public partial class MainWindow : Window
         { e.Handled=true; ToggleFullScreen(); }
         else if(e.Key==Key.Escape && isFullScreen)
         { e.Handled=true; ExitFullScreen(); }
+        else if(e.Key==Key.Escape && Model.HasCashClosureDetail)
+        { e.Handled=true; Model.HideCashClosure(); }
         else if(e.Key==Key.Escape && (Model.IsCounting || Model.IsClosingResult || Model.IsOpening))
         { e.Handled=true; if(Model.IsOpening) Model.CancelOpening(); else Model.BackFromClosing(); }
         else if(e.Key==Key.Enter && Keyboard.FocusedElement==CountedInput && Model.IsCounting)

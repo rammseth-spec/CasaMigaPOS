@@ -40,7 +40,7 @@ public sealed class RecipeUpgradeTests : SalesFixture
         {q.Transaction=t;q.CommandText=script;Assert.ThrowsExactly<SqliteException>(()=>q.ExecuteNonQuery());t.Rollback();}
         Assert.AreEqual(before,PreviousRows());Assert.AreEqual(12L,Sql("SELECT max(version) FROM schema_migration"));
         Assert.AreEqual(0L,Sql("SELECT count(*) FROM sqlite_master WHERE name IN('formula','production_batch','operation_013_backup')"));db.Validate();
-        db.Initialize();db.Validate();Assert.AreEqual(16L,Sql("SELECT max(version) FROM schema_migration"));
+        db.Initialize();db.Validate();Assert.AreEqual(17L,Sql("SELECT max(version) FROM schema_migration"));
     }
     [TestMethod] public void InitializeFailureAtMigrationRegistrationRollsBackAndCanRetry()
     {
@@ -56,7 +56,7 @@ public sealed class RecipeUpgradeTests : SalesFixture
         var destination=Path.Combine(directory,"restored12");InstallationBackup.Restore(backup,destination);
         var restored=new Database(Path.Combine(destination,"casamiga.db"));restored.Initialize();restored.Validate();
         using var c=restored.Open(readOnly:true);using var q=c.CreateCommand();
-        q.CommandText="SELECT max(version) FROM schema_migration";Assert.AreEqual(16L,q.ExecuteScalar());
+        q.CommandText="SELECT max(version) FROM schema_migration";Assert.AreEqual(17L,q.ExecuteScalar());
         q.CommandText="SELECT id FROM sale";Assert.AreEqual(original,q.ExecuteScalar());
         q.CommandText="SELECT quantity_atomic FROM inventory_balance";Assert.AreEqual(8L,q.ExecuteScalar());
         q.CommandText="SELECT count(*) FROM inventory_operation WHERE kind='SALE_CONSUMPTION'";Assert.AreEqual(1L,q.ExecuteScalar());
