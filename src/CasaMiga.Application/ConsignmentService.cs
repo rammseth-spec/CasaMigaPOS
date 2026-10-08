@@ -22,7 +22,8 @@ public sealed class ConsignmentService(ILocalUnitOfWork database, UserSession id
     // ---------- Tiendas ----------
     public IReadOnlyList<ConsignmentStore> Stores(bool includeInactive = false) => View(store => store.ListConsignmentStores(includeInactive));
 
-    public ConsignmentStore SaveStore(Guid? id, string name, string contact, string phone, string address)
+    /// <param name="newId">Sólo para altas hechas en la versión web (con <paramref name="id"/> nulo): identificador que trae la nube.</param>
+    public ConsignmentStore SaveStore(Guid? id, string name, string contact, string phone, string address, Guid? newId = null)
     {
         name = name.Trim(); contact = contact.Trim(); phone = phone.Trim(); address = address.Trim();
         if (name.Length is < 1 or > 120) throw new ArgumentException("Escribe el nombre de la tienda (hasta 120 caracteres).");
@@ -31,7 +32,7 @@ public sealed class ConsignmentService(ILocalUnitOfWork database, UserSession id
         {
             var existing = id is { } key ? store.FindConsignmentStore(key) ?? throw new ConsignmentException("No se encontró la tienda.") : null;
             if (store.ConsignmentStoreNameTaken(name, existing?.Id)) throw new ConsignmentException($"Ya existe una tienda llamada «{name}».");
-            var saved = new ConsignmentStore(existing?.Id ?? Guid.NewGuid(), name, contact, phone, address, existing?.Active ?? true);
+            var saved = new ConsignmentStore(existing?.Id ?? newId ?? Guid.NewGuid(), name, contact, phone, address, existing?.Active ?? true);
             store.SaveConsignmentStore(saved, existing is null, at);
             Audit(store, actor, existing is null ? "consignment.store.created" : "consignment.store.updated", saved.Id, at,
                 new { saved.Name, saved.Contact, saved.Phone, saved.Address });

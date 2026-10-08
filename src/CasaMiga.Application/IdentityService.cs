@@ -108,6 +108,44 @@ public sealed class IdentityService(ILocalUnitOfWork database, IPasswords passwo
         return temporary;
     }
 
+    /// <summary>
+    /// Alta hecha en la versión web: la nube ya generó la contraseña temporal y su hash (mismo formato PBKDF2) y el identificador,
+    /// para que todas las cajas de la sucursal tengan el mismo usuario. Repetir el mismo alta no hace nada.
+    /// </summary>
+    public void CreateUserWithHash(Guid id, string username, string displayName, string role, string passwordHash)
+    {
+        var normalized = Normalize(username);
+        ValidateNames(normalized, displayName);
+        if (role is not ("Manager" or "Cashier")) throw new ArgumentException("Sólo existe un administrador. El rol debe ser Encargado o Cajero.");
+        if (id == Guid.Empty || string.IsNullOrWhiteSpace(passwordHash)) throw new ArgumentException("Alta inválida.");
+        database.Run(store =>
+        {
+            var actor = Manager(store) ?? throw new AccessDeniedException();
+            if (store.FindUser(id) is not null) return true;
+            if (store.FindUser(normalized) is not null) throw new ArgumentException("Ya existe un usuario con ese nombre en esta caja.");
+            var at = clock.UtcNow;
+            store.AddUser(id, normalized, displayName.Trim(), role, passwordHash, mustChangePassword: true, at);
+            store.AddAudit(new(Guid.NewGuid(), actor.Id, null, "identity.user.created", id, at, JsonSerializer.Serialize(new { role, source = "web" })));
+            return true;
+        });
+    }
+
+    /// <summary>Restablecimiento hecho en la versión web: la contraseña temporal ya viene como hash; debe cambiarse al entrar.</summary>
+    public void ResetPasswordWithHash(Guid userId, string passwordHash)
+    {
+        if (string.IsNullOrWhiteSpace(passwordHash)) throw new ArgumentException("Restablecimiento inválido.");
+        database.Run(store =>
+        {
+            var actor = Manager(store) ?? throw new AccessDeniedException();
+            var target = store.FindUser(userId) ?? throw new ArgumentException("El usuario ya no existe.");
+            if (target.Role == "Administrator") throw new ArgumentException("El administrador se recupera en el equipo con la herramienta de mantenimiento.");
+            if (!target.Active) throw new ArgumentException("El usuario está inactivo.");
+            store.SetPassword(target.Id, passwordHash, mustChangePassword: true);
+            store.AddAudit(new(Guid.NewGuid(), actor.Id, null, "identity.password.reset", target.Id, clock.UtcNow, JsonSerializer.Serialize(new { source = "web" })));
+            return true;
+        });
+    }
+
     /// <summary>Asigna una contraseña temporal, desbloquea al usuario y obliga a cambiarla. Devuelve la temporal para mostrarla una sola vez.</summary>
     public string ResetPassword(Guid userId)
     {

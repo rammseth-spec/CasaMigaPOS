@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using CasaMiga.Application;
 
 namespace CasaMiga.Infrastructure;
 
@@ -97,6 +98,9 @@ public interface ISyncTransport
 {
     Task<string> RegisterAsync(Uri api, string enrollmentSecret, BranchIdentity branch, Guid terminalId, string terminalName, CancellationToken cancel);
     Task<SyncBatchResult> SendAsync(Uri api, string terminalKey, Guid branchId, IReadOnlyList<SyncEnvelope> batch, CancellationToken cancel);
+    /// <summary>Cambios hechos en la versión web para la sucursal, posteriores al cursor.</summary>
+    Task<IReadOnlyList<CloudCommand>> PullCommandsAsync(Uri api, string terminalKey, long after, CancellationToken cancel) => Task.FromResult<IReadOnlyList<CloudCommand>>([]);
+    Task ReportCommandsAsync(Uri api, string terminalKey, IReadOnlyList<CloudCommandResult> results, CancellationToken cancel) => Task.CompletedTask;
 }
 
 public sealed class HttpSyncTransport(HttpClient http) : ISyncTransport
@@ -140,6 +144,32 @@ public sealed class HttpSyncTransport(HttpClient http) : ISyncTransport
         return new(Read(body["accepted"]), Read(body["conflicts"]));
     }
 
+    public async Task<IReadOnlyList<CloudCommand>> PullCommandsAsync(Uri api, string terminalKey, long after, CancellationToken cancel)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri(api, $"api/sync/commands?after={after}"));
+        request.Headers.Authorization = new("Bearer", terminalKey);
+        using var response = await http.SendAsync(request, cancel);
+        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden) throw new SyncUnauthorizedException("El servidor rechazó la terminal. Vuelve a registrarla.");
+        var body = await ReadBody(response, cancel);
+        if (!response.IsSuccessStatusCode || body?["commands"] is not JsonArray list) throw new HttpRequestException((string?)body?["error"] ?? "Respuesta no válida del servidor.");
+        return list.OfType<JsonObject>().Select(c => new CloudCommand(
+            Guid.Parse((string)c["id"]!), (long)c["seq"]!, (string)c["kind"]!, c["payload"] as JsonObject ?? [],
+            Guid.TryParse((string?)c["requestedBy"]?["id"], out var by) ? by : Guid.Empty, (string?)c["requestedBy"]?["name"] ?? "web")).ToList();
+    }
+
+    public async Task ReportCommandsAsync(Uri api, string terminalKey, IReadOnlyList<CloudCommandResult> results, CancellationToken cancel)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, new Uri(api, "api/sync/commands"))
+        {
+            Content = JsonContent.Create(new { results = results.Select(r => new { id = r.Id, status = r.Status, message = r.Message }) })
+        };
+        request.Headers.Authorization = new("Bearer", terminalKey);
+        using var response = await http.SendAsync(request, cancel);
+        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden) throw new SyncUnauthorizedException("El servidor rechazó la terminal. Vuelve a registrarla.");
+        var body = await ReadBody(response, cancel);
+        if (!response.IsSuccessStatusCode || body is null) throw new HttpRequestException((string?)body?["error"] ?? "Respuesta no válida del servidor.");
+    }
+
     /// <summary>Lee el cuerpo sin fallar si no es JSON (páginas de error de un gateway, portales cautivos).</summary>
     private static async Task<JsonObject?> ReadBody(HttpResponseMessage response, CancellationToken cancel)
     {
@@ -156,7 +186,7 @@ public sealed record SyncStatus(SyncState State, long Pending, DateTimeOffset? L
 /// Envío de la cola local. Sólo marca como enviado lo que la nube confirma; ante un corte, lo pendiente se conserva y se reintenta.
 /// Un conflicto (mismo seq con otro contenido) detiene el envío hasta revisión.
 /// </summary>
-public sealed class SyncEngine(SqliteSyncOutbox outbox, ISyncTransport transport, string dataDirectory, TimeProvider? time = null)
+public sealed class SyncEngine(SqliteSyncOutbox outbox, ISyncTransport transport, string dataDirectory, TimeProvider? time = null, CloudCommandService? commands = null)
 {
     public const int BatchSize = 100;
     private readonly TimeProvider clock = time ?? TimeProvider.System;
@@ -177,12 +207,60 @@ public sealed class SyncEngine(SqliteSyncOutbox outbox, ISyncTransport transport
         return branch.Name;
     }
 
-    /// <summary>Envía lotes hasta vaciar la cola o encontrar un problema. Devuelve el estado resultante.</summary>
+    /// <summary>
+    /// Envía lotes hasta vaciar la cola o encontrar un problema; con todo enviado, aplica los cambios hechos en la web,
+    /// informa el resultado y sube lo que esos cambios produjeron. Devuelve el estado resultante.
+    /// </summary>
     public async Task<SyncStatus> RunOnceAsync(CancellationToken cancel = default)
     {
         var settings = SyncSettings.Load(dataDirectory);
         if (settings is null) return Status = new(SyncState.NotConfigured, outbox.PendingCount(), null, "Registra esta terminal para sincronizar.");
         var key = settings.TerminalKey();
+        var status = await PushAsync(settings, key, cancel);
+        if (status.State != SyncState.UpToDate || commands is null) return status;
+        try
+        {
+            if (await ApplyCommandsAsync(settings, key, cancel)) status = await PushAsync(settings, key, cancel);
+            return status;
+        }
+        catch (SyncUnauthorizedException error)
+        {
+            return Status = new(SyncState.NeedsAttention, outbox.PendingCount(), lastSuccess, error.Message);
+        }
+        catch (Exception error) when (error is HttpRequestException or TaskCanceledException or IOException && !cancel.IsCancellationRequested)
+        {
+            return Status = new(SyncState.Offline, outbox.PendingCount(), lastSuccess, "Sin conexión con el servidor; se reintentará.");
+        }
+        catch (Exception error) when (!cancel.IsCancellationRequested)
+        {
+            return Status = new(SyncState.NeedsAttention, outbox.PendingCount(), lastSuccess, $"No se pudo aplicar un cambio de la versión web ({error.GetType().Name}); se reintentará.");
+        }
+    }
+
+    /// <summary>Aplica en orden los cambios de la web y reporta cada resultado. Devuelve si alguno cambió datos de esta caja.</summary>
+    private async Task<bool> ApplyCommandsAsync(SyncSettings settings, string key, CancellationToken cancel)
+    {
+        var changed = false;
+        await ReportAsync(settings, key, cancel);
+        while (true)
+        {
+            var pulled = await transport.PullCommandsAsync(settings.ApiUrl, key, commands!.LastSequence(), cancel);
+            foreach (var command in pulled.OrderBy(c => c.Sequence)) changed |= commands.Apply(command).Applied;
+            await ReportAsync(settings, key, cancel);
+            if (pulled.Count < 50) return changed;
+        }
+    }
+
+    private async Task ReportAsync(SyncSettings settings, string key, CancellationToken cancel)
+    {
+        var unreported = commands!.Unreported();
+        if (unreported.Count == 0) return;
+        await transport.ReportCommandsAsync(settings.ApiUrl, key, unreported, cancel);
+        commands.MarkReported(unreported.Select(r => r.Id).ToArray());
+    }
+
+    private async Task<SyncStatus> PushAsync(SyncSettings settings, string key, CancellationToken cancel)
+    {
         while (true)
         {
             var batch = outbox.PendingEnvelopes(BatchSize);

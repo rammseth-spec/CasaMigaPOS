@@ -1,5 +1,4 @@
 import { neon, Pool } from '@neondatabase/serverless';
-import { ProtocolError, sha256Hex } from './protocol.ts';
 import { migrate } from './migrate.ts';
 
 function url(): string {
@@ -29,13 +28,6 @@ export function ensureSchema(): Promise<void> {
     }
   })().catch(error => { schema = null; throw error; });
   return schema;
-}
-
-/** Resuelve la terminal por su llave; nunca se guarda la llave, sólo su SHA-256. */
-export async function authenticate(key: string): Promise<{ id: string; branchId: string }> {
-  const rows = await sql()`SELECT id, branch_id FROM terminal WHERE key_sha256 = ${sha256Hex(key)} AND revoked_at IS NULL`;
-  if (rows.length !== 1) throw new ProtocolError('Terminal no autorizada', 401);
-  return { id: rows[0].id as string, branchId: rows[0].branch_id as string };
 }
 
 /** Consultas con parámetros posicionales (mismo contrato que PGlite en las pruebas). */

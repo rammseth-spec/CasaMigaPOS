@@ -52,9 +52,10 @@ public sealed class CatalogService(ILocalUnitOfWork database,UserSession identit
         =>s.AddAudit(new(Guid.NewGuid(),actor,terminal,action,entity,at,JsonSerializer.Serialize(new {before,after})));
     private static object Snapshot(Category c)=>new {c.Name,c.Description,c.SortOrder,c.IsActive};
     private static object Snapshot(Product p)=>new {p.Name,p.Description,p.CategoryId,p.Sku,priceCents=p.SalePrice.Cents,p.IsActive,p.TrackInventory};
-    public Category CreateCategory(string name,string description="",int sortOrder=0)=>database.Run(s=>
+    /// <param name="id">Sólo para altas hechas en la versión web: el mismo identificador en todas las cajas de la sucursal.</param>
+    public Category CreateCategory(string name,string description="",int sortOrder=0,Guid? id=null)=>database.Run(s=>
     {
-        var actor=Authorize(s,"categories.create");var at=clock.UtcNow;var c=new Category(Guid.NewGuid(),name,description,sortOrder,true,at,at);
+        var actor=Authorize(s,"categories.create");var at=clock.UtcNow;var c=new Category(id??Guid.NewGuid(),name,description,sortOrder,true,at,at);
         s.SaveCategory(c,true);Audit(s,actor,"category.create",c.Id,null,Snapshot(c),at);return c;
     });
     public Category EditCategory(Guid id,string name,string description,int sortOrder)=>database.Run(s=>
@@ -77,10 +78,11 @@ public sealed class CatalogService(ILocalUnitOfWork database,UserSession identit
         var c=s.FindCategory(category)??throw new CatalogException("Selecciona una categoría válida.");
         if(active&&!c.IsActive)throw new CatalogException("Un producto activo requiere una categoría activa.");
     }
-    public Product CreateProduct(Guid category,string? sku,string name,string description,Money price,bool trackInventory=true)=>database.Run(s=>
+    /// <param name="id">Sólo para altas hechas en la versión web: el mismo identificador en todas las cajas de la sucursal.</param>
+    public Product CreateProduct(Guid category,string? sku,string name,string description,Money price,bool trackInventory=true,Guid? id=null)=>database.Run(s=>
     {
         var actor=Authorize(s,"products.create");ValidateCategory(s,category,true);var at=clock.UtcNow;
-        var p=new Product(Guid.NewGuid(),category,sku,name,description,price,true,trackInventory,at,at);
+        var p=new Product(id??Guid.NewGuid(),category,sku,name,description,price,true,trackInventory,at,at);
         s.SaveProduct(p,true);Audit(s,actor,"product.create",p.Id,null,Snapshot(p),at);return p;
     });
     public Product EditProduct(Guid id,Guid category,string? sku,string name,string description,Money price,bool trackInventory)=>database.Run(s=>

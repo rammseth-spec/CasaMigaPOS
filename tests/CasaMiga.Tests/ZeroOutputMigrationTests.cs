@@ -76,7 +76,7 @@ public sealed partial class RecipePersistenceTests
         var tables=new List<string>();using(var r=q.ExecuteReader())while(r.Read())tables.Add(r.GetString(0));
         var result=new List<string>();
         // Historical business snapshot excludes new photo-only tables when comparing pre-photo upgrades.
-        foreach(var table in tables.Where(x=>(migrations||x!="schema_migration") && (!excludeProductionPermissions || x is not ("product_photo" or "product_photo_asset" or "branch" or "sync_outbox" or "sale_refund" or "sale_refund_item" or "cash_movement") && !x.StartsWith("consignment_", StringComparison.Ordinal))))
+        foreach(var table in tables.Where(x=>(migrations||x!="schema_migration") && (!excludeProductionPermissions || x is not ("product_photo" or "product_photo_asset" or "branch" or "sync_outbox" or "sale_refund" or "sale_refund_item" or "cash_movement" or "cloud_command") && !x.StartsWith("consignment_", StringComparison.Ordinal))))
         {
             q.CommandText="SELECT * FROM \""+table+"\"";
             // Migration 017 only adds must_change_password and users.manage; compare the historical columns/rows.

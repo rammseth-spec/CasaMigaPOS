@@ -100,6 +100,12 @@ public interface ILocalStore
     // Charolas a consignación
     IReadOnlyList<ConsignmentStore> ListConsignmentStores(bool includeInactive);
     ConsignmentStore? FindConsignmentStore(Guid id);
+    // Cambios de la versión web aplicados en esta caja (migración 024).
+    long LastCloudCommandSequence();
+    CloudCommandResult? FindCloudCommand(Guid id);
+    void AddCloudCommand(CloudCommandResult result, string kind, string requestedBy, DateTimeOffset at);
+    IReadOnlyList<CloudCommandResult> UnreportedCloudCommands();
+    void MarkCloudCommandsReported(IReadOnlyCollection<Guid> ids, DateTimeOffset at);
     bool ConsignmentStoreNameTaken(string name, Guid? except);
     void SaveConsignmentStore(ConsignmentStore store, bool create, DateTimeOffset at);
     IReadOnlyList<ConsignmentTemplateLine> ConsignmentTemplate(Guid storeId);

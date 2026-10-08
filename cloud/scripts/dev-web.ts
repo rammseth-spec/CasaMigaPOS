@@ -10,6 +10,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { migrate } from '../lib/migrate.ts';
 import { storeBatch } from '../lib/store.ts';
 import { handle } from '../lib/router.ts';
+import { handleTerminal } from '../lib/terminal.ts';
 import type { Query } from '../lib/panel.ts';
 
 const [file, portText] = process.argv.slice(2);
@@ -27,7 +28,7 @@ await q(`INSERT INTO terminal(id, branch_id, name, key_sha256) VALUES ($1, $2, $
 for (let i = 0; i < data.entries.length; i += 200)
   await storeBatch(q, { id: data.terminal.id, branchId: data.branch.id }, { branchId: data.branch.id, entries: data.entries.slice(i, i + 200) });
 
-const env = { SESSION_SECRET: process.env.SESSION_SECRET ?? randomBytes(32).toString('hex') };
+const env = { SESSION_SECRET: process.env.SESSION_SECRET ?? randomBytes(32).toString('hex'), ENROLLMENT_SECRET: process.env.ENROLLMENT_SECRET };
 const root = fileURLToPath(new URL('../public/', import.meta.url));
 const types: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json' };
 const port = Number(portText ?? 4173);
@@ -37,7 +38,12 @@ createServer(async (req, res) => {
   const chunks: Buffer[] = [];
   for await (const chunk of req) chunks.push(chunk as Buffer);
   let response: Response;
-  if (url.pathname.startsWith('/api/web/')) {
+  const terminalRoute = ({ '/api/terminals/register': 'register', '/api/sync/batch': 'batch', '/api/sync/commands': 'commands' } as const)[url.pathname as '/api/sync/batch'];
+  if (terminalRoute) {
+    // Las cajas de prueba pueden registrarse contra este servidor (http://localhost:<puerto>) con ENROLLMENT_SECRET.
+    const request = new Request(url, { method: req.method, headers: req.headers as Record<string, string>, body: chunks.length ? Buffer.concat(chunks) : undefined });
+    response = await handleTerminal(q, request, terminalRoute, env);
+  } else if (url.pathname.startsWith('/api/web/')) {
     const request = new Request(url, { method: req.method, headers: req.headers as Record<string, string>, body: chunks.length ? Buffer.concat(chunks) : undefined });
     response = await handle(q, request, url.pathname.split('/').pop() ?? '', env);
   } else {
