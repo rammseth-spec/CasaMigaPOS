@@ -1,3 +1,14 @@
+# Casa Miga en línea (versión web) — 07/10/2026
+
+**Implementado y probado de punta a punta en local; publicación pendiente** (falta `npx vercel login` del dueño y capturar `DATABASE_URL`, `ENROLLMENT_SECRET` y `SESSION_SECRET`). Ver [WEB.md](WEB.md).
+
+- **Caja → nube** (migración 023): además de ventas y cortes, la caja sube sucursal, usuarios (sólo el hash PBKDF2), permisos, catálogo con fotos (miniatura), gastos/retiros/entradas, charolas, inventario, recetas y producción. Lo existente se encola una vez; iniciar sesión ya no encola al usuario; lotes de 1.5 MB.
+- **Nube** (`cloud/db/002_web.sql`, se aplica sola): último estado por registro, bloqueos del acceso web y cola de cambios por sucursal.
+- **Web** responsiva (computadora, tablet, celular): entra cada usuario con su cuenta de la caja; administrador todas las sucursales, encargado la suya, cajero no entra. Resumen, Ventas con ticket, Reportes (comparativo, por hora, control de caja, producción sugerida), Caja, Charolas, Catálogo con fotos, Inventario, Recetas, Producción, Usuarios y Cajas.
+- **Web → caja** (migración 024): precios, productos, categorías, usuarios (alta con contraseña temporal, rol, activar, restablecer) y tiendas/charola habitual. La caja los aplica en orden con sus propias reglas y permisos, informa «Aplicado» o «Rechazado» con el motivo y sube el resultado.
+- Prueba de punta a punta: copia de la app registrada contra la nube local (`scripts/dev-web.ts` con la cola real exportada por `CasaMiga.Maintenance export-sync`): subió 2880 registros, el panel cuadró con la copia demo (1061 ventas, $71,583; charolas por cobrar $1,231), un cambio de precio hecho en la web quedó «Aplicado» y la caja mostró el precio nuevo.
+- Corregido: tras reiniciar la app con el conteo ciego ya hecho, la tarjeta de movimientos volvía a aparecer; ahora el turno contado queda congelado.
+
 # Gastos, retiros y entradas de caja — 07/10/2026
 
 **Implementado; smoke manual pendiente.** En **Caja**, con la caja abierta, tarjeta «Movimientos de efectivo» (migración 022): **Gasto** con categoría fija (Insumos, Gas, Limpieza, Transporte, Mantenimiento, Otro con nota obligatoria), **Entrada** (efectivo que entra y no es venta) y **Retiro** (a resguardo; sólo encargado y administrador, el cajero no lo ve). Cambian el efectivo esperado del corte; sólo antes del conteo ciego; nunca se saca más de lo que debe haber, y las devoluciones en efectivo también lo respetan. Registros inmutables con operación idempotente y auditoría `cash.expense`/`cash.withdrawal`/`cash.deposit`; la base repite las reglas. El cierre desglosa gastos, retiros y entradas, y Reportes → Cortes muestra la columna «Mov.» (también en el CSV). Sólo registro, sin comprobante impreso (elección del usuario). Ver [CASH_MOVEMENTS.md](CASH_MOVEMENTS.md).

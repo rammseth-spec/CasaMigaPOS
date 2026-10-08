@@ -80,6 +80,8 @@ public sealed class CashMovementsPresentationTests
             StringAssert.Contains(model.ClosingDetails, "Efectivo esperado: $400.00");
             model.BackFromClosing();
             Assert.IsFalse(model.ShowCashMovements, "Después del conteo ciego ya no se registran movimientos.");
+            await cashierModel.LoadAsync();
+            Assert.IsTrue(cashierModel.Counted, "Al volver a cargar (p. ej. tras reiniciar la app) el turno contado sigue congelado.");
 
             model.Logout();
             Assert.IsEmpty(movements.Movements, "Salir del usuario olvida la lista.");

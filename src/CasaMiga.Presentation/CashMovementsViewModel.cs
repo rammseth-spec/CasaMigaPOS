@@ -30,6 +30,8 @@ public sealed class CashMovementsViewModel(CashMovementService service, Action<s
     public bool MessageIsSuccess { get; private set; }
     public bool CanRecord { get; private set; }
     public bool CanWithdraw { get; private set; }
+    /// <summary>Ya hay conteo ciego: no se registran más movimientos en este turno.</summary>
+    public bool Counted { get; private set; }
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Notify() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
 
@@ -84,6 +86,7 @@ public sealed class CashMovementsViewModel(CashMovementService service, Action<s
         (CanRecord, CanWithdraw) = await Task.Run(() => (service.CanRecord(), service.CanWithdraw()));
         if (!CanWithdraw && Kind == CashMovementKind.Withdrawal) Kind = CashMovementKind.Expense;
         Movements = CanRecord ? (await Task.Run(service.Current)).Select(m => new CashMovementRow(m)).ToArray() : [];
+        Counted = CanRecord && await Task.Run(service.IsCounted);
     });
 
     public Task RecordAsync() => RunAsync(async () =>
@@ -99,7 +102,7 @@ public sealed class CashMovementsViewModel(CashMovementService service, Action<s
         log("cash.movement.recorded", null);
     });
 
-    public void Forget() { Movements = []; AmountText = ""; Note = ""; Category = null; Kind = CashMovementKind.Expense; Message = ""; Notify(); }
+    public void Forget() { Movements = []; AmountText = ""; Note = ""; Category = null; Kind = CashMovementKind.Expense; Message = ""; Counted = false; Notify(); }
 
     private async Task RunAsync(Func<Task> work)
     {

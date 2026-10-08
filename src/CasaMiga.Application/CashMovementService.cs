@@ -94,6 +94,13 @@ public sealed class CashMovementService(ILocalUnitOfWork database, UserSession i
         return store.FindOpenSession(terminalId) is { } open ? store.ListCashMovements(open.Session.Id) : [];
     });
 
+    /// <summary>Con el conteo ciego ya confirmado, el cajón queda congelado (también tras reiniciar la app).</summary>
+    public bool IsCounted() => Run(store =>
+    {
+        Authorize(store, RecordPermission);
+        return store.FindOpenSession(terminalId) is { } open && store.FindCount(open.Session.Id) is not null;
+    });
+
     public CashMovement Record(CashMovementRequest request) => Run(store =>
     {
         var actor = Authorize(store, RecordPermission);
