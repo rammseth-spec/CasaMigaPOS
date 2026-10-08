@@ -9,6 +9,7 @@
 - Las ventas y turnos web se guardan con el formato de la caja de escritorio: Resumen, Ventas, Reportes, Ganancia y Caja los cuentan igual.
 - El cajero ya entra a la web, sólo a Vender (y Catálogo de consulta). Caja en la web pide `sales.view`: muestra el esperado del turno abierto y el conteo es ciego.
 - Prueba en el navegador con la demo: cajera Ana abrió turno con $500, vendió C02-000001 en efectivo ($42, cambio $58) y C02-000002 con tarjeta ($40, ref. 4601); el encargado contó $540 → esperado $542, diferencia −$2, y cerró. Resumen y Ventas los muestran. Computadora, tableta y celular sin desbordes. Pruebas de la nube 42/42.
+- Servidor de prueba (`npm run dev:web`) sin contraseña por decisión del usuario: se elige el usuario al entrar; `--con-login` la pide. La nube publicada siempre pide contraseña.
 - Pendiente (siguientes fases): devoluciones y cancelaciones, gastos/retiros/entradas, reimpresión y descuento de inventario desde la web.
 
 # Ganancia desde recetas y análisis de charolas — 08/10/2026

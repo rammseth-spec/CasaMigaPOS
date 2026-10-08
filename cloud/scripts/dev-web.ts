@@ -1,6 +1,7 @@
 // Versión web local sin Neon ni Vercel: PGlite en memoria con la cola exportada de una copia de la app
 // (CasaMiga.Maintenance export-sync <copia> <json>). Sólo desarrollo.
-// Uso: node scripts/dev-web.ts <export.json> [puerto]
+// Uso: node scripts/dev-web.ts <export.json> [puerto] [--con-login]
+// Por omisión entra SIN contraseña (eligiendo el usuario): sólo para probar en local. scripts/ no se publica (.vercelignore).
 import { createServer } from 'node:http';
 import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -13,9 +14,13 @@ import { handle } from '../lib/router.js';
 import { handleTerminal } from '../lib/terminal.js';
 import { handleBackup, handleDaily } from '../lib/backupRoutes.js';
 import { memoryStorage } from '../lib/storage.js';
+import { canUseWeb, issueSession, sessionCookie, toUser } from '../lib/auth.js';
+import { createTill } from '../lib/pos.js';
 import type { Query } from '../lib/panel.js';
 
-const [file, portText] = process.argv.slice(2);
+const args = process.argv.slice(2);
+const [file, portText] = args.filter(a => !a.startsWith('--'));
+const noLogin = !args.includes('--con-login');
 if (!file) throw new Error('Falta el archivo exportado.');
 const data = JSON.parse(readFileSync(file, 'utf8')) as { branch: { id: string; name: string }; terminal: { id: string; name: string }; entries: any[] };
 
@@ -29,6 +34,10 @@ await q('INSERT INTO branch(id, name) VALUES ($1, $2)', [data.branch.id, data.br
 await q(`INSERT INTO terminal(id, branch_id, name, key_sha256) VALUES ($1, $2, $3, repeat('0', 64))`, [data.terminal.id, data.branch.id, data.terminal.name]);
 for (let i = 0; i < data.entries.length; i += 200)
   await storeBatch(q, { id: data.terminal.id, branchId: data.branch.id }, { branchId: data.branch.id, entries: data.entries.slice(i, i + 200) });
+
+// Una caja web lista para vender (la base de prueba vive en memoria y empieza vacía en cada arranque).
+const [admin] = await q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'app_user' AND NOT deleted AND payload->>'role_name' = 'Administrator' LIMIT 1`, []);
+const webTill = admin ? await createTill(q, await toUser(q, admin), data.branch.id) : null;
 
 const env = { SESSION_SECRET: process.env.SESSION_SECRET ?? randomBytes(32).toString('hex'), ENROLLMENT_SECRET: process.env.ENROLLMENT_SECRET,
   BACKUP_SECRET: process.env.BACKUP_SECRET ?? randomBytes(32).toString('hex'), CRON_SECRET: process.env.CRON_SECRET ?? randomBytes(16).toString('hex') };
@@ -57,6 +66,21 @@ createServer(async (req, res) => {
     // Las cajas de prueba pueden registrarse contra este servidor (http://localhost:<puerto>) con ENROLLMENT_SECRET.
     const request = new Request(url, { method: req.method, headers: req.headers as Record<string, string>, body: chunks.length ? Buffer.concat(chunks) : undefined });
     response = await handleTerminal(q, request, terminalRoute, env);
+  } else if (noLogin && url.pathname === '/api/web/dev-users') {
+    // Usuarios que pueden entrar a la web, para elegir sin contraseña.
+    const rows = await q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'app_user' AND NOT deleted AND (payload->>'active')::int = 1`, []);
+    const order = ['Administrator', 'Manager', 'Cashier'];
+    const users = [];
+    for (const row of rows) { const u = await toUser(q, row); if (canUseWeb(u.permissions)) users.push({ username: u.username, name: u.name, role: u.role }); }
+    users.sort((a, b) => order.indexOf(a.role) - order.indexOf(b.role) || a.username.localeCompare(b.username));
+    response = Response.json(users);
+  } else if (noLogin && url.pathname === '/api/web/dev-login' && req.method === 'POST') {
+    let username = '';
+    try { username = String(JSON.parse(Buffer.concat(chunks).toString('utf8')).username ?? '').trim().toUpperCase(); } catch { /* vacío */ }
+    const [row] = await q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'app_user' AND NOT deleted AND (payload->>'active')::int = 1 AND upper(payload->>'username') = $1`, [username]);
+    const user = row ? await toUser(q, row) : null;
+    response = !user || !canUseWeb(user.permissions) ? Response.json({ error: 'Usuario sin acceso a la web' }, { status: 403 })
+      : Response.json({ ok: true }, { headers: { 'set-cookie': sessionCookie(issueSession(user, env.SESSION_SECRET)) } });
   } else if (url.pathname.startsWith('/api/web/')) {
     const request = new Request(url, { method: req.method, headers: req.headers as Record<string, string>, body: chunks.length ? Buffer.concat(chunks) : undefined });
     response = await handle(q, request, url.pathname.split('/').pop() ?? '', env);
@@ -72,4 +96,4 @@ createServer(async (req, res) => {
   response.headers.forEach((value, key) => headers.push([key, key === 'set-cookie' ? value.replace('; Secure', '') : value]));
   res.writeHead(response.status, headers);
   res.end(Buffer.from(await response.arrayBuffer()));
-}).listen(port, () => console.log(`Versión web local en http://localhost:${port} (${data.entries.length} registros)`));
+}).listen(port, () => console.log(`Versión web local en http://localhost:${port} (${data.entries.length} registros)${noLogin ? ' · sin contraseña (sólo prueba; --con-login para pedirla)' : ''}${webTill ? ` · caja web ${webTill.name}` : ''}`));
