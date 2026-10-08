@@ -67,19 +67,33 @@ public sealed class SqliteSyncOutbox(Database database)
         q.ExecuteNonQuery();
     }
 
-    /// <summary>Pendientes con el contenido completo de cada registro, leído en una sola transacción de lectura.</summary>
-    public IReadOnlyList<SyncEnvelope> PendingEnvelopes(int limit)
+    /// <summary>Pendientes con el contenido completo de cada registro, leído en una sola transacción de lectura.
+    /// Se corta antes de <paramref name="maxBytes"/> (las fotos pesan) pero siempre lleva al menos uno.</summary>
+    public IReadOnlyList<SyncEnvelope> PendingEnvelopes(int limit, int maxBytes = 1_500_000)
     {
         var pending = Pending(limit);
         if (pending.Count == 0) return [];
         using var c = database.Open(readOnly: true); using var t = c.BeginTransaction(deferred: true);
-        return pending.Select(entry => new SyncEnvelope(entry, Payload(c, t, entry))).ToList();
+        var envelopes = new List<SyncEnvelope>(); var bytes = 0;
+        foreach (var entry in pending)
+        {
+            var payload = Payload(c, t, entry, dataDirectory);
+            var size = payload.ToJsonString().Length;
+            if (envelopes.Count > 0 && bytes + size > maxBytes) break;
+            envelopes.Add(new(entry, payload)); bytes += size;
+        }
+        return envelopes;
     }
 
-    private static JsonObject Payload(Microsoft.Data.Sqlite.SqliteConnection c, Microsoft.Data.Sqlite.SqliteTransaction t, SyncOutboxEntry entry)
+    private readonly string dataDirectory = Path.GetDirectoryName(database.FilePath)!;
+
+    private static JsonObject Payload(Microsoft.Data.Sqlite.SqliteConnection c, Microsoft.Data.Sqlite.SqliteTransaction t, SyncOutboxEntry entry, string dataDirectory)
     {
         JsonObject? One(string sql) => Rows(c, t, sql, entry.EntityId).FirstOrDefault();
         JsonArray Many(string sql) => new(Rows(c, t, sql, entry.EntityId).Select(r => (JsonNode)r).ToArray());
+        // Una baja (sólo precios de charola hoy) viaja como marca; la nube la aplica al estado más reciente.
+        JsonObject Deleted() => new() { ["deleted"] = true, ["id"] = entry.EntityId };
+        if (entry.Change == "delete") return Deleted();
         var payload = entry.Entity switch
         {
             "cash_session" => One("SELECT * FROM cash_session WHERE id=$id"),
@@ -91,9 +105,93 @@ public sealed class SqliteSyncOutbox(Database database)
             "sale_refund" => One("SELECT * FROM sale_refund WHERE id=$id") is { } refund
                 ? new JsonObject { ["refund"] = refund, ["items"] = Many("SELECT * FROM sale_refund_item WHERE refund_id=$id ORDER BY position") }
                 : null,
+            "branch" => One("SELECT id,name,created_utc FROM branch WHERE id=$id"),
+            // El hash (PBKDF2-SHA512, 210 000 iteraciones) permite entrar a la versión web con la misma contraseña de la caja.
+            "app_user" => One("SELECT id,username,display_name,password_hash,role_name,active,must_change_password,created_utc FROM app_user WHERE id=$id"),
+            "role_permission" => new JsonObject { ["rows"] = Many("SELECT role_name,permission_name FROM role_permission WHERE $id='all' ORDER BY role_name,permission_name") },
+            "category" => One("SELECT * FROM category WHERE id=$id"),
+            "product" => One("SELECT * FROM product WHERE id=$id") is { } product
+                ? new JsonObject { ["product"] = product, ["inventoryLinks"] = Many("SELECT * FROM product_inventory_link WHERE product_id=$id ORDER BY created_utc,id") }
+                : null,
+            "product_photo" => One("SELECT * FROM product_photo WHERE product_id=$id") is { } photo
+                ? PhotoPayload(photo, One("SELECT a.* FROM product_photo p JOIN product_photo_asset a ON a.id=p.current_photo_id WHERE p.product_id=$id"), dataDirectory)
+                : null,
+            "cash_movement" => One("SELECT * FROM cash_movement WHERE id=$id"),
+            "consignment_store" => One("SELECT * FROM consignment_store WHERE id=$id") is { } store
+                ? new JsonObject { ["store"] = store, ["template"] = Many("SELECT * FROM consignment_template_item WHERE store_id=$id ORDER BY product_id") }
+                : null,
+            // Un alta que se borró antes de enviarse viaja como baja: la cola nunca se atora por un registro que ya no existe.
+            "consignment_price" => One("SELECT * FROM consignment_price WHERE product_id=$id") ?? Deleted(),
+            "consignment_delivery" => One("SELECT * FROM consignment_delivery WHERE id=$id") is { } delivery
+                ? new JsonObject
+                {
+                    ["delivery"] = delivery, ["items"] = Many("SELECT * FROM consignment_delivery_item WHERE delivery_id=$id ORDER BY position"),
+                    ["settlement"] = One("SELECT * FROM consignment_settlement WHERE delivery_id=$id"),
+                    ["settlementItems"] = Many("SELECT * FROM consignment_settlement_item WHERE delivery_id=$id ORDER BY position"),
+                    ["void"] = One("SELECT * FROM consignment_void WHERE delivery_id=$id"),
+                }
+                : null,
+            "consignment_payment" => One("SELECT * FROM consignment_payment WHERE id=$id"),
+            "measurement_unit" => new JsonObject { ["rows"] = Many("SELECT * FROM measurement_unit WHERE $id='all' ORDER BY code") },
+            "inventory_location" => One("SELECT * FROM inventory_location WHERE id=$id"),
+            "inventory_item" => One("SELECT * FROM inventory_item WHERE id=$id") is { } item
+                ? new JsonObject
+                {
+                    ["item"] = item, ["units"] = Many("SELECT * FROM inventory_item_unit WHERE item_id=$id ORDER BY code"),
+                    ["balances"] = Many("SELECT * FROM inventory_balance WHERE item_id=$id ORDER BY location_id"),
+                }
+                : null,
+            "inventory_operation" => One("SELECT id,kind,state,actor_id,terminal_id,reason_code,note,external_reference,created_utc,confirmed_utc,sale_evaluation_id,production_batch_id,production_batch_status FROM inventory_operation WHERE id=$id") is { } operation
+                ? new JsonObject { ["operation"] = operation, ["movements"] = Many("SELECT * FROM inventory_movement WHERE operation_id=$id ORDER BY sequence") }
+                : null,
+            "formula" => One("SELECT * FROM formula WHERE id=$id") is { } formula
+                ? new JsonObject
+                {
+                    ["formula"] = formula, ["versions"] = Many("SELECT * FROM formula_version WHERE formula_id=$id ORDER BY version"),
+                    ["ingredients"] = Many("SELECT i.* FROM formula_ingredient i JOIN formula_version v ON v.id=i.version_id WHERE v.formula_id=$id ORDER BY v.version,i.sequence"),
+                    ["groups"] = Many("SELECT g.* FROM formula_alternative_group g JOIN formula_version v ON v.id=g.version_id WHERE v.formula_id=$id ORDER BY v.version,g.sequence"),
+                    ["options"] = Many("SELECT o.* FROM formula_alternative_option o JOIN formula_version v ON v.id=o.version_id WHERE v.formula_id=$id ORDER BY v.version,o.group_id,o.sequence"),
+                }
+                : null,
+            "production_profile" => One("SELECT * FROM production_profile WHERE id=$id") is { } profile
+                ? new JsonObject
+                {
+                    ["profile"] = profile, ["versions"] = Many("SELECT * FROM production_profile_version WHERE profile_id=$id ORDER BY version"),
+                    ["directIngredients"] = Many("SELECT d.* FROM profile_direct_ingredient d JOIN production_profile_version v ON v.id=d.profile_version_id WHERE v.profile_id=$id ORDER BY v.version,d.sequence"),
+                    ["formulaRequirements"] = Many("SELECT r.* FROM profile_formula_requirement r JOIN production_profile_version v ON v.id=r.profile_version_id WHERE v.profile_id=$id ORDER BY v.version,r.sequence"),
+                }
+                : null,
+            "production_batch" => One("SELECT id,operation_id,status,created_by,terminal_id,created_utc,confirmed_utc,notes,consumption_operation_id,output_operation_id FROM production_batch WHERE id=$id") is { } batch
+                ? new JsonObject
+                {
+                    ["batch"] = batch, ["outputs"] = Many("SELECT * FROM production_output_plan WHERE batch_id=$id ORDER BY sequence"),
+                    ["inputs"] = Many("SELECT * FROM production_input_snapshot WHERE batch_id=$id ORDER BY sequence"),
+                }
+                : null,
             _ => throw new InvalidDataException($"Entidad de sincronización desconocida: {entry.Entity}.")
         };
         return payload ?? throw new InvalidDataException($"No existe el registro {entry.Entity} {entry.EntityId} de la cola.");
+    }
+
+    /// <summary>Foto vigente del producto con su miniatura (JPEG de 512 px) en base64; sin foto, sólo la marca.</summary>
+    private static JsonObject PhotoPayload(JsonObject photo, JsonObject? asset, string dataDirectory)
+    {
+        var payload = new JsonObject { ["photo"] = photo, ["asset"] = null, ["thumbnail"] = null };
+        if (asset is null) return payload;
+        payload["asset"] = new JsonObject
+        {
+            ["id"] = asset["id"]?.DeepClone(), ["provenance"] = asset["provenance"]?.DeepClone(), ["thumbnail_sha256"] = asset["thumbnail_sha256"]?.DeepClone(),
+            ["thumbnail_edge"] = asset["thumbnail_edge"]?.DeepClone(), ["created_utc"] = asset["created_utc"]?.DeepClone(),
+        };
+        var id = Guid.Parse((string)asset["id"]!); var sha = (string)asset["thumbnail_sha256"]!;
+        var path = Path.Combine(dataDirectory, "product-images", "v1", id.ToString("N"), $"pos-v1-{sha}.jpg");
+        // Una miniatura ausente o alterada no detiene la sincronización: la web muestra el producto sin foto.
+        if (File.Exists(path))
+        {
+            var bytes = File.ReadAllBytes(path);
+            if (Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)) == sha) payload["thumbnail"] = Convert.ToBase64String(bytes);
+        }
+        return payload;
     }
 
     private static List<JsonObject> Rows(Microsoft.Data.Sqlite.SqliteConnection c, Microsoft.Data.Sqlite.SqliteTransaction t, string sql, string id)

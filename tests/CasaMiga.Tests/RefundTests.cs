@@ -247,10 +247,10 @@ public sealed class RefundTests : SalesFixture
 
         old.Initialize(); old.Validate();
         Assert.AreEqual((long)Database.LatestVersion, Scalar("SELECT max(version) FROM schema_migration"));
-        Assert.AreEqual(before, Snapshot(), "Sequences, sent marks and attempts survive the outbox rebuild.");
+        StringAssert.StartsWith(Snapshot(), before + "|", "Sequences, sent marks and attempts survive the outbox rebuilds (023 appends master data).");
         var beforeCount = Scalar("SELECT count(*) FROM sync_outbox");
         new CashClosingService(oldWork, session, clock).SubmitCount(oldWork.Run(s => s.FindOpenSession(terminal.Id))!.Session.Id, new Money(100));
-        Assert.AreEqual(beforeCount + 2, Scalar("SELECT count(*) FROM sync_outbox"), "Recreated triggers keep queueing.");
+        Assert.AreEqual(beforeCount + 2, Scalar("SELECT count(*) FROM sync_outbox"), "Recreated triggers keep queueing (cash count and its audit).");
         Assert.AreEqual(beforeCount + 2, Scalar("SELECT max(seq) FROM sync_outbox"), "New sequences continue after the preserved ones.");
     }
 }

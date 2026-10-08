@@ -90,7 +90,14 @@ public sealed class SyncEngineTests : SalesFixture
         Assert.AreEqual("CASH", (string?)salePayload["payment"]!["method"]);
         var refund = all.Single(e => e.Entry.Entity == "sale_refund").Payload;
         Assert.AreEqual(1L, (long)refund["items"]![0]!["quantity"]!);
-        Assert.IsFalse(all.Any(e => e.Payload.ToJsonString().Contains("password_hash", StringComparison.Ordinal)), "Credentials never leave the terminal.");
+        // La versión web acepta la misma contraseña de la caja: sólo sale el hash PBKDF2 (formato Identity V3), nunca la contraseña,
+        // ni intentos fallidos o bloqueos, ni la llave de la terminal.
+        var users = all.Where(e => e.Entry.Entity == "app_user").Select(e => e.Payload).ToList();
+        Assert.IsNotEmpty(users);
+        Assert.IsTrue(users.All(u => ((string?)u["password_hash"])!.StartsWith("AQAAAAIAA", StringComparison.Ordinal)), "PBKDF2-HMAC-SHA512 hash only.");
+        Assert.IsTrue(users.All(u => u["failed_attempts"] is null && u["locked_until_utc"] is null));
+        Assert.IsFalse(all.Any(e => e.Payload.ToJsonString().Contains(password, StringComparison.Ordinal)), "The password itself never leaves the terminal.");
+        Assert.IsFalse(all.Any(e => e.Payload.ToJsonString().Contains(new string('k', 42), StringComparison.Ordinal)), "Nor the terminal key.");
         Assert.AreEqual("K" + new string('k', 42), transport.LastKey);
     }
 
@@ -145,7 +152,7 @@ public sealed class SyncEngineTests : SalesFixture
         var handler = new RecordingHandler();
         var transport = new HttpSyncTransport(new HttpClient(handler));
         var outbox = new SqliteSyncOutbox(db);
-        var batch = outbox.PendingEnvelopes(10);
+        var batch = outbox.PendingEnvelopes(200);
         var key = new string('a', 43);
         var result = await transport.SendAsync(new Uri(Api), key, outbox.Branch().Id, batch, default);
 

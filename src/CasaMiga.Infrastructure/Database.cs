@@ -137,6 +137,12 @@ public sealed class Database(string path)
                     + " AND (SELECT count(*) FROM role_permission WHERE permission_name='cash.movement')=3 AND (SELECT count(*) FROM role_permission WHERE permission_name='cash.withdrawal')=2";
                 if (Convert.ToInt64(command.ExecuteScalar()) != 1) throw new InvalidOperationException("La migración de movimientos de caja no creó sus estructuras.");
             }
+            if (i + 1 == 23)
+            {
+                command.CommandText = "SELECT (SELECT count(*) FROM sqlite_master WHERE type='trigger' AND name LIKE 'sync\\_%' ESCAPE '\\')=66"
+                    + " AND (SELECT count(*) FROM sqlite_master WHERE name IN ('sync_outbox','ix_sync_outbox_pending'))=2 AND (SELECT count(*) FROM sqlite_master WHERE name='sync_outbox_v23')=0";
+                if (Convert.ToInt64(command.ExecuteScalar()) != 1) throw new InvalidOperationException("La migración de sincronización de la versión web no creó sus estructuras.");
+            }
             command.CommandText = "INSERT INTO schema_migration VALUES($v,$hash,$at)";
             command.Parameters.AddWithValue("$hash", hash);
             command.Parameters.AddWithValue("$at", DateTimeOffset.UtcNow.ToString("O"));

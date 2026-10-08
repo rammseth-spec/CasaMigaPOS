@@ -35,6 +35,8 @@ public sealed class SyncOutboxTests
     private static object? Scalar(Database db, string sql) { using var c = db.Open(); using var q = c.CreateCommand(); q.CommandText = sql; return q.ExecuteScalar(); }
     private static void Execute(Database db, string sql) => Scalar(db, sql);
     private static string Outbox(Database db) => (string?)Scalar(db, "SELECT group_concat(entity||':'||change, ',') FROM (SELECT * FROM sync_outbox ORDER BY seq)") ?? "";
+    /// <summary>Sólo la operación comercial (caja, ventas, devoluciones, bitácora); los datos maestros de 023 se prueban aparte.</summary>
+    private static string Commercial(Database db) => (string?)Scalar(db, "SELECT group_concat(entity||':'||change, ',') FROM (SELECT * FROM sync_outbox WHERE entity IN ('cash_session','cash_count','sale','sale_refund','audit_entry') ORDER BY seq)") ?? "";
 
     /// <summary>Applies the first <paramref name="count"/> migrations exactly as historical versions would have.</summary>
     private static Database BuildAtVersion(string path, int count)
@@ -74,13 +76,14 @@ public sealed class SyncOutboxTests
     {
         var db = new Database(Path.Combine(directory, "cash.db")); db.Initialize();
         var app = Open(db);
-        Assert.AreEqual("audit_entry:insert", Outbox(db), "Bootstrap audit is queued.");
+        Assert.AreEqual("audit_entry:insert", Commercial(db), "Bootstrap audit is queued.");
+        StringAssert.StartsWith(Outbox(db), "branch:insert,role_permission:insert,measurement_unit:insert,inventory_location:insert,app_user:insert", "Seeded master data first, then the administrator.");
         var opened = app.Cash.Open(app.Terminal.Id, new Money(50000));
         var closing = new CashClosingService(app.Work, app.Session, clock);
         closing.SubmitCount(opened.Session.Id, new Money(50000));
         closing.Close(opened.Session.Id);
-        Assert.AreEqual("audit_entry:insert,cash_session:insert,audit_entry:insert,cash_count:insert,audit_entry:insert,cash_session:update,audit_entry:insert", Outbox(db));
-        Assert.AreEqual(7L, new SqliteSyncOutbox(db).PendingCount());
+        Assert.AreEqual("audit_entry:insert,cash_session:insert,audit_entry:insert,cash_count:insert,audit_entry:insert,cash_session:update,audit_entry:insert", Commercial(db));
+        Assert.AreEqual(Scalar(db, "SELECT count(*) FROM sync_outbox"), new SqliteSyncOutbox(db).PendingCount());
     }
 
     [TestMethod]
@@ -109,11 +112,14 @@ public sealed class SyncOutboxTests
 
         db.Initialize(); db.Validate();
         Assert.AreEqual((long)Database.LatestVersion, Scalar(db, "SELECT max(version) FROM schema_migration"));
-        Assert.AreEqual("cash_session:insert,audit_entry:insert,audit_entry:insert", Outbox(db), "Sessions are queued before audit history.");
+        Assert.AreEqual("cash_session:insert,audit_entry:insert,audit_entry:insert", Commercial(db), "Sessions are queued before audit history.");
+        Assert.AreEqual("cash_session:insert,audit_entry:insert,audit_entry:insert,branch:insert,role_permission:insert,app_user:insert,measurement_unit:insert,inventory_location:insert", Outbox(db),
+            "018 queues history first; 023 then queues master data once, users before what they created.");
         Assert.AreEqual(auditsBefore, Scalar(db, "SELECT count(*) FROM audit_entry"));
 
+        var queued = (long)Scalar(db, "SELECT count(*) FROM sync_outbox")!;
         db.Initialize();
-        Assert.AreEqual(3L, Scalar(db, "SELECT count(*) FROM sync_outbox"), "Re-initializing must not queue history again.");
+        Assert.AreEqual(queued, Scalar(db, "SELECT count(*) FROM sync_outbox"), "Re-initializing must not queue history again.");
     }
 
     [TestMethod]
@@ -147,7 +153,8 @@ public sealed class SyncOutboxTests
         app.Cash.Open(app.Terminal.Id, new Money(0));
         var outbox = new SqliteSyncOutbox(db);
         var pending = outbox.Pending(500);
-        Assert.HasCount(3, pending);
+        Assert.AreEqual(outbox.PendingCount(), pending.Count);
+        Assert.IsTrue(pending.Count >= 3);
         Assert.IsTrue(pending.Select(p => p.Sequence).SequenceEqual(pending.Select(p => p.Sequence).Order()));
 
         outbox.MarkFailed(pending[0].Sequence, "sin conexión");
@@ -155,9 +162,9 @@ public sealed class SyncOutboxTests
         Assert.ThrowsExactly<SqliteException>(() => Execute(db, "DELETE FROM sync_outbox"));
 
         outbox.MarkSent([pending[0].Sequence, pending[1].Sequence], clock.UtcNow);
-        Assert.AreEqual(1L, outbox.PendingCount());
+        Assert.AreEqual(pending.Count - 2L, outbox.PendingCount());
         Assert.ThrowsExactly<InvalidOperationException>(() => outbox.MarkSent([pending[0].Sequence, pending[2].Sequence], clock.UtcNow), "Partial confirmations roll back as a whole.");
-        Assert.AreEqual(1L, outbox.PendingCount());
+        Assert.AreEqual(pending.Count - 2L, outbox.PendingCount());
         Execute(db, $"DELETE FROM sync_outbox WHERE seq={pending[0].Sequence}");
     }
 }
