@@ -48,4 +48,6 @@ npm run typecheck
 
 Revisar la web con datos reales sin tocar la nube: exportar la cola de una **copia** de datos de la caja con `CasaMiga.Maintenance export-sync <copia> <archivo.json>` y luego `npm run dev:web -- <archivo.json>` → `http://localhost:4173`. Con `ENROLLMENT_SECRET` definido, una copia de la app puede registrarse contra `http://localhost:4173` y probar el ciclo completo.
 
+Este servidor de prueba **no pide contraseña** (decisión del usuario, 08/10/2026): entra solo con el último usuario elegido y, con «Salir», se elige otro (administrador, encargado o cajero). Para pedirla: `--con-login`. Empieza con una caja web lista (`CAJA-WEB-02`). Sólo existe en `scripts/dev-web.ts`, que no se publica (`.vercelignore`): la nube en Vercel siempre pide contraseña. Mientras corre, cualquiera en la misma red Wi-Fi puede entrar; úsalo sólo con datos de prueba.
+
 TypeScript con importaciones `.js` (NodeNext): Vercel lo compila al publicar; localmente corre con `tsx`.

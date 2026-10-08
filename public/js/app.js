@@ -228,8 +228,36 @@ async function login(event) {
   } catch (e) { $('login-error').textContent = e.message; }
   finally { button.disabled = false; }
 }
+// Servidor de prueba sin contraseña (npm run dev:web): elegir usuario. En la nube publicada /dev-users no existe.
+let devUsers = null;
+// session: sólo esta pestaña. Todo dentro de try: el almacenamiento puede estar bloqueado.
+const setKey = (key, value, session = false) => { try { const s = session ? sessionStorage : localStorage; if (value === null) s.removeItem(key); else s.setItem(key, value); } catch { /* sin almacenamiento */ } };
+const getKey = (key, session = false) => { try { return (session ? sessionStorage : localStorage).getItem(key); } catch { return null; } };
+async function devEnter(username) {
+  await post('dev-login', { username });
+  setKey('cm-dev-user', username); setKey('cm-dev-out', null, true);
+}
+function showDevUsers() {
+  const box = $('dev-users');
+  box.hidden = !devUsers?.length;
+  if (!devUsers?.length) return;
+  box.replaceChildren(h('p', { class: 'muted small', text: 'Servidor de prueba: entra sin contraseña.' }),
+    ...devUsers.map(u => h('button', { type: 'button', onclick: async () => {
+      try { await devEnter(u.username); await start(); } catch (e) { $('login-error').textContent = e.message; }
+    } }, h('strong', { text: u.name }), h('span', { class: 'muted small', text: ROLE[u.role] ?? u.role }))));
+}
 async function start() {
-  const me = await api('me');
+  let me;
+  try { me = await api('me'); }
+  catch (error) {
+    if (error.status !== 401) throw error;
+    devUsers ??= await fetch('/api/web/dev-users').then(r => (r.ok ? r.json() : [])).catch(() => []);
+    showDevUsers();
+    if (!devUsers.length || getKey('cm-dev-out', true)) throw error;
+    const user = devUsers.find(u => u.username === getKey('cm-dev-user')) ?? devUsers[0];
+    await devEnter(user.username);
+    me = await api('me');
+  }
   state.me = me; state.branches = me.branches; state.timeZone = me.timeZone;
   $('login').hidden = true; $('app').hidden = false;
   layout(); choose(state.period === 'custom' ? 'today' : state.period, false);
@@ -239,7 +267,11 @@ async function start() {
 document.addEventListener('DOMContentLoaded', () => {
   recall();
   $('login-form').addEventListener('submit', login);
-  $('logout').addEventListener('click', async () => { await post('logout', {}).catch(() => {}); state.me = null; showLogin(''); });
+  $('logout').addEventListener('click', async () => {
+    await post('logout', {}).catch(() => {}); state.me = null;
+    setKey('cm-dev-out', '1', true); // en el servidor de prueba, no volver a entrar solo
+    showLogin(''); showDevUsers();
+  });
   $('menu').addEventListener('click', () => document.body.classList.toggle('menu-open'));
   document.addEventListener('click', e => { if (document.body.classList.contains('menu-open') && !e.target.closest('#nav') && !e.target.closest('#menu')) document.body.classList.remove('menu-open'); });
   const custom = () => { if ($('from').value && $('to').value) { state.from = $('from').value; state.to = $('to').value; choose('custom'); } };

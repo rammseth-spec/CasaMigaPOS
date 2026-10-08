@@ -67,7 +67,7 @@ async function permissionsFor(q: Query, branchId: string, role: string): Promise
   return new Set(rows.map(r => String(r.permission)));
 }
 
-async function toUser(q: Query, row: Row): Promise<WebUser> {
+export async function toUser(q: Query, row: Row): Promise<WebUser> {
   const p = row.payload as Record<string, unknown>;
   const role = String(p.role_name);
   return {

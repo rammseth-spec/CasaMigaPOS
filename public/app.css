@@ -64,6 +64,8 @@ label.check { display: flex; gap: 10px; align-items: center; font-size: 14px; }
 .login-card h1, .login-card > p { text-align: center; }
 .login-card h1 { font-size: 22px; margin-top: 4px; }
 .error { color: var(--error); min-height: 1.2em; font-size: 14px; }
+.dev-users { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
+.dev-users button { justify-content: space-between; }
 
 /* ---------- Marco ---------- */
 .shell { display: grid; grid-template-columns: var(--nav) 1fr; min-height: 100dvh; }
