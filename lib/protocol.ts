@@ -2,14 +2,21 @@
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 
 export const MAX_BATCH = 200;
-export const ENTITIES = ['cash_session', 'cash_count', 'sale', 'sale_refund', 'audit_entry'] as const;
+export const ENTITIES = [
+  'cash_session', 'cash_count', 'sale', 'sale_refund', 'audit_entry',
+  'branch', 'app_user', 'role_permission', 'category', 'product', 'product_photo', 'cash_movement',
+  'consignment_store', 'consignment_price', 'consignment_delivery', 'consignment_payment',
+  'measurement_unit', 'inventory_location', 'inventory_item', 'inventory_operation',
+  'formula', 'production_profile', 'production_batch',
+] as const;
+export const CHANGES = ['insert', 'update', 'delete'] as const;
 export type Entity = (typeof ENTITIES)[number];
 
 export interface SyncEntry {
   seq: number;
   entity: Entity;
   entityId: string;
-  change: 'insert' | 'update';
+  change: (typeof CHANGES)[number];
   enqueuedAt: string;
   payload: unknown;
 }
@@ -52,7 +59,7 @@ export function parseBatch(body: unknown): SyncBatch {
     if (!Number.isSafeInteger(e.seq) || e.seq < 1 || seen.has(e.seq)) throw new ProtocolError(`Entrada ${i}: seq inválido o repetido`);
     seen.add(e.seq);
     if (!ENTITIES.includes(e.entity)) throw new ProtocolError(`Entrada ${i}: entity desconocida`);
-    if (e.change !== 'insert' && e.change !== 'update') throw new ProtocolError(`Entrada ${i}: change inválido`);
+    if (!CHANGES.includes(e.change)) throw new ProtocolError(`Entrada ${i}: change inválido`);
     if (typeof e.enqueuedAt !== 'string' || Number.isNaN(Date.parse(e.enqueuedAt))) throw new ProtocolError(`Entrada ${i}: enqueuedAt inválido`);
     if (e.payload === undefined || e.payload === null || typeof e.payload !== 'object') throw new ProtocolError(`Entrada ${i}: payload requerido`);
     return { seq: e.seq, entity: e.entity, entityId: text(e.entityId, `Entrada ${i}: entityId`, 64), change: e.change, enqueuedAt: e.enqueuedAt, payload: e.payload };

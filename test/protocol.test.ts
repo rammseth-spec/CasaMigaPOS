@@ -17,8 +17,8 @@ test('batch rejects empty, oversized, duplicated or malformed entries', () => {
   assert.throws(() => parseBatch({ branchId, entries: Array.from({ length: MAX_BATCH + 1 }, (_, i) => entry(i + 1)) }), ProtocolError);
   assert.throws(() => parseBatch({ branchId, entries: [entry(1), entry(1)] }), /repetido/);
   assert.throws(() => parseBatch({ branchId, entries: [entry(0)] }), ProtocolError);
-  assert.throws(() => parseBatch({ branchId, entries: [entry(1, { entity: 'product' })] }), /entity/);
-  assert.throws(() => parseBatch({ branchId, entries: [entry(1, { change: 'delete' })] }), /change/);
+  assert.throws(() => parseBatch({ branchId, entries: [entry(1, { entity: 'secret_table' })] }), /entity/);
+  assert.throws(() => parseBatch({ branchId, entries: [entry(1, { change: 'truncate' })] }), /change/);
   assert.throws(() => parseBatch({ branchId, entries: [entry(1, { payload: null })] }), /payload/);
   assert.throws(() => parseBatch({ branchId, entries: [entry(1, { enqueuedAt: 'ayer' })] }), /enqueuedAt/);
   assert.throws(() => parseBatch({ branchId: 'no-uuid', entries: [entry(1)] }), /UUID/);
