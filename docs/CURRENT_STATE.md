@@ -1,8 +1,12 @@
-# FASE 1K ABIERTA — 1K.4C-R2, 07/10/2026
+# FASE 1K ABIERTA — 1K.4C-R3, 07/10/2026
 
-**FASE 1K.4C-R2 técnicamente completada; smoke humano pendiente.** El `DatePicker` estándar fue sustituido sólo en Presentation por un editor compuesto: `TextBox` normal, botón de calendario de 42 px y `Calendar` emergente. El buffer conserva literalmente entradas inválidas, valida de forma estricta e invariante `dd/MM/yyyy` al salir o aplicar, presenta borde/mensaje cercano y no cambia el filtro activo si falta una fecha, es inválida o Desde supera Hasta.
+**FASE 1K.4C-R3 técnicamente completada; smoke humano pendiente.** El control compuesto de R2 incorpora una máscara de teclado: recibe hasta ocho dígitos y regenera automáticamente `dd/mm/aaaa`. Backspace y Delete operan sobre dígitos sin dejar barras dobles; selección parcial, Ctrl+A y pegado compacto/formateado conservan una posición coherente del cursor. Letras, espacios, símbolos, guiones y exceso de dígitos no contaminan el valor.
 
-Focales **29/29**; suite final **740/740** (561 generales + 179 WPF/Presentation), 0 fallidas/omitidas; Release Phase1K4C-R2 0 errores/advertencias. Sólo Presentation, pruebas y documentación; Domain/Application/Infrastructure/SQLite/migraciones intactos. Schema 16, sin 017. Base protegida SHA-256 inicial/final `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Revisión: `src/CasaMiga.Presentation/bin/Phase1K4C-R2/`, `work/Abrir-Casa-Miga-1K4C-R2.cmd`, DataDirectory `work/phase1k4c-r2-smoke-20261007`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4C-R2`. Ver `PHASE_1K4C_R2_REPORT.md`. No iniciar 1K.4D; no publicar hasta después de su cierre.
+Focales **32/32**; suite final **743/743** (561 generales + 182 WPF/Presentation), 0 fallidas/omitidas; Release Phase1K4C-R3 0 errores/advertencias. Sólo Presentation, pruebas y documentación; Domain/Application/Infrastructure/SQLite/migraciones intactos. Schema 16, sin 017. Base protegida SHA-256 inicial/final `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Revisión: `src/CasaMiga.Presentation/bin/Phase1K4C-R3/`, `work/Abrir-Casa-Miga-1K4C-R3.cmd`, DataDirectory `work/phase1k4c-r3-smoke-20261007`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4C-R3`. Ver `PHASE_1K4C_R3_REPORT.md`. No iniciar 1K.4D; no publicar hasta después de su cierre.
+
+## Registro anterior — 1K.4C-R2
+
+R2 corrigió el clipping y el borrado silencioso mediante el control compuesto; su smoke manual fue aprobado. R3 conserva ese comportamiento y añade únicamente la máscara numérica solicitada.
 
 ## Registro anterior — 1K.4C-R1
 

@@ -71,6 +71,55 @@ public sealed class SalesHistoryUsabilityTests
     }
 
     [TestMethod]
+    public async Task DateMaskInsertsSeparatorsLimitsDigitsAndKeepsSemanticValidation()
+    {
+        var edit=new DateMaskEdit("",0);
+        var progressive=new[]{"0","07","07/1","07/10","07/10/2","07/10/20","07/10/202","07/10/2026"};
+        for(var index=0;index<8;index++)
+        {
+            edit=DateTextMask.Insert(edit.Text,edit.Caret,0,"07102026"[index].ToString());
+            Assert.AreEqual(progressive[index],edit.Text);
+        }
+        Assert.AreEqual("07/10/2026",DateTextMask.Insert(edit.Text,edit.Caret,0,"99").Text,"The mask must keep at most eight significant digits.");
+
+        using var fixture=new Fixture();var vm=fixture.ViewModel();await vm.TodayAsync();var prior=vm.FilterSummary;
+        var invalid=DateTextMask.Insert("",0,0,"32102026");Assert.AreEqual("32/10/2026",invalid.Text);
+        await vm.SearchDatesAsync(invalid.Text,"07/10/2026");Assert.AreEqual("32/10/2026",vm.FromDateText);StringAssert.Contains(vm.FromDateError,"dd/mm/aaaa");Assert.AreEqual(prior,vm.FilterSummary);
+        fixture.AssertReadOnly();
+    }
+
+    [TestMethod]
+    public void DateMaskSupportsBackspaceDeleteSelectionReplacementAndPaste()
+    {
+        var backspace=DateTextMask.Backspace("07/10/2026",10,0);Assert.AreEqual("07/10/202",backspace.Text);
+        backspace=DateTextMask.Backspace("07/10",5,0);Assert.AreEqual("07/1",backspace.Text,"Backspace must remove a digit without leaving a broken slash.");
+        var delete=DateTextMask.Delete("07/10/2026",3,0);Assert.AreEqual("07/02/026",delete.Text,"Delete at the month must reformat the remaining digits.");
+        var replace=DateTextMask.Insert("07/10/2026",0,10,"06102026");Assert.AreEqual("06/10/2026",replace.Text,"Ctrl+A then typing must replace the complete value.");
+        var partial=DateTextMask.Insert("07/10/2026",3,2,"12");Assert.AreEqual("07/12/2026",partial.Text);
+        Assert.IsTrue(DateTextMask.TryNormalizePaste("07102026",out var compact));Assert.AreEqual("07/10/2026",DateTextMask.Format(compact));
+        Assert.IsTrue(DateTextMask.TryNormalizePaste("07/10/2026",out var formatted));Assert.AreEqual("07102026",formatted);
+        Assert.IsFalse(DateTextMask.TryNormalizePaste("07-10-2026",out _));Assert.IsFalse(DateTextMask.TryNormalizePaste("071020269",out _));
+    }
+
+    [TestMethod]
+    public Task DateEntryControlMasksRealTextInputAndKeyboardDeletion()=>WpfTestHost.OnUi(()=>
+    {
+        var control=new DateEntryControl();var window=new Window{Content=control,Width=320,Height=120,ShowInTaskbar=false,WindowStyle=WindowStyle.None};
+        try
+        {
+            window.Show();WpfTestHost.Layout(window,320,120);var editor=Descendants<TextBox>(control).Single();editor.Focus();Keyboard.Focus(editor);
+            foreach(var character in "07102026")SendText(editor,character.ToString());
+            Assert.AreEqual("07/10/2026",control.Text);Assert.AreEqual("07/10/2026",editor.Text);
+            SendText(editor,"x");Assert.AreEqual("07/10/2026",editor.Text,"Letters must not contaminate the date entry.");
+            SendKey(editor,window,Key.Back);Assert.AreEqual("07/10/202",editor.Text);
+            editor.SelectAll();foreach(var character in "06102026")SendText(editor,character.ToString());
+            Assert.AreEqual("06/10/2026",control.Text,"Selection plus numeric typing must replace the complete date.");
+        }
+        finally{window.Close();}
+        return Task.CompletedTask;
+    });
+
+    [TestMethod]
     public async Task PagingShowsRealTotalsPageCountAndSingularPlural()
     {
         using var fixture=new Fixture(addPagedSales:true);var vm=fixture.ViewModel();await vm.CurrentSessionAsync();
@@ -113,9 +162,12 @@ public sealed class SalesHistoryUsabilityTests
             {
                 var editor=Descendants<TextBox>(entry).Single();var calendarButton=Descendants<Button>(entry).Single();
                 Assert.IsTrue(editor.ActualWidth>=165,$"The date text area must remain readable; actual {editor.ActualWidth}.");Assert.AreEqual(42d,calendarButton.ActualWidth,0.5);
-                entry.Text="07/10/2026";WpfTestHost.Layout(window,contentWidth,contentHeight);Assert.AreEqual("07/10/2026",editor.Text);Assert.AreEqual("07/10/2026",entry.Text);
+                editor.SelectAll();foreach(var character in "07102026")SendText(editor,character.ToString());WpfTestHost.Layout(window,contentWidth,contentHeight);
+                Assert.AreEqual("07/10/2026",editor.Text);Assert.AreEqual("07/10/2026",entry.Text);
             }
+            Assert.AreEqual("07/10/2026",vm.FromDateText);Assert.AreEqual("07/10/2026",vm.ThroughDateText,"Masked text input must keep both outer bindings alive.");
             var from=entries[0];var calendar=(Calendar)from.FindName("PickerCalendar");calendar.SelectedDate=new DateTime(2026,10,6);Assert.AreEqual("06/10/2026",from.Text,"Calendar selection must keep the strict human format.");
+            Assert.AreEqual("06/10/2026",vm.FromDateText,"Calendar selection must update the same ViewModel buffer.");
             vm.SelectedSale=vm.Sales.First();await vm.OpenDetailAsync();WpfTestHost.Layout(window,contentWidth,contentHeight);
             var detail=Descendants<DataGrid>(view).Single(x=>AutomationProperties.GetName(x)=="Partidas de venta"&&x.Visibility==Visibility.Visible);
             Assert.AreEqual(0d,Descendants<ScrollViewer>(detail).First().ScrollableWidth,0.5);Assert.IsTrue(Descendants<Button>(view).Any(x=>Equals(x.Content,"Volver")&&x.IsVisible));
@@ -130,6 +182,14 @@ public sealed class SalesHistoryUsabilityTests
     {
         for(var i=0;i<VisualTreeHelper.GetChildrenCount(root);i++){var child=VisualTreeHelper.GetChild(root,i);if(child is T value)yield return value;foreach(var nested in Descendants<T>(child))yield return nested;}
     }
+
+    private static void SendText(TextBox editor,string text)
+    {
+        var composition=new TextComposition(InputManager.Current,editor,text);
+        editor.RaiseEvent(new TextCompositionEventArgs(Keyboard.PrimaryDevice,composition){RoutedEvent=TextCompositionManager.PreviewTextInputEvent});
+    }
+    private static void SendKey(UIElement source,Window window,Key key)=>source.RaiseEvent(
+        new KeyEventArgs(Keyboard.PrimaryDevice,PresentationSource.FromVisual(window)!,Environment.TickCount,key){RoutedEvent=Keyboard.PreviewKeyDownEvent});
 
     private sealed class Fixture:IDisposable
     {

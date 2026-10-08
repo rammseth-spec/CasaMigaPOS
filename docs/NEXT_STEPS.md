@@ -1,18 +1,21 @@
-# Próximo paso — smoke manual de 1K.4C-R2
+# Próximo paso — smoke manual de 1K.4C-R3
 
-Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4C-R2`, abierta desde `work/Abrir-Casa-Miga-1K4C-R2.cmd`, con DataDirectory `work/phase1k4c-r2-smoke-20261007`. No usar el acceso anclado ni builds anteriores.
+Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4C-R3`, abierta desde `work/Abrir-Casa-Miga-1K4C-R3.cmd`, con DataDirectory `work/phase1k4c-r3-smoke-20261007`. No usar el acceso anclado ni builds anteriores.
 
 1. Iniciar sesión y entrar en Historial de ventas.
-2. Confirmar que ambos campos muestran completo `dd/mm/aaaa`, conservan el botón de calendario y permiten escribir completo `06/10/2026`–`07/10/2026` antes de aplicar.
-3. Probar `32/10/2026`, `31/02/2026`, `abc`, `07/13/2026`, `7-10-2026` y Desde posterior a Hasta: el texto debe permanecer visible, con borde/mensaje humano, y el filtro previo debe conservarse.
-4. Revisar Todos, Hoy, Ayer y Rango; comprobar fechas `dd/MM/yyyy · HH:mm`, conteos y día final inclusivo.
-5. Elegir Sesión actual. Debe indicar 57 ventas; la primera página debe decir `Página 1 de 2 · 57 ventas · 50 por página` y mostrar únicamente `Venta #NNNNNN`, con la caja en su propia columna.
-6. Ir a la segunda página: debe decir `Página 2 de 2`, contener siete filas y deshabilitar Siguiente. No deben aparecer caja auxiliar, GUID, folio técnico, CashSessionId, `CASH` ni «Aplicado».
-7. Abrir una venta de varias piezas. El título sólo debe mostrar `Venta #NNNNNN`; el contexto conserva fecha, responsable y caja. Revisar productos históricos, precio unitario, cantidad, importe, subtotal, total, Efectivo, recibido y cambio.
-8. Confirmar que Reimprimir ticket aparece según permiso, sin pulsarlo.
-9. Revisar 1280×820, 1920×1080 y F11/Escape. Salir sin operar.
+2. En Desde, escribir sólo `07102026` y confirmar el resultado progresivo/final `07/10/2026`; repetir en Hasta y aplicar.
+3. Probar Backspace, Delete, selección parcial y Ctrl+A + `32102026`: debe quedar `32/10/2026`, conservarse y mostrar el error humano sin cambiar resultados.
+4. Probar pegado `07102026` y `07/10/2026`, además del calendario; todas las rutas deben producir `07/10/2026`.
+5. Revisar Todos, Hoy, Ayer y Rango; comprobar fechas `dd/MM/yyyy · HH:mm`, conteos y día final inclusivo.
+6. Elegir Sesión actual: 57 ventas, primera página 50 y segunda siete; revisar `Venta #NNNNNN` y Caja separada.
+7. Abrir una venta y confirmar el detalle financiero. Verificar que Reimprimir aparece según permiso, sin pulsarlo.
+8. Revisar 1280×820, 1920×1080 y F11/Escape. Salir sin operar.
 
 No vender, cobrar, abrir/cerrar/contar caja, modificar inventario/producción ni imprimir. Después del smoke, esperar confirmación explícita. No iniciar 1K.4D ni publicar: el siguiente checkpoint GitHub permanece después de 1K.4D.
+
+## Registro anterior — smoke de 1K.4C-R2
+
+R2 fue aprobada manualmente en clipping, validación, calendario, filtros, Historial, paginación y navegación. R3 sustituye únicamente su escritura manual por la máscara numérica.
 
 ## Registro anterior — smoke de 1K.4C-R1
 
