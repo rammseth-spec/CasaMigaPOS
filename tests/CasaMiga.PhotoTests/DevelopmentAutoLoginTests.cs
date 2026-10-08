@@ -53,6 +53,32 @@ public sealed class DevelopmentAutoLoginTests
     });
 
     [TestMethod]
+    public Task AfterLogoutEachAccountOfTheFileIsOneTapAway() => WpfTestHost.OnUi(async () =>
+    {
+        File.WriteAllText(Path.Combine(directory, DevelopmentAutoLogin.FileName), JsonSerializer.Serialize(new
+        {
+            Username = "admin", Password = password,
+            Users = new[] { new { Username = "ADMIN", Password = password }, new { Username = "ana", Password = "Equivocada#2026" } },
+        }));
+        var model = await Start(development: true);
+        try
+        {
+            Assert.IsTrue(model.CanNavigate, model.Message);
+            Assert.IsFalse(model.HasDevelopmentAccounts, "Signed in: no quick accounts on screen.");
+            model.Logout();
+            CollectionAssert.AreEqual(new[] { "admin", "ana" }, model.DevelopmentAccounts.ToArray(), "The automatic one first, no repeated users.");
+            await model.LoginAsDevelopmentAsync("ana");
+            Assert.IsFalse(model.CanNavigate, "Quick accounts use the normal login: a wrong password does not enter.");
+            await model.LoginAsDevelopmentAsync("ADMIN");
+            Assert.AreEqual("Administrador", model.CurrentUserName);
+            model.Logout();
+            await model.LoginAsDevelopmentAsync("nadie");
+            Assert.IsFalse(model.CanNavigate);
+        }
+        finally { model.Sync?.Dispose(); }
+    });
+
+    [TestMethod]
     public Task NormalInstallationIgnoresTheFileEvenIfPresent() => WpfTestHost.OnUi(async () =>
     {
         WriteFile("admin", password);
@@ -61,6 +87,7 @@ public sealed class DevelopmentAutoLoginTests
         {
             Assert.IsFalse(model.CanNavigate);
             Assert.IsTrue(model.IsLogin);
+            Assert.IsFalse(model.HasDevelopmentAccounts);
             Assert.IsNull(DevelopmentAutoLogin.TryLoad(new FoundationOptions(directory, IsDevelopment: false)));
         }
         finally { model.Sync?.Dispose(); }

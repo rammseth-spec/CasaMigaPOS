@@ -60,6 +60,13 @@ public partial class MainWindow : Window
         if (Model.CanNavigate) EnterFullScreen();
         else if (Model.IsChangePassword) ChangeCurrent.Focus();
     }
+    private async void DevelopmentLoginClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement { Tag: string username }) return;
+        await Model.LoginAsDevelopmentAsync(username);
+        if (Model.CanNavigate) EnterFullScreen();
+        else if (Model.IsChangePassword) ChangeCurrent.Focus();
+    }
     private async void ForgotPasswordClick(object sender, RoutedEventArgs e) => await Model.ForgotPasswordAsync(LoginUser.Text);
     private void ShowChangePasswordClick(object sender, RoutedEventArgs e)
     {

@@ -49,6 +49,19 @@
         <Button Content="¿Olvidaste tu contraseña?" Click="ForgotPasswordClick" Style="{StaticResource GhostButton}" Margin="0,0,8,0" AutomationProperties.Name="Olvidé mi contraseña"/>
         <Button Content="Cambiar contraseña" Click="ShowChangePasswordClick" Style="{StaticResource GhostButton}" AutomationProperties.Name="Cambiar contraseña"/>
        </WrapPanel>
+       <!-- Sólo copias de desarrollo con dev-autologin.json: entrar con un toque como cada usuario de prueba. -->
+       <Border Visibility="{Binding HasDevelopmentAccounts,Converter={StaticResource VisibleWhen}}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Margin="0,18,0,0" Padding="0,14,0,0">
+        <StackPanel>
+         <TextBlock Text="Copia de prueba: entrar sin escribir la contraseña" Style="{StaticResource CaptionText}" HorizontalAlignment="Center" Margin="0,0,0,10"/>
+         <ItemsControl ItemsSource="{Binding DevelopmentAccounts}" HorizontalAlignment="Center">
+          <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel HorizontalAlignment="Center"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate><DataTemplate>
+           <Button Content="{Binding}" Tag="{Binding}" Click="DevelopmentLoginClick" Style="{StaticResource SecondaryButton}" MinWidth="110" Margin="4"
+                   AutomationProperties.Name="{Binding StringFormat=Entrar como {0}}"/>
+          </DataTemplate></ItemsControl.ItemTemplate>
+         </ItemsControl>
+        </StackPanel>
+       </Border>
       </StackPanel>
       <StackPanel Visibility="{Binding IsChangePassword,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
        <TextBlock Text="Usuario" Style="{StaticResource FieldLabel}"/><TextBox x:Name="ChangeUser" Text="{Binding ChangePasswordUser,UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Usuario" MaxLength="80" Margin="0,6,0,14"/>

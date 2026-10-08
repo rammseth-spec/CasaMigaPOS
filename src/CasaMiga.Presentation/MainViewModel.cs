@@ -182,7 +182,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
         await TryDevelopmentAutoLoginAsync(options);
     }
 
-    // Sólo desarrollo: entra con las credenciales de dev-autologin.json usando el login normal. Al salir del usuario vuelve el login.
+    // Sólo desarrollo: entra con las credenciales de dev-autologin.json usando el login normal. Al salir del usuario vuelve el login
+    // con un botón por cada cuenta del archivo, para cambiar de usuario sin teclear.
+    private DevelopmentAutoLogin? developmentLogin;
+    public IReadOnlyList<string> DevelopmentAccounts => IsLogin && developmentLogin is { } d ? d.Accounts.Select(a => a.Username).ToList() : [];
+    public bool HasDevelopmentAccounts => DevelopmentAccounts.Count > 0;
+    public Task LoginAsDevelopmentAsync(string username) =>
+        developmentLogin?.Accounts.FirstOrDefault(a => string.Equals(a.Username, username, StringComparison.OrdinalIgnoreCase)) is { } account
+            ? LoginAsync(account.Username, account.Password) : Task.CompletedTask;
     private async Task TryDevelopmentAutoLoginAsync(FoundationOptions options)
     {
         if (!IsLogin) return;
@@ -190,6 +197,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         try { auto = DevelopmentAutoLogin.TryLoad(options); }
         catch (Exception error) when (error is System.IO.InvalidDataException or System.Text.Json.JsonException or System.IO.IOException or UnauthorizedAccessException)
         { Message = $"No se pudo leer {DevelopmentAutoLogin.FileName}; inicia sesión manualmente."; Notify(); return; }
+        developmentLogin = auto;
         if (auto is null) return;
         await LoginAsync(auto.Username, auto.Password);
         runtime?.TryLog(CanNavigate ? "development.autologin" : "development.autologin.failed");
