@@ -137,6 +137,21 @@ public sealed class CloudCommandTests : SalesFixture
         Assert.IsEmpty(trays.Route().Single(s => s.Store.Id == store.Id).AtStore);
     }
 
+    [TestMethod]
+    public void IngredientCostFromTheWebTravelsBackWithTheItem()
+    {
+        var item = Guid.NewGuid();
+        Sql($"INSERT INTO inventory_item(id,code,name,kind,dimension,active,created_utc,modified_utc) VALUES('{item}','HAR-1','Harina','RAW_MATERIAL','MASS',1,'2026-10-01T00:00:00Z','2026-10-01T00:00:00Z')");
+        Ok(Commands.Apply(Command("inventory.cost", new() { ["itemId"] = item.ToString(), ["costCents"] = 2850, ["perAtomic"] = 1_000_000, ["unitLabel"] = "kg" })));
+        Assert.AreEqual(2850L, Convert.ToInt64(Sql($"SELECT cost_cents FROM inventory_item_cost WHERE item_id='{item}'")));
+        Assert.AreEqual(1L, Convert.ToInt64(Sql($"SELECT count(*) FROM audit_entry WHERE action='inventory.cost.set' AND entity_id='{item}'")));
+        Ok(Commands.Apply(Command("inventory.cost", new() { ["itemId"] = item.ToString(), ["costCents"] = 3000, ["perAtomic"] = 1_000_000, ["unitLabel"] = "kg" })));
+        var payload = new SqliteSyncOutbox(db).PendingEnvelopes(500, int.MaxValue).Last(e => e.Entry.Entity == "inventory_item" && e.Entry.EntityId == item.ToString()).Payload;
+        Assert.AreEqual(3000L, (long)payload["cost"]!["cost_cents"]!, "The latest cost goes up with the item.");
+        Assert.AreEqual("rejected", Commands.Apply(Command("inventory.cost", new() { ["itemId"] = Guid.NewGuid().ToString(), ["costCents"] = 1, ["perAtomic"] = 1, ["unitLabel"] = "kg" })).Status);
+        Assert.AreEqual("rejected", Commands.Apply(Command("inventory.cost", new() { ["itemId"] = item.ToString(), ["costCents"] = -1, ["perAtomic"] = 1, ["unitLabel"] = "kg" })).Status);
+    }
+
     private sealed class Transport : ISyncTransport
     {
         public List<CloudCommand> Pending { get; } = [];

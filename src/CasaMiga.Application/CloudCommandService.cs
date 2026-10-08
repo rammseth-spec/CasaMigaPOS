@@ -113,6 +113,9 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
             case "consignment.void":
                 onRoute.Void(Id(p, "deliveryId"), Text(p, "reason"));
                 break;
+            case "inventory.cost":
+                new IngredientCostService(database, session, clock, terminalId).SetCost(Id(p, "itemId"), new Money(Long(p, "costCents")), Long(p, "perAtomic"), Text(p, "unitLabel"));
+                break;
             case "consignment.template.save":
                 trays.SaveTemplate(Id(p, "storeId"), (p["lines"] as JsonArray ?? throw new InvalidCommandException())
                     .Select(l => new ConsignmentLine(Id(l as JsonObject ?? throw new InvalidCommandException(), "productId"), Int((JsonObject)l!, "quantity"))).ToList());

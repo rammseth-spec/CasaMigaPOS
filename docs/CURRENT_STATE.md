@@ -1,3 +1,14 @@
+# Ganancia desde recetas y análisis de charolas — 08/10/2026
+
+**Implementado y probado en local.** Ver [PROFIT.md](PROFIT.md).
+
+- **Costo de insumos** (migración 025, `inventory_item_cost`): precio de referencia por insumo, capturado en la web (Inventario → tocar el insumo, administrador); la caja lo aplica (`inventory.cost`, auditado) y lo sube con el insumo.
+- **Costo por pan** desde el perfil de producción publicado: ingredientes directos + preparaciones (alternativa preferida). Política de redondeo: costo por pieza al centavo; totales = costo por pieza × piezas.
+- **Reportes → Ganancia**: mostrador contra charolas (las piezas que regresan cuentan como costo), margen, ganancia por pieza y por pan; avisa qué panes no tienen costo y por qué.
+- **Charolas → Análisis**: por tienda, cada cuántos días pide, días habituales, vendido/regresado, cobrado y lo que más se vende allí.
+- Corregido en la web: los tipos de insumo se veían como `RAW_MATERIAL` (ahora «Materia prima», etc., como en la caja) y las existencias en cero como «0 mg».
+- Prueba en el navegador con la copia demo más una receta de prueba: Concha de vainilla a $4.08 por pieza × 438 piezas = $1,787.04 de costo, $3,906.96 de ganancia (69 %); un costo capturado en la web quedó en Cajas → Cambios como «Costo de insumo · $95.50 por kg». Vista de celular sin desbordes.
+
 # Casa Miga en línea (versión web) — 07/10/2026
 
 **Implementado y probado de punta a punta en local; publicación pendiente** (falta `npx vercel login` del dueño y capturar `DATABASE_URL`, `ENROLLMENT_SECRET` y `SESSION_SECRET`). Ver [WEB.md](WEB.md).

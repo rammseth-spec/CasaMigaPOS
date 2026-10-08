@@ -23,7 +23,7 @@ Decisiones del usuario (07/10/2026): consultar todo lo que se ve en la caja; edi
 
 ## Pantallas
 
-Resumen, Ventas (búsqueda por folio C01-001061 o producto, forma de pago, detalle del ticket con devoluciones), Reportes (comparativo contra el periodo anterior, ventas por hora, control de caja, producción sugerida), Caja (cortes con su resultado o el esperado del turno abierto; gastos, retiros y entradas), Charolas (tiendas con saldo, entregas, cobros), Catálogo (fotos, precios, precio de charola), Inventario, Recetas, Producción, Usuarios (sólo administrador) y Cajas (última conexión y cambios enviados con su estado por caja).
+Resumen, Ventas (búsqueda por folio C01-001061 o producto, forma de pago, detalle del ticket con devoluciones), Reportes (comparativo contra el periodo anterior, ventas por hora, ganancia, control de caja, producción sugerida), Caja (cortes con su resultado o el esperado del turno abierto; gastos, retiros y entradas), Charolas (ruta, análisis por tienda, tiendas con saldo, entregas, cobros), Catálogo (fotos, precios, precio de charola), Inventario (con costo de referencia por insumo), Recetas, Producción, Usuarios (sólo administrador) y Cajas (última conexión y cambios enviados con su estado por caja).
 
 Responsiva: menú lateral en computadora, riel de íconos en tablet (≤1100 px) y menú desplegable en celular (≤720 px), donde las tablas se vuelven tarjetas y los diálogos hojas inferiores.
 
@@ -35,6 +35,10 @@ Responsiva: menú lateral en computadora, riel de íconos en tablet (≤1100 px)
 ## Respaldos
 
 Cada caja sube su base cada hora (si cambió) y sus fotos una vez; la nube se copia cada noche; todo cifrado y 30 días. Pantalla **Respaldos** (administrador) y restauración con `CasaMiga.Maintenance restore-cloud`. Ver [BACKUPS.md](BACKUPS.md).
+
+## Ganancia y análisis de charolas
+
+Reportes → Ganancia compara mostrador contra charolas con el costo de cada pan calculado desde su receta; Charolas → Análisis da por tienda la frecuencia de pedido, los días habituales, el porcentaje vendido y el pan que más se vende allí. Ver [PROFIT.md](PROFIT.md).
 
 ## Ruta del repartidor (Charolas → Ruta)
 
@@ -55,6 +59,7 @@ Pensada para celular: una tarjeta por tienda activa con teléfono, saldo, últim
 | Usuario: alta, nombre/rol, activar, restablecer contraseña | `users.manage` (administrador) | `CreateUserWithHash` / `UpdateUser` / `SetActive` / `ResetPasswordWithHash`; la contraseña temporal la genera la nube, se muestra una vez y debe cambiarse al entrar. El administrador no se edita desde la web. |
 | Tienda de charolas y charola habitual | `consignment.manage` | `SaveStore` / `SetStoreActive` / `SaveTemplate` |
 | Ruta: entrega, recolección (con cobro), cobro, anulación | `consignment.manage` | `Deliver` / `Collect` / `ReceivePayment` / `Void` con la hora de la ruta |
+| Costo de referencia de un insumo | `inventory.configure` (administrador) | `IngredientCostService.SetCost` (migración 025); no mueve existencias |
 
 La caja actúa como quien pidió el cambio si ese usuario existe en ella (con sus permisos locales); si existe pero está desactivado, lo rechaza; si no existe (por ejemplo, el administrador de otra sucursal), actúa como el administrador local. La caja relee los últimos 20 cambios en cada sincronización, porque dos guardados simultáneos en la web pueden hacerse visibles fuera de orden; los ya aplicados no se repiten. Un cambio que las reglas de la caja rechazan queda «Rechazado» con el motivo en Cajas → Cambios; un error inesperado se reintenta en la siguiente sincronización.
 
@@ -72,7 +77,7 @@ El código de la nube es TypeScript con importaciones `.js` (estilo NodeNext): V
 ## Pendiente
 
 - Varias cajas en una sucursal comparten sucursal pero no catálogo: cada una tiene su base; los cambios de la web llegan a todas, pero altas hechas en una caja no bajan a las demás (fase 4 completa).
-- Inventario, recetas y producción: sólo consulta.
+- Inventario, recetas y producción: sólo consulta (salvo el costo de referencia de cada insumo).
 - Fotos: se ven, no se cambian desde la web.
 - El administrador de cualquier sucursal entra como administrador de todas (decisión «un solo administrador», SYNC_PLAN). Con varias sucursales conviene que sea la misma persona.
 - Si dos personas guardan el mismo producto en la web en el mismo instante, puede quedar el primero de los dos guardados (caso extremo; se corrige guardando otra vez).

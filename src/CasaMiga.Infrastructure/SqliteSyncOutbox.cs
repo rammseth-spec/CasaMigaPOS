@@ -139,6 +139,7 @@ public sealed class SqliteSyncOutbox(Database database)
                 {
                     ["item"] = item, ["units"] = Many("SELECT * FROM inventory_item_unit WHERE item_id=$id ORDER BY code"),
                     ["balances"] = Many("SELECT * FROM inventory_balance WHERE item_id=$id ORDER BY location_id"),
+                    ["cost"] = One("SELECT cost_cents,per_atomic,unit_label,updated_utc FROM inventory_item_cost WHERE item_id=$id"),
                 }
                 : null,
             "inventory_operation" => One("SELECT id,kind,state,actor_id,terminal_id,reason_code,note,external_reference,created_utc,confirmed_utc,sale_evaluation_id,production_batch_id,production_batch_status FROM inventory_operation WHERE id=$id") is { } operation

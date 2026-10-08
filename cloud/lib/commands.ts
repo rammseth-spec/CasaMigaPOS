@@ -9,7 +9,9 @@ import type { Query, Row } from './panel.js';
 export const KINDS = ['category.save', 'product.save', 'product.active', 'user.create', 'user.update', 'user.active', 'user.reset_password',
   'consignment.store.save', 'consignment.template.save',
   // Ruta: lo que el repartidor registra en la tienda desde el celular.
-  'consignment.deliver', 'consignment.collect', 'consignment.payment', 'consignment.void'] as const;
+  'consignment.deliver', 'consignment.collect', 'consignment.payment', 'consignment.void',
+  // Costo de referencia de un insumo, para calcular la ganancia desde las recetas.
+  'inventory.cost'] as const;
 const METHODS = ['CASH', 'CARD', 'TRANSFER'];
 export type Kind = (typeof KINDS)[number];
 
@@ -107,6 +109,13 @@ export async function createCommand(q: Query, user: WebUser, branchId: unknown, 
       requirePermission(user, 'consignment.manage');
       payload = {};
       break;
+    case 'inventory.cost': {
+      requirePermission(user, 'inventory.configure');
+      const item = id(b.itemId, 'Insumo');
+      if (!(await state(q, branch, 'inventory_item', item))) throw new ProtocolError('Insumo inexistente', 404);
+      payload = { itemId: item, costCents: int(b.costCents, 'Costo', 0, 100_000_000), perAtomic: int(b.perAtomic, 'Cantidad', 1, 1_000_000_000_000), unitLabel: text(b.unitLabel, 'Unidad', 1, 40) };
+      break;
+    }
     case 'consignment.template.save': {
       requirePermission(user, 'consignment.manage');
       const store = id(b.storeId, 'Tienda');

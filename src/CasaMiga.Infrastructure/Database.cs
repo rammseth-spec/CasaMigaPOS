@@ -143,6 +143,11 @@ public sealed class Database(string path)
                     + " AND (SELECT count(*) FROM sqlite_master WHERE name IN ('sync_outbox','ix_sync_outbox_pending'))=2 AND (SELECT count(*) FROM sqlite_master WHERE name='sync_outbox_v23')=0";
                 if (Convert.ToInt64(command.ExecuteScalar()) != 1) throw new InvalidOperationException("La migración de sincronización de la versión web no creó sus estructuras.");
             }
+            if (i + 1 == 25)
+            {
+                command.CommandText = "SELECT (SELECT count(*) FROM sqlite_master WHERE name IN ('inventory_item_cost','sync_inventory_cost_insert','sync_inventory_cost_update'))=3";
+                if (Convert.ToInt64(command.ExecuteScalar()) != 1) throw new InvalidOperationException("La migración de costos de insumos no creó sus estructuras.");
+            }
             if (i + 1 == 24)
             {
                 command.CommandText = "SELECT (SELECT count(*) FROM sqlite_master WHERE name IN ('cloud_command','ix_cloud_command_unreported','cloud_command_no_delete','cloud_command_result_immutable'))=4";

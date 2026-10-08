@@ -100,6 +100,8 @@ public interface ILocalStore
     // Charolas a consignación
     IReadOnlyList<ConsignmentStore> ListConsignmentStores(bool includeInactive);
     ConsignmentStore? FindConsignmentStore(Guid id);
+    /// <summary>Costo de referencia de un insumo (migración 025). False si el insumo no existe.</summary>
+    bool SetInventoryItemCost(Guid itemId, long costCents, long perAtomic, string unitLabel, DateTimeOffset at, Guid by);
     // Cambios de la versión web aplicados en esta caja (migración 024).
     long LastCloudCommandSequence();
     CloudCommandResult? FindCloudCommand(Guid id);

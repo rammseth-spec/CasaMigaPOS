@@ -5,6 +5,7 @@ import { dashboard, DEFAULT_TIME_ZONE, MAX_DAYS, parseRange, terminals, branches
 import * as web from './web.js';
 import { createCommand, listCommands } from './commands.js';
 import * as backups from './backup.js';
+import { profit, trayAnalytics } from './analytics.js';
 
 export interface Env { SESSION_SECRET?: string; PANEL_TIME_ZONE?: string; BACKUP_SECRET?: string }
 
@@ -12,7 +13,7 @@ export interface Env { SESSION_SECRET?: string; PANEL_TIME_ZONE?: string; BACKUP
 const VIEW: Record<string, string> = {
   dashboard: 'sales.view', sales: 'sales.view', sale: 'sales.view', compare: 'sales.view', heatmap: 'sales.view', 'cash-control': 'sales.view',
   'production-suggestion': 'sales.view', terminals: 'sales.view', cash: 'cash.view', consignment: 'consignment.view', catalog: 'catalog.view',
-  photo: 'catalog.view', route: 'consignment.view', backups: 'users.manage', backup: 'users.manage', inventory: 'inventory.view', recipes: 'recipe.view', production: 'production.view', users: 'users.manage', commands: 'sales.view',
+  photo: 'catalog.view', route: 'consignment.view', profit: 'recipe.view', 'tray-analytics': 'consignment.view', backups: 'users.manage', backup: 'users.manage', inventory: 'inventory.view', recipes: 'recipe.view', production: 'production.view', users: 'users.manage', commands: 'sales.view',
 };
 
 function me(user: WebUser) {
@@ -93,6 +94,8 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       case 'consignment': return json(200, await web.consignment(q, range()));
       case 'catalog': return json(200, await web.catalog(q, branch));
       case 'route': return json(200, await web.route(q, branch));
+      case 'profit': requirePermission(user, 'sales.view'); return json(200, await profit(q, range()));
+      case 'tray-analytics': return json(200, await trayAnalytics(q, range()));
       case 'photo': {
         const image = await web.photo(q, branch, url.searchParams.get('product') ?? '');
         if (!image) return new Response('Sin foto', { status: 404 });

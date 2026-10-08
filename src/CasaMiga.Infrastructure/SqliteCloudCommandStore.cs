@@ -5,6 +5,16 @@ public sealed partial class SqliteLocalUnitOfWork
 {
     private sealed partial class Store
     {
+        public bool SetInventoryItemCost(Guid itemId, long costCents, long perAtomic, string unitLabel, DateTimeOffset at, Guid by)
+        {
+            using var q = Command(@"INSERT INTO inventory_item_cost(item_id,cost_cents,per_atomic,unit_label,updated_utc,updated_by)
+                SELECT $item,$cost,$per,$label,$at,$by WHERE EXISTS(SELECT 1 FROM inventory_item WHERE id=$item)
+                ON CONFLICT(item_id) DO UPDATE SET cost_cents=excluded.cost_cents,per_atomic=excluded.per_atomic,unit_label=excluded.unit_label,
+                  updated_utc=excluded.updated_utc,updated_by=excluded.updated_by",
+                ("$item", Id(itemId)), ("$cost", costCents), ("$per", perAtomic), ("$label", unitLabel), ("$at", At(at)), ("$by", Id(by)));
+            return q.ExecuteNonQuery() == 1;
+        }
+
         public long LastCloudCommandSequence()
         {
             using var q = Command("SELECT COALESCE(max(seq),0) FROM cloud_command");
