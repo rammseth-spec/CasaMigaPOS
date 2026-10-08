@@ -1,4 +1,4 @@
-import { sql } from '../../lib/db.ts';
+import { ensureSchema, sql } from '../../lib/db.ts';
 import { failure, json, newTerminalKey, parseRegistration, ProtocolError, readJson, secretMatches, sha256Hex } from '../../lib/protocol.ts';
 
 /**
@@ -7,6 +7,7 @@ import { failure, json, newTerminalKey, parseRegistration, ProtocolError, readJs
  */
 export async function POST(request: Request): Promise<Response> {
   try {
+    await ensureSchema();
     const registration = parseRegistration(await readJson(request, 10_000));
     if (!secretMatches(registration.enrollmentSecret, process.env.ENROLLMENT_SECRET)) throw new ProtocolError('Secreto de alta incorrecto', 403);
     const db = sql();

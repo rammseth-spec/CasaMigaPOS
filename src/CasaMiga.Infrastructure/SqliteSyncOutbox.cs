@@ -27,13 +27,13 @@ public sealed class SqliteSyncOutbox(Database database)
     }
 
     /// <summary>Pendientes en orden de llegada, que respeta dependencias (caja antes que sus ventas).</summary>
-    public IReadOnlyList<SyncOutboxEntry> Pending(int limit)
+    public IReadOnlyList<SyncOutboxEntry> Pending(int limit, long after = 0)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(limit, 1);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(limit, 500);
         using var c = database.Open(readOnly: true); using var q = c.CreateCommand();
-        q.CommandText = "SELECT seq,entity,entity_id,change,enqueued_utc,attempts FROM sync_outbox WHERE sent_utc IS NULL ORDER BY seq LIMIT $limit";
-        q.Parameters.AddWithValue("$limit", limit);
+        q.CommandText = "SELECT seq,entity,entity_id,change,enqueued_utc,attempts FROM sync_outbox WHERE sent_utc IS NULL AND seq>$after ORDER BY seq LIMIT $limit";
+        q.Parameters.AddWithValue("$limit", limit); q.Parameters.AddWithValue("$after", after);
         using var r = q.ExecuteReader();
         var entries = new List<SyncOutboxEntry>();
         while (r.Read())
@@ -69,9 +69,9 @@ public sealed class SqliteSyncOutbox(Database database)
 
     /// <summary>Pendientes con el contenido completo de cada registro, leído en una sola transacción de lectura.
     /// Se corta antes de <paramref name="maxBytes"/> (las fotos pesan) pero siempre lleva al menos uno.</summary>
-    public IReadOnlyList<SyncEnvelope> PendingEnvelopes(int limit, int maxBytes = 1_500_000)
+    public IReadOnlyList<SyncEnvelope> PendingEnvelopes(int limit, int maxBytes = 1_500_000, long after = 0)
     {
-        var pending = Pending(limit);
+        var pending = Pending(limit, after);
         if (pending.Count == 0) return [];
         using var c = database.Open(readOnly: true); using var t = c.BeginTransaction(deferred: true);
         var envelopes = new List<SyncEnvelope>(); var bytes = 0;

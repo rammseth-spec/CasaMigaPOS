@@ -1,66 +1,12 @@
-// Panel web de consulta (fase 5, docs/SYNC_PLAN.md): sólo lectura sobre sync_event, con acceso por contraseña de panel.
-import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
+// Resumen de la versión web (docs/WEB.md): sólo lectura sobre entity_state, el último contenido de cada registro.
 import { ProtocolError } from './protocol.ts';
 
 export type Row = Record<string, unknown>;
 /** Ejecuta SQL con parámetros posicionales ($1, $2…). En producción es Neon; en pruebas, PGlite. */
 export type Query = (text: string, params: unknown[]) => Promise<Row[]>;
 
-export const COOKIE = 'cm_panel';
-export const SESSION_HOURS = 12;
-export const MIN_PASSWORD = 12;
 export const MAX_DAYS = 92;
 export const DEFAULT_TIME_ZONE = 'America/Mexico_City';
-
-// ---------- Acceso ----------
-
-function key(password: string): Buffer {
-  return createHash('sha256').update('casamiga-panel:' + password, 'utf8').digest();
-}
-
-/** La contraseña del panel vive sólo en la variable PANEL_PASSWORD; sin ella (o corta) el panel no abre. */
-export function panelPassword(env: string | undefined): string {
-  if (!env || env.length < MIN_PASSWORD) throw new ProtocolError('Panel sin configurar', 503);
-  return env;
-}
-
-export function passwordMatches(provided: unknown, expected: string): boolean {
-  if (typeof provided !== 'string' || provided.length === 0 || provided.length > 200) return false;
-  return timingSafeEqual(key(provided), key(expected));
-}
-
-/** Valor de la cookie: vencimiento y su firma HMAC. Cambiar la contraseña invalida todas las sesiones. */
-export function issueSession(password: string, now = Date.now()): string {
-  const expires = now + SESSION_HOURS * 3_600_000;
-  return `${expires}.${createHmac('sha256', key(password)).update(String(expires)).digest('base64url')}`;
-}
-
-export function sessionValid(value: string | undefined, password: string, now = Date.now()): boolean {
-  const match = /^(\d{13})\.([A-Za-z0-9_-]{43})$/.exec(value ?? '');
-  if (!match) return false;
-  const expires = Number(match[1]);
-  if (!(expires > now) || expires > now + SESSION_HOURS * 3_600_000) return false;
-  const expected = createHmac('sha256', key(password)).update(match[1]).digest();
-  return timingSafeEqual(Buffer.from(match[2], 'base64url'), expected);
-}
-
-export function readCookie(header: string | null, name = COOKIE): string | undefined {
-  for (const part of (header ?? '').split(';')) {
-    const [k, ...v] = part.trim().split('=');
-    if (k === name) return v.join('=');
-  }
-  return undefined;
-}
-
-export function sessionCookie(value: string): string {
-  return `${COOKIE}=${value}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${SESSION_HOURS * 3600}`;
-}
-export const clearedCookie = `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`;
-
-export function requireSession(request: Request, env: string | undefined): void {
-  const password = panelPassword(env);
-  if (!sessionValid(readCookie(request.headers.get('cookie')), password)) throw new ProtocolError('Inicia sesión en el panel', 401);
-}
 
 // ---------- Filtros ----------
 
@@ -88,27 +34,24 @@ export function parseRange(url: URL, timeZone = DEFAULT_TIME_ZONE): Range {
 }
 
 // ---------- Consultas ----------
-// Cada registro puede llegar varias veces (insert y luego update); se toma el de seq más alto de cada terminal.
 
-const SALES = `SELECT DISTINCT ON (entity_id) branch_id, terminal_id, entity_id AS sale_id, payload,
+export const SALES = `SELECT branch_id, terminal_id, entity_id AS sale_id, payload,
     ((payload->'sale'->>'confirmed_utc')::timestamptz AT TIME ZONE $1)::date AS day,
     (payload->'sale'->>'total_cents')::bigint AS total,
     COALESCE(payload->'payment'->>'method', 'CASH') AS method,
     (payload->'sale'->>'cash_session_id') AS session_id,
     COALESCE((payload->'payment'->>'applied_cents')::bigint, (payload->'sale'->>'total_cents')::bigint) AS applied
-  FROM sync_event WHERE entity = 'sale' ORDER BY entity_id, seq DESC`;
+  FROM entity_state WHERE entity = 'sale' AND NOT deleted`;
 
-const REFUNDS = `SELECT DISTINCT ON (entity_id) branch_id, entity_id AS refund_id,
+export const REFUNDS = `SELECT branch_id, entity_id AS refund_id, payload,
     ((payload->'refund'->>'refunded_utc')::timestamptz AT TIME ZONE $1)::date AS day,
     (payload->'refund'->>'total_cents')::bigint AS total,
     payload->'refund'->>'sale_id' AS sale_id,
     payload->'refund'->>'cash_session_id' AS session_id
-  FROM sync_event WHERE entity = 'sale_refund' ORDER BY entity_id, seq DESC`;
+  FROM entity_state WHERE entity = 'sale_refund' AND NOT deleted`;
 
-const MOVEMENTS = `SELECT (details->>'cashSessionId') AS session_id, action, (details->>'amountCents')::bigint AS amount
-  FROM (SELECT DISTINCT ON (entity_id) payload->>'action' AS action, (payload->>'details_json')::jsonb AS details
-        FROM sync_event WHERE entity = 'audit_entry' AND payload->>'action' IN ('cash.expense','cash.withdrawal','cash.deposit')
-        ORDER BY entity_id, seq DESC) a`;
+const MOVEMENTS = `SELECT payload->>'cash_session_id' AS session_id, payload->>'kind' AS kind, (payload->>'amount_cents')::bigint AS amount
+  FROM entity_state WHERE entity = 'cash_movement' AND NOT deleted`;
 
 const n = (v: unknown) => (v === null || v === undefined ? 0 : Number(v));
 const day = (v: unknown) => (v instanceof Date ? v.toISOString().slice(0, 10) : String(v).slice(0, 10));
@@ -166,12 +109,11 @@ export interface SessionRow {
 
 /** Cortes que abrieron en el periodo. Abiertos: el esperado es lo que va del turno; cerrados: lo que se registró al cerrar. */
 export async function sessions(q: Query, r: Range): Promise<SessionRow[]> {
-  const rows = await q(`WITH c AS (
-      SELECT DISTINCT ON (entity_id) branch_id, terminal_id, payload AS p FROM sync_event WHERE entity = 'cash_session' ORDER BY entity_id, seq DESC),
+  const rows = await q(`WITH c AS (SELECT branch_id, terminal_id, payload AS p FROM entity_state WHERE entity = 'cash_session' AND NOT deleted),
     s AS (${SALES}), r AS (${REFUNDS}), m AS (${MOVEMENTS}),
     cs AS (SELECT session_id, sum(applied) AS total FROM s WHERE method = 'CASH' GROUP BY session_id),
     cr AS (SELECT r.session_id, sum(r.total) AS total FROM r JOIN s ON s.sale_id = r.sale_id WHERE s.method = 'CASH' GROUP BY r.session_id),
-    mv AS (SELECT session_id, sum(CASE WHEN action = 'cash.deposit' THEN amount ELSE -amount END) AS net FROM m GROUP BY session_id)
+    mv AS (SELECT session_id, sum(CASE WHEN kind = 'DEPOSIT' THEN amount ELSE -amount END) AS net FROM m GROUP BY session_id)
     SELECT c.p->>'id' AS id, c.branch_id, COALESCE(t.name, 'Caja') AS terminal,
       c.p->>'opened_utc' AS opened_at, c.p->>'closed_utc' AS closed_at, c.p->>'state' AS state,
       (c.p->>'opening_cents')::bigint AS opening, cs.total AS cash_sales, cr.total AS cash_refunds, mv.net AS movements,
