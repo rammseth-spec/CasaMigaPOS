@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseRange } from '../lib/panel.ts';
-import * as web from '../lib/web.ts';
-import { handle } from '../lib/router.ts';
-import { issueSession, login } from '../lib/auth.ts';
-import { caja1, caja2, centro, database, norte, permissions, sale, seedSales, send, user } from './helpers.ts';
+import { parseRange } from '../lib/panel.js';
+import * as web from '../lib/web.js';
+import { handle } from '../lib/router.js';
+import { issueSession, login } from '../lib/auth.js';
+import { caja1, caja2, centro, database, norte, permissions, sale, seedSales, send, user } from './helpers.js';
 
 const range = (from: string, to: string, branch: string | null = null) =>
   ({ ...parseRange(new URL(`https://x/?from=${from}&to=${to}`)), branchId: branch });
@@ -23,6 +23,10 @@ test('sales list searches by folio or product and the detail shows items, paymen
   assert.deepEqual([all.items[0].id, all.items[0].folio], ['s5', 'C01-000005'], 'Newest first.');
   const byFolio = await web.salesList(q, { ...range('2026-10-06', '2026-10-07', centro), search: 'C01-000003', method: null, page: 0 });
   assert.deepEqual(byFolio.items.map(s => s.id), ['s3']);
+  const otherTill = await web.salesList(q, { ...range('2026-10-06', '2026-10-07'), search: 'C02-000001', method: null, page: 0 });
+  assert.deepEqual([otherTill.total, otherTill.items.map(s => s.id)], [1, ['n1']], 'The till code filters in the query, so the count matches.');
+  const noTill = await web.salesList(q, { ...range('2026-10-06', '2026-10-07'), search: 'C07-000001', method: null, page: 0 });
+  assert.equal(noTill.total, 0);
   const byProduct = await web.salesList(q, { ...range('2026-10-06', '2026-10-07'), search: 'boli', method: null, page: 0 });
   assert.deepEqual(byProduct.items.map(s => s.id), ['s4']);
   const cards = await web.salesList(q, { ...range('2026-10-06', '2026-10-07'), search: '', method: 'CARD', page: 0 });
@@ -31,6 +35,12 @@ test('sales list searches by folio or product and the detail shows items, paymen
   assert.equal(s1.refunded, 1900); assert.equal(s1.cashier, 'admin (Administrator)'); assert.equal(s1.pieces, 2);
 
   await assert.rejects(web.saleDetail(q, null, 's1'), /inválida/, 'Only UUIDs.');
+});
+
+test('cash totals come from the database, not from the truncated lists', async () => {
+  const { q } = await database(); await seedSales(q);
+  const totals = await web.cashTotals(q, range('2026-10-06', '2026-10-07', centro));
+  assert.deepEqual(totals, { sessions: 2, open: 1, expenses: { count: 1, amount: 4550 }, withdrawals: { count: 0, amount: 0 }, deposits: { count: 1, amount: 10000 } });
 });
 
 test('reports: comparison, hours, cash control and production suggestion', async () => {
@@ -111,7 +121,11 @@ test('router: cashier cannot enter, manager sees own branch only, admin sees all
   assert.equal((await call('dashboard', 'basura')).status, 401);
   assert.equal((await handle(q, new Request('https://x/api/web/me'), 'me', {})).status, 503, 'Without SESSION_SECRET the web stays closed.');
 
-  const loginResponse = await handle(q, new Request('https://x/api/web/login', { method: 'POST', body: JSON.stringify({ username: 'ana', password: 'Ana#2026centro' }) }), 'login', env);
+  const post = (headers: Record<string, string>) => handle(q, new Request('https://x/api/web/login', { method: 'POST', headers, body: JSON.stringify({ username: 'ana', password: 'Ana#2026centro' }) }), 'login', env);
+  assert.equal((await post({ 'content-type': 'application/json', origin: 'https://evil.example' })).status, 403, 'Another site cannot post.');
+  assert.equal((await post({ 'content-type': 'application/json', 'sec-fetch-site': 'cross-site' })).status, 403);
+  assert.equal((await post({ 'content-type': 'text/plain' })).status, 415, 'Plain form posts are refused.');
+  const loginResponse = await post({ 'content-type': 'application/json', origin: 'https://x', 'sec-fetch-site': 'same-origin' });
   assert.equal(loginResponse.status, 200);
   assert.match(loginResponse.headers.get('set-cookie') ?? '', /cm_web=.+; Path=\/; HttpOnly; Secure; SameSite=Strict/);
 });

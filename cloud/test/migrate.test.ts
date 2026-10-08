@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { PGlite } from '@electric-sql/pglite';
-import { migrate, migrations } from '../lib/migrate.ts';
-import { session } from './helpers.ts';
+import { migrate, migrations } from '../lib/migrate.js';
+import { session } from './helpers.js';
 
 test('fresh database gets every migration once, in order', async () => {
   const db = new PGlite(); const s = session(db);

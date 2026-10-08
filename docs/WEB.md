@@ -15,7 +15,8 @@ Decisiones del usuario (07/10/2026): consultar todo lo que se ve en la caja; edi
 ## Acceso
 
 - Usuario y contraseña de la caja. La nube compara contra el hash PBKDF2-SHA512 (210 000 iteraciones, formato de ASP.NET Identity V3) que subió la caja; la contraseña nunca se guarda ni se muestra en la web.
-- Cinco intentos fallidos bloquean ese usuario 15 minutos en la web (la caja no se afecta).
+- Cinco intentos fallidos bloquean ese usuario 15 minutos en la web (la caja no se afecta). Cada intento se cuenta antes de revisar la contraseña, así que muchos intentos simultáneos tampoco pasan de cinco.
+- Los envíos (entrar, cambios) sólo se aceptan desde la propia página (origen y `application/json`); la cookie además es `SameSite=Strict`.
 - Con contraseña temporal no se entra: primero se cambia en la caja.
 - Sesión: cookie firmada (HttpOnly, Secure, SameSite=Strict) de 12 h. Cada consulta revalida al usuario contra lo último que subió la caja: si se desactiva, pierde el permiso o cambia su contraseña, la sesión termina.
 - Alcance: el administrador ve todas las sucursales; el encargado, la suya; el cajero (sin `sales.view`) no entra. Cada pantalla pide el mismo permiso que en la caja.
@@ -36,7 +37,7 @@ Responsiva: menú lateral en computadora, riel de íconos en tablet (≤1100 px)
 | Usuario: alta, nombre/rol, activar, restablecer contraseña | `users.manage` (administrador) | `CreateUserWithHash` / `UpdateUser` / `SetActive` / `ResetPasswordWithHash`; la contraseña temporal la genera la nube, se muestra una vez y debe cambiarse al entrar. El administrador no se edita desde la web. |
 | Tienda de charolas y charola habitual | `consignment.manage` | `SaveStore` / `SetStoreActive` / `SaveTemplate` |
 
-La caja actúa como quien pidió el cambio si ese usuario existe en ella (con sus permisos locales); si no (por ejemplo, el administrador de otra sucursal), como el administrador local. Un cambio que las reglas de la caja rechazan queda «Rechazado» con el motivo en Cajas → Cambios; un error inesperado se reintenta en la siguiente sincronización.
+La caja actúa como quien pidió el cambio si ese usuario existe en ella (con sus permisos locales); si existe pero está desactivado, lo rechaza; si no existe (por ejemplo, el administrador de otra sucursal), actúa como el administrador local. La caja relee los últimos 20 cambios en cada sincronización, porque dos guardados simultáneos en la web pueden hacerse visibles fuera de orden; los ya aplicados no se repiten. Un cambio que las reglas de la caja rechazan queda «Rechazado» con el motivo en Cajas → Cambios; un error inesperado se reintenta en la siguiente sincronización.
 
 ## Publicar
 
@@ -45,10 +46,15 @@ Ver [SYNC_PLAN.md](SYNC_PLAN.md#publicar-en-vercel). Variables: `DATABASE_URL` (
 Revisión local sin Neon ni Vercel:
 
 1. `CasaMiga.Maintenance export-sync <copia de datos> <archivo.json>` (aplica las migraciones a esa copia y vuelca su cola sin marcar nada como enviado).
-2. `node scripts/dev-web.ts <archivo.json>` desde `cloud/` y abrir `http://localhost:4173`.
+2. Desde `cloud/`: `npm run dev:web -- <archivo.json>` y abrir `http://localhost:4173`. Con `ENROLLMENT_SECRET` definido, una copia de la app puede registrarse contra `http://localhost:4173` y probar el ciclo completo (subir, ver, editar en la web, aplicar en la caja).
+
+El código de la nube es TypeScript con importaciones `.js` (estilo NodeNext): Vercel lo compila al publicar; localmente las pruebas y el servidor corren con `tsx`.
 
 ## Pendiente
 
 - Varias cajas en una sucursal comparten sucursal pero no catálogo: cada una tiene su base; los cambios de la web llegan a todas, pero altas hechas en una caja no bajan a las demás (fase 4 completa).
 - Inventario, recetas y producción: sólo consulta.
 - Fotos: se ven, no se cambian desde la web.
+- El administrador de cualquier sucursal entra como administrador de todas (decisión «un solo administrador», SYNC_PLAN). Con varias sucursales conviene que sea la misma persona.
+- Si dos personas guardan el mismo producto en la web en el mismo instante, puede quedar el primero de los dos guardados (caso extremo; se corrige guardando otra vez).
+- Estado más reciente: dentro de una misma caja manda el orden de su cola (aunque su reloj se atrase); entre cajas distintas, la hora en que se encoló.

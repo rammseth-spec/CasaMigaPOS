@@ -80,6 +80,12 @@ public sealed class CloudCommandTests : SalesFixture
         var category = (string)Sql("SELECT id FROM category WHERE name='Salado'")!;
         Assert.AreEqual(ana.ToString(), Sql($"SELECT actor_id FROM audit_entry WHERE action='category.create' AND entity_id='{category}'"));
 
+        // Desactivado aquí después de pedir el cambio: se rechaza, nunca se aplica como administrador.
+        identity.SetActive(ana, false);
+        var inactive = Commands.Apply(Command("category.save", new() { ["id"] = Guid.NewGuid().ToString(), ["name"] = "Sin permiso", ["description"] = "", ["sortOrder"] = 3 }, ana));
+        Assert.AreEqual("rejected", inactive.Status);
+        Assert.AreEqual(0L, Convert.ToInt64(Sql("SELECT count(*) FROM category WHERE name='Sin permiso'")));
+
         // El administrador de otra sucursal no existe aquí: actúa el administrador local.
         Ok(Commands.Apply(Command("category.save", new() { ["id"] = category, ["name"] = "Pan salado", ["description"] = "", ["sortOrder"] = 2, ["active"] = false }, Guid.NewGuid())));
         Assert.AreEqual("Pan salado", work.Run(s => s.FindCategory(Guid.Parse(category)))!.Name);
@@ -111,6 +117,25 @@ public sealed class CloudCommandTests : SalesFixture
         public Task<IReadOnlyList<CloudCommand>> PullCommandsAsync(Uri api, string terminalKey, long after, CancellationToken cancel) =>
             Task.FromResult<IReadOnlyList<CloudCommand>>(Pending.Where(c => c.Sequence > after).ToList());
         public Task ReportCommandsAsync(Uri api, string terminalKey, IReadOnlyList<CloudCommandResult> results, CancellationToken cancel) { Reported.AddRange(results); return Task.CompletedTask; }
+    }
+
+    [TestMethod]
+    public async Task ChangesThatBecomeVisibleOutOfOrderAreNotSkipped()
+    {
+        var transport = new Transport();
+        var engine = new SyncEngine(new SqliteSyncOutbox(db), transport, directory, commands: Commands);
+        await engine.RegisterAsync("https://sync.example.test/", "secreto-correcto", "Centro", terminal.Id, terminal.Name);
+        CloudCommand Price(long seq, long cents) => new(Guid.NewGuid(), seq, "product.save",
+            new() { ["id"] = product.Id.ToString(), ["categoryId"] = product.CategoryId.ToString(), ["sku"] = null, ["name"] = "Concha", ["description"] = "", ["priceCents"] = cents, ["trackInventory"] = true },
+            user.Current!.Id, "Web");
+        // Dos guardados simultáneos en la web: el 42 se ve antes que el 41.
+        transport.Pending.Add(Price(42, 2600));
+        await engine.RunOnceAsync();
+        transport.Pending.Add(Price(41, 2500));
+        await engine.RunOnceAsync();
+        CollectionAssert.AreEqual(new long[] { 42, 41 }, transport.Reported.Select(r => r.Sequence).ToArray(), "41 is applied late; 42 is not applied or reported twice.");
+        Assert.AreEqual(2L, Convert.ToInt64(Sql("SELECT count(*) FROM cloud_command")));
+        Assert.AreEqual(42L, Commands.LastSequence());
     }
 
     [TestMethod]

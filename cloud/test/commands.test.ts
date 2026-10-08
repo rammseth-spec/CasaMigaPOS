@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { ProtocolError } from '../lib/protocol.ts';
-import { login, verifyIdentityHash } from '../lib/auth.ts';
-import { createCommand, listCommands, pendingFor, recordResults } from '../lib/commands.ts';
-import { caja1, caja2, centro, database, norte, permissions, send, user } from './helpers.ts';
+import { ProtocolError } from '../lib/protocol.js';
+import { login, verifyIdentityHash } from '../lib/auth.js';
+import { createCommand, listCommands, pendingFor, recordResults } from '../lib/commands.js';
+import { caja1, caja2, centro, database, norte, permissions, send, user } from './helpers.js';
 
 const status = (code: number) => (e: unknown) => e instanceof ProtocolError && e.status === code;
 const category = 'c1000000-0000-4000-8000-000000000001';

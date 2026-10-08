@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { bearer, MAX_BATCH, newTerminalKey, parseBatch, parseRegistration, ProtocolError, reconcile, secretMatches, sha256Hex } from '../lib/protocol.ts';
+import { bearer, MAX_BATCH, newTerminalKey, parseBatch, parseRegistration, ProtocolError, reconcile, secretMatches, sha256Hex } from '../lib/protocol.js';
 
 const branchId = '7f9c2b1e-3d4a-4c5b-8e6f-112233445566';
 const entry = (seq: number, extra: Record<string, unknown> = {}) =>

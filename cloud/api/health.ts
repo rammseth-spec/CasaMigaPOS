@@ -1,5 +1,5 @@
-import { ensureSchema, sql } from '../lib/db.ts';
-import { failure, json } from '../lib/protocol.ts';
+import { ensureSchema, sql } from '../lib/db.js';
+import { failure, json } from '../lib/protocol.js';
 
 export async function GET(): Promise<Response> {
   try {

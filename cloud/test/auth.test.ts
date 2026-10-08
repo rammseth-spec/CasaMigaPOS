@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ProtocolError } from '../lib/protocol.ts';
-import { identityHash, issueSession, login, readSession, requireUser, scopeBranch, temporaryPassword, verifyIdentityHash, MAX_FAILURES } from '../lib/auth.ts';
-import { caja1, caja2, centro, database, norte, permissions, user } from './helpers.ts';
+import { ProtocolError } from '../lib/protocol.js';
+import { identityHash, issueSession, login, readSession, requireUser, scopeBranch, temporaryPassword, verifyIdentityHash, MAX_FAILURES } from '../lib/auth.js';
+import { caja1, caja2, centro, database, norte, permissions, user } from './helpers.js';
 
 const SECRET = 'x'.repeat(40);
 const admin = 'a0000000-0000-4000-8000-000000000001';
@@ -65,6 +65,16 @@ test('five failures lock the user in the web for fifteen minutes; success resets
   assert.equal(later.id, admin);
 });
 
+test('simultaneous guesses are counted before checking the password: at most five get through', async () => {
+  const q = await seeded();
+  const now = new Date('2026-10-07T12:00:00Z');
+  const results = await Promise.allSettled(Array.from({ length: 20 }, () => login(q, 'admin', 'mal', now)));
+  const status = (r: PromiseSettledResult<unknown>) => (r.status === 'rejected' ? (r.reason as ProtocolError).status : 200);
+  assert.ok(results.filter(r => status(r) === 401).length <= 5, 'At most five password checks.');
+  assert.ok(results.filter(r => status(r) === 429).length >= 15);
+  await assert.rejects(login(q, 'admin', 'Admin#2026centro', now), (e: unknown) => e instanceof ProtocolError && e.status === 429);
+});
+
 test('session cookie is signed and revalidated against the latest synced user', async () => {
   const q = await seeded();
   const ana = await login(q, 'ana', 'Ana#2026centro');
@@ -93,4 +103,6 @@ test('managers only reach their branch; the administrator reaches all', async ()
   const boss = await login(q, 'admin', 'Admin#2026centro');
   assert.equal(scopeBranch(boss, null), null);
   assert.equal(scopeBranch(boss, norte), norte);
+  assert.equal(scopeBranch(boss, norte.toUpperCase()), norte);
+  assert.throws(() => scopeBranch(boss, "x' OR 1=1"), status(400));
 });

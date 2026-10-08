@@ -244,10 +244,17 @@ public sealed class SyncEngine(SqliteSyncOutbox outbox, ISyncTransport transport
         await ReportAsync(settings, key, cancel);
         while (true)
         {
-            var pulled = await transport.PullCommandsAsync(settings.ApiUrl, key, commands!.LastSequence(), cancel);
-            foreach (var command in pulled.OrderBy(c => c.Sequence)) changed |= commands.Apply(command).Applied;
+            var before = commands!.LastSequence();
+            var pulled = await transport.PullCommandsAsync(settings.ApiUrl, key, commands.PullCursor(), cancel);
+            foreach (var command in pulled.OrderBy(c => c.Sequence))
+            {
+                var known = commands.IsKnown(command.Id);
+                var result = commands.Apply(command);
+                changed |= !known && result.Applied;
+            }
             await ReportAsync(settings, key, cancel);
-            if (pulled.Count < 50) return changed;
+            // Un lote lleno puede traer más; si el cursor no avanzó, ya no hay nada nuevo (evita repetir el mismo tramo).
+            if (pulled.Count < 50 || commands.LastSequence() == before) return changed;
         }
     }
 

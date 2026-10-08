@@ -1,5 +1,5 @@
 import { neon, Pool } from '@neondatabase/serverless';
-import { migrate } from './migrate.ts';
+import { migrate } from './migrate.js';
 
 function url(): string {
   const value = process.env.DATABASE_URL;

@@ -1,5 +1,5 @@
 // Resumen de la versión web (docs/WEB.md): sólo lectura sobre entity_state, el último contenido de cada registro.
-import { ProtocolError } from './protocol.ts';
+import { ProtocolError } from './protocol.js';
 
 export type Row = Record<string, unknown>;
 /** Ejecuta SQL con parámetros posicionales ($1, $2…). En producción es Neon; en pruebas, PGlite. */
@@ -149,10 +149,20 @@ export async function branches(q: Query): Promise<{ id: string; name: string }[]
   return (await q('SELECT id, name FROM branch ORDER BY name', [])).map(x => ({ id: String(x.id), name: String(x.name) }));
 }
 
+/** Faltantes y sobrantes de todos los cortes cerrados que abrieron en el periodo. */
+export async function cashDifferences(q: Query, r: Range) {
+  const [row] = await q(`SELECT COALESCE(sum(LEAST((payload->>'difference_cents')::bigint, 0)), 0) AS shortages,
+      COALESCE(sum(GREATEST((payload->>'difference_cents')::bigint, 0)), 0) AS overages
+    FROM entity_state WHERE entity = 'cash_session' AND NOT deleted AND payload->>'state' = 'CLOSED'
+      AND (((payload->>'opened_utc')::timestamptz AT TIME ZONE $1)::date) BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR branch_id = $4::uuid)`,
+    [r.timeZone, r.from, r.to, r.branchId]);
+  return { shortages: n(row.shortages), overages: n(row.overages) };
+}
+
 /** Todo lo que muestra el panel para un periodo, en una sola respuesta. */
 export async function dashboard(q: Query, r: Range) {
-  const [days, refundMethods, products, cortes, terminalRows, branchRows] = await Promise.all([
-    salesByDay(q, r), refundsByMethod(q, r), topProducts(q, r), sessions(q, r), terminals(q, r.branchId), branches(q),
+  const [days, refundMethods, products, cortes, terminalRows, branchRows, differences] = await Promise.all([
+    salesByDay(q, r), refundsByMethod(q, r), topProducts(q, r), sessions(q, r), terminals(q, r.branchId), branches(q), cashDifferences(q, r),
   ]);
   const sum = (f: (d: DayRow) => number) => days.reduce((a, d) => a + f(d), 0);
   const totals = {
@@ -163,8 +173,8 @@ export async function dashboard(q: Query, r: Range) {
       card: sum(d => d.card) - refundMethods.card,
       transfer: sum(d => d.transfer) - refundMethods.transfer,
     },
-    shortages: cortes.reduce((a, c) => a + (c.difference !== null && c.difference < 0 ? c.difference : 0), 0),
-    overages: cortes.reduce((a, c) => a + (c.difference !== null && c.difference > 0 ? c.difference : 0), 0),
+    // De todos los cortes del periodo (la lista de cortes se recorta a 300).
+    shortages: differences.shortages, overages: differences.overages,
   };
   return { range: r, branches: branchRows, days, totals, products, sessions: cortes, terminals: terminalRows };
 }

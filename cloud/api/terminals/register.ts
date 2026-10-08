@@ -1,6 +1,6 @@
-import { ensureSchema, query } from '../../lib/db.ts';
-import { failure } from '../../lib/protocol.ts';
-import { handleTerminal } from '../../lib/terminal.ts';
+import { ensureSchema, query } from '../../lib/db.js';
+import { failure } from '../../lib/protocol.js';
+import { handleTerminal } from '../../lib/terminal.js';
 
 /** Alta o reinstalación de una caja con el secreto de alta (lib/terminal.ts). */
 export async function POST(request: Request): Promise<Response> {

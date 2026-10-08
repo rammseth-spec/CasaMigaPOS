@@ -18,9 +18,17 @@ public sealed record CloudCommandResult(Guid Id, long Sequence, string Status, s
 /// </summary>
 public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock, Guid terminalId, TimeZoneInfo timeZone)
 {
+    /// <summary>
+    /// Desde dónde pedir cambios. Se relee un tramo ya aplicado porque dos cambios simultáneos en la web pueden hacerse visibles
+    /// fuera de orden (el 42 antes que el 41); los ya aplicados se reconocen por su identificador y no se repiten.
+    /// </summary>
+    public const long Overlap = 20;
     public long LastSequence() => database.Run(store => store.LastCloudCommandSequence());
+    public long PullCursor() => Math.Max(0, LastSequence() - Overlap);
     public IReadOnlyList<CloudCommandResult> Unreported() => database.Run(store => store.UnreportedCloudCommands());
     public void MarkReported(IReadOnlyCollection<Guid> ids) => database.Run(store => { store.MarkCloudCommandsReported(ids, clock.UtcNow); return true; });
+
+    public bool IsKnown(Guid id) => database.Run(store => store.FindCloudCommand(id)) is not null;
 
     public CloudCommandResult Apply(CloudCommand command)
     {
@@ -42,9 +50,10 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
         return result;
     }
 
+    /// <summary>Quien pidió el cambio si existe aquí; si existe pero está desactivado, nadie (se rechaza); si no existe, el administrador local.</summary>
     private static LocalUser? Actor(ILocalStore store, Guid requestedBy)
     {
-        if (store.FindUser(requestedBy) is { Active: true } same) return same;
+        if (store.FindUser(requestedBy) is { } same) return same.Active ? same : null;
         return store.ListUsers().FirstOrDefault(u => u.Role == "Administrator" && u.Active) is { } admin ? store.FindUser(admin.Id) : null;
     }
 
