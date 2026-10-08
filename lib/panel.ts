@@ -135,14 +135,14 @@ export async function sessions(q: Query, r: Range): Promise<SessionRow[]> {
   });
 }
 
-export interface TerminalRow { id: string; branchId: string; name: string; registeredAt: string; lastSeenAt: string | null; revoked: boolean }
+export interface TerminalRow { id: string; branchId: string; name: string; registeredAt: string; lastSeenAt: string | null; revoked: boolean; web: boolean }
 
 export async function terminals(q: Query, branchId: string | null): Promise<TerminalRow[]> {
-  const rows = await q(`SELECT id, branch_id, name, registered_at, last_seen_at, revoked_at FROM terminal
+  const rows = await q(`SELECT id, branch_id, name, registered_at, last_seen_at, revoked_at, kind FROM terminal
     WHERE ($1::uuid IS NULL OR branch_id = $1::uuid) ORDER BY name`, [branchId]);
   const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : String(v));
   return rows.map(x => ({ id: String(x.id), branchId: String(x.branch_id), name: String(x.name), registeredAt: iso(x.registered_at),
-    lastSeenAt: x.last_seen_at ? iso(x.last_seen_at) : null, revoked: x.revoked_at !== null && x.revoked_at !== undefined }));
+    lastSeenAt: x.last_seen_at ? iso(x.last_seen_at) : null, revoked: x.revoked_at !== null && x.revoked_at !== undefined, web: x.kind === 'web' }));
 }
 
 export async function branches(q: Query): Promise<{ id: string; name: string }[]> {

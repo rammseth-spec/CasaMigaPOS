@@ -3,6 +3,7 @@
 Versión web de Casa Miga POS: consulta y algunos cambios desde la computadora, el celular o la tablet. Las cajas (app de escritorio CasaMigaPOS) siguen vendiendo sin Internet y sincronizan con esta nube cada 60 segundos.
 
 - **Web responsiva**: menú lateral en computadora, riel de íconos en tablet, menú desplegable y tarjetas en celular.
+- **Vender**: punto de venta en el navegador (Mac, iPad, celular) con cajas web, fotos, cobro, ticket y corte; el cajero entra sólo aquí. Ver `docs/POS_WEB.md` del repositorio principal.
 - **Pantallas**: Resumen, Ventas (ticket), Reportes, Caja, Charolas (incluida la **Ruta** para registrar entregas, recolecciones y cobros desde el celular), Catálogo con fotos, Inventario, Recetas, Producción, Usuarios y Cajas.
 - **Acceso**: usuario y contraseña de la caja. Administrador: todas las sucursales; encargado: la suya; cajero: no entra.
 - **Cambios** (precios, productos, categorías, usuarios, tiendas, ruta): se validan aquí y cada caja los aplica con sus propias reglas.

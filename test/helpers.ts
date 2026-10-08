@@ -44,12 +44,17 @@ export function sale(id: string, session: string, at: string, method: string, it
   };
 }
 
+// Como en la caja (migraciones 001–022): el cajero vende y abre caja, pero no ve reportes ni hace el corte.
+const SELL = ['pos.use', 'sales.complete', 'cash.open'];
+const CLOSE = ['cash.close', 'cash.close.other'];
 export const PERMISSIONS: Record<string, string[]> = {
   Administrator: ['sales.view', 'cash.view', 'catalog.view', 'consignment.view', 'consignment.manage', 'inventory.view', 'recipe.view', 'production.view', 'users.manage',
-    'products.create', 'products.edit', 'products.deactivate', 'categories.create', 'categories.edit', 'categories.deactivate'],
+    'products.create', 'products.edit', 'products.deactivate', 'categories.create', 'categories.edit', 'categories.deactivate', ...SELL, ...CLOSE],
   Manager: ['sales.view', 'cash.view', 'catalog.view', 'consignment.view', 'consignment.manage', 'inventory.view', 'recipe.view', 'production.view',
-    'products.create', 'products.edit', 'products.deactivate', 'categories.create', 'categories.edit', 'categories.deactivate'],
-  Cashier: ['cash.view', 'catalog.view', 'pos.use'],
+    'products.create', 'products.edit', 'products.deactivate', 'categories.create', 'categories.edit', 'categories.deactivate', ...SELL, ...CLOSE],
+  Cashier: ['cash.view', 'catalog.view', 'cash.movement', ...SELL],
+  // Rol sin venta ni consulta (por ejemplo, uno futuro de sólo inventario): no entra a la web.
+  Stock: ['inventory.view'],
 };
 
 export async function permissions(q: Query, terminal: string, branch: string) {
