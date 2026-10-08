@@ -1,7 +1,9 @@
 // Pantallas de Casa Miga en línea. Cada una pide sus datos a /api/web/<op> y dibuja con h() (sin HTML en texto).
 import { api, at, bars, can, card, command, dateLong, dayLabel, dialog, field, fmt, h, METHOD, pesos, quantity, range, render, ROLE, state, table, time, toast } from './app.js';
+import { vender } from './pos.js';
 
 const I = {
+  pos: ['M6 8h12l-1 12H7z', 'M9 8V6a3 3 0 0 1 6 0v2'],
   home: ['M3 11.5 12 4l9 7.5', 'M5.5 10v10h13V10'], sales: ['M6 3h12v18l-3-2-3 2-3-2-3 2z', 'M9 8h6', 'M9 12h6'],
   reports: ['M4 20V11', 'M10 20V5', 'M16 20v-7', 'M21 20H3'], cash: ['M3 7h18v12H3z', 'M16 13h2', 'M3 7l2-3h12l2 3'],
   trays: ['M3 14h18', 'M5 14l2 5h10l2-5', 'M8 10c0-3.5 8-3.5 8 0'], catalog: ['M4 4h7v7H4z', 'M13 4h7v7h-7z', 'M4 13h7v7H4z', 'M13 13h7v7h-7z'],
@@ -60,7 +62,7 @@ function terminalsList(terminals) {
   if (!terminals.length) return h('p', { class: 'empty', text: 'Ninguna caja registrada. Regístrala desde la pantalla Nube de la app.' });
   return h('ul', { class: 'rows' }, terminals.map(t => {
     const recent = t.lastSeenAt && Date.now() - new Date(t.lastSeenAt).getTime() < 30 * 60000;
-    return h('li', {}, h('div', {}, h('strong', { text: t.name }), h('small', { class: 'muted', text: ' ' + branchName(t.branchId) })),
+    return h('li', {}, h('div', {}, h('strong', { text: t.name }), t.web ? h('span', { class: 'pill info', text: 'Caja web', style: { marginLeft: '6px' } }) : null, h('small', { class: 'muted', text: ' ' + branchName(t.branchId) })),
       h('span', { class: 'pill ' + (t.revoked ? 'bad' : recent ? 'ok' : ''), text: t.revoked ? 'Dada de baja' : recent ? 'Conectada' : 'Sin conexión reciente' }),
       h('span', { class: 'muted small', text: t.lastSeenAt ? at(t.lastSeenAt) : 'Nunca' }));
   }));
@@ -659,10 +661,13 @@ async function respaldos() {
 }
 
 export const VIEWS = [
+  // Sin actualización automática: no debe redibujarse mientras se arma una venta.
+  { id: 'vender', title: 'Vender', subtitle: 'Punto de venta: selecciona productos, revisa el ticket y cobra', icon: I.pos, permission: 'pos.use', usesRange: false, manual: true, render: vender },
   { id: 'resumen', title: 'Resumen', icon: I.home, permission: 'sales.view', usesRange: true, render: resumen },
   { id: 'ventas', title: 'Ventas', subtitle: 'Toca una venta para ver su ticket', icon: I.sales, permission: 'sales.view', usesRange: true, render: ventas },
   { id: 'reportes', title: 'Reportes', icon: I.reports, permission: 'sales.view', usesRange: true, render: reportes },
-  { id: 'caja', title: 'Caja', subtitle: 'Cortes, gastos, retiros y entradas', icon: I.cash, permission: 'cash.view', usesRange: true, render: caja },
+  // Muestra el esperado del turno abierto: no para el cajero (conteo ciego).
+  { id: 'caja', title: 'Caja', subtitle: 'Cortes, gastos, retiros y entradas', icon: I.cash, permission: 'sales.view', usesRange: true, render: caja },
   { id: 'charolas', title: 'Charolas', icon: I.trays, permission: 'consignment.view', usesRange: true, render: charolas },
   { id: 'catalogo', title: 'Catálogo', icon: I.catalog, permission: 'catalog.view', usesRange: false, render: catalogo },
   { id: 'inventario', title: 'Inventario', icon: I.inventory, permission: 'inventory.view', usesRange: false, render: inventario },

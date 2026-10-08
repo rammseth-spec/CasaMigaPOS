@@ -10,8 +10,9 @@ export const COOKIE = 'cm_web';
 export const SESSION_HOURS = 12;
 export const MAX_FAILURES = 5;
 export const LOCK_MINUTES = 15;
-/** Lo mínimo para entrar a la web: el cajero no lo tiene. */
-export const WEB_PERMISSION = 'sales.view';
+/** Para entrar a la web: consultar ventas (administrador, encargado) o vender (cajero, sólo el punto de venta). */
+export const WEB_PERMISSIONS = ['sales.view', 'pos.use'] as const;
+export const canUseWeb = (permissions: Set<string>) => WEB_PERMISSIONS.some(p => permissions.has(p));
 
 // ---------- Hash de ASP.NET Identity V3 (el mismo de la caja) ----------
 
@@ -113,7 +114,7 @@ export async function login(q: Query, username: unknown, password: unknown, now 
   if (Number((match.payload as Row).must_change_password) === 1)
     throw new ProtocolError('Tu contraseña es temporal: cámbiala primero en la caja.', 403);
   const user = await toUser(q, match);
-  if (!user.permissions.has(WEB_PERMISSION)) throw new ProtocolError('Tu usuario no tiene acceso a la versión web.', 403);
+  if (!canUseWeb(user.permissions)) throw new ProtocolError('Tu usuario no tiene acceso a la versión web.', 403);
   return user;
 }
 
@@ -161,7 +162,7 @@ export async function requireUser(q: Query, request: Request, secret: string): P
     [session.branchId, session.userId]);
   if (!row || Number((row.payload as Row).active) !== 1) throw new ProtocolError('Inicia sesión', 401);
   const user = await toUser(q, row);
-  if (user.fingerprint !== session.fingerprint || !user.permissions.has(WEB_PERMISSION)) throw new ProtocolError('Inicia sesión', 401);
+  if (user.fingerprint !== session.fingerprint || !canUseWeb(user.permissions)) throw new ProtocolError('Inicia sesión', 401);
   return user;
 }
 

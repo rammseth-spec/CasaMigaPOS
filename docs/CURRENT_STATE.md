@@ -1,3 +1,16 @@
+# Punto de venta en la web, fase 1 — 08/10/2026
+
+**Implementado y probado en local.** Ver [POS_WEB.md](POS_WEB.md).
+
+- Decisión del usuario: POS web completo (vender y cobrar desde Mac, iPad o celular), por fases.
+- **Cajas web** (migración de la nube 004): cada una con turno, fondo y folios propios (`CAJA-WEB-02` → `C02-000001`); el administrador las crea en Vender.
+- **Vender** igual que en la app: categorías, buscador, fotos, ticket con − / +, cobro en efectivo (cambio y atajos), tarjeta o transferencia (exacto, referencia), ticket en pantalla e impresión del navegador; **corte** con conteo ciego y cierre.
+- Reglas de la caja en la nube, una sentencia por operación: precio del catálogo vigente, productos y categorías activos, identificador de cobro (reintentar no duplica), sin ventas después del conteo, folios sin repetir con dos dispositivos.
+- Las ventas y turnos web se guardan con el formato de la caja de escritorio: Resumen, Ventas, Reportes, Ganancia y Caja los cuentan igual.
+- El cajero ya entra a la web, sólo a Vender (y Catálogo de consulta). Caja en la web pide `sales.view`: muestra el esperado del turno abierto y el conteo es ciego.
+- Prueba en el navegador con la demo: cajera Ana abrió turno con $500, vendió C02-000001 en efectivo ($42, cambio $58) y C02-000002 con tarjeta ($40, ref. 4601); el encargado contó $540 → esperado $542, diferencia −$2, y cerró. Resumen y Ventas los muestran. Computadora, tableta y celular sin desbordes. Pruebas de la nube 42/42.
+- Pendiente (siguientes fases): devoluciones y cancelaciones, gastos/retiros/entradas, reimpresión y descuento de inventario desde la web.
+
 # Ganancia desde recetas y análisis de charolas — 08/10/2026
 
 **Implementado y probado en local.** Ver [PROFIT.md](PROFIT.md).

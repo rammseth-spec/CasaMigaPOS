@@ -77,13 +77,13 @@ export function toast(message) {
   const node = h('div', { class: 'toast', role: 'status', text: message });
   document.body.append(node); setTimeout(() => node.remove(), 4200);
 }
-export function dialog(title, build, { submit = 'Guardar', onSubmit, wide = false } = {}) {
+export function dialog(title, build, { submit = 'Guardar', onSubmit, wide = false, cancel = 'Cancelar' } = {}) {
   const error = h('p', { class: 'error', role: 'alert' });
   const body = h('div', { class: 'form-grid' });
   const form = h('form', { method: 'dialog', novalidate: true },
     h('header', {}, h('h2', { text: title }), h('button', { type: 'button', class: 'icon ghost', 'aria-label': 'Cerrar', onclick: () => close() }, '✕')),
     body, error,
-    onSubmit ? h('footer', {}, h('button', { type: 'button', onclick: () => close() }, 'Cancelar'), h('button', { type: 'submit', class: 'primary' }, submit)) : null);
+    onSubmit ? h('footer', {}, cancel ? h('button', { type: 'button', onclick: () => close() }, cancel) : null, h('button', { type: 'submit', class: 'primary' }, submit)) : null);
   const node = h('dialog', { 'aria-label': title }, form);
   if (wide) node.style.width = 'min(860px, calc(100vw - 32px))';
   const close = () => { node.close(); node.remove(); };
@@ -154,7 +154,7 @@ function choose(period, reload = true) {
 // ---------- Rutas y marco ----------
 function allowed() { return VIEWS.filter(v => !v.permission || can(v.permission)); }
 function current() {
-  const id = location.hash.replace(/^#\/?/, '').split('?')[0] || 'resumen';
+  const id = location.hash.replace(/^#\/?/, '').split('?')[0] || (can('sales.view') ? 'resumen' : 'vender');
   return allowed().find(v => v.id === id) ?? allowed()[0];
 }
 
@@ -208,7 +208,7 @@ const REFRESH_MS = 60_000;
 let lastRefresh = Date.now();
 function autoRefresh() {
   const typing = document.activeElement?.matches?.('#view input, #view select, #view textarea');
-  if (!state.me || document.hidden || typing || document.querySelector('dialog[open]')) return;
+  if (!state.me || document.hidden || typing || document.querySelector('dialog[open]') || state.view?.manual) return;
   lastRefresh = Date.now();
   render({ silent: true });
 }
@@ -233,7 +233,7 @@ async function start() {
   state.me = me; state.branches = me.branches; state.timeZone = me.timeZone;
   $('login').hidden = true; $('app').hidden = false;
   layout(); choose(state.period === 'custom' ? 'today' : state.period, false);
-  if (!location.hash) location.hash = '#/resumen'; else render();
+  if (!location.hash) location.hash = `#/${allowed()[0]?.id ?? 'resumen'}`; else render();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

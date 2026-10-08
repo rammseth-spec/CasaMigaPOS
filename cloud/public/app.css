@@ -169,6 +169,56 @@ th.num, td.num { text-align: right; }
 .product .info .price { font-weight: 700; font-variant-numeric: tabular-nums; }
 .product.off { opacity: .6; }
 
+/* Punto de venta (Vender) */
+.pos { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr) 360px; grid-template-areas: "head head" "catalog ticket"; align-items: start; }
+.pos-head { grid-area: head; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 12px; }
+.pos-head > div:first-child { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pos-catalog { grid-area: catalog; display: grid; gap: 12px; min-width: 0; }
+.pos-chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.pos-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.pos-grid .product { position: relative; touch-action: manipulation; }
+.pos-grid .product:active { transform: scale(.98); }
+.pos-grid .info { gap: 6px; }
+.badge { position: absolute; top: 8px; right: 8px; min-width: 30px; height: 30px; padding: 0 8px; border-radius: 15px; background: var(--primary); color: #fff; font-weight: 700; display: grid; place-items: center; font-variant-numeric: tabular-nums; }
+.pos-ticket { grid-area: ticket; position: sticky; top: calc(var(--top) + 24px); display: grid; gap: 12px; max-height: calc(100dvh - var(--top) - 48px); grid-template-rows: auto minmax(0, 1fr) auto; }
+.pos-ticket > header { margin: 0; align-items: start; }
+.pos-ticket > header span { display: block; }
+.cart { display: grid; overflow-y: auto; min-height: 0; }
+.cart-line { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--line); align-items: start; }
+.cart-line .cart-name { display: grid; } .cart-line small { color: var(--muted); }
+.cart-actions { grid-column: 2 / -1; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cart-actions svg { width: 20px; height: 20px; }
+.cart-empty { display: grid; place-items: center; text-align: center; gap: 4px; padding: 40px 10px; }
+.cart-totals { display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 10px; }
+.cart-totals .line { display: flex; justify-content: space-between; }
+.cart-totals .total strong { font-size: 30px; letter-spacing: -.02em; }
+.cart-totals .pay { min-height: 54px; font-size: 17px; }
+.pic { width: 52px; height: 52px; border-radius: 12px; overflow: hidden; background: var(--surface-2); display: grid; place-items: center; color: var(--faint); font-weight: 700; }
+.pic img { width: 100%; height: 100%; object-fit: cover; }
+.pos-bar-mobile { display: none; }
+.till-list { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.till { display: grid; justify-items: start; gap: 4px; padding: 14px 16px; min-height: 0; text-align: left; }
+.open-shift { display: grid; gap: 12px; max-width: 420px; }
+.change { display: flex; justify-content: space-between; align-items: baseline; font-size: 18px; background: var(--surface-2); border-radius: 12px; padding: 10px 14px; }
+.change strong { font-size: 26px; }
+.pay-cash { display: grid; gap: 10px; }
+.big-change { display: flex; justify-content: space-between; align-items: baseline; background: var(--success-soft); color: var(--success); border-radius: 12px; padding: 12px 16px; margin-bottom: 12px; }
+.big-change strong { font-size: 30px; }
+.receipt { font: 13px/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace; }
+.receipt p { margin: 0; } .receipt .center { text-align: center; }
+.receipt .line { display: flex; justify-content: space-between; gap: 8px; }
+.receipt .total { font-weight: 700; }
+.receipt hr { border: 0; border-top: 1px dashed var(--border); margin: 6px 0; }
+.receipt.on-screen { background: var(--surface-2); border-radius: 12px; padding: 14px; max-width: 360px; margin: 0 auto; }
+#print-area { display: none; }
+@media print {
+  @page { margin: 3mm; }
+  body > *:not(#print-area) { display: none !important; }
+  #print-area { display: block; }
+  #print-area .receipt { width: 72mm; color: #000; font-size: 12px; }
+  #print-area .receipt hr { border-top-color: #000; }
+}
+
 /* Diálogos (hoja inferior en celular) */
 dialog { border: 0; padding: 0; border-radius: 20px; width: min(640px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); box-shadow: 0 20px 60px rgba(42, 30, 21, .25); color: var(--text); }
 dialog::backdrop { background: rgba(42, 30, 21, .35); }
@@ -196,6 +246,18 @@ dialog footer { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: 
   .grid-3 { grid-template-columns: 1fr 1fr; }
   .topbar, .content { padding-left: 20px; padding-right: 20px; }
 }
+
+/* Vender en tableta vertical y celular: el ticket se abre desde una barra fija abajo. */
+@media (max-width: 900px) {
+  .pos { grid-template-columns: 1fr; grid-template-areas: "head" "catalog"; padding-bottom: 76px; }
+  .pos-ticket { display: none; }
+  .pos-bar-mobile { display: flex; gap: 10px; position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -6px 20px rgba(42, 30, 21, .08); }
+  .pos-bar-mobile .cart-open { flex: 1; justify-content: space-between; min-height: 50px; }
+  .pos-bar-mobile .primary { flex: 0 0 40%; min-height: 50px; font-size: 16px; }
+  body:has(.pos-bar-mobile) .toast { bottom: calc(86px + env(safe-area-inset-bottom)); }
+}
+@media (min-width: 721px) and (max-width: 900px) { .pos-bar-mobile { left: var(--rail); } }
 
 /* ---------- Celular: menú desplegable, tarjetas ---------- */
 @media (max-width: 720px) {

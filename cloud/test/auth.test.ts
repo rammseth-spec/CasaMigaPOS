@@ -39,14 +39,17 @@ test('temporary passwords follow the terminal policy', () => {
   }
 });
 
-test('admin and managers sign in with their terminal password; cashiers and temporary passwords cannot', async () => {
+test('admin, managers and cashiers sign in with their terminal password; temporary passwords and roles without sales or POS cannot', async () => {
   const q = await seeded();
   const signed = await login(q, ' Admin ', 'Admin#2026centro');
   assert.equal(signed.admin, true); assert.equal(signed.branchId, centro);
   const ana = await login(q, 'ana', 'Ana#2026norte');
   assert.equal(ana.id, managerNorte, 'Same username in two branches: the password tells which one.');
   assert.equal(ana.admin, false);
-  await assert.rejects(login(q, 'luis', 'Luis#2026centro'), status(403));
+  const luis = await login(q, 'luis', 'Luis#2026centro');
+  assert.equal(luis.permissions.has('sales.view'), false, 'The cashier only gets the point of sale.');
+  await user(q, caja1, centro, 'a0000000-0000-4000-8000-000000000006', 'bodega', 'Stock', 'Bodega#2026');
+  await assert.rejects(login(q, 'bodega', 'Bodega#2026'), status(403));
   await user(q, caja1, centro, 'a0000000-0000-4000-8000-000000000005', 'nuevo', 'Manager', 'Temporal#2026', { must_change_password: 1 });
   await assert.rejects(login(q, 'nuevo', 'Temporal#2026'), /temporal/);
   await assert.rejects(login(q, 'nadie', 'x'), status(401));

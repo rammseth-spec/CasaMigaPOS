@@ -19,11 +19,11 @@ Decisiones del usuario (07/10/2026): consultar todo lo que se ve en la caja; edi
 - Los envíos (entrar, cambios) sólo se aceptan desde la propia página (origen y `application/json`); la cookie además es `SameSite=Strict`.
 - Con contraseña temporal no se entra: primero se cambia en la caja.
 - Sesión: cookie firmada (HttpOnly, Secure, SameSite=Strict) de 12 h. Cada consulta revalida al usuario contra lo último que subió la caja: si se desactiva, pierde el permiso o cambia su contraseña, la sesión termina.
-- Alcance: el administrador ve todas las sucursales; el encargado, la suya; el cajero (sin `sales.view`) no entra. Cada pantalla pide el mismo permiso que en la caja.
+- Alcance: el administrador ve todas las sucursales; el encargado, la suya; el cajero entra **sólo a Vender** (y Catálogo para consultar; no ve Caja porque el conteo es ciego). Un rol sin `sales.view` ni `pos.use` no entra. Cada pantalla pide el mismo permiso que en la caja.
 
 ## Pantallas
 
-Resumen, Ventas (búsqueda por folio C01-001061 o producto, forma de pago, detalle del ticket con devoluciones), Reportes (comparativo contra el periodo anterior, ventas por hora, ganancia, control de caja, producción sugerida), Caja (cortes con su resultado o el esperado del turno abierto; gastos, retiros y entradas), Charolas (ruta, análisis por tienda, tiendas con saldo, entregas, cobros), Catálogo (fotos, precios, precio de charola), Inventario (con costo de referencia por insumo), Recetas, Producción, Usuarios (sólo administrador) y Cajas (última conexión y cambios enviados con su estado por caja).
+**Vender** (punto de venta con fotos, cobro, ticket y corte; ver [POS_WEB.md](POS_WEB.md)), Resumen, Ventas (búsqueda por folio C01-001061 o producto, forma de pago, detalle del ticket con devoluciones), Reportes (comparativo contra el periodo anterior, ventas por hora, ganancia, control de caja, producción sugerida), Caja (cortes con su resultado o el esperado del turno abierto; gastos, retiros y entradas), Charolas (ruta, análisis por tienda, tiendas con saldo, entregas, cobros), Catálogo (fotos, precios, precio de charola), Inventario (con costo de referencia por insumo), Recetas, Producción, Usuarios (sólo administrador) y Cajas (última conexión y cambios enviados con su estado por caja).
 
 Responsiva: menú lateral en computadora, riel de íconos en tablet (≤1100 px) y menú desplegable en celular (≤720 px), donde las tablas se vuelven tarjetas y los diálogos hojas inferiores.
 

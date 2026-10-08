@@ -6,6 +6,7 @@ import * as web from './web.js';
 import { createCommand, listCommands } from './commands.js';
 import * as backups from './backup.js';
 import { profit, trayAnalytics } from './analytics.js';
+import * as pos from './pos.js';
 
 export interface Env { SESSION_SECRET?: string; PANEL_TIME_ZONE?: string; BACKUP_SECRET?: string }
 
@@ -13,7 +14,7 @@ export interface Env { SESSION_SECRET?: string; PANEL_TIME_ZONE?: string; BACKUP
 const VIEW: Record<string, string> = {
   dashboard: 'sales.view', sales: 'sales.view', sale: 'sales.view', compare: 'sales.view', heatmap: 'sales.view', 'cash-control': 'sales.view',
   'production-suggestion': 'sales.view', terminals: 'sales.view', cash: 'cash.view', consignment: 'consignment.view', catalog: 'catalog.view',
-  photo: 'catalog.view', route: 'consignment.view', profit: 'recipe.view', 'tray-analytics': 'consignment.view', backups: 'users.manage', backup: 'users.manage', inventory: 'inventory.view', recipes: 'recipe.view', production: 'production.view', users: 'users.manage', commands: 'sales.view',
+  photo: 'catalog.view', pos: 'pos.use', route: 'consignment.view', profit: 'recipe.view', 'tray-analytics': 'consignment.view', backups: 'users.manage', backup: 'users.manage', inventory: 'inventory.view', recipes: 'recipe.view', production: 'production.view', users: 'users.manage', commands: 'sales.view',
 };
 
 function me(user: WebUser) {
@@ -64,6 +65,15 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       const body = (await readJson(request, 50_000)) as { branchId?: unknown; kind?: unknown; payload?: unknown } | null;
       return json(200, await createCommand(q, user, body?.branchId, body?.kind, body?.payload));
     }
+    // Punto de venta web (docs/POS_WEB.md).
+    const POS: Record<string, (body: Record<string, unknown> | null) => Promise<unknown>> = {
+      'pos-till': body => pos.createTill(q, user, body?.branchId),
+      'pos-open': body => pos.openSession(q, user, body),
+      'pos-sale': body => pos.checkout(q, user, body),
+      'pos-count': body => pos.countSession(q, user, body),
+      'pos-close': body => pos.closeSession(q, user, body),
+    };
+    if (POS[op] && request.method === 'POST') return json(200, await POS[op]((await readJson(request, 50_000)) as Record<string, unknown> | null));
     if (request.method !== 'GET') throw new ProtocolError('Método no permitido', 405);
 
     const permission = VIEW[op];
@@ -87,6 +97,7 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       case 'production-suggestion': return json(200, await web.productionSuggestion(q, branch, timeZone, day(url.searchParams.get('day'), timeZone)));
       case 'terminals': return json(200, await terminals(q, branch));
       case 'cash': {
+        requirePermission(user, 'sales.view'); // trae el esperado del turno abierto: el cajero cuenta a ciegas
         const r = range();
         const [data, movements, totals] = await Promise.all([dashboard(q, r), web.cashMovements(q, r), web.cashTotals(q, r)]);
         return json(200, { sessions: data.sessions, totals: data.totals, movements, cash: totals });
@@ -94,6 +105,11 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       case 'consignment': return json(200, await web.consignment(q, range()));
       case 'catalog': return json(200, await web.catalog(q, branch));
       case 'route': return json(200, await web.route(q, branch));
+      case 'pos': {
+        const where = branch ?? (await branches(q))[0]?.id;
+        if (!where) throw new ProtocolError('Sin sucursales', 404);
+        return json(200, await pos.posState(q, user, where, url.searchParams.get('till')));
+      }
       case 'profit': requirePermission(user, 'sales.view'); return json(200, await profit(q, range()));
       case 'tray-analytics': return json(200, await trayAnalytics(q, range()));
       case 'photo': {
@@ -107,7 +123,8 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       case 'production': return json(200, await web.production(q, range()));
       case 'users': return json(200, await web.users(q, branch));
       case 'commands': return json(200, await listCommands(q, branch));
-      case 'backups': return json(200, { sets: await backups.list(q, branch), terminals: await terminals(q, branch) });
+      // Las cajas web no tienen base propia: lo suyo va en la copia nocturna de la nube.
+      case 'backups': return json(200, { sets: await backups.list(q, branch), terminals: (await terminals(q, branch)).filter(t => !t.web) });
       case 'backup': {
         // Para restaurar con CasaMiga.Maintenance restore-cloud: direcciones de cada parte y la llave para descifrarlas.
         const found = await backups.detail(q, url.searchParams.get('id') ?? '');
