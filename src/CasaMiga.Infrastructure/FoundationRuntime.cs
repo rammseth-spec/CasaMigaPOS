@@ -14,13 +14,20 @@ public sealed record FoundationOptions(string DataDirectory, bool IsDevelopment 
         {
             var settings = JsonSerializer.Deserialize<FoundationOptions>(File.ReadAllText(developmentFile));
             if (settings is not { IsDevelopment: true }) throw new InvalidDataException("Configuración de desarrollo inválida.");
-            configured = settings.DataDirectory; development = true; preview = settings;
+            configured = DevelopmentDirectory(settings.DataDirectory, AppContext.BaseDirectory); development = true; preview = settings;
         }
         var directory = configured ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "CasaMigaPOS");
         if (!Path.IsPathFullyQualified(directory) || directory.StartsWith(@"\\", StringComparison.Ordinal))
             throw new ArgumentException("Se requiere una ruta local absoluta.");
         return new(directory, development, preview?.DiagnosticCrashOnStartup ?? false, preview?.PreviewWidth ?? 0, preview?.PreviewHeight ?? 0);
     }
+
+    /// <summary>
+    /// Copias portátiles de prueba: una ruta relativa en development.settings.json se toma desde la carpeta del programa
+    /// (por ejemplo «..\datos»), así la copia funciona al abrir el .exe directo en cualquier equipo. Una absoluta queda igual.
+    /// </summary>
+    public static string DevelopmentDirectory(string dataDirectory, string programDirectory) =>
+        string.IsNullOrWhiteSpace(dataDirectory) || Path.IsPathRooted(dataDirectory) ? dataDirectory : Path.GetFullPath(Path.Combine(programDirectory, dataDirectory));
 }
 
 public sealed class FoundationRuntime(FoundationOptions options)

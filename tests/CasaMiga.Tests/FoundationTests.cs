@@ -19,6 +19,12 @@ public sealed class FoundationTests
     }
     [TestCleanup] public void Cleanup() => Directory.Delete(directory, recursive: true);
 
+    [TestMethod] public void PortableTestCopyFindsItsDataNextToTheProgram()
+    {
+        var program = Path.Combine(directory, "CasaMiga", "app");
+        Assert.AreEqual(Path.Combine(directory, "CasaMiga", "datos"), FoundationOptions.DevelopmentDirectory(@"..\datos", program));
+        Assert.AreEqual(@"D:\CasaMiga\datos", FoundationOptions.DevelopmentDirectory(@"D:\CasaMiga\datos", program), "An absolute path stays as written.");
+    }
     [TestMethod] public void MoneyIsExactAndChangeIsCorrect()
     {
         Assert.AreEqual(12550L, Money.FromPesos(125.50m).Cents);
