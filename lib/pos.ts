@@ -193,20 +193,27 @@ export async function countResult(q: Query, branchId: string, sessionId: string)
   return { ...e, counted, difference: counted - e.expected };
 }
 
-/** Cierra el turno ya contado con el esperado de ese momento (después del conteo no entran ventas). */
+/**
+ * Cierra el turno ya contado con el esperado de ese momento (después del conteo no entran ventas).
+ * Con faltante o sobrante pide una nota de 1 a 500 caracteres, como la caja de escritorio (migración 026).
+ */
 export async function closeSession(q: Query, user: WebUser, body: Row | null) {
   const { t, sessionId, session } = await closer(q, user, body);
   if (!t.counted) throw conflict('Confirma primero el conteo ciego.');
   const result = await countResult(q, t.branchId, sessionId);
   if (!result) throw conflict('Confirma primero el conteo ciego.');
+  const raw = typeof body?.discrepancyNote === 'string' ? body.discrepancyNote.trim() : '';
+  if (raw.length > 500) throw new ProtocolError('La nota admite hasta 500 caracteres.');
+  if (result.difference !== 0 && !raw) throw new ProtocolError('Escribe una nota para explicar la diferencia antes de cerrar la caja.');
+  const note = raw || null;
   const at = new Date().toISOString();
   const [count] = await q(`SELECT payload FROM entity_state WHERE branch_id = $1 AND entity = 'cash_count' AND entity_id = $2`, [t.branchId, sessionId]);
   const c = count.payload as Row;
-  const closed = { ...session, state: 'CLOSED', closed_utc: at, closed_by: user.id, expected_cents: result.expected, counted_cents: result.counted, difference_cents: result.difference };
+  const closed = { ...session, state: 'CLOSED', closed_utc: at, closed_by: user.id, expected_cents: result.expected, counted_cents: result.counted, difference_cents: result.difference, discrepancy_note: note };
   const written = await write(q, t.id, 'close', sessionId, [
     { entity: 'cash_session', entity_id: sessionId, change: 'update', payload: closed },
     audit(user, t.id, 'cash.close', sessionId, at, { openedBy: session.opened_by, closedBy: user.id, closedByOtherUser: s(session.opened_by) !== user.id,
-      countedBy: c.counted_by, countedAt: c.counted_utc, openingCents: result.opening, expectedCents: result.expected, countedCents: result.counted, differenceCents: result.difference }),
+      countedBy: c.counted_by, countedAt: c.counted_utc, openingCents: result.opening, expectedCents: result.expected, countedCents: result.counted, differenceCents: result.difference, discrepancyNote: note }),
   ]);
   if (!written.length) throw conflict('Este turno ya está cerrado.');
   return result;

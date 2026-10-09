@@ -113,10 +113,12 @@ test('blind count and close: only who may close; no sales after counting; expect
   await assert.rejects(pos.countSession(q, ana, { tillId: till.id, sessionId, countedCents: 52600 }), /ya fue confirmado/);
   await assert.rejects(pos.checkout(q, luis, { tillId: till.id, sessionId, operationId: op(), lines: [{ productId: concha, quantity: 1 }], method: 'CASH', receivedCents: 1300 }), /sin conteo/);
 
-  await pos.closeSession(q, ana, { tillId: till.id, sessionId });
-  await assert.rejects(pos.closeSession(q, ana, { tillId: till.id, sessionId }), /cerrado/);
+  await assert.rejects(pos.closeSession(q, ana, { tillId: till.id, sessionId }), /nota/, 'With a shortage the close needs a note, like the desktop (migration 026).');
+  await assert.rejects(pos.closeSession(q, ana, { tillId: till.id, sessionId, discrepancyNote: 'x'.repeat(501) }), /500/);
+  await pos.closeSession(q, ana, { tillId: till.id, sessionId, discrepancyNote: '  Faltó un peso de cambio  ' });
+  await assert.rejects(pos.closeSession(q, ana, { tillId: till.id, sessionId, discrepancyNote: 'otra' }), /cerrado/);
   const [closed] = await sessions(q, range(today(), today()));
-  assert.deepEqual([closed.terminal, closed.open, closed.expected, closed.counted, closed.difference], ['CAJA-WEB-02', false, 52600, 52500, -100]);
+  assert.deepEqual([closed.terminal, closed.open, closed.expected, closed.counted, closed.difference, closed.note], ['CAJA-WEB-02', false, 52600, 52500, -100, 'Faltó un peso de cambio']);
   assert.equal((await pos.tills(q, centro))[0].open, false, 'The till can open a new shift.');
   await pos.openSession(q, luis, { tillId: till.id, openingCents: 0 });
 });

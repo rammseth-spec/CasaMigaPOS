@@ -105,6 +105,7 @@ export async function topProducts(q: Query, r: Range, limit = 10): Promise<Produ
 export interface SessionRow {
   id: string; branchId: string; terminal: string; openedAt: string; closedAt: string | null; open: boolean;
   opening: number; cashSales: number; cashRefunds: number; movements: number; expected: number; counted: number | null; difference: number | null;
+  note: string | null;
 }
 
 /** Cortes que abrieron en el periodo. Abiertos: el esperado es lo que va del turno; cerrados: lo que se registró al cerrar. */
@@ -117,7 +118,8 @@ export async function sessions(q: Query, r: Range): Promise<SessionRow[]> {
     SELECT c.p->>'id' AS id, c.branch_id, COALESCE(t.name, 'Caja') AS terminal,
       c.p->>'opened_utc' AS opened_at, c.p->>'closed_utc' AS closed_at, c.p->>'state' AS state,
       (c.p->>'opening_cents')::bigint AS opening, cs.total AS cash_sales, cr.total AS cash_refunds, mv.net AS movements,
-      (c.p->>'expected_cents')::bigint AS expected, (c.p->>'counted_cents')::bigint AS counted, (c.p->>'difference_cents')::bigint AS difference
+      (c.p->>'expected_cents')::bigint AS expected, (c.p->>'counted_cents')::bigint AS counted, (c.p->>'difference_cents')::bigint AS difference,
+      c.p->>'discrepancy_note' AS note
     FROM c LEFT JOIN terminal t ON t.id = c.terminal_id
       LEFT JOIN cs ON cs.session_id = c.p->>'id' LEFT JOIN cr ON cr.session_id = c.p->>'id' LEFT JOIN mv ON mv.session_id = c.p->>'id'
     WHERE (((c.p->>'opened_utc')::timestamptz AT TIME ZONE $1)::date) BETWEEN $2::date AND $3::date
@@ -131,6 +133,7 @@ export async function sessions(q: Query, r: Range): Promise<SessionRow[]> {
       closedAt: x.closed_at ? String(x.closed_at) : null, open, opening: n(x.opening), cashSales: n(x.cash_sales),
       cashRefunds: n(x.cash_refunds), movements: n(x.movements), expected: open ? running : n(x.expected),
       counted: open || x.counted === null ? null : n(x.counted), difference: open || x.difference === null ? null : n(x.difference),
+      note: open || x.note === null || x.note === undefined ? null : String(x.note),
     };
   });
 }
