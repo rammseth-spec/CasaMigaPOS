@@ -74,7 +74,11 @@ public partial class MainWindow : Window
         if (ContextHelp.TryHandleEscape(e)) return;
         if (PopupEscape.TryHandle(e)) return;
         if(e.Key==Key.Escape && Model.Operations?.IsPanelOpen==true)
-        {e.Handled=true;Model.Operations.ClosePanel();return;}
+        {
+            e.Handled=true;
+            if(!OperationsPanel.TryHandleEscape())Model.Operations.ClosePanel();
+            return;
+        }
         if(e.Key==Key.F11)
         { e.Handled=true; ToggleFullScreen(); }
         else if(e.Key==Key.Escape && isFullScreen)

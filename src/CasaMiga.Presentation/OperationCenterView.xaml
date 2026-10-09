@@ -17,8 +17,14 @@
    </Grid>
    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Contenido del centro operativo">
     <StackPanel>
-     <TextBlock Text="TEMPORIZADORES" Style="{StaticResource EyebrowText}" Margin="0,0,0,8"/>
-     <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="12" Padding="12" Margin="0,0,0,12">
+      <Grid Margin="0,0,0,8">
+       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+       <TextBlock Text="TEMPORIZADORES" Style="{StaticResource EyebrowText}" VerticalAlignment="Center"/>
+       <Button Grid.Column="1" Content="+ Nuevo" Click="OpenTimerEditorClick" MinHeight="36" Padding="10,4" AutomationProperties.Name="Nuevo temporizador">
+        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}"><Style.Triggers><DataTrigger Binding="{Binding IsTimerEditorOpen}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Button.Style>
+       </Button>
+      </Grid>
+      <Border x:Name="TimerEditor" AutomationProperties.Name="Editor de temporizador" Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="12" Padding="12" Margin="0,0,0,12" Visibility="{Binding IsTimerEditorOpen,Converter={StaticResource VisibleWhen}}">
       <StackPanel>
        <TextBlock Text="Nuevo temporizador" FontWeight="SemiBold"/>
        <TextBox x:Name="TimerName" AutomationProperties.Name="Nombre del temporizador" MaxLength="80" Margin="0,7,0,8" FontSize="15" MinHeight="40"/>
@@ -40,14 +46,17 @@
         <Button Content="45" Tag="45" Click="PresetClick" Style="{StaticResource SecondaryButton}" MinWidth="48" MinHeight="36" Padding="8,4" Margin="0,0,6,6" ToolTip="45 minutos"/>
         <Button Content="60" Tag="60" Click="PresetClick" Style="{StaticResource SecondaryButton}" MinWidth="48" MinHeight="36" Padding="8,4" Margin="0,0,6,6" ToolTip="60 minutos"/>
        </WrapPanel>
-       <Button Content="Iniciar temporizador" Click="CreateTimerClick" MinHeight="40"/>
+        <WrapPanel>
+         <Button Content="Iniciar temporizador" Click="CreateTimerClick" MinHeight="40"/>
+         <Button Content="Cancelar" Click="CancelTimerEditorClick" Style="{StaticResource SecondaryButton}" MinHeight="40" Margin="8,0,0,0"/>
+        </WrapPanel>
        <TextBlock Text="{Binding TimerMessage}" Foreground="{DynamicResource ErrorBrush}" Style="{StaticResource CaptionText}" Margin="0,6,0,0" Visibility="{Binding HasTimerMessage,Converter={StaticResource VisibleWhen}}" AutomationProperties.LiveSetting="Polite"/>
       </StackPanel>
      </Border>
      <TextBlock Text="No hay temporizadores. Usa un nombre y una duración para comenzar." Margin="0,0,0,12"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource EmptyStateText}"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding HasTimers}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
      <ItemsControl ItemsSource="{Binding Timers}" AutomationProperties.Name="Temporizadores activos">
       <ItemsControl.ItemTemplate><DataTemplate>
-       <Border x:Name="TimerCard" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,0,0,8">
+        <Border x:Name="TimerCard" AutomationProperties.Name="Tarjeta de temporizador" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="10" Margin="0,0,0,7">
         <Border.Style><Style TargetType="Border"><Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/><Style.Triggers><DataTrigger Binding="{Binding IsReady}" Value="True"><Setter Property="Background" Value="{DynamicResource PrimarySoftBrush}"/><Setter Property="BorderBrush" Value="{DynamicResource AvocadoLeafBrush}"/><Setter Property="BorderThickness" Value="2"/></DataTrigger></Style.Triggers></Style></Border.Style>
         <StackPanel>
          <Grid>
@@ -56,7 +65,7 @@
           <StackPanel Grid.Column="1" VerticalAlignment="Center"><TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap"/><Border BorderBrush="{DynamicResource ErrorBrush}" BorderThickness="1" CornerRadius="8" Padding="6,1" HorizontalAlignment="Left" Margin="0,3,0,0" Visibility="{Binding IsUrgent,Converter={StaticResource VisibleWhen}}"><TextBlock Text="URGENTE" Foreground="{DynamicResource ErrorBrush}" FontSize="10" FontWeight="SemiBold"/></Border></StackPanel>
           <TextBlock Grid.Column="2" Text="{Binding RemainingText}" FontSize="19" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" Margin="8,0,0,0"/>
          </Grid>
-         <TextBlock Text="{Binding StateText}" Style="{StaticResource CaptionText}" Margin="30,3,0,7"/>
+          <TextBlock Text="{Binding StateText}" Style="{StaticResource CaptionText}" Margin="30,2,0,5"/>
          <WrapPanel Margin="30,0,0,0">
           <Button Content="Pausar" Click="PauseTimerClick" Style="{StaticResource SecondaryButton}" MinWidth="70" MinHeight="36" Padding="9,4" Margin="0,0,6,6" Visibility="{Binding IsRunning,Converter={StaticResource VisibleWhen}}"/>
           <Button Content="Reanudar" Click="ResumeTimerClick" MinWidth="82" MinHeight="36" Padding="9,4" Margin="0,0,6,6" Visibility="{Binding IsPaused,Converter={StaticResource VisibleWhen}}"/>
@@ -70,10 +79,19 @@
      </ItemsControl>
 
      <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Margin="0,14,0,14"/>
-     <TextBlock Text="NOTAS Y RECORDATORIOS" Style="{StaticResource EyebrowText}" Margin="0,0,0,8"/>
-     <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="12" Padding="12" Margin="0,0,0,12">
-      <StackPanel>
-       <TextBlock Text="Nota" FontWeight="SemiBold"/>
+      <Grid Margin="0,0,0,8">
+       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+       <TextBlock Text="NOTAS Y RECORDATORIOS" Style="{StaticResource EyebrowText}" VerticalAlignment="Center"/>
+       <Button Grid.Column="1" Content="+ Nueva" Click="OpenNoteEditorClick" MinHeight="36" Padding="10,4" AutomationProperties.Name="Nueva nota">
+        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}"><Style.Triggers><DataTrigger Binding="{Binding IsNoteEditorOpen}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Button.Style>
+       </Button>
+      </Grid>
+      <Border x:Name="NoteEditor" AutomationProperties.Name="Editor de nota" Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="12" Padding="12" Margin="0,0,0,12" Visibility="{Binding IsNoteEditorOpen,Converter={StaticResource VisibleWhen}}">
+       <StackPanel>
+        <TextBlock Text="Nueva nota" FontWeight="SemiBold">
+         <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding IsEditingNote}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+        </TextBlock>
+        <TextBlock Text="Editar nota" FontWeight="SemiBold" Visibility="{Binding IsEditingNote,Converter={StaticResource VisibleWhen}}"/>
        <TextBox x:Name="NoteText" AutomationProperties.Name="Texto de la nota" MaxLength="280" AcceptsReturn="True" TextWrapping="Wrap" Height="64" FontSize="15" Margin="0,7,0,8"/>
        <TextBlock Text="Recordatorio opcional" Style="{StaticResource CaptionText}"/>
        <Grid Margin="0,3,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="110"/></Grid.ColumnDefinitions>
@@ -85,14 +103,14 @@
         <StackPanel><TextBlock Text="Categoría" Style="{StaticResource CaptionText}"/><ComboBox x:Name="NoteIcon" ItemsSource="{Binding NoteIconOptions}" ItemTemplate="{StaticResource OperationIconOptionTemplate}" SelectedValuePath="Kind" MinHeight="40" AutomationProperties.Name="Categoría de la nota"/></StackPanel>
         <StackPanel Grid.Column="2"><TextBlock Text="Prioridad" Style="{StaticResource CaptionText}"/><ComboBox x:Name="NotePriority" ItemsSource="{Binding PriorityOptions}" DisplayMemberPath="Label" SelectedValuePath="Value" MinHeight="40" AutomationProperties.Name="Prioridad de la nota"/></StackPanel>
        </Grid>
-       <WrapPanel><Button Content="Guardar nota" Click="SaveNoteClick" MinHeight="40"/><Button Content="Cancelar edición" Click="CancelNoteClick" Style="{StaticResource SecondaryButton}" MinHeight="40" Margin="8,0,0,0" Visibility="{Binding IsEditingNote,Converter={StaticResource VisibleWhen}}"/></WrapPanel>
+        <WrapPanel><Button Content="Guardar nota" Click="SaveNoteClick" MinHeight="40"/><Button Content="Cancelar" Click="CancelNoteClick" Style="{StaticResource SecondaryButton}" MinHeight="40" Margin="8,0,0,0"/></WrapPanel>
        <TextBlock Text="{Binding NoteMessage}" Foreground="{DynamicResource ErrorBrush}" Style="{StaticResource CaptionText}" Margin="0,6,0,0" Visibility="{Binding HasNoteMessage,Converter={StaticResource VisibleWhen}}" AutomationProperties.LiveSetting="Polite"/>
       </StackPanel>
      </Border>
      <TextBlock Text="No hay notas. Puedes guardar una sin recordatorio o programarla para después." Margin="0,0,0,12"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource EmptyStateText}"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding HasNotes}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
      <ItemsControl ItemsSource="{Binding Notes}" AutomationProperties.Name="Notas y recordatorios">
       <ItemsControl.ItemTemplate><DataTemplate>
-       <Border x:Name="NoteCard" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,0,0,8">
+        <Border x:Name="NoteCard" AutomationProperties.Name="Tarjeta de nota" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="10" Margin="0,0,0,7">
         <Border.Style><Style TargetType="Border"><Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/><Style.Triggers><DataTrigger Binding="{Binding IsReady}" Value="True"><Setter Property="Background" Value="{DynamicResource PrimarySoftBrush}"/><Setter Property="BorderBrush" Value="{DynamicResource AvocadoLeafBrush}"/><Setter Property="BorderThickness" Value="2"/></DataTrigger></Style.Triggers></Style></Border.Style>
         <StackPanel>
          <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="30"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
@@ -100,15 +118,19 @@
           <TextBlock Grid.Column="1" Text="{Binding Text}" FontWeight="SemiBold" TextWrapping="Wrap"/>
           <Border Grid.Column="2" BorderBrush="{DynamicResource ErrorBrush}" BorderThickness="1" CornerRadius="8" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Top" Visibility="{Binding IsUrgent,Converter={StaticResource VisibleWhen}}"><TextBlock Text="URGENTE" Foreground="{DynamicResource ErrorBrush}" FontSize="10" FontWeight="SemiBold"/></Border>
          </Grid>
-         <TextBlock Text="{Binding ReminderText}" Style="{StaticResource CaptionText}" Margin="30,3,0,7"/>
-         <WrapPanel Margin="30,0,0,0">
-          <Button Content="Atender" Click="AttendNoteClick" MinWidth="70" MinHeight="36" Padding="9,4" Margin="0,0,6,6" Visibility="{Binding IsReady,Converter={StaticResource VisibleWhen}}"/>
-          <Button Content="+5 min" Tag="5" Click="SnoozeNoteClick" Style="{StaticResource SecondaryButton}" MinWidth="60" MinHeight="36" Padding="8,4" Margin="0,0,5,6" Visibility="{Binding IsReady,Converter={StaticResource VisibleWhen}}" ToolTip="Posponer 5 minutos"/>
-          <Button Content="+10" Tag="10" Click="SnoozeNoteClick" Style="{StaticResource SecondaryButton}" MinWidth="50" MinHeight="36" Padding="8,4" Margin="0,0,5,6" Visibility="{Binding IsReady,Converter={StaticResource VisibleWhen}}" ToolTip="Posponer 10 minutos"/>
-          <Button Content="+15" Tag="15" Click="SnoozeNoteClick" Style="{StaticResource SecondaryButton}" MinWidth="50" MinHeight="36" Padding="8,4" Margin="0,0,5,6" Visibility="{Binding IsReady,Converter={StaticResource VisibleWhen}}" ToolTip="Posponer 15 minutos"/>
-          <Button Content="Editar" Click="EditNoteClick" Style="{StaticResource SecondaryButton}" MinWidth="66" MinHeight="36" Padding="9,4" Margin="0,0,6,6"/>
-          <Button Content="Eliminar" Click="DeleteNoteClick" Style="{StaticResource GhostButton}" MinWidth="70" MinHeight="36" Padding="9,4" Margin="0,0,0,6"/>
-         </WrapPanel>
+          <TextBlock Text="{Binding ReminderText}" Style="{StaticResource CaptionText}" Margin="30,2,0,5"/>
+          <WrapPanel Margin="30,0,0,0">
+           <Button Content="Atender" Click="AttendNoteClick" MinWidth="70" MinHeight="36" Padding="9,4" Margin="0,0,6,6" Visibility="{Binding IsReady,Converter={StaticResource VisibleWhen}}"/>
+           <Button Content="Posponer" Click="ToggleSnoozeClick" Style="{StaticResource SecondaryButton}" MinWidth="78" MinHeight="36" Padding="9,4" Margin="0,0,6,6" Visibility="{Binding IsReady,Converter={StaticResource VisibleWhen}}" ToolTip="Elegir cuánto tiempo posponer"/>
+           <Button Content="Editar" Click="EditNoteClick" Style="{StaticResource SecondaryButton}" MinWidth="66" MinHeight="36" Padding="9,4" Margin="0,0,6,6"/>
+           <Button Content="Eliminar" Click="DeleteNoteClick" Style="{StaticResource GhostButton}" MinWidth="70" MinHeight="36" Padding="9,4" Margin="0,0,0,6"/>
+          </WrapPanel>
+          <WrapPanel Margin="30,0,0,4" Visibility="{Binding IsSnoozeOpen,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Opciones para posponer">
+           <TextBlock Text="Posponer:" Style="{StaticResource CaptionText}" VerticalAlignment="Center" Margin="0,0,8,5"/>
+           <Button Content="5 min" Tag="5" Click="SnoozeNoteClick" Style="{StaticResource SecondaryButton}" MinWidth="58" MinHeight="34" Padding="8,3" Margin="0,0,5,5"/>
+           <Button Content="10 min" Tag="10" Click="SnoozeNoteClick" Style="{StaticResource SecondaryButton}" MinWidth="62" MinHeight="34" Padding="8,3" Margin="0,0,5,5"/>
+           <Button Content="15 min" Tag="15" Click="SnoozeNoteClick" Style="{StaticResource SecondaryButton}" MinWidth="62" MinHeight="34" Padding="8,3" Margin="0,0,5,5"/>
+          </WrapPanel>
         </StackPanel>
        </Border>
       </DataTemplate></ItemsControl.ItemTemplate>

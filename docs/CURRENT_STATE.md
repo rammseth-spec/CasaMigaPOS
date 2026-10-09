@@ -1,4 +1,16 @@
-# FASE 1K.4F TÉCNICAMENTE COMPLETADA — SMOKE VISUAL HUMANO PENDIENTE, 09/10/2026
+# FASE 1K.4F-R1 TÉCNICAMENTE COMPLETADA — SMOKE VISUAL HUMANO PENDIENTE, 09/10/2026
+
+R1 convierte el Centro operativo en una vista de trabajo primero. Los editores de temporizador y nota aparecen colapsados; `+ Nuevo`/`+ Nueva` los abren dentro de la misma sección, Cancelar descarta sin crear y una creación o guardado válido vuelve automáticamente a la lista. Editar una nota reutiliza el editor con el rótulo «Editar nota». Las tarjetas reducen moderadamente padding y separación; a 1280×820 las pruebas WPF confirman al menos tres tarjetas de temporizador completas con los editores cerrados.
+
+Un recordatorio listo muestra Atender, Posponer, Editar y Eliminar. Posponer revela inline únicamente 5/10/15 minutos, cierra tras elegir y también responde a Escape. Escape cancela primero el editor o desplegable transitorio y después cierra el panel; F11, Alt+Tab y minimizar conservan la semántica previa. Header y login permanecen intactos para evitar regresiones visuales. Alertas `¡Listo!`, doble pulso/micro-shake de 600 ms, sonido, taskbar, iconos y Normal/Urgente no cambiaron.
+
+La persistencia se auditó sobre `work/phase1k4f-r1-smoke-20261009`: nota simple, recordatorio urgente y timer activo se recargaron desde `operations-hub.json`; tras un minuto simulado el timer siguió Running con 2,640 segundos, consistente con su deadline UTC. El archivo continúa fuera de `.cmbackup`; backup/restore no se modificó. Focales **16/16**; suite **779/779** (576 generales + 203 WPF/Presentation), 0 fallidas y 0 omitidas. Release identificado 0 errores/advertencias. Base protegida schema 16 y SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`; fixture schema 17; no existe migración 018. Impresión 1K.4E-R1, Qian, `printing.json`, cajón y datos comerciales permanecen intactos. Ver `PHASE_1K4F_R1_REPORT.md` y `evidence/phase1k4f-r1-verification.md`.
+
+Build de revisión: `src/CasaMiga.Presentation/bin/Phase1K4F-R1/`; launcher `work/Abrir-Casa-Miga-1K4F-R1.cmd`; título `Casa Miga POS · Caja · DESARROLLO · 1K.4F-R1`. No push. No iniciar 1K.4G ni 1K.5.
+
+## Registro anterior — 1K.4F
+
+# FASE 1K.4F TÉCNICAMENTE COMPLETADA — SUSTITUIDA POR R1, 09/10/2026
 
 Casa Miga incorpora un Centro operativo en Presentation sin migraciones ni cambios de negocio. El Header D muestra hora local `HH:mm`, fecha abreviada y un indicador acotado de activos/listos/urgentes. El botón completo abre el Panel 4 de 420 DIP dentro del mismo árbol visual y HWND; no existe Popup o Window principal adicional. Escape lo cierra antes de salir de F11, y desactivación/minimización también lo cierran para evitar superficies huérfanas.
 

@@ -93,6 +93,8 @@ public sealed class OperationCenterPresentationTests
         using var fixture=new Fixture();await fixture.InitializeAsync();
         var center=fixture.Model.Operations!;
         Assert.IsTrue(center.CreateTimer("Entrega","0","5",OperationIconKind.Delivery));
+        Assert.IsTrue(center.CreateTimer("Horneado","0","10",OperationIconKind.Oven));
+        Assert.IsTrue(center.CreateTimer("Fermentación","0","15",OperationIconKind.Fermentation));
         Assert.IsTrue(center.SaveNote("Limpiar área","","",OperationIconKind.Cleaning));
         foreach(var size in new[]{new Size(1280,820),new Size(1920,1080)})
         {
@@ -103,14 +105,63 @@ public sealed class OperationCenterPresentationTests
                 window.Show();center.OpenPanel();WpfTestHost.Layout(window,size.Width,size.Height);
                 var panel=Descendants<OperationCenterView>(window).Single();
                 Assert.IsTrue(panel.IsVisible);
+                Assert.IsFalse(Descendants<Border>(panel).Single(x=>AutomationProperties.GetName(x)=="Editor de temporizador").IsVisible);
+                Assert.IsFalse(Descendants<Border>(panel).Single(x=>AutomationProperties.GetName(x)=="Editor de nota").IsVisible);
                 Assert.IsTrue(Descendants<System.Windows.Shapes.Path>(panel).Any(x=>AutomationProperties.GetName(x)=="Entrega"));
                 Assert.IsTrue(Descendants<System.Windows.Shapes.Path>(panel).Any(x=>AutomationProperties.GetName(x)=="Limpieza"));
                 var selectors=Descendants<ComboBox>(panel).Where(x=>AutomationProperties.GetName(x).Contains("Categoría",StringComparison.Ordinal)).ToArray();
                 Assert.AreEqual(2,selectors.Length);
+                if(size.Height==820)
+                    Assert.IsTrue(Descendants<Border>(panel).Count(x=>AutomationProperties.GetName(x)=="Tarjeta de temporizador"&&IsInside(x,panel))>=3,
+                        "At 1280×820 at least three compact timer cards fit before scrolling.");
                 Assert.IsTrue(IsInside(panel,window));
             }
             finally{window.Close();}
         }
+    });
+
+    [TestMethod]
+    public Task InlineEditorsAndSnoozeChoicesUseProgressiveDisclosureAndEscapePriority()=>WpfTestHost.OnUi(async()=>
+    {
+        using var fixture=new Fixture();await fixture.InitializeAsync();
+        var center=fixture.Model.Operations!;
+        var due=DateTimeOffset.Now.AddMinutes(-1);
+        Assert.IsTrue(center.SaveNote("Revisar pedido",due.ToString("dd/MM/yyyy"),due.ToString("HH:mm")));
+        center.Tick(DateTimeOffset.Now);
+        var window=Offscreen(new MainWindow{DataContext=fixture.Model});
+        try
+        {
+            window.OperationAlertSound=()=>{};window.TaskbarAttentionOverride=()=>{};
+            window.Show();center.OpenPanel();WpfTestHost.Layout(window,1280,820);
+            var panel=Descendants<OperationCenterView>(window).Single();
+            var timerEditor=Descendants<Border>(panel).Single(x=>AutomationProperties.GetName(x)=="Editor de temporizador");
+            var noteEditor=Descendants<Border>(panel).Single(x=>AutomationProperties.GetName(x)=="Editor de nota");
+            Assert.IsFalse(timerEditor.IsVisible);
+            Assert.IsFalse(noteEditor.IsVisible);
+
+            Descendants<Button>(panel).Single(x=>AutomationProperties.GetName(x)=="Nuevo temporizador").RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            WpfTestHost.Layout(window,1280,820);
+            Assert.IsTrue(timerEditor.IsVisible);
+            Send(window,Key.Escape);
+            WpfTestHost.Layout(window,1280,820);
+            Assert.IsFalse(timerEditor.IsVisible,"The first Escape cancels the active editor.");
+            Assert.IsTrue(center.IsPanelOpen,"Cancelling an editor must keep the operations panel open.");
+
+            var postpone=Descendants<Button>(panel).Single(x=>x.Content?.ToString()=="Posponer"&&x.IsVisible);
+            postpone.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            WpfTestHost.Layout(window,1280,820);
+            var choices=Descendants<WrapPanel>(panel).Single(x=>AutomationProperties.GetName(x)=="Opciones para posponer");
+            Assert.IsTrue(choices.IsVisible);
+            var five=Descendants<Button>(choices).Single(x=>x.Content?.ToString()=="5 min");
+            five.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            WpfTestHost.Layout(window,1280,820);
+            Assert.IsFalse(choices.IsVisible);
+            Assert.IsFalse(center.Notes.Single().IsReady);
+
+            Send(window,Key.Escape);
+            Assert.IsFalse(center.IsPanelOpen,"With no transient editor open, Escape closes the panel.");
+        }
+        finally{window.Close();}
     });
 
     private static bool IsInside(FrameworkElement child,FrameworkElement root)

@@ -1,17 +1,23 @@
-# Próximo paso — smoke manual final de FASE 1K.4F
+# Próximo paso — smoke manual final de FASE 1K.4F-R1
 
-Usar exclusivamente `work/Abrir-Casa-Miga-1K4F.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4F`, DataDirectory `work/phase1k4f-smoke-20261008`. La apertura automática queda en login y no equivale a aprobación humana.
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4F-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4F-R1`, DataDirectory `work/phase1k4f-r1-smoke-20261009`. La apertura automática queda en login y no equivale a aprobación humana.
 
-1. Confirmar que antes de iniciar sesión sólo aparecen hora y fecha, sin información operativa.
-2. Iniciar sesión con las credenciales verificadas entregadas en la conversación y abrir Centro operativo desde Header D.
-3. Revisar los iconos de línea, selectores compactos, tarjetas Ready, prioridad urgente y header sin saturación.
-4. Crear dos timers de un minuto con categorías distintas; dejar que terminen juntos y confirmar una sola alerta breve, doble pulso/micro-shake de 600 ms y estado persistente `¡Listo!`.
-5. Con Casa Miga minimizado o detrás de otra aplicación, dejar vencer un recordatorio y confirmar sonido local + atención discreta en taskbar, sin robo de foco.
-6. Probar recordatorio normal/urgente, Atender y Posponer 5/10/15; revisar que el icono y prioridad sobreviven navegación/reinicio.
-7. Revisar Alt+Tab, minimizar/restaurar, Escape, 1280×820, 1920×1080 y F11. Confirmar targets, contraste, scroll interno, ausencia de parpadeo y estabilidad del catálogo/POS.
-8. Cerrar sesión: sale de F11 y vuelve a login sin datos operativos.
+1. Revisar login; iniciar sesión con las credenciales verificadas entregadas en la conversación y abrir Centro operativo.
+2. Confirmar que los editores de Temporizadores y Notas están cerrados y que la lista aparece primero.
+3. Pulsar `+ Nuevo`, cancelar, volver a abrir y crear un timer; comprobar que el editor se cierra y el timer aparece. Crear tres y revisar densidad a 1280×820.
+4. Terminar uno; confirmar `¡Listo!`, Atender, Reiniciar y Eliminar sin pérdida de jerarquía.
+5. Pulsar `+ Nueva`, cancelar, crear una nota y editarla; comprobar rótulo «Editar nota», guardado y autocierre.
+6. Crear un recordatorio, dejarlo vencer, pulsar Posponer y comprobar que sólo entonces aparecen 5/10/15 min; elegir 5 min y confirmar que se ocultan.
+7. Dejar dos eventos vencer juntos y confirmar una sola alerta breve, doble pulso/micro-shake de 600 ms, sonido y estado persistente. Repetir con la ventana detrás/minimizada para revisar taskbar sin robo de foco.
+8. Comprobar primer Escape sobre editor/desplegable y segundo Escape sobre panel; revisar F11, Alt+Tab, minimizar/restaurar, 1280×820 y 1920×1080.
+9. Cerrar completamente y reabrir el mismo launcher; comprobar timer activo por deadline, notas y recordatorios. Observar parpadeos/CPU.
+10. Cerrar sesión y confirmar retorno a login.
 
-No imprimir, usar cajón, vender, abrir/cerrar caja, modificar inventario/recetas/producción ni iniciar 1K.5. `operations-hub.json` sigue fuera de `.cmbackup`. Esperar aprobación humana antes de publicar; no push.
+No imprimir, usar cajón, vender, abrir/cerrar caja ni modificar inventario/recetas/producción. `operations-hub.json` sigue fuera de `.cmbackup`. Esperar aprobación humana; no push y no iniciar 1K.4G/1K.5.
+
+## Registro anterior — smoke 1K.4F
+
+El build 1K.4F fue sustituido por R1 debido al espacio vertical ocupado por sus formularios permanentes.
 
 ## Registro anterior — 1K.4E-R1
 

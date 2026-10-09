@@ -200,6 +200,72 @@ public sealed class OperationCenterTests
         Assert.IsFalse(center.HeaderStatus.Contains("Operación",StringComparison.Ordinal));
     }
 
+    [TestMethod]
+    public void EditorsStartCollapsedAndCloseAfterCancelCreateOrSave()
+    {
+        using var fixture=new DirectoryFixture();
+        var start=new DateTimeOffset(2026,10,9,9,0,0,TimeSpan.FromHours(-6));
+        var center=new OperationCenterViewModel(fixture.Path,()=>start);
+        Assert.IsFalse(center.IsTimerEditorOpen);
+        Assert.IsFalse(center.IsNoteEditorOpen);
+
+        center.OpenTimerEditor();
+        Assert.IsTrue(center.IsTimerEditorOpen);
+        center.CancelTimerEditor();
+        Assert.IsFalse(center.IsTimerEditorOpen);
+        Assert.AreEqual(0,center.Timers.Count);
+        center.OpenTimerEditor();
+        Assert.IsTrue(center.CreateTimer("Primer horneado","0","10"));
+        Assert.IsFalse(center.IsTimerEditorOpen);
+
+        center.OpenNoteEditor();
+        Assert.IsTrue(center.IsNoteEditorOpen);
+        center.CancelNoteEditor();
+        Assert.IsFalse(center.IsNoteEditorOpen);
+        Assert.AreEqual(0,center.Notes.Count);
+        center.OpenNoteEditor();
+        Assert.IsTrue(center.SaveNote("Revisar vitrina","",""));
+        Assert.IsFalse(center.IsNoteEditorOpen);
+
+        var note=center.Notes.Single();
+        center.BeginEditNote(note);
+        Assert.IsTrue(center.IsNoteEditorOpen);
+        Assert.IsTrue(center.IsEditingNote);
+        center.CancelEditNote();
+        Assert.IsFalse(center.IsNoteEditorOpen);
+        Assert.IsFalse(center.IsEditingNote);
+        Assert.AreEqual("Revisar vitrina",note.Text);
+    }
+
+    [TestMethod]
+    public void SnoozeChoicesAreTransientExclusiveAndCloseAfterSelectionOrEscape()
+    {
+        using var fixture=new DirectoryFixture();
+        var start=new DateTimeOffset(2026,10,9,9,0,0,TimeSpan.FromHours(-6));
+        var center=new OperationCenterViewModel(fixture.Path,()=>start);
+        var due=start.AddMinutes(1);
+        Assert.IsTrue(center.SaveNote("Primera",due.ToString("dd/MM/yyyy"),due.ToString("HH:mm")));
+        Assert.IsTrue(center.SaveNote("Segunda",due.ToString("dd/MM/yyyy"),due.ToString("HH:mm")));
+        center.Tick(due);
+        var first=center.Notes.Single(x=>x.Text=="Primera");
+        var second=center.Notes.Single(x=>x.Text=="Segunda");
+
+        center.ToggleSnoozeOptions(first);
+        Assert.IsTrue(first.IsSnoozeOpen);
+        center.ToggleSnoozeOptions(second);
+        Assert.IsFalse(first.IsSnoozeOpen);
+        Assert.IsTrue(second.IsSnoozeOpen);
+        Assert.IsTrue(center.CloseTransientEditor());
+        Assert.IsFalse(second.IsSnoozeOpen);
+        Assert.IsFalse(center.CloseTransientEditor());
+
+        center.ToggleSnoozeOptions(first);
+        center.SnoozeNote(first,10);
+        Assert.IsFalse(first.IsSnoozeOpen);
+        Assert.IsFalse(first.IsReady);
+        Assert.AreEqual(due.AddMinutes(10).ToUniversalTime(),first.ReminderUtc);
+    }
+
     private sealed class DirectoryFixture:IDisposable
     {
         public string Path{get;}=System.IO.Path.Combine(System.IO.Path.GetTempPath(),"CasaMigaOperations",Guid.NewGuid().ToString("N"));

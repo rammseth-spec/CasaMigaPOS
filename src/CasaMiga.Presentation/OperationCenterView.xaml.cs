@@ -13,6 +13,17 @@ public partial class OperationCenterView : UserControl
     }
     private OperationCenterViewModel Model=>(OperationCenterViewModel)DataContext;
     private void CloseClick(object sender,RoutedEventArgs e)=>Model.ClosePanel();
+    private void OpenTimerEditorClick(object sender,RoutedEventArgs e)
+    {
+        Model.OpenTimerEditor();
+        EnsureDefaults();
+        TimerName.Focus();
+    }
+    private void CancelTimerEditorClick(object sender,RoutedEventArgs e)
+    {
+        Model.CancelTimerEditor();
+        ClearTimerEditor();
+    }
     private void PresetClick(object sender,RoutedEventArgs e)
     {
         var minutes=int.Parse((string)((Button)sender).Tag,CultureInfo.InvariantCulture);
@@ -25,7 +36,7 @@ public partial class OperationCenterView : UserControl
         var icon=TimerIcon.SelectedValue is OperationIconKind selectedIcon?selectedIcon:OperationIconKind.Clock;
         var priority=TimerPriority.SelectedValue is OperationPriority selectedPriority?selectedPriority:OperationPriority.Normal;
         if(!Model.CreateTimer(TimerName.Text,TimerHours.Text,TimerMinutes.Text,icon,priority))return;
-        TimerName.Clear();TimerHours.Text="0";TimerMinutes.Text="10";TimerName.Focus();
+        ClearTimerEditor();
     }
     private OperationTimerViewModel Timer(object sender)=>(OperationTimerViewModel)((FrameworkElement)sender).DataContext;
     private void PauseTimerClick(object sender,RoutedEventArgs e)=>Model.PauseTimer(Timer(sender));
@@ -34,6 +45,12 @@ public partial class OperationCenterView : UserControl
     private void AttendTimerClick(object sender,RoutedEventArgs e)=>Model.AttendTimer(Timer(sender));
     private void DeleteTimerClick(object sender,RoutedEventArgs e)=>Model.DeleteTimer(Timer(sender));
     private OperationNoteViewModel Note(object sender)=>(OperationNoteViewModel)((FrameworkElement)sender).DataContext;
+    private void OpenNoteEditorClick(object sender,RoutedEventArgs e)
+    {
+        Model.OpenNoteEditor();
+        ClearNoteEditor();
+        NoteText.Focus();
+    }
     private void SaveNoteClick(object sender,RoutedEventArgs e)
     {
         var icon=NoteIcon.SelectedValue is OperationIconKind selectedIcon?selectedIcon:OperationIconKind.General;
@@ -51,13 +68,24 @@ public partial class OperationCenterView : UserControl
     }
     private void CancelNoteClick(object sender,RoutedEventArgs e){Model.CancelEditNote();ClearNoteEditor();}
     private void AttendNoteClick(object sender,RoutedEventArgs e)=>Model.AttendNote(Note(sender));
+    private void ToggleSnoozeClick(object sender,RoutedEventArgs e)=>Model.ToggleSnoozeOptions(Note(sender));
     private void SnoozeNoteClick(object sender,RoutedEventArgs e)
     {
         var minutes=int.Parse((string)((Button)sender).Tag,CultureInfo.InvariantCulture);
         Model.SnoozeNote(Note(sender),minutes);
     }
     private void DeleteNoteClick(object sender,RoutedEventArgs e)=>Model.DeleteNote(Note(sender));
-    private void ClearNoteEditor(){NoteText.Clear();ReminderDate.Clear();ReminderTime.Clear();NoteIcon.SelectedValue=OperationIconKind.General;NotePriority.SelectedValue=OperationPriority.Normal;NoteText.Focus();}
+    internal bool TryHandleEscape()
+    {
+        var timerWasOpen=Model.IsTimerEditorOpen;
+        var noteWasOpen=Model.IsNoteEditorOpen;
+        if(!Model.CloseTransientEditor())return false;
+        if(timerWasOpen)ClearTimerEditor();
+        if(noteWasOpen)ClearNoteEditor();
+        return true;
+    }
+    private void ClearTimerEditor(){TimerName.Clear();TimerHours.Text="0";TimerMinutes.Text="10";TimerIcon.SelectedValue=OperationIconKind.Oven;TimerPriority.SelectedValue=OperationPriority.Normal;}
+    private void ClearNoteEditor(){NoteText.Clear();ReminderDate.Clear();ReminderTime.Clear();NoteIcon.SelectedValue=OperationIconKind.General;NotePriority.SelectedValue=OperationPriority.Normal;}
     private void EnsureDefaults()
     {
         if(TimerIcon.SelectedIndex<0)TimerIcon.SelectedValue=OperationIconKind.Oven;

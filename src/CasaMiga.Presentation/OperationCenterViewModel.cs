@@ -16,6 +16,8 @@ public sealed class OperationCenterViewModel : INotifyPropertyChanged
     private string timerMessage = "";
     private string noteMessage = "";
     private Guid? editingNoteId;
+    private bool timerEditorOpen;
+    private bool noteEditorOpen;
 
     public OperationCenterViewModel(string dataDirectory, Func<DateTimeOffset>? clock = null)
     {
@@ -69,9 +71,15 @@ public sealed class OperationCenterViewModel : INotifyPropertyChanged
     public string NoteMessage { get => noteMessage; private set { noteMessage = value; Changed(nameof(NoteMessage)); Changed(nameof(HasNoteMessage)); } }
     public bool HasNoteMessage => !string.IsNullOrWhiteSpace(NoteMessage);
     public bool IsEditingNote => editingNoteId.HasValue;
+    public bool IsTimerEditorOpen { get => timerEditorOpen; private set { if (timerEditorOpen == value) return; timerEditorOpen = value; Changed(nameof(IsTimerEditorOpen)); } }
+    public bool IsNoteEditorOpen { get => noteEditorOpen; private set { if (noteEditorOpen == value) return; noteEditorOpen = value; Changed(nameof(IsNoteEditorOpen)); } }
 
     public void OpenPanel() => IsPanelOpen = true;
     public void ClosePanel() => IsPanelOpen = false;
+    public void OpenTimerEditor() { TimerMessage = ""; IsTimerEditorOpen = true; }
+    public void CancelTimerEditor() { TimerMessage = ""; IsTimerEditorOpen = false; }
+    public void OpenNoteEditor() { editingNoteId = null; NoteMessage = ""; Changed(nameof(IsEditingNote)); IsNoteEditorOpen = true; }
+    public void CancelNoteEditor() { editingNoteId = null; NoteMessage = ""; Changed(nameof(IsEditingNote)); IsNoteEditorOpen = false; }
 
     public void Tick(DateTimeOffset value)
     {
@@ -110,7 +118,7 @@ public sealed class OperationCenterViewModel : INotifyPropertyChanged
         if (seconds is < 60 or > 359999) return TimerFailure("El temporizador debe durar entre 1 minuto y 99 horas 59 minutos.");
         if (Timers.Count >= 24) return TimerFailure("Puedes conservar hasta 24 temporizadores.");
         Timers.Insert(0, OperationTimerViewModel.Create(name, seconds, now, icon, priority));
-        Changed(nameof(HasTimers)); HeaderChanged(); Save();
+        IsTimerEditorOpen = false; Changed(nameof(HasTimers)); HeaderChanged(); Save();
         return true;
     }
 
@@ -140,12 +148,25 @@ public sealed class OperationCenterViewModel : INotifyPropertyChanged
             Notes.Insert(0, OperationNoteViewModel.Create(text, reminder, now, icon, priority));
             Changed(nameof(HasNotes));
         }
-        HeaderChanged(); Save(); return true;
+        IsNoteEditorOpen = false; HeaderChanged(); Save(); return true;
     }
 
-    public OperationNoteViewModel BeginEditNote(OperationNoteViewModel note) { editingNoteId = note.Id; NoteMessage = ""; Changed(nameof(IsEditingNote)); return note; }
-    public void CancelEditNote() { editingNoteId = null; NoteMessage = ""; Changed(nameof(IsEditingNote)); }
+    public OperationNoteViewModel BeginEditNote(OperationNoteViewModel note) { editingNoteId = note.Id; NoteMessage = ""; IsNoteEditorOpen = true; Changed(nameof(IsEditingNote)); return note; }
+    public void CancelEditNote() => CancelNoteEditor();
     public void AttendNote(OperationNoteViewModel note) { note.Attend(); HeaderChanged(); Save(); }
+    public void ToggleSnoozeOptions(OperationNoteViewModel note)
+    {
+        foreach (var current in Notes.Where(x => !ReferenceEquals(x, note))) current.CloseSnooze();
+        note.ToggleSnooze();
+    }
+    public bool CloseTransientEditor()
+    {
+        if (IsTimerEditorOpen) { CancelTimerEditor(); return true; }
+        if (IsNoteEditorOpen) { CancelNoteEditor(); return true; }
+        var open = Notes.FirstOrDefault(x => x.IsSnoozeOpen);
+        if (open is null) return false;
+        open.CloseSnooze(); return true;
+    }
     public void SnoozeNote(OperationNoteViewModel note, int minutes)
     {
         if (minutes is not (5 or 10 or 15)) throw new ArgumentOutOfRangeException(nameof(minutes));
@@ -154,7 +175,11 @@ public sealed class OperationCenterViewModel : INotifyPropertyChanged
     public void DeleteNote(OperationNoteViewModel note)
     {
         if (!Notes.Remove(note)) return;
-        if (editingNoteId == note.Id) editingNoteId = null;
+        if (editingNoteId == note.Id)
+        {
+            editingNoteId = null;
+            IsNoteEditorOpen = false;
+        }
         Changed(nameof(IsEditingNote)); Changed(nameof(HasNotes)); HeaderChanged(); Save();
     }
 
@@ -240,6 +265,7 @@ public sealed class OperationNoteViewModel : INotifyPropertyChanged
     private bool ready;
     private OperationIconKind icon;
     private OperationPriority priority;
+    private bool snoozeOpen;
     internal OperationNoteViewModel(OperationNoteData data, DateTimeOffset now)
     {
         Id=data.Id;text=data.Text;reminderUtc=data.ReminderUtc;attended=data.Attended;
@@ -256,14 +282,17 @@ public sealed class OperationNoteViewModel : INotifyPropertyChanged
     public bool IsUrgent=>priority==OperationPriority.Urgent;
     public bool IsReady=>ready;
     public bool IsAttended=>attended;
+    public bool IsSnoozeOpen=>snoozeOpen;
     public string ReminderText=>reminderUtc is null?"Sin recordatorio":attended?$"Atendido · {reminderUtc.Value.ToLocalTime():dd/MM/yyyy · HH:mm}":ready?$"¡Recordatorio listo! · {reminderUtc.Value.ToLocalTime():dd/MM/yyyy · HH:mm}":reminderUtc.Value.ToLocalTime().ToString("dd/MM/yyyy · HH:mm");
     public event PropertyChangedEventHandler? PropertyChanged;
     internal bool Tick(DateTimeOffset now){var next=!attended&&reminderUtc is not null&&now.ToUniversalTime()>=reminderUtc.Value;if(next==ready)return false;ready=next;All();return next;}
     internal void Edit(string value,DateTimeOffset? reminder,OperationIconKind selectedIcon,OperationPriority selectedPriority,DateTimeOffset now){text=value;reminderUtc=reminder?.ToUniversalTime();icon=selectedIcon;priority=selectedPriority;attended=false;ready=false;Tick(now);All();}
-    internal void Attend(){attended=true;ready=false;All();}
-    internal void Snooze(DateTimeOffset reminder){reminderUtc=reminder.ToUniversalTime();attended=false;ready=false;All();}
+    internal void Attend(){attended=true;ready=false;snoozeOpen=false;All();}
+    internal void ToggleSnooze(){snoozeOpen=!snoozeOpen;Changed(nameof(IsSnoozeOpen));}
+    internal void CloseSnooze(){if(!snoozeOpen)return;snoozeOpen=false;Changed(nameof(IsSnoozeOpen));}
+    internal void Snooze(DateTimeOffset reminder){reminderUtc=reminder.ToUniversalTime();attended=false;ready=false;snoozeOpen=false;All();}
     internal OperationNoteData Export()=>new(Id,text,reminderUtc,attended,icon,priority);
-    private void All(){Changed(nameof(Text));Changed(nameof(ReminderUtc));Changed(nameof(ReminderText));Changed(nameof(Icon));Changed(nameof(IconLabel));Changed(nameof(IconGeometry));Changed(nameof(Priority));Changed(nameof(IsUrgent));Changed(nameof(IsReady));Changed(nameof(IsAttended));}
+    private void All(){Changed(nameof(Text));Changed(nameof(ReminderUtc));Changed(nameof(ReminderText));Changed(nameof(Icon));Changed(nameof(IconLabel));Changed(nameof(IconGeometry));Changed(nameof(Priority));Changed(nameof(IsUrgent));Changed(nameof(IsReady));Changed(nameof(IsAttended));Changed(nameof(IsSnoozeOpen));}
     private void Changed(string name)=>PropertyChanged?.Invoke(this,new PropertyChangedEventArgs(name));
 }
 

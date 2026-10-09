@@ -169,7 +169,7 @@
   </Grid>
   <Grid Panel.ZIndex="90" Visibility="{Binding Operations.IsPanelOpen,Converter={StaticResource VisibleWhen}}">
    <Border Background="#52000000" MouseLeftButtonDown="OperationsBackdropClick"/>
-   <local:OperationCenterView DataContext="{Binding Operations}" Width="420" MaxWidth="420" HorizontalAlignment="Right" AutomationProperties.Name="Centro operativo"/>
+   <local:OperationCenterView x:Name="OperationsPanel" DataContext="{Binding Operations}" Width="420" MaxWidth="420" HorizontalAlignment="Right" AutomationProperties.Name="Centro operativo"/>
   </Grid>
  </Grid>
 </Window>
