@@ -12,6 +12,14 @@ public sealed class Database(string path)
     /// <summary>Versión de esquema que alcanza <see cref="Initialize"/>: una por migración embebida.</summary>
     public static int LatestVersion { get; } = typeof(Database).Assembly.GetManifestResourceNames().Count(n => n.EndsWith(".sql", StringComparison.Ordinal));
 
+    /// <summary>
+    /// Rama QA (fase 1K.4D): la nota de discrepancia del corte se aplicó como migración 17 en bases de esa rama. Al juntar las
+    /// ramas, esa misma migración (idéntica byte a byte) es la 26 y la 17 es la de contraseñas temporales. Una base con la 17
+    /// de QA se reconoce por su huella: se registra como 26 y se aplican 17–25, todo en la misma transacción.
+    /// </summary>
+    internal const string QaCashDiscrepancyNoteHash = "FFFD6B9273CB924968F60DB3BFBFBFD7B10377052861F7FB87CEB922617EBDA3";
+    internal const int QaCashDiscrepancyNoteVersion = 26;
+
     public SqliteConnection Open(bool readOnly = false)
     {
         var connection = new SqliteConnection(new SqliteConnectionStringBuilder
@@ -71,6 +79,18 @@ public sealed class Database(string path)
             command.CommandText = "SELECT sha256 FROM schema_migration WHERE version=$v";
             command.Parameters.AddWithValue("$v", i + 1);
             var existing = command.ExecuteScalar();
+            if (existing is not null && i + 1 == 17 && Equals(existing, QaCashDiscrepancyNoteHash))
+            {
+                command.Parameters.Clear();
+                command.CommandText = "SELECT count(*) FROM schema_migration WHERE version>17";
+                if (Convert.ToInt64(command.ExecuteScalar()) != 0) throw new InvalidOperationException("Historial de migraciones incompleto.");
+                command.CommandText = "UPDATE schema_migration SET version=$v WHERE version=17";
+                command.Parameters.AddWithValue("$v", QaCashDiscrepancyNoteVersion);
+                command.ExecuteNonQuery();
+                command.Parameters.Clear();
+                command.Parameters.AddWithValue("$v", i + 1);
+                existing = null;
+            }
             if (existing is not null)
             {
                 if (!Equals(existing, hash)) throw new InvalidOperationException("Migración histórica modificada.");
@@ -142,6 +162,11 @@ public sealed class Database(string path)
                 command.CommandText = "SELECT (SELECT count(*) FROM sqlite_master WHERE type='trigger' AND name LIKE 'sync\\_%' ESCAPE '\\')=66"
                     + " AND (SELECT count(*) FROM sqlite_master WHERE name IN ('sync_outbox','ix_sync_outbox_pending'))=2 AND (SELECT count(*) FROM sqlite_master WHERE name='sync_outbox_v23')=0";
                 if (Convert.ToInt64(command.ExecuteScalar()) != 1) throw new InvalidOperationException("La migración de sincronización de la versión web no creó sus estructuras.");
+            }
+            if (i + 1 == 26)
+            {
+                command.CommandText = "SELECT (SELECT count(*) FROM pragma_table_info('cash_session') WHERE name='discrepancy_note')=1 AND (SELECT count(*) FROM sqlite_master WHERE name='cash_close_note_required')=1";
+                if (Convert.ToInt64(command.ExecuteScalar()) != 1) throw new InvalidOperationException("La migración de nota de discrepancia no creó sus estructuras.");
             }
             if (i + 1 == 25)
             {

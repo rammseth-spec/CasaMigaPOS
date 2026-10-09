@@ -55,6 +55,7 @@
      <StackPanel>
       <TextBlock Text="Ticket" Style="{StaticResource SectionTitleText}"/>
       <TextBlock Text="Venta temporal hasta confirmar el cobro" Style="{StaticResource CaptionText}"/>
+      <TextBlock Text="{Binding CartSummary}" Style="{StaticResource CaptionText}" FontWeight="SemiBold" Margin="0,2,0,0" AutomationProperties.Name="Resumen del carrito"/>
       <Border Background="{DynamicResource WarningSoftBrush}" CornerRadius="10" Padding="8,2" Margin="0,6,0,0" HorizontalAlignment="Left" Visibility="{Binding IsDevelopment,Converter={StaticResource VisibleWhen}}"><TextBlock Text="DEMO · precios de prueba" Foreground="{DynamicResource WarningTextBrush}" FontSize="12" FontWeight="SemiBold"/></Border>
      </StackPanel>
     </DockPanel>
@@ -64,25 +65,25 @@
       <TextBlock Text="Carrito vacío" FontWeight="SemiBold" FontSize="16" HorizontalAlignment="Center" Margin="0,8,0,2"/>
       <TextBlock Text="Toca un pan para agregarlo." Foreground="{DynamicResource MutedBrush}" HorizontalAlignment="Center"/>
      </StackPanel>
-     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><ItemsControl ItemsSource="{Binding Lines}" IsEnabled="{Binding CanOperate}"><ItemsControl.ItemTemplate><DataTemplate>
-      <Border BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,0,0,1" Padding="0,10" Margin="0,0,4,0">
+     <ScrollViewer x:Name="CartLinesScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Partidas del carrito"><ItemsControl x:Name="CartLinesList" ItemsSource="{Binding Lines}" IsEnabled="{Binding CanModifyCart}"><ItemsControl.ItemTemplate><DataTemplate>
+      <Border BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,0,0,1" Padding="0,6" Margin="0,0,4,0" AutomationProperties.Name="{Binding Name}">
        <Grid>
         <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
         <Border Width="48" Height="48" CornerRadius="10" Background="{DynamicResource SurfaceSecondaryBrush}" ClipToBounds="True" VerticalAlignment="Top" Margin="0,0,10,0">
          <Image Source="{Binding Photo}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" Visibility="{Binding HasPhoto,Converter={StaticResource VisibleWhen}}"/>
         </Border>
         <StackPanel Grid.Column="1">
-         <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
+         <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="34" LineHeight="17" ToolTip="{Binding Name}"/>
          <TextBlock Text="{Binding UnitPrice}" Style="{StaticResource CaptionText}"/>
-         <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+         <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
           <Border Style="{StaticResource StepperTrack}">
            <StackPanel Orientation="Horizontal">
-            <Button Content="−" Tag="{Binding Id}" Click="DecreaseClick" IsEnabled="{Binding CanDecrease}" Style="{StaticResource QuantityButton}" AutomationProperties.Name="Disminuir cantidad"/>
+            <Button Content="−" Tag="{Binding Id}" Click="DecreaseClick" IsEnabled="{Binding CanDecrease}" Style="{StaticResource QuantityButton}" MinHeight="34" Height="34" AutomationProperties.Name="Disminuir cantidad"/>
             <TextBlock Text="{Binding Quantity}" MinWidth="28" TextAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold" Typography.NumeralAlignment="Tabular"/>
-            <Button Content="+" Tag="{Binding Id}" Click="IncreaseClick" Style="{StaticResource QuantityButton}" AutomationProperties.Name="Incrementar cantidad"/>
+            <Button Content="+" Tag="{Binding Id}" Click="IncreaseClick" Style="{StaticResource QuantityButton}" MinHeight="34" Height="34" AutomationProperties.Name="Incrementar cantidad"/>
            </StackPanel>
           </Border>
-          <Button Tag="{Binding Id}" Click="RemoveClick" Style="{StaticResource QuantityButton}" Margin="6,0,0,0" ToolTip="Quitar del ticket" AutomationProperties.Name="Eliminar">
+          <Button Tag="{Binding Id}" Click="RemoveClick" Style="{StaticResource QuantityButton}" MinHeight="34" Height="34" Margin="6,0,0,0" ToolTip="Quitar del ticket" AutomationProperties.Name="Eliminar">
            <Viewbox Width="18" Height="18"><Canvas Width="24" Height="24"><Path Data="{StaticResource IconTrash}" Stroke="{DynamicResource TextSecondaryBrush}" StrokeThickness="1.9" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Canvas></Viewbox>
           </Button>
          </StackPanel>

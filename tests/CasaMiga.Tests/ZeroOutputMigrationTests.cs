@@ -87,7 +87,15 @@ public sealed partial class RecipePersistenceTests
             if(excludeProductionPermissions && table is "permission" or "role_permission")
                 q.CommandText+=" WHERE "+(table=="permission"?"name":"permission_name")+" NOT IN ('recipe.view','recipe.configure','production.view','production.create','production.confirm','users.manage','sales.refund','consignment.view','consignment.manage','cash.movement','cash.withdrawal')";
             using var r=q.ExecuteReader();var rows=new List<string>();
-            while(r.Read()){var values=new object[r.FieldCount];r.GetValues(values);rows.Add(JsonSerializer.Serialize(values));}
+            while(r.Read())
+            {
+                var values=new object[r.FieldCount];r.GetValues(values);
+                // 017 adds only a nullable note. Include its expected NULL in the legacy
+                // snapshot so equality still checks every old value AND the new NULL.
+                if(table=="cash_session" && !Enumerable.Range(0,r.FieldCount).Any(i=>r.GetName(i)=="discrepancy_note"))
+                    values=[..values,DBNull.Value];
+                rows.Add(JsonSerializer.Serialize(values));
+            }
             result.Add(table+string.Join("\n",rows.Order(StringComparer.Ordinal)));
         }
         return string.Join("\n",result);

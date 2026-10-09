@@ -53,7 +53,7 @@ public sealed class CashClosingTests
         var result=closing.SubmitCount(id,new Money(counted));
         Assert.AreEqual(50025L,result.Expected.Cents);Assert.AreEqual(difference,result.Difference.Cents);
         Assert.AreEqual(CashState.Open,work.Run(s=>s.FindSession(id))!.State);
-        clock.UtcNow=clock.UtcNow.AddHours(1);var closed=closing.Close(id);
+        clock.UtcNow=clock.UtcNow.AddHours(1);var closed=closing.Close(id,difference==0?null:"Diferencia sintética verificada");
         Assert.AreEqual(CashState.Closed,closed.State);Assert.AreEqual(owner,closed.OpenedBy);Assert.AreEqual(owner,closed.ClosedBy);
         Assert.AreEqual(clock.UtcNow,closed.ClosedAt);Assert.AreEqual(difference,closed.Difference!.Value.Cents);
         Assert.IsFalse(closed.ClosedByOtherUser);Assert.IsNull(cash.Current(terminal.Id));
@@ -147,7 +147,7 @@ public sealed class CashClosingTests
     }
     [TestMethod] public void MaximumMoneyRemainsExactAndDomainRejectsInvalidTransition()
     {
-        var id=Open(long.MaxValue);closing.SubmitCount(id,new Money(0));var closed=closing.Close(id);
+        var id=Open(long.MaxValue);closing.SubmitCount(id,new Money(0));var closed=closing.Close(id,"Conteo sintético de límite");
         Assert.AreEqual(-long.MaxValue,closed.Difference!.Value.Cents);
         Assert.ThrowsExactly<InvalidOperationException>(()=>closed.Close(user.Current!.Id,clock.UtcNow,new Money(0),new Money(0)));
         Assert.ThrowsExactly<ArgumentException>(()=>Money.FromPesos(1.001m));

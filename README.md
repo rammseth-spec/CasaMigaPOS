@@ -1,5 +1,7 @@
 # Casa Miga POS
 
+**Estado actual (09/10/2026):** QAv1 incluye la rama QA (fases 1K.4B–1K.4D: carrito, historial de ventas, nota de discrepancia e historial de caja) además de la versión web con punto de venta. Ver [estado actual](docs/CURRENT_STATE.md). Los párrafos de fase de abajo son históricos.
+
 **FASE 1K.4C-R3 TÉCNICAMENTE COMPLETADA; SMOKE MANUAL PENDIENTE.** La entrada de fechas del Historial permite escribir únicamente ocho dígitos e inserta automáticamente las barras de `dd/mm/aaaa`; conserva Backspace, Delete, selección, reemplazo y pegado, además del calendario y validación humana de R2. Focales 32/32; suite 743/743; Release limpio; schema 16 sin migración 017 y base protegida intacta. Ver [reporte 1K.4C-R3](docs/PHASE_1K4C_R3_REPORT.md) y [evidencia](docs/evidence/phase1k4c-r3-verification.md). No iniciar 1K.4D ni publicar hasta su cierre.
 
 **FASE 1K.3C TÉCNICAMENTE COMPLETADA; SMOKE MANUAL PENDIENTE.** Recetas ofrece búsqueda incremental de ingredientes, unidades compatibles por dimensión, versionado y estados humanos, alternativas por grupo/opción, secciones distintas para preparaciones e ingredientes directos, ayudas breves y acciones inválidas deshabilitadas. Suite 708/708; Release 0 errores/advertencias. Build aislado `Phase1K3C`; schema 16 sin migración 017 y datos protegidos. Ver [reporte 1K.3C](docs/PHASE_1K3C_REPORT.md) y [evidencia](docs/evidence/phase1k3c-verification.md). 1K.3B fue aprobada manualmente por el usuario antes de esta autorización. FASE 1K permanece abierta.

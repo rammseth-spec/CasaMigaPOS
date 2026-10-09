@@ -74,7 +74,7 @@ function sessionsTable(sessions) {
     { label: 'Fondo', num: true, value: s => fmt(s.opening) },
     { label: 'Esperado', num: true, value: s => [fmt(s.expected), (s.movements || s.cashRefunds) ? h('small', { text: [s.movements ? `Mov. ${fmt(s.movements)}` : '', s.cashRefunds ? `Dev. −${fmt(s.cashRefunds)}` : ''].filter(Boolean).join(' · ') }) : null] },
     { label: 'Contado', num: true, value: s => s.counted === null ? '—' : fmt(s.counted) },
-    { label: 'Diferencia', num: true, value: s => diffCell(s.difference) },
+    { label: 'Diferencia', num: true, value: s => [diffCell(s.difference), s.note ? h('small', { text: `«${s.note}»` }) : null] },
   ], sessions, { empty: 'Sin cortes en el periodo.' });
 }
 function terminalsList(terminals) {

@@ -48,17 +48,17 @@ public sealed class CashClosingService(ILocalUnitOfWork database, UserSession id
             System.Text.Json.JsonSerializer.Serialize(new {countedCents=counted.Cents})));
         return Result(store,session,count);
     });
-    public CashSession Close(Guid id) => Run(store =>
+    public CashSession Close(Guid id, string? discrepancyNote = null) => Run(store =>
     {
         var session=Get(store,id); var actor=Authorize(store,session); RequireOpen(session);
         var count=store.FindCount(id) ?? throw new CashClosingException("Confirma primero el conteo ciego.");
-        var closed=session.Close(actor.Id,clock.UtcNow,Expected(store,session),count.Counted);
+        var closed=session.Close(actor.Id,clock.UtcNow,Expected(store,session),count.Counted,discrepancyNote);
         store.CloseSession(closed);
         store.AddAudit(new(Guid.NewGuid(),actor.Id,session.TerminalId,"cash.close",id,closed.ClosedAt!.Value,
             System.Text.Json.JsonSerializer.Serialize(new {openedBy=session.OpenedBy,closedBy=actor.Id,
                 closedByOtherUser=closed.ClosedByOtherUser,countedBy=count.CountedBy,countedAt=count.CountedAt,
                 openingCents=session.OpeningFund.Cents,expectedCents=closed.Expected!.Value.Cents,
-                countedCents=count.Counted.Cents,differenceCents=closed.Difference!.Value.Cents})));
+                countedCents=count.Counted.Cents,differenceCents=closed.Difference!.Value.Cents,discrepancyNote=closed.DiscrepancyNote})));
         return closed;
     });
 }

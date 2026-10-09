@@ -85,18 +85,25 @@ function countRows(c) {
     h('li', {}, h('strong', { text: 'Contado' }), h('span'), h('b', { class: 'num', text: fmt(c.counted) })),
     h('li', {}, h('strong', { text: 'Diferencia' }), h('span'), h('b', { class: 'num ' + (c.difference < 0 ? 'short' : c.difference > 0 ? 'over' : 'even'), text: c.difference === 0 ? 'Cuadra' : fmt(c.difference) })));
 }
-async function closeShift(data) {
-  await post('pos-close', { tillId: data.till.id, sessionId: data.session.id });
+async function closeShift(data, discrepancyNote = '') {
+  await post('pos-close', { tillId: data.till.id, sessionId: data.session.id, discrepancyNote });
   toast('Turno cerrado.'); render();
 }
+// Con faltante o sobrante, el cierre pide una nota (como la caja de escritorio).
+const noteField = c => c.difference === 0 ? h('p', { class: 'muted small wide', text: 'Sin diferencia. No se requiere nota.' })
+  : field('Nota de la diferencia (obligatoria)', h('textarea', { name: 'note', maxlength: '500', required: true, placeholder: 'Por ejemplo, se dio cambio de más' }), true);
+const readNote = (form, c) => {
+  const note = form.elements.note?.value.trim() ?? '';
+  if (c.difference !== 0 && !note) throw new Error('Escribe una nota para explicar la diferencia antes de cerrar la caja.');
+  return note;
+};
 function countedShift(data) {
   if (!can('cash.close')) return card(`${data.till.name} · turno contado`, h('p', { text: 'Ya se hizo el conteo de esta caja; falta que el encargado cierre el turno. Mientras tanto no se puede vender.' }));
   return card(`${data.till.name} · conteo confirmado`, h('p', { class: 'muted', text: `Turno de ${data.session.openedBy || '—'} desde ${time(data.session.openedAt)} · ${data.session.tickets} tickets. Ya no entran ventas a este turno.`, style: { marginBottom: '10px' } }),
     countRows(data.session.count),
-    h('div', { class: 'toolbar', style: { marginTop: '14px' } }, h('button', { type: 'button', class: 'primary', onclick: async e => {
-      e.target.disabled = true;
-      try { await closeShift(data); } catch (error) { toast(error.message); e.target.disabled = false; }
-    } }, 'Cerrar turno')));
+    h('div', { class: 'toolbar', style: { marginTop: '14px' } }, h('button', { type: 'button', class: 'primary', onclick: () => dialog('Cerrar turno', body => {
+      body.append(h('div', { class: 'wide' }, countRows(data.session.count)), noteField(data.session.count));
+    }, { submit: 'Cerrar turno', onSubmit: async form => { await closeShift(data, readNote(form, data.session.count)); } }) }, 'Cerrar turno')));
 }
 function countDialog(data) {
   dialog('Corte de caja · conteo ciego', body => {
@@ -107,8 +114,8 @@ function countDialog(data) {
     if (cents === null) throw new Error('Escribe lo contado, por ejemplo 1250.50.');
     const result = await post('pos-count', { tillId: data.till.id, sessionId: data.session.id, countedCents: cents });
     setTimeout(() => dialog('Resultado del conteo', body => {
-      body.append(h('div', { class: 'wide' }, countRows(result)));
-    }, { submit: 'Cerrar turno', onSubmit: async () => { await closeShift(data); } }));
+      body.append(h('div', { class: 'wide' }, countRows(result)), noteField(result));
+    }, { submit: 'Cerrar turno', onSubmit: async form => { await closeShift(data, readNote(form, result)); } }));
     render({ silent: true });
   } });
 }

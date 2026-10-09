@@ -148,13 +148,16 @@ public sealed partial class SqliteLocalUnitOfWork(Database database) : ILocalUni
         }
         public CashSession? FindSession(Guid id)
         {
-            using var cmd=Command("SELECT terminal_id,opened_by,opened_utc,opening_cents,state,closed_utc,closed_by,expected_cents,counted_cents,difference_cents FROM cash_session WHERE id=$id",("$id",Id(id)));
+            // Named fields also allow reading legacy fixtures before their explicit upgrade.
+            using var cmd=Command("SELECT * FROM cash_session WHERE id=$id",("$id",Id(id)));
             using var r=cmd.ExecuteReader();
             if(!r.Read()) return null;
-            return CashSession.Restore(id,Guid.Parse(r.GetString(0)),Guid.Parse(r.GetString(1)),Date(r,2)!.Value,
-                new Money(r.GetInt64(3)),r.GetString(4)=="OPEN"?CashState.Open:CashState.Closed,Date(r,5),
-                r.IsDBNull(6)?null:Guid.Parse(r.GetString(6)),r.IsDBNull(7)?null:new Money(r.GetInt64(7)),
-                r.IsDBNull(8)?null:new Money(r.GetInt64(8)),r.IsDBNull(9)?null:new Money(r.GetInt64(9)));
+            Money? Amount(string name) => r[name] is long cents ? new Money(cents) : null;
+            var noteIndex = Enumerable.Range(0,r.FieldCount).FirstOrDefault(i=>r.GetName(i)=="discrepancy_note",-1);
+            return CashSession.Restore(id,Guid.Parse((string)r["terminal_id"]),Guid.Parse((string)r["opened_by"]),Date(r,r.GetOrdinal("opened_utc"))!.Value,
+                Amount("opening_cents")!.Value,(string)r["state"]=="OPEN"?CashState.Open:CashState.Closed,Date(r,r.GetOrdinal("closed_utc")),
+                r["closed_by"] is string actor?Guid.Parse(actor):null,Amount("expected_cents"),Amount("counted_cents"),Amount("difference_cents"),
+                noteIndex<0 || r.IsDBNull(noteIndex)?null:r.GetString(noteIndex));
         }
         public CashCount? FindCount(Guid id)
         {
@@ -170,9 +173,9 @@ public sealed partial class SqliteLocalUnitOfWork(Database database) : ILocalUni
         }
         public void CloseSession(CashSession session)
         {
-            using var cmd=Command("UPDATE cash_session SET state='CLOSED',closed_by=$actor,closed_utc=$at,expected_cents=$expected,counted_cents=$counted,difference_cents=$difference WHERE id=$id AND state='OPEN'",
+            using var cmd=Command("UPDATE cash_session SET state='CLOSED',closed_by=$actor,closed_utc=$at,expected_cents=$expected,counted_cents=$counted,difference_cents=$difference,discrepancy_note=$note WHERE id=$id AND state='OPEN'",
                 ("$id",Id(session.Id)),("$actor",Id(session.ClosedBy!.Value)),("$at",At(session.ClosedAt!.Value)),
-                ("$expected",session.Expected!.Value.Cents),("$counted",session.Counted!.Value.Cents),("$difference",session.Difference!.Value.Cents));
+                ("$expected",session.Expected!.Value.Cents),("$counted",session.Counted!.Value.Cents),("$difference",session.Difference!.Value.Cents),("$note",session.DiscrepancyNote));
             if(cmd.ExecuteNonQuery()!=1) throw new CashClosingException("La sesión ya no está abierta.");
         }
         public void AddAudit(AuditEntry entry)

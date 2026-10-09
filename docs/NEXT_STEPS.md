@@ -1,4 +1,79 @@
-# Próximo paso — smoke manual de 1K.4A
+# FASE 1K.4D-R1 aprobada — siguiente trabajo pendiente de autorización
+
+El usuario aprobó el smoke visual final del build `work/Abrir-Casa-Miga-1K4D-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4D-R1`, con DataDirectory aislado `work/phase1k4d-r1-smoke-20261008` (schema 17).
+
+La fase queda cerrada. Publicar el checkpoint aprobado únicamente en `origin/QA` mediante avance normal y conservar `main` sin cambios. No crear ramas. No iniciar otra fase, migración, instalador ni promoción a producción hasta recibir autorización expresa.
+
+La copia de revisión permanece como evidencia local. No imprimir ni accionar cajón desde ella.
+
+## Registro anterior — smoke manual de Caja 1K.4D
+
+# Próximo paso — smoke manual de Caja 1K.4D
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4D.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4D`, DataDirectory `work/phase1k4d-smoke-20261008` (schema 17). La base protegida sigue en schema 16, intacta. Las instrucciones antiguas quedan como registro histórico.
+
+1. Iniciar sesión con las credenciales verificadas entregadas en la conversación. Confirmar CAJA CERRADA, 30 cierres y paginación 25+5.
+2. Revisar detalles sintéticos: fondo $500 + ventas $1,250 = esperado $1,750; exacto $1,750, sobrante $1,780 (+$30) y faltante $1,700 (−$50). Notas visibles y sólo lectura.
+3. En esta copia, abrir con $500. Contar $500: el esperado no aparece antes de confirmar conteo; después fondo $500 + ventas $0 = esperado $500. Cerrar sin nota.
+4. En sesiones nuevas independientes con fondo $500, contar $530 y $450 respectivamente. Ver obligatoriedad de nota, escribir observación sintética y confirmar cierre definitivo. No intentar cambiar un conteo confirmado.
+5. Consultar los cierres creados, responsables y notas. Revisar 1280×820, 1920×1080, F11 y Escape.
+6. No vender desde UI, imprimir, activar cajón, modificar inventario ni producción. Las ventas requeridas ya se prepararon mediante tooling en históricos sintéticos.
+
+Ver el checklist detallado en `PHASE_1K4D_REPORT.md`. Apertura automática en login no equivale a aprobación humana. Después del smoke esperar aprobación explícita antes del checkpoint GitHub. Sin push durante esta ejecución; no iniciar fase siguiente.
+
+## Registro anterior — 1K.4C-R3
+
+# Próximo paso — smoke manual de 1K.4C-R3
+
+Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4C-R3`, abierta desde `work/Abrir-Casa-Miga-1K4C-R3.cmd`, con DataDirectory `work/phase1k4c-r3-smoke-20261007`. No usar el acceso anclado ni builds anteriores.
+
+1. Iniciar sesión y entrar en Historial de ventas.
+2. En Desde, escribir sólo `07102026` y confirmar el resultado progresivo/final `07/10/2026`; repetir en Hasta y aplicar.
+3. Probar Backspace, Delete, selección parcial y Ctrl+A + `32102026`: debe quedar `32/10/2026`, conservarse y mostrar el error humano sin cambiar resultados.
+4. Probar pegado `07102026` y `07/10/2026`, además del calendario; todas las rutas deben producir `07/10/2026`.
+5. Revisar Todos, Hoy, Ayer y Rango; comprobar fechas `dd/MM/yyyy · HH:mm`, conteos y día final inclusivo.
+6. Elegir Sesión actual: 57 ventas, primera página 50 y segunda siete; revisar `Venta #NNNNNN` y Caja separada.
+7. Abrir una venta y confirmar el detalle financiero. Verificar que Reimprimir aparece según permiso, sin pulsarlo.
+8. Revisar 1280×820, 1920×1080 y F11/Escape. Salir sin operar.
+
+No vender, cobrar, abrir/cerrar/contar caja, modificar inventario/producción ni imprimir. Después del smoke, esperar confirmación explícita. No iniciar 1K.4D ni publicar: el siguiente checkpoint GitHub permanece después de 1K.4D.
+
+## Registro anterior — smoke de 1K.4C-R2
+
+R2 fue aprobada manualmente en clipping, validación, calendario, filtros, Historial, paginación y navegación. R3 sustituye únicamente su escritura manual por la máscara numérica.
+
+## Registro anterior — smoke de 1K.4C-R1
+
+R1 fue sustituida porque el smoke humano confirmó clipping real y borrado silencioso de fechas inválidas. No usar ese build para aprobar fechas.
+
+## Registro anterior — smoke corto de 1K.4B-R1
+
+Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4B-R1`, abierta desde `work/Abrir-Casa-Miga-1K4B-R1.cmd`, con DataDirectory `work/phase1k4b-r1-smoke-20261007`. No usar el acceso anclado ni builds anteriores.
+
+1. Iniciar sesión y entrar al POS; observar el catálogo.
+2. Agregar el producto A y confirmar que imágenes y tarjetas no parpadean.
+3. Agregar A nuevamente y confirmar que la misma fila aumenta a dos piezas sin refrescar el catálogo.
+4. Agregar B; usar + y −; eliminar B.
+5. Confirmar durante todo el recorrido que búsqueda, categoría, página y scroll del catálogo permanecen estables.
+6. No cobrar. Limpiar el carrito si hace falta y salir.
+
+Si el recorrido no muestra parpadeo, cerrar formalmente 1K.4B. No iniciar 1K.4C, 1K.4D, Pedidos/Tiendas, instalador o migración 017. No publicar esta R1: el siguiente checkpoint GitHub permanece previsto después de 1K.4D.
+
+## Registro anterior — smoke manual de 1K.4B
+
+Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4B`, abierta desde `work/Abrir-Casa-Miga-1K4B.cmd`, con DataDirectory `work/phase1k4b-smoke-20261006`. No usar el acceso anclado ni builds anteriores.
+
+1. Iniciar sesión, entrar al POS y confirmar el carrito vacío: `0 productos · 0 piezas`, Subtotal/TOTAL en $0.00 y las tres acciones deshabilitadas.
+2. Agregar un producto: revisar nombre, precio unitario, importe, `1 producto · 1 pieza` y total. Pulsar la misma tarjeta otra vez y confirmar una sola fila con dos piezas.
+3. Agregar un producto distinto y confirmar `2 productos · 3 piezas`; revisar que cada importe y el total sumen una sola vez.
+4. Probar + y −. Al llegar a una pieza, − debe quedar deshabilitado; usar el icono con tooltip `Eliminar producto del carrito` para quitar la fila.
+5. Agregar cinco o más productos. Confirmar al menos cuatro filas cómodas a 1280×820, scroll sólo en las partidas, desplazamiento mínimo al agregar una fila fuera de vista y pie fijo.
+6. Probar nombre largo, Limpiar con confirmación y vuelta al estado vacío. No abrir el diálogo de cobro si no se realizará una venta autorizada.
+7. Revisar 1920×1080 y F11; comprobar además búsqueda en vivo, × Limpiar, categoría y Escape de 1K.4A. Salir sin confirmar venta ni imprimir.
+
+No ejecutar ventas, pagos, caja, impresión, inventario o producción. Tras el smoke, esperar confirmación explícita del usuario. No iniciar 1K.4C, 1K.4D, Pedidos/Tiendas, instalador o migración 017. No publicar 1K.4B en GitHub: el siguiente checkpoint remoto está previsto después de 1K.4D.
+
+## Registro anterior — smoke manual de 1K.4A
 
 Usar únicamente `Casa Miga POS · Caja · DESARROLLO · 1K.4A`, abierta desde `work/Abrir-Casa-Miga-1K4A.cmd`, con DataDirectory `work/phase1k4a-smoke-20261006`. No usar el acceso anclado ni builds anteriores.
 

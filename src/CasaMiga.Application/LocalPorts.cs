@@ -74,6 +74,8 @@ public interface ILocalStore
     CashCount? FindCount(Guid id);
     void AddCount(CashCount count);
     void CloseSession(CashSession session);
+    CashClosureHistoryPage QueryCashClosures(Guid terminal, int page);
+    CashClosureHistoryRow? FindCashClosure(Guid terminal, Guid id);
     Category? FindCategory(Guid id);
     IReadOnlyList<Category> ListCategories(bool includeInactive);
     IReadOnlyList<Category> ListPosCategories();

@@ -187,11 +187,13 @@
          </StackPanel>
          <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="14" Padding="18,14" Margin="0,0,0,20"><TextBlock Text="{Binding CashDetails}" LineHeight="23"/></Border>
          <Button Content="Abrir caja" Click="ShowOpeningClick" IsEnabled="{Binding CanOpen}" Visibility="{Binding HasNoOpenCash,Converter={StaticResource VisibleWhen}}" HorizontalAlignment="Left" MinWidth="220" MinHeight="52" Margin="0,0,0,12"/>
-         <Button Content="Cerrar caja" Click="BeginClosingClick" Visibility="{Binding HasOpenCash,Converter={StaticResource VisibleWhen}}" Style="{StaticResource DestructiveButton}" HorizontalAlignment="Left" MinWidth="220" MinHeight="52" Margin="0,0,0,12"/>
+         <Button Content="Cerrar caja" Click="BeginClosingClick" Visibility="{Binding CanClose,Converter={StaticResource VisibleWhen}}" Style="{StaticResource DestructiveButton}" HorizontalAlignment="Left" MinWidth="220" MinHeight="52" Margin="0,0,0,12"/>
          <TextBlock Text="Salir del usuario o cerrar la aplicación no cierra la caja." Style="{StaticResource CaptionText}" Margin="0,4,0,0"/>
         </StackPanel>
         <local:CashMovementsView DataContext="{Binding CashMovements}" Width="600" Margin="0,0,0,24" Visibility="{Binding DataContext.ShowCashMovements,RelativeSource={RelativeSource AncestorType=Window},Converter={StaticResource VisibleWhen}}"/>
         </WrapPanel>
+        <!-- Cierres anteriores de esta caja (sólo lectura) con su detalle y nota de discrepancia. -->
+        <local:CashHistoryView Visibility="{Binding IsDashboard,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}" MaxWidth="1120" HorizontalAlignment="Left"/>
         <StackPanel Visibility="{Binding IsUsers,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}">
          <TextBlock Text="Usuarios registrados" Style="{StaticResource SectionTitleText}" Margin="0,0,0,10"/>
          <DataGrid x:Name="UserList" ItemsSource="{Binding Users}" SelectedItem="{Binding SelectedUser}" Height="220" AutomationProperties.Name="Usuarios">
@@ -234,7 +236,16 @@
          <TextBlock Text="{Binding ClosingOwner}" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,16"/>
          <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="14" Padding="20,16" Margin="0,0,0,20"><TextBlock Text="{Binding ClosingDetails}" FontSize="20" LineHeight="30"/></Border>
          <TextBlock Text="La sesión quedará cerrada y auditada. No podrá volver a abrirse. Volver conserva el conteo confirmado." Margin="0,0,0,24"/>
-         <WrapPanel><Button x:Name="BackResult" Content="Volver" Click="BackClosingClick" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8"/><Button Content="Confirmar cierre" Click="ConfirmCloseClick" Style="{StaticResource DestructiveButton}" Margin="0,0,0,8"/></WrapPanel>
+          <TextBlock x:Name="NoDiscrepancyNoteMessage" Text="Sin diferencia. No se requiere nota." FontSize="15" Margin="0,0,0,12">
+           <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource CaptionText}"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding RequiresDiscrepancyNote}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+          </TextBlock>
+          <StackPanel x:Name="DiscrepancyNoteEditor" Visibility="{Binding RequiresDiscrepancyNote,Converter={StaticResource VisibleWhen}}">
+           <TextBlock Text="{Binding DiscrepancyNoteLabel}" FontWeight="SemiBold"/>
+           <TextBlock Text="Escribe una nota para habilitar el cierre." Style="{StaticResource CaptionText}" Margin="0,2,0,4"/>
+           <TextBox Text="{Binding DiscrepancyNote,UpdateSourceTrigger=PropertyChanged}" MaxLength="500" AcceptsReturn="True" TextWrapping="Wrap" Height="85" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Nota de discrepancia" Margin="0,2,0,4"/>
+           <TextBlock Text="{Binding DiscrepancyNoteCount}" Style="{StaticResource CaptionText}" Margin="0,0,0,12"/>
+          </StackPanel>
+         <WrapPanel><Button x:Name="BackResult" Content="Volver" Click="BackClosingClick" Style="{StaticResource SecondaryButton}" Margin="0,0,12,8"/><Button Content="Confirmar cierre definitivo" IsEnabled="{Binding CanConfirmClose}" Click="ConfirmCloseClick" Style="{StaticResource DestructiveButton}" Margin="0,0,0,8"/></WrapPanel>
         </StackPanel>
         <TextBlock Text="{Binding Message}" Margin="0,18,0,0" AutomationProperties.LiveSetting="Polite"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/></DataTrigger><DataTrigger Binding="{Binding Message}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger><DataTrigger Binding="{Binding Message}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
        </StackPanel>

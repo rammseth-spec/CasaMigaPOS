@@ -42,7 +42,7 @@ public sealed class ReportTests : SalesFixture
     {
         Persist();
         var closing = new CashClosingService(work, user, clock);
-        closing.SubmitCount(cash.Id, new Money(53700)); closing.Close(cash.Id);
+        closing.SubmitCount(cash.Id, new Money(53700)); closing.Close(cash.Id, "Sobrante de prueba");
         var shift = Reports.Sales(Today, Today).Data.Sessions.Single();
         Assert.IsTrue(shift.Closed);
         Assert.AreEqual(53700L, shift.Counted!.Value.Cents);

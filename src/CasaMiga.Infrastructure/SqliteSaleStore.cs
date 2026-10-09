@@ -96,6 +96,7 @@ public sealed partial class SqliteLocalUnitOfWork
                 var values = new List<(string, object?)>();
                 if (filter.FromUtc is { } from) { parts.Add("s.confirmed_utc >= $from"); values.Add(("$from", At(from))); }
                 if (filter.UntilUtc is { } until) { parts.Add("s.confirmed_utc < $until"); values.Add(("$until", At(until))); }
+                if (filter.CashSessionId is { } cash) { parts.Add("s.cash_session_id=$cash"); values.Add(("$cash", Id(cash))); }
                 predicate = parts.Count == 0 ? "" : " WHERE " + string.Join(" AND ", parts);
                 parameters = values.ToArray();
             }
@@ -115,7 +116,7 @@ public sealed partial class SqliteLocalUnitOfWork
                 var saleId = Guid.Parse(reader.GetString(0));
                 var terminalId = Guid.Parse(reader.GetString(1));
                 var rowSequence = reader.GetInt64(2);
-                items.Add(new(saleId, $"{terminalId:N}-{rowSequence:D8}", Date(reader, 3)!.Value,
+                items.Add(new(saleId, $"{terminalId:N}-{rowSequence:D8}", rowSequence, Date(reader, 3)!.Value,
                     new(reader.GetInt64(4)), reader.GetString(5), Guid.Parse(reader.GetString(6)), reader.GetString(7),
                     terminalId, reader.GetString(8), Guid.Parse(reader.GetString(9)), new(reader.GetInt64(10))));
             }

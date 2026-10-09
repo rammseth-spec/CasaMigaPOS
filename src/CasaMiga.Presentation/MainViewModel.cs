@@ -6,13 +6,14 @@ using CasaMiga.Infrastructure;
 
 namespace CasaMiga.Presentation;
 
-public sealed class MainViewModel : INotifyPropertyChanged
+public sealed partial class MainViewModel : INotifyPropertyChanged
 {
     public PosViewModel? Pos { get; private set; }
     public bool IsPos => screen == "pos";
     public bool IsNotPos => !IsPos;
     // Rediseño A: el menú es un riel fijo con íconos en todas las pantallas; el contenido va directo sobre el fondo.
     public System.Windows.Thickness ShellContentMargin => IsPos ? new(16,0,16,16) : new(24,0,24,24);
+    public bool IsScrollableContent => CanNavigate && !IsPos && !IsDashboard;
     public bool HasCart => user?.Cart is { IsEmpty:false };
     public bool HasPendingCheckout => user?.CheckoutPending==true;
     public void DiscardCart() => Pos?.Discard(true);
@@ -84,11 +85,15 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public bool HasOpenCash => opened is not null;
     public string CountedAmount { get; set; } = "";
     public string ClosingOwner => opened is null ? "" : $"Abierta por: {opened.OpenedByName}" + (opened.Session.OpenedBy != user?.Current?.Id ? " · Cierre por otro usuario" : " · Tu sesión");
-    public string ClosingDetails => closingResult is not { } r ? "" : $"Fondo inicial: {Format(r.Session.OpeningFund)}\n" + (r.Refunds.Cents > 0 ? $"Devoluciones en efectivo: −{Format(r.Refunds)}\n" : "") + MovementLines(r.Movements) + $"Efectivo esperado: {Format(r.Expected)}\nEfectivo contado: {Format(r.Count.Counted)}\n{DifferenceLabel(r.Difference)}";
+    public string ClosingDetails => closingResult is not { } r ? "" :
+        $"Caja: {CurrentTerminalName}\nApertura: {r.Session.OpenedAt.ToLocalTime():dd/MM/yyyy · HH:mm}\nFondo inicial: {Format(r.Session.OpeningFund)}\n"
+        + $"+ Ventas en efectivo: {Format(new Money(checked(r.Expected.Cents - r.Session.OpeningFund.Cents + r.Refunds.Cents - (r.Movements?.Net.Cents ?? 0))))}\n"
+        + (r.Refunds.Cents > 0 ? $"Devoluciones en efectivo: −{Format(r.Refunds)}\n" : "") + MovementLines(r.Movements)
+        + $"= Efectivo esperado: {Format(r.Expected)}\nEfectivo contado: {Format(r.Count.Counted)}\n{DifferenceLabel(r.Difference)}";
     private static string MovementLines(CashMovementTotals? totals) => totals is not { Any: true } t ? "" :
         (t.Expenses.Cents > 0 ? $"Gastos: −{Format(t.Expenses)}\n" : "") + (t.Withdrawals.Cents > 0 ? $"Retiros: −{Format(t.Withdrawals)}\n" : "") + (t.Deposits.Cents > 0 ? $"Entradas: +{Format(t.Deposits)}\n" : "");
     private static string Format(Money value) => (value.Cents/100m).ToString("C2",CultureInfo.GetCultureInfo("es-MX"));
-    private static string DifferenceLabel(Money value) => value.Cents==0 ? "Diferencia: $0.00 · Caja exacta" : value.Cents>0 ? $"SOBRANTE {Format(value)}" : $"FALTANTE {Format(new Money(checked(-value.Cents)))}";
+    internal static string DifferenceLabel(Money value) => value.Cents==0 ? "Sin diferencia · $0.00" : value.Cents>0 ? $"Sobrante de {Format(value)} (+)" : $"Faltante de {Format(new Money(checked(-value.Cents)))} (−)";
     public bool IsOpening => screen == "opening";
     public bool CanOpen { get; private set; }
     public bool HasNoOpenCash => opened is null;
@@ -111,8 +116,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         var words = name.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         return string.Concat(words.Take(2).Select(w => char.ToUpper(w[0], CultureInfo.GetCultureInfo("es-MX"))));
     }
-    public string CashDetails => opened is null ? "Captura el fondo inicial para comenzar." :
-        $"Abierta por: {opened.OpenedByName}\nHora de apertura: {opened.Session.OpenedAt.ToLocalTime():dd/MM/yyyy HH:mm:ss zzz}\n\nImportes ocultos hasta confirmar el conteo ciego. Las ventas en efectivo, los gastos, los retiros y las entradas se incluyen en el cierre.";
+    public string CashDetails => opened is null ? "No hay una sesión de caja abierta." :
+        $"Caja: {CurrentTerminalName}\nResponsable: {opened.OpenedByName}\nApertura: {opened.Session.OpenedAt.ToLocalTime():dd/MM/yyyy · HH:mm}\nFondo inicial: {Format(opened.Session.OpeningFund)}\n\nImportes ocultos hasta confirmar el conteo ciego. Las ventas en efectivo, los gastos, los retiros y las entradas se incluyen en el cierre.";
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Notify() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
 
@@ -146,7 +151,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 terminal = TerminalConfiguration.LoadOrCreate(options.DataDirectory);
                 database.Run(store => { store.EnsureTerminal(terminal, clock.UtcNow); return true; });
                 var journal = new CheckoutJournal(options.DataDirectory);
-                user = new UserSession(journal); login = new(database, new LocalPasswords(), clock, user); cash = new(database, user, clock); closing = new(database,user,clock);
+                user = new UserSession(journal); login = new(database, new LocalPasswords(), clock, user); cash = new(database, user, clock); closing = new(database,user,clock); cashHistory = new(database,user,terminal.Id);
                 var checkout = new CheckoutService(database,user,clock,terminal.Id,journal, new CheckoutReceiptSnapshot(new PrintingConfigurationProvider(options.DataDirectory),TimeZoneInfo.Local));
                 var receipts = new ReceiptService(database,user,clock,terminal.Id,TimeZoneInfo.Local,
                     new PrintingConfigurationProvider(options.DataDirectory),new EscPosReceiptRenderer(),
@@ -156,7 +161,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 Pos = new(new PosService(database,user,terminal.Id),checkout,receipts,photoUi,()=>UserLabel + " · " + TerminalLabel,(eventName,errorType)=>runtime.TryLog(eventName,errorType)){IsDevelopment=options.IsDevelopment,TerminalName=terminal.Name};
                 catalogService = new CatalogService(database,user,clock,terminal.Id,options.IsDevelopment);
                 Catalog = new(catalogService,photoUi,options.IsDevelopment,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
-                SalesHistory = new(new SalesHistoryService(database,user,TimeZoneInfo.Local),receipts,(eventName,errorType)=>runtime.TryLog(eventName,errorType),new RefundService(database,user,clock,terminal.Id));
+                SalesHistory = new(new SalesHistoryService(database,user,TimeZoneInfo.Local),receipts,TimeZoneInfo.Local,clock,
+                    ()=>opened?.Session.Id,(eventName,errorType)=>runtime.TryLog(eventName,errorType),new RefundService(database,user,clock,terminal.Id));
                 Inventory = new(new InventoryService(new SqliteInventoryStore(sqlite, clock), database, user, clock, terminal.Id),
                     catalogService, (eventName,errorType)=>runtime.TryLog(eventName,errorType),new ConsumptionViewModel(new SaleConsumptionService(database,database,user,clock,terminal.Id)));
                 Reports = new(new ReportService(database,user,TimeZoneInfo.Local),(eventName,errorType)=>runtime.TryLog(eventName,errorType));
@@ -289,7 +295,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             !u.Active ? "Inactivo" : u.MustChangePassword ? "Debe cambiar contraseña" : "Activo", u.Role, u.Active)).ToList();
         SelectedUser = Users.FirstOrDefault(u => u.Id == keep);
     }
-    public void Logout() { if (Busy) return; user?.SignOut(); Users = []; SelectedUser = null; TemporaryPasswordNotice = ""; CanManageUsers = false; Pos?.ForgetView(); SalesHistory?.Forget(); Reports?.Forget(); Consignment?.Forget(); CashMovements?.Forget(); Inventory?.Forget(); opened = null; closingResult = null; CountedAmount = ""; CanViewSales=false; CanViewInventory=false;CanViewRecipes=false;CanViewProduction=false;CanViewConsignment=false;CurrentRoleLabel=""; screen = "login"; Message = ""; Notify(); RefreshSignInStatus(); }
+    public void Logout() { if (Busy) return; user?.SignOut(); ClearCashHistory(); Users = []; SelectedUser = null; TemporaryPasswordNotice = ""; CanManageUsers = false; Pos?.ForgetView(); SalesHistory?.Forget(); Reports?.Forget(); Consignment?.Forget(); CashMovements?.Forget(); Inventory?.Forget(); opened = null; closingResult = null; CountedAmount = ""; CanViewSales=false; CanViewInventory=false;CanViewRecipes=false;CanViewProduction=false;CanViewConsignment=false;CurrentRoleLabel=""; screen = "login"; Message = ""; Notify(); RefreshSignInStatus(); }
     public void ShowOpening() { if (Busy || !CanOpen) return; Amount = "0.00"; screen = "opening"; Message = ""; Notify(); }
     public void CancelOpening() { if (Busy) return; screen = "dashboard"; Message = ""; Notify(); }
     public Task OpenAsync() => Execute(async () =>
@@ -299,8 +305,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         var fund = Money.FromPesos(pesos);
         try { opened = await Task.Run(() => cash!.Open(terminal!.Id, fund)); }
         catch (CashAlreadyOpenException) { await RefreshAsync(); screen = "dashboard"; throw; }
-        runtime!.TryLog("cash.opened"); CanOpen = false; screen = "dashboard";
-        if (CashMovements is { } movements) await movements.LoadAsync();
+        runtime!.TryLog("cash.opened"); await RefreshAsync(); screen = "dashboard";
     });
     public Task ShowPosAsync() => Execute(async () => {await Pos!.EnterAsync();screen="pos";});
     public Task ShowCatalogAsync() => Execute(async () => {await Catalog!.LoadAsync();screen="catalog";});
@@ -323,7 +328,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public Task ShowCashAsync() => Execute(async () => {await RefreshAsync();screen="dashboard";});
     public Task BeginClosingAsync() => Execute(async () =>
     {
-        if(opened is null) return;
+        if(opened is null) return; DiscrepancyNote="";
         closingResult=await Task.Run(()=>closing!.Resume(opened.Session.Id));
         CountedAmount=""; screen=closingResult is null?"counting":"closingResult";
     });
@@ -338,14 +343,16 @@ public sealed class MainViewModel : INotifyPropertyChanged
     });
     public Task ConfirmCloseAsync() => Execute(async () =>
     {
-        await Task.Run(()=>closing!.Close(opened!.Session.Id));
-        runtime!.TryLog("cash.closed"); closingResult=null;
+        await Task.Run(()=>closing!.Close(opened!.Session.Id,DiscrepancyNote));
+        runtime!.TryLog("cash.closed"); closingResult=null; DiscrepancyNote="";
         await RefreshAsync(); screen="dashboard"; MessageIsSuccess=true; Message="Cierre registrado y auditado. La sesión histórica permanece cerrada.";
     });
     private async Task RefreshAsync()
     {
         opened = await Task.Run(() => cash!.Current(terminal!.Id));
         CanOpen = opened is null && await Task.Run(() => cash!.CanOpen());
+        CanClose = opened is not null && await Task.Run(()=>catalogService!.Can("cash.close")) && (opened.Session.OpenedBy==user?.Current?.Id || await Task.Run(()=>catalogService!.Can("cash.close.other")));
+        await RefreshCashHistory();
         CanViewSales = await Task.Run(() => SalesHistory!.CanView());
         CanViewInventory = await Task.Run(() => Inventory!.CanEnter());
         CanViewRecipes=await Task.Run(()=>catalogService!.Can("recipe.view"));

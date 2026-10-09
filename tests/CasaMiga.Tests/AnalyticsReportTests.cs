@@ -175,7 +175,7 @@ public sealed class AnalyticsReportServiceTests : SalesFixture
         var first = Persist(); Persist();
         Refunds.Return(first.Id, [new(1, 1)], "Pan aplastado");
         var closing = new CashClosingService(work, user, clock);
-        closing.SubmitCount(cash.Id, new Money(50000 + 7600 - 1900 - 100)); closing.Close(cash.Id);
+        closing.SubmitCount(cash.Id, new Money(50000 + 7600 - 1900 - 100)); closing.Close(cash.Id, "Faltante de prueba");
         var report = Reports.CashControl(Today, Today);
         var cashier = report.Cashiers.Single();
         Assert.AreEqual("Prueba ventas", cashier.Name);
