@@ -31,6 +31,28 @@ Decisión del usuario (08/10/2026): **POS web completo**, para vender y cobrar d
 
 Base: `cloud/db/004_web_pos.sql` (`terminal.kind`, `web_till`, `web_operation`). Rutas: `GET /api/web/pos`, `POST /api/web/pos-till | pos-open | pos-sale | pos-count | pos-close`. Pruebas: `cloud/test/pos.test.ts`.
 
+## Fase 3: inventario, producción y fotos desde la web
+
+Lo que en la caja se hace en Inventario, Producción y Catálogo → foto también se pide desde la web. Igual que los precios o la ruta, **la nube sólo valida y encola** (`branch_command`, migración de la nube 006) y **la caja de escritorio lo aplica con sus propias reglas y permisos** (`CloudCommandService`), firmado por quien lo pidió. Mientras la caja no se conecta, la web lo muestra en **«Enviado a la caja»** como *Pendiente*; si la caja lo rechaza, ahí mismo sale *Rechazado* con el motivo (también en Cajas → Cambios).
+
+| Qué | Quién | Cómo |
+|---|---|---|
+| **Entrada** | `inventory.receive` (encargado y administrador) | Insumo, cantidad y unidad (kg, g, L, ml, pieza o la presentación del insumo, como «Bulto 44 kg» en enteros), referencia y observación opcionales. |
+| **Merma** | `inventory.waste` (encargado y administrador) | Cantidad, unidad y motivo (dañado, caducado, error de producción, derrame, otro). «Otro» pide observación. |
+| **Conteo** | `inventory.adjust` (sólo administrador, como en la caja) | Lo que hay físicamente; la caja calcula la diferencia y registra la ganancia o pérdida con su motivo. **Si el insumo no tiene saldo, el primer conteo es su saldo inicial.** Una entrada o merma sin saldo inicial se rechaza con aviso. |
+| **Registrar producción** | `production.create` y `production.confirm` (encargado y administrador) | Panes con receta activa, piezas planeadas y las que salieron. La caja prepara la producción con esa receta, la fija y la confirma: descuenta los insumos y suma lo que salió. Si falta existencia (o algo está inactivo o sin saldo) la rechaza **sin dejar borrador** y dice qué falta. |
+| **Foto del producto** | `products.edit` | En el producto, **Agregar/Cambiar foto** (celular: cámara o galería). El navegador la endereza, la recorta al centro en cuadro y la reduce (máx. 1024 px, JPEG < 1 MB); la caja la procesa igual que una importada ahí (original + miniatura de 512) y la sube. Un producto nuevo puede llevar su foto desde el alta. |
+
+Reglas:
+
+- Cantidades como texto decimal (`"2.5"`), hasta 3 decimales y 999,999; deben dar unidades mínimas enteras (2.5 kg sí, 0.5 mg no). La caja vuelve a revisar unidad, dimensión, existencia y permisos.
+- **Cada pedido es una operación con el identificador del cambio**: si la caja lo aplica dos veces (corte de luz, red), no se repite nada (inventario: mismo `OperationId`; producción: lote = id del cambio y operación derivada; foto: misma operación).
+- La nube no guarda la foto en la lista de cambios que ve la web; a la caja le baja sólo lo que no ha reportado y en lotes de hasta ~3 MB.
+- Las cajas web ya no cuentan como «cajas que aplican cambios» (antes un cambio podía quedarse en «1 de 2 cajas»).
+- Una caja de escritorio sin actualizar rechaza estos cambios con «actualiza Casa Miga».
+
+Recetas (fórmulas y versiones) siguen configurándose en la caja.
+
 ## Diferencias con la caja de escritorio
 
 - Necesita Internet en todo momento (no hay modo sin conexión).
@@ -41,4 +63,5 @@ Base: `cloud/db/004_web_pos.sql` (`terminal.kind`, `web_till`, `web_operation`).
 
 - **Fase 1** (08/10/2026): caja web, turno, venta con fotos, cobro, ticket e impresión, corte.
 - **Fase 2** (09/10/2026): tickets, reimpresión, cancelaciones y devoluciones, gastos/entradas/retiros. Pruebas `cloud/test/pos.test.ts` (5).
+- **Fase 3** (09/10/2026): entradas, mermas y conteos de inventario, registro de producción y foto del producto desde la web (aplicados por la caja). Pruebas de la nube `cloud/test/commands.test.ts` y de la caja `CloudCommandTests`, `RecipePersistenceTests.WebProduction`, `WebPhotoCommandTests`.
 - **Inventario**: hoy el descuento automático de inventario al vender está **apagado** en la caja de escritorio (`inventory_sale_consumption_config` = DISABLED) y ningún producto lleva inventario, así que las ventas web y las de escritorio se comportan igual. Si se enciende, faltará mandar el consumo de las ventas web a la caja de escritorio (un cambio de la web más, como los de la ruta).

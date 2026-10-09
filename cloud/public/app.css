@@ -205,6 +205,12 @@ th.num, td.num { text-align: right; }
 td .pieces { min-width: 260px; }
 .piece { white-space: nowrap; }
 .piece { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 3px 10px 3px 4px; }
+.photo-field { display: flex; gap: 14px; align-items: center; }
+.photo-frame { flex: none; }
+.photo-preview { width: 132px; height: 132px; border-radius: 14px; object-fit: cover; display: grid; place-items: center; background: var(--surface-2); color: var(--faint); font-weight: 600; font-size: 13px; }
+.photo-actions { display: grid; gap: 6px; justify-items: start; }
+.production-rows { display: grid; gap: 10px; }
+.production-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) 42px; gap: 10px; align-items: end; }
 .pos-bar-mobile { display: none; }
 .ticket-list { display: grid; gap: 6px; max-height: 55dvh; overflow-y: auto; }
 .ticket-row { justify-content: space-between; text-align: left; min-height: 52px; }
@@ -291,6 +297,9 @@ dialog footer { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: 
   .kpi strong { font-size: 21px; }
   .card { padding: 14px; }
   .form-grid { grid-template-columns: 1fr; }
+  .production-row { grid-template-columns: 1fr 1fr 42px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .production-row > label:first-child { grid-column: 1 / -1; }
+  .photo-preview { width: 104px; height: 104px; }
   .bar { grid-template-columns: 78px 1fr auto; }
   .bar b { min-width: 76px; }
   .products { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }

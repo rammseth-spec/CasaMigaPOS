@@ -152,6 +152,65 @@ public sealed class CloudCommandTests : SalesFixture
         Assert.AreEqual("rejected", Commands.Apply(Command("inventory.cost", new() { ["itemId"] = item.ToString(), ["costCents"] = -1, ["perAtomic"] = 1, ["unitLabel"] = "kg" })).Status);
     }
 
+    private CloudCommandService WithModules => new(work, clock, terminal.Id, TimeZoneInfo.Utc,
+        new CloudCommandModules(new SqliteInventoryStore(db, clock), work, new SqliteProductionUnitOfWork(db), _ => throw new NotSupportedException()));
+    private long Balance(Guid item) => Convert.ToInt64(Sql($"SELECT quantity_atomic FROM inventory_balance WHERE item_id='{item}'"));
+
+    [TestMethod]
+    public void InventoryFromTheWebUsesTheSameRulesAsTheScreen()
+    {
+        var inventory = new InventoryService(new SqliteInventoryStore(db, clock), work, user, clock, terminal.Id);
+        var flour = inventory.CreateInventoryItem("HAR", "Harina", InventoryItemKind.RawMaterial, InventoryDimension.Mass).Id;
+        var main = SqliteInventoryStore.MainLocationId.ToString();
+        JsonObject Line(string quantity, string unit, string? reason = null, string? note = null) =>
+            new() { ["itemId"] = flour.ToString(), ["locationId"] = main, ["quantity"] = quantity, ["unitCode"] = unit, ["reason"] = reason, ["note"] = note };
+
+        var refused = WithModules.Apply(Command("inventory.receive", Line("2", "kg")));
+        StringAssert.Contains(refused.Message, "no tiene saldo inicial", "Receiving needs a starting count first.");
+        var opening = Command("inventory.count", Line("5", "kg", "PhysicalCountVariance"));
+        Ok(WithModules.Apply(opening));
+        Assert.AreEqual(5_000_000L, Balance(flour), "The first count is the opening balance.");
+        Assert.AreEqual(1L, Convert.ToInt64(Sql($"SELECT count(*) FROM inventory_operation WHERE id='{opening.Id}' AND kind='OPENING_BALANCE'")));
+
+        Ok(WithModules.Apply(Command("inventory.receive", new() { ["itemId"] = flour.ToString(), ["locationId"] = main, ["quantity"] = "2.5", ["unitCode"] = "kg", ["reference"] = "Factura 18", ["note"] = "Proveedor Rosa" })));
+        Assert.AreEqual(7_500_000L, Balance(flour));
+        var waste = Command("inventory.waste", Line("500", "g", "Damaged"));
+        Ok(WithModules.Apply(waste));
+        Ok(WithModules.Apply(waste));
+        Assert.AreEqual(7_000_000L, Balance(flour), "Applying the same waste twice discounts it once.");
+        Ok(WithModules.Apply(Command("inventory.count", Line("6.8", "kg", "PhysicalCountVariance"))));
+        Assert.AreEqual(6_800_000L, Balance(flour));
+        Assert.AreEqual(1L, Convert.ToInt64(Sql("SELECT count(*) FROM inventory_operation WHERE kind='ADJUSTMENT_LOSS'")));
+
+        Assert.AreEqual("El motivo OTHER exige una observación.", WithModules.Apply(Command("inventory.waste", Line("1", "kg", "Other"))).Message);
+        Assert.AreEqual("rejected", WithModules.Apply(Command("inventory.waste", Line("1", "piece", "Damaged"))).Status, "A piece is not a mass.");
+        Assert.AreEqual("Cambio con formato inválido.", WithModules.Apply(Command("inventory.waste", Line("1", "kg", "1"))).Message);
+        Assert.AreEqual("Cambio con formato inválido.", WithModules.Apply(Command("inventory.receive", Line("-1", "kg"))).Message);
+        Assert.AreEqual(6_800_000L, Balance(flour));
+
+        var old = Commands.Apply(Command("inventory.receive", Line("1", "kg")));
+        Assert.AreEqual("Esta caja no puede aplicar ese cambio; actualiza Casa Miga.", old.Message, "Without the modules the till refuses instead of guessing.");
+    }
+
+    [TestMethod]
+    public void OnlyTheAdministratorCountsInventoryFromTheWeb()
+    {
+        var inventory = new InventoryService(new SqliteInventoryStore(db, clock), work, user, clock, terminal.Id);
+        var flour = inventory.CreateInventoryItem("HAR", "Harina", InventoryItemKind.RawMaterial, InventoryDimension.Mass).Id;
+        inventory.RegisterOpeningBalance(new(Guid.NewGuid(), flour, SqliteInventoryStore.MainLocationId, 5, "kg"));
+        var identity = new IdentityService(work, new LocalPasswords(), clock, user);
+        var temporary = identity.CreateUser("ana", "Ana", "Manager");
+        identity.ChangePassword("ana", temporary, "Ana#2026centro");
+        Assert.IsTrue(identity.Login("admin", password));
+        var ana = work.Run(s => s.FindUser("ANA"))!.Id;
+        JsonObject Line(string quantity) => new() { ["itemId"] = flour.ToString(), ["locationId"] = SqliteInventoryStore.MainLocationId.ToString(), ["quantity"] = quantity, ["unitCode"] = "kg", ["reason"] = "PhysicalCountVariance" };
+
+        Assert.AreEqual("rejected", WithModules.Apply(Command("inventory.count", Line("4"), ana)).Status, "A manager receives and records waste, but does not adjust.");
+        Ok(WithModules.Apply(Command("inventory.receive", new() { ["itemId"] = flour.ToString(), ["locationId"] = SqliteInventoryStore.MainLocationId.ToString(), ["quantity"] = "1", ["unitCode"] = "kg" }, ana)));
+        Assert.AreEqual(6_000_000L, Balance(flour));
+        Assert.AreEqual(ana.ToString(), (string)Sql("SELECT actor_id FROM inventory_operation WHERE kind='RECEIPT'")!, "The operation is signed by who asked for it.");
+    }
+
     private sealed class Transport : ISyncTransport
     {
         public List<CloudCommand> Pending { get; } = [];

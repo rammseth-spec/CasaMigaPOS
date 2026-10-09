@@ -81,8 +81,7 @@ El código de la nube es TypeScript con importaciones `.js` (estilo NodeNext): V
 ## Pendiente
 
 - Varias cajas en una sucursal comparten sucursal pero no catálogo: cada una tiene su base; los cambios de la web llegan a todas, pero altas hechas en una caja no bajan a las demás (fase 4 completa).
-- Inventario, recetas y producción: sólo consulta (salvo el costo de referencia de cada insumo).
-- Fotos: se ven, no se cambian desde la web.
+- Recetas: sólo consulta. Inventario (entradas, mermas, conteos), producción y fotos ya se piden desde la web y los aplica la caja ([POS_WEB.md](POS_WEB.md), fase 3).
 - El administrador de cualquier sucursal entra como administrador de todas (decisión «un solo administrador», SYNC_PLAN). Con varias sucursales conviene que sea la misma persona.
 - Si dos personas guardan el mismo producto en la web en el mismo instante, puede quedar el primero de los dos guardados (caso extremo; se corrige guardando otra vez).
 - Estado más reciente: dentro de una misma caja manda el orden de su cola (aunque su reloj se atrase); entre cajas distintas, la hora en que se encoló.

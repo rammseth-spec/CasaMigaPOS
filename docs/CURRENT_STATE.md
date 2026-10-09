@@ -1,3 +1,14 @@
+# Punto de venta en la web, fase 3: inventario, producción y fotos — 09/10/2026
+
+**Implementado y probado.** Pedido del usuario: «Termina todo el POS a WEB». Ver [POS_WEB.md](POS_WEB.md).
+
+- Desde la web: **Entrada**, **Merma** y **Conteo** de inventario (el primer conteo de un insumo es su saldo inicial), **Registrar producción** (panes con receta activa, planeadas y las que salieron) y **foto del producto** (recortada en cuadro en el navegador). La nube valida y encola (migración de la nube **006**); la caja de escritorio los aplica con sus reglas y permisos (`CloudCommandService` + `CloudCommandModules`), sin repetir nada si los aplica dos veces. Producción sin existencia se rechaza sin dejar borrador y dice qué falta.
+- Inventario y Producción en la web muestran **«Enviado a la caja»** (pendiente / rechazado con motivo).
+- Corrección: las cajas web ya no cuentan como cajas que aplican cambios (un cambio podía quedarse en «1 de 2 cajas»). La caja ya no vuelve a bajar lo que reportó y cada lote pesa como máximo ~3 MB.
+- Pruebas: nube 46/46 (inventario, producción, fotos, lotes); caja: inventario y permisos (`CloudCommandTests`), producción (`RecipePersistenceTests.WebProduction`), foto (`WebPhotoCommandTests`). Probado en el navegador: conteo de harina 25.5 kg, merma con «Otro» pide observación, entrada de azúcar 10 kg, producción de conchas 24 → 22, foto nueva de un producto, vista de celular.
+- Sigue en la caja: recetas (fórmulas y versiones), alta de insumos, impresora térmica y cajón. La web no funciona sin Internet.
+- Vercel: el conector de Vercel de esta sesión ve el equipo «Alex Poumian's projects» pero **no tiene permiso para crear proyectos** (403); la publicación queda en manos del usuario (ver mensaje de la sesión).
+
 # Rama QA fusionada en QAv1 (fases 1K.4B–1K.4D) — 09/10/2026
 
 **Fusionada y verificada.** A pedido del usuario se juntó la rama `QA` (9 commits: carrito, historial de ventas, cierre e historial de caja; smoke aprobado por el usuario en esa rama) con QAv1. **Decisión del usuario: se conserva el diseño de QAv1**; lo de QA entra como funciones dentro de ese diseño.

@@ -11,13 +11,22 @@ public sealed record CloudCommandResult(Guid Id, long Sequence, string Status, s
 }
 
 /// <summary>
+/// Lo que la caja usa para aplicar inventario, producción y fotos pedidos desde la web (docs/POS_WEB.md, fase 3).
+/// Sin esto esos cambios se rechazan con aviso; los demás se aplican igual.
+/// </summary>
+public sealed record CloudCommandModules(IInventoryStore Inventory, ILocalReadUnitOfWork Security, IProductionUnitOfWork Production, Func<UserSession, ProductPhotoService> Photos);
+
+/// <summary>
 /// Aplica en esta caja los cambios hechos en la web, en orden y con las mismas reglas y permisos que en la pantalla:
 /// actúa como quien lo pidió si existe aquí; si no (por ejemplo, el administrador de otra sucursal), como el administrador local.
 /// Un cambio que las reglas rechazan queda registrado con el motivo; un error inesperado (disco, base) se reintenta después.
 /// Aplicar dos veces el mismo cambio no repite nada.
 /// </summary>
-public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock, Guid terminalId, TimeZoneInfo timeZone)
+public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock, Guid terminalId, TimeZoneInfo timeZone, CloudCommandModules? modules = null)
 {
+    /// <summary>La operación de una producción pedida desde la web se deriva del cambio: reintentar no crea otra.</summary>
+    public static readonly Guid WebProductionNamespace = new("3c0f6f1e-5d2a-5b8e-9a41-7e2b8c9d0f13");
+
     /// <summary>
     /// Desde dónde pedir cambios. Se relee un tramo ya aplicado porque dos cambios simultáneos en la web pueden hacerse visibles
     /// fuera de orden (el 42 antes que el 41); los ya aplicados se reconocen por su identificador y no se repiten.
@@ -41,9 +50,12 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
             session.SignIn(new UserIdentity(actor.Id, actor.DisplayName));
             Execute(command, session);
         }
-        catch (Exception error) when (error is AccessDeniedException or ArgumentException or CatalogException or ConsignmentException or InvalidCommandException or KeyNotFoundException)
+        catch (Exception error) when (error is AccessDeniedException or ArgumentException or CatalogException or ConsignmentException or InvalidCommandException or KeyNotFoundException
+            or ProductPhotoException or ProductionDomainException
+            or InventoryApplicationException { Error: not (InventoryError.ConcurrencyConflict or InventoryError.InconsistentBalance) }
+            or ProductionException { Code: not (ProductionFailure.ConcurrencyConflict or ProductionFailure.RecoveryInconsistent) })
         {
-            rejection = error.Message;
+            rejection = Describe(error);
         }
         var result = new CloudCommandResult(command.Id, command.Sequence, rejection is null ? "applied" : "rejected", rejection);
         database.Run(store => { store.AddCloudCommand(result, command.Kind, command.RequestedByName, clock.UtcNow); return true; });
@@ -120,9 +132,84 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
                 trays.SaveTemplate(Id(p, "storeId"), (p["lines"] as JsonArray ?? throw new InvalidCommandException())
                     .Select(l => new ConsignmentLine(Id(l as JsonObject ?? throw new InvalidCommandException(), "productId"), Int((JsonObject)l!, "quantity"))).ToList());
                 break;
+            // Inventario desde la web: misma operación que en la pantalla, con el identificador del cambio (reintentar no la repite).
+            case "inventory.receive":
+                Inventory(session).ReceiveInventory(new(command.Id, Id(p, "itemId"), Id(p, "locationId"), Quantity(p), Text(p, "unitCode"), Optional(p, "reference"), Optional(p, "note")));
+                break;
+            case "inventory.waste":
+                Inventory(session).RecordWaste(new(command.Id, Id(p, "itemId"), Id(p, "locationId"), Quantity(p), Text(p, "unitCode"), Reason<WasteReason>(p), Optional(p, "note")));
+                break;
+            case "inventory.count":
+            {
+                var item = Id(p, "itemId"); var location = Id(p, "locationId");
+                var store = Modules.Inventory;
+                if (store.FindOperation(command.Id) is not null) break;
+                // Sin saldo en esa ubicación, el primer conteo es el saldo inicial (mismo permiso que el ajuste: sólo el administrador).
+                if (store.FindBalance(item, location) is null) Inventory(session).RegisterOpeningBalance(new(command.Id, item, location, Quantity(p), Text(p, "unitCode")));
+                else Inventory(session).AdjustToPhysicalCount(new(command.Id, item, location, Quantity(p), Text(p, "unitCode"), Reason<AdjustmentReason>(p), Optional(p, "note")));
+                break;
+            }
+            case "production.record": RecordProduction(command, session); break;
+            case "product.photo":
+            {
+                var product = Id(p, "productId");
+                var photos = Modules.Photos(session);
+                if (photos.Recover(product, command.Id) is not null) break;
+                byte[] image;
+                try { image = Convert.FromBase64String(Text(p, "image")); }
+                catch (FormatException) { throw new InvalidCommandException(); }
+                var edge = Int(p, "edge");
+                // La web manda la foto ya recortada en cuadro (edge × edge); aquí se procesa igual que una importada en la caja.
+                photos.Import(new PhotoImport(product, photos.Current(product).Revision, command.Id, Text(p, "name"), "REAL", new PhotoCrop(0, 0, edge)), new MemoryStream(image, false));
+                break;
+            }
             default: throw new InvalidCommandException("Esta caja no reconoce ese cambio; actualiza Casa Miga.");
         }
     }
+
+    private CloudCommandModules Modules => modules ?? throw new InvalidCommandException("Esta caja no puede aplicar ese cambio; actualiza Casa Miga.");
+    private InventoryService Inventory(UserSession session) => new(Modules.Inventory, Modules.Security, session, clock, terminalId);
+
+    /// <summary>
+    /// Producción hecha: se prepara con las versiones publicadas que eligió la web, se fija y se registra con lo que salió, como en la pantalla
+    /// (borrador y confirmación). Si falta existencia o algo está inactivo se rechaza antes de crear el borrador.
+    /// </summary>
+    private void RecordProduction(CloudCommand command, UserSession session)
+    {
+        var p = command.Payload;
+        var outputs = (p["outputs"] as JsonArray ?? throw new InvalidCommandException()).Select(o => o as JsonObject ?? throw new InvalidCommandException())
+            .Select(o => (Version: Id(o, "profileVersionId"), Planned: Long(o, "planned"), Actual: Long(o, "actual"))).ToArray();
+        if (outputs.Length is 0 or > 20 || outputs.Select(o => o.Version).Distinct().Count() != outputs.Length || outputs.Any(o => o.Planned <= 0 || o.Actual < 0))
+            throw new InvalidCommandException();
+        var production = new ProductionService(Modules.Production, session, clock, terminalId);
+        var plan = new PrepareProductionCommand(outputs.Select(o => new RequestedProductionOutput(o.Version, o.Planned)).ToArray(), []);
+        var operation = SaleConsumptionIdentity.UuidV5(WebProductionNamespace, command.Id.ToString("D"));
+        if (production.GetProduction(command.Id) is null)
+        {
+            var preview = production.PrepareProduction(plan);
+            if (!preview.CanConfirm)
+                throw new ProductionException(!preview.Planning.IsResolved ? ProductionFailure.UnresolvedPlan : preview.InactiveItems.Count > 0 ? ProductionFailure.InactiveItem
+                    : preview.Shortages.Count > 0 ? ProductionFailure.InsufficientStock : ProductionFailure.NotInitialized, preview.Shortages);
+        }
+        var batch = production.CreateProduction(new(command.Id, operation, plan, Optional(p, "notes")));
+        if (batch.Status == "CONFIRMED") return;
+        var actual = batch.Outputs.Select(o => new ActualOutputLine(o.ProductId, outputs.Single(x => x.Version == o.ProfileVersionId).Actual)).ToArray();
+        production.ConfirmProduction(new(batch.Id, batch.OperationId, ProductionContract.Revision(batch), actual));
+    }
+
+    /// <summary>El motivo que ve la web cuando la caja rechaza un cambio.</summary>
+    private string Describe(Exception error) => error switch
+    {
+        ProductionException { Code: ProductionFailure.InsufficientStock } e => "No hay existencia suficiente para registrar esta producción." +
+            (e.Shortages.Count == 0 ? "" : " Falta: " + string.Join(", ", e.Shortages.Select(s => modules?.Inventory.FindItem(s.ItemId)?.Name ?? "un insumo")) + "."),
+        ProductionException { Code: ProductionFailure.InactiveItem } => "Un insumo o producto terminado ya no está activo.",
+        ProductionException { Code: ProductionFailure.NotInitialized } => "Un insumo o producto terminado todavía no tiene saldo inicial (haz el conteo inicial en Inventario).",
+        ProductionException { Code: ProductionFailure.UnresolvedPlan } => "La receta tiene problemas pendientes y no puede registrarse.",
+        ProductionException { Code: ProductionFailure.NotFound } => "La receta ya no existe o cambió de versión; actualiza la página.",
+        ProductionException => "No se pudo registrar la producción con esos datos.",
+        ProductionDomainException => "Revisa las cantidades y la configuración de la receta.",
+        _ => error.Message,
+    };
 
     private sealed class InvalidCommandException(string message = "Cambio con formato inválido.") : Exception(message);
     private sealed class FixedClock(DateTimeOffset at) : IClock { public DateTimeOffset UtcNow => at; }
@@ -157,4 +244,10 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
         "true" => true, "false" => false, _ => throw new InvalidCommandException(),
     };
     private static Guid Id(JsonObject p, string name) => Guid.TryParse(Text(p, name), out var id) && id != Guid.Empty ? id : throw new InvalidCommandException();
+    private static string? Optional(JsonObject p, string name) => p[name] is null ? null : Text(p, name) is { Length: > 0 } value ? value : null;
+    /// <summary>Cantidad como texto decimal («2.5»), para no perder exactitud en el camino; la caja la convierte a su unidad mínima.</summary>
+    private static decimal Quantity(JsonObject p) =>
+        decimal.TryParse(Text(p, "quantity"), System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out var value) ? value : throw new InvalidCommandException();
+    private static T Reason<T>(JsonObject p) where T : struct, Enum =>
+        Enum.TryParse<T>(Text(p, "reason"), false, out var value) && Enum.IsDefined(value) && !int.TryParse(Text(p, "reason"), out _) ? value : throw new InvalidCommandException();
 }
