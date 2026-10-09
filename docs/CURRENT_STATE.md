@@ -1,13 +1,13 @@
 # Rama QA fusionada en QAv1 (fases 1K.4B–1K.4D) — 09/10/2026
 
-**Fusionada y verificada.** A pedido del usuario se juntó la rama `QA` (9 commits: carrito, historial de ventas, cierre e historial de caja; smoke aprobado por el usuario en esa rama) con QAv1.
+**Fusionada y verificada.** A pedido del usuario se juntó la rama `QA` (9 commits: carrito, historial de ventas, cierre e historial de caja; smoke aprobado por el usuario en esa rama) con QAv1. **Decisión del usuario: se conserva el diseño de QAv1**; lo de QA entra como funciones dentro de ese diseño.
 
-- **Carrito (1K.4B):** resumen «N productos · N piezas», operaciones del carrito en fila (sin duplicar ni perder toques), el renglón nuevo se desplaza a la vista, el catálogo no parpadea ni recarga fotos (la foto del ticket reutiliza la de la tarjeta). Sobre el rediseño A de QAv1: nombres largos en 2 renglones y renglones más compactos.
-- **Historial de ventas (1K.4C):** filtros Todos/Hoy/Ayer/Sesión actual, rango con fechas tecleadas `dd/mm/aaaa` (control con máscara), fechas en la zona de la caja, detalle con montos claros. Se conservan de QAv1: búsqueda por folio corto (C01-001061), columna Devuelto, formas de pago con referencia y cancelaciones/devoluciones.
-- **Caja (1K.4D):** con faltante o sobrante el cierre exige **nota de discrepancia** (1–500, también en la base por trigger); **historial de cierres** de la caja con detalle (identificación, resumen y nota); «Cerrar caja» sólo para quien puede. Integrado bajo el tablero de QAv1 (estado y movimientos).
+- **Carrito (1K.4B):** operaciones del carrito en fila (sin duplicar ni perder toques), el renglón nuevo se desplaza a la vista, el catálogo no parpadea ni recarga fotos (la foto del ticket reutiliza la de la tarjeta). El ticket es el de QAv1 (renglones con foto, nombre en un renglón); el resumen «N productos · N piezas» queda en el modelo, sin cambiar la pantalla.
+- **Historial de ventas (1K.4C):** pantalla de QAv1 (folio corto, fechas, tabla con Devuelto y CashSessionId, detalle en texto, cancelaciones y devoluciones). De QA: atajos **Hoy / Ayer / Sesión actual** (botones secundarios de QAv1 bajo las fechas), fechas en `AAAA-MM-DD` **o** `dd/mm/aaaa`, zona horaria de la caja, mensajes de fecha y resumen del filtro. El control con máscara de QA queda en el código sin usarse.
+- **Caja (1K.4D):** con faltante o sobrante el cierre exige **nota de discrepancia** (1–500, también en la base por trigger); **historial de cierres** de la caja con detalle (identificación, resumen y nota); «Cerrar caja» sólo para quien puede. Tablero, textos y resultado del corte de QAv1 («SOBRANTE $…», «Confirmar cierre»); la nota y los cierres anteriores se agregan debajo.
 - **Migración:** la nota de QA era su 017; en QAv1 la 017 ya era la de contraseñas temporales. Ahora es la **026** (mismo archivo, byte por byte). `Database.Initialize` reconoce una base de la rama QA por la huella de su 017, la registra como 026 y aplica 17–25 en la misma transacción (`QaBranchMigrationTests`). Una 17 desconocida sigue rechazándose. Una base de la rama QA (versión 17) es la causa más probable del «No se completó la operación» antes del login reportado en la otra Windows; la fusión la abre.
 - **Web:** el cierre de una caja web con diferencia también pide la nota; Caja del panel la muestra.
-- Pruebas de QA adaptadas al diseño vigente (textos y botones del rediseño A, folio corto, contraseñas de prueba dentro de la política 8–16).
+- Pruebas de QA adaptadas al diseño de QAv1 (textos, botones, folio corto, 2 renglones con foto visibles en el ticket a 1280×820, contraseñas de prueba dentro de la política 8–16).
 
 # Punto de venta en la web, fase 2 y fotos en el panel — 09/10/2026
 

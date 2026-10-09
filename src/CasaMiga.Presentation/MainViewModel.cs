@@ -85,15 +85,11 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
     public bool HasOpenCash => opened is not null;
     public string CountedAmount { get; set; } = "";
     public string ClosingOwner => opened is null ? "" : $"Abierta por: {opened.OpenedByName}" + (opened.Session.OpenedBy != user?.Current?.Id ? " · Cierre por otro usuario" : " · Tu sesión");
-    public string ClosingDetails => closingResult is not { } r ? "" :
-        $"Caja: {CurrentTerminalName}\nApertura: {r.Session.OpenedAt.ToLocalTime():dd/MM/yyyy · HH:mm}\nFondo inicial: {Format(r.Session.OpeningFund)}\n"
-        + $"+ Ventas en efectivo: {Format(new Money(checked(r.Expected.Cents - r.Session.OpeningFund.Cents + r.Refunds.Cents - (r.Movements?.Net.Cents ?? 0))))}\n"
-        + (r.Refunds.Cents > 0 ? $"Devoluciones en efectivo: −{Format(r.Refunds)}\n" : "") + MovementLines(r.Movements)
-        + $"= Efectivo esperado: {Format(r.Expected)}\nEfectivo contado: {Format(r.Count.Counted)}\n{DifferenceLabel(r.Difference)}";
+    public string ClosingDetails => closingResult is not { } r ? "" : $"Fondo inicial: {Format(r.Session.OpeningFund)}\n" + (r.Refunds.Cents > 0 ? $"Devoluciones en efectivo: −{Format(r.Refunds)}\n" : "") + MovementLines(r.Movements) + $"Efectivo esperado: {Format(r.Expected)}\nEfectivo contado: {Format(r.Count.Counted)}\n{DifferenceLabel(r.Difference)}";
     private static string MovementLines(CashMovementTotals? totals) => totals is not { Any: true } t ? "" :
         (t.Expenses.Cents > 0 ? $"Gastos: −{Format(t.Expenses)}\n" : "") + (t.Withdrawals.Cents > 0 ? $"Retiros: −{Format(t.Withdrawals)}\n" : "") + (t.Deposits.Cents > 0 ? $"Entradas: +{Format(t.Deposits)}\n" : "");
     private static string Format(Money value) => (value.Cents/100m).ToString("C2",CultureInfo.GetCultureInfo("es-MX"));
-    internal static string DifferenceLabel(Money value) => value.Cents==0 ? "Sin diferencia · $0.00" : value.Cents>0 ? $"Sobrante de {Format(value)} (+)" : $"Faltante de {Format(new Money(checked(-value.Cents)))} (−)";
+    internal static string DifferenceLabel(Money value) => value.Cents==0 ? "Diferencia: $0.00 · Caja exacta" : value.Cents>0 ? $"SOBRANTE {Format(value)}" : $"FALTANTE {Format(new Money(checked(-value.Cents)))}";
     public bool IsOpening => screen == "opening";
     public bool CanOpen { get; private set; }
     public bool HasNoOpenCash => opened is null;
@@ -116,8 +112,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
         var words = name.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         return string.Concat(words.Take(2).Select(w => char.ToUpper(w[0], CultureInfo.GetCultureInfo("es-MX"))));
     }
-    public string CashDetails => opened is null ? "No hay una sesión de caja abierta." :
-        $"Caja: {CurrentTerminalName}\nResponsable: {opened.OpenedByName}\nApertura: {opened.Session.OpenedAt.ToLocalTime():dd/MM/yyyy · HH:mm}\nFondo inicial: {Format(opened.Session.OpeningFund)}\n\nImportes ocultos hasta confirmar el conteo ciego. Las ventas en efectivo, los gastos, los retiros y las entradas se incluyen en el cierre.";
+    public string CashDetails => opened is null ? "Captura el fondo inicial para comenzar." :
+        $"Abierta por: {opened.OpenedByName}\nHora de apertura: {opened.Session.OpenedAt.ToLocalTime():dd/MM/yyyy HH:mm:ss zzz}\n\nImportes ocultos hasta confirmar el conteo ciego. Las ventas en efectivo, los gastos, los retiros y las entradas se incluyen en el cierre.";
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Notify() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
 

@@ -24,8 +24,8 @@ public sealed class SalesHistoryUsabilityTests
         Assert.AreEqual("Todos · 5 ventas",vm.FilterSummary);Assert.IsTrue(vm.Sales.All(x=>x.SaleNumber.StartsWith("Venta C01-")));Assert.IsTrue(vm.Sales.All(x=>x.Terminal=="CAJA PRUEBA"));
         Assert.IsTrue(vm.Sales.All(x=>x.Method=="Efectivo"));Assert.IsFalse(vm.Sales.Any(x=>x.SaleNumber.Contains(fixture.CurrentSessionId.ToString(),StringComparison.OrdinalIgnoreCase)));
 
-        await vm.TodayAsync();Assert.AreEqual("Hoy · 3 ventas",vm.FilterSummary);Assert.IsTrue(vm.Sales.All(x=>x.Date.StartsWith("07/10/2026 · ")));
-        await vm.YesterdayAsync();Assert.AreEqual("Ayer · 1 venta",vm.FilterSummary);Assert.AreEqual("06/10/2026 · 12:00",vm.Sales.Single().Date);
+        await vm.TodayAsync();Assert.AreEqual("Hoy · 3 ventas",vm.FilterSummary);Assert.IsTrue(vm.Sales.All(x=>x.Date.StartsWith("07/10/2026 ")));
+        await vm.YesterdayAsync();Assert.AreEqual("Ayer · 1 venta",vm.FilterSummary);StringAssert.StartsWith(vm.Sales.Single().Date,"06/10/2026 12:00:00");
         await vm.SearchDatesAsync("06/10/2026","07/10/2026");Assert.AreEqual("Rango personalizado · 4 ventas",vm.FilterSummary);
         await vm.CurrentSessionAsync();Assert.AreEqual("Sesión actual · 2 ventas",vm.FilterSummary);Assert.IsTrue(vm.Sales.All(x=>fixture.CurrentSaleIds.Contains(x.SaleId)));
 
@@ -131,48 +131,36 @@ public sealed class SalesHistoryUsabilityTests
     }
 
     [TestMethod]
-    public async Task DetailUsesSnapshotsQuantitiesAndFinancialLabelsWithoutTechnicalIds()
+    public async Task DetailUsesSnapshotsQuantitiesAndPaymentLabels()
     {
+        // Detalle con el diseño de QAv1: contexto y pago en texto, con folio corto y datos técnicos de auditoría.
         using var fixture=new Fixture();var vm=fixture.ViewModel();await vm.CurrentSessionAsync();vm.SelectedSale=vm.Sales.Single(x=>x.SaleId==fixture.DetailedSaleId);await vm.OpenDetailAsync();
-        StringAssert.StartsWith(vm.DetailTitle,"Venta C01-");Assert.IsFalse(vm.DetailTitle.Contains("CAJA",StringComparison.Ordinal));StringAssert.Contains(vm.DetailContext,"Responsable: Administrador de prueba");StringAssert.Contains(vm.DetailContext,"Caja: CAJA PRUEBA");
-        CollectionAssert.AreEqual(new[]{"2 piezas","1 pieza"},vm.DetailItems.Select(x=>x.Quantity).ToArray());
+        StringAssert.StartsWith(vm.DetailTitle,"Venta C01-");StringAssert.Contains(vm.DetailContext,"Cajero actual: Administrador de prueba");StringAssert.Contains(vm.DetailContext,"Terminal actual: CAJA PRUEBA");
+        CollectionAssert.AreEqual(new[]{2,1},vm.DetailItems.Select(x=>x.Quantity).ToArray());
+        foreach(var line in new[]{"Subtotal: $41.00","Total: $41.00","Método: Efectivo","Recibido: $50.00","Cambio: $9.00"})StringAssert.Contains(vm.DetailPayment,line);
         Assert.AreEqual("$41.00",vm.DetailSubtotal);Assert.AreEqual("$41.00",vm.DetailTotal);Assert.AreEqual("Efectivo",vm.DetailPaymentMethod);Assert.AreEqual("$50.00",vm.DetailReceived);Assert.AreEqual("$9.00",vm.DetailChange);
-        var text=string.Join('|',new[]{vm.DetailTitle,vm.DetailContext,vm.DetailPaymentMethod}.Concat(vm.DetailItems.SelectMany(x=>new[]{x.Name,x.Quantity,x.UnitPrice,x.LineTotal})));
-        Assert.IsFalse(text.Contains(fixture.CurrentSessionId.ToString(),StringComparison.OrdinalIgnoreCase));Assert.IsFalse(text.Contains("CASH",StringComparison.Ordinal));Assert.IsFalse(text.Contains("Aplicado",StringComparison.Ordinal));
         Assert.IsTrue(vm.ReprintAllowed,"The administrator keeps the dedicated reprint permission, without executing it.");fixture.AssertReadOnly();
     }
 
     [TestMethod]
     [DataRow(1280,820)]
     [DataRow(1920,1080)]
-    public Task HistoryAndDetailFitReviewSizesWithoutHorizontalScrolling(int width,int height)=>WpfTestHost.OnUi(async()=>
+    public Task HistoryKeepsTheQAv1LayoutWithQuickFilters(int width,int height)=>WpfTestHost.OnUi(async()=>
     {
+        // Diseño de QAv1: folio, fechas, atajos de la rama QA con botones secundarios, tabla con folio corto y detalle en texto.
         using var fixture=new Fixture();var vm=fixture.ViewModel();await vm.LoadAsync();
         var contentWidth=width-280;var contentHeight=height-190;var view=new SalesHistoryView{DataContext=vm};var window=new Window{Content=view,Width=contentWidth,Height=contentHeight,ShowInTaskbar=false,WindowStyle=WindowStyle.None};
         try
         {
             window.Show();WpfTestHost.Layout(window,contentWidth,contentHeight);
-            var grid=Descendants<DataGrid>(view).Single(x=>AutomationProperties.GetName(x)=="Historial de ventas"&&x.Visibility==Visibility.Visible);
-            Assert.IsFalse(grid.Columns.Any(x=>Equals(x.Header,"Folio")||Equals(x.Header,"CashSessionId")));Assert.AreEqual(0d,Descendants<ScrollViewer>(grid).First().ScrollableWidth,0.5);
-            Assert.AreEqual("SaleNumber",((Binding)((DataGridBoundColumn)grid.Columns.Single(x=>Equals(x.Header,"Venta"))).Binding).Path.Path);Assert.AreEqual("Terminal",((Binding)((DataGridBoundColumn)grid.Columns.Single(x=>Equals(x.Header,"Caja"))).Binding).Path.Path);
-            Assert.IsTrue(Descendants<Button>(view).Any(x=>Equals(x.Content,"Sesión actual")&&x.IsVisible));
-            var entries=Descendants<DateEntryControl>(view).ToArray();Assert.HasCount(2,entries);Assert.IsTrue(entries.All(x=>x.ActualWidth>=209),"Both date editors keep the intended width.");
-            var hints=Descendants<TextBlock>(view).Where(x=>x.Text=="dd/mm/aaaa").ToArray();Assert.HasCount(2,hints);Assert.IsTrue(hints.All(x=>x.TextWrapping==TextWrapping.NoWrap&&x.Visibility==Visibility.Visible&&x.DesiredSize.Width<=x.ActualWidth));
-            foreach(var entry in entries)
-            {
-                var editor=Descendants<TextBox>(entry).Single();var calendarButton=Descendants<Button>(entry).Single();
-                Assert.IsTrue(editor.ActualWidth>=165,$"The date text area must remain readable; actual {editor.ActualWidth}.");Assert.AreEqual(42d,calendarButton.ActualWidth,0.5);
-                editor.SelectAll();foreach(var character in "07102026")SendText(editor,character.ToString());WpfTestHost.Layout(window,contentWidth,contentHeight);
-                Assert.AreEqual("07/10/2026",editor.Text);Assert.AreEqual("07/10/2026",entry.Text);
-            }
-            Assert.AreEqual("07/10/2026",vm.FromDateText);Assert.AreEqual("07/10/2026",vm.ThroughDateText,"Masked text input must keep both outer bindings alive.");
-            var from=entries[0];var calendar=(Calendar)from.FindName("PickerCalendar");calendar.SelectedDate=new DateTime(2026,10,6);Assert.AreEqual("06/10/2026",from.Text,"Calendar selection must keep the strict human format.");
-            Assert.AreEqual("06/10/2026",vm.FromDateText,"Calendar selection must update the same ViewModel buffer.");
+            var grid=Descendants<DataGrid>(view).Single(x=>AutomationProperties.GetName(x)=="Historial de ventas");
+            CollectionAssert.AreEqual(new object[]{"Folio","Fecha local","Total","Devuelto","Pago","Cajero actual","Terminal actual","CashSessionId"},grid.Columns.Select(x=>x.Header).ToArray());
+            foreach(var label in new[]{"Buscar folio","Buscar fechas","Limpiar","Hoy","Ayer","Sesión actual"})Assert.IsTrue(Descendants<Button>(view).Any(x=>Equals(x.Content,label)&&x.IsVisible),label);
+            var dates=Descendants<TextBox>(view).Where(x=>AutomationProperties.GetName(x) is "Fecha desde" or "Fecha hasta").ToArray();Assert.HasCount(2,dates);
+            dates[0].Text="2026-10-06";dates[1].Text="07/10/2026";await vm.SearchDatesAsync();WpfTestHost.Layout(window,contentWidth,contentHeight);
+            Assert.AreEqual("Rango personalizado · 4 ventas",vm.FilterSummary,"Both date formats are accepted.");
             vm.SelectedSale=vm.Sales.First();await vm.OpenDetailAsync();WpfTestHost.Layout(window,contentWidth,contentHeight);
-            var detail=Descendants<DataGrid>(view).Single(x=>AutomationProperties.GetName(x)=="Partidas de venta"&&x.Visibility==Visibility.Visible);
-            Assert.AreEqual(0d,Descendants<ScrollViewer>(detail).First().ScrollableWidth,0.5);Assert.IsTrue(Descendants<Button>(view).Any(x=>Equals(x.Content,"Volver")&&x.IsVisible));
-            view.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice,PresentationSource.FromVisual(window)!,Environment.TickCount,Key.Escape){RoutedEvent=Keyboard.PreviewKeyDownEvent});
-            Assert.IsTrue(vm.IsList,"Escape must retain the approved return from sale detail.");
+            Assert.IsTrue(Descendants<TextBlock>(view).Any(x=>x.IsVisible&&x.Text==vm.DetailPayment));
         }
         finally{window.Close();}
         fixture.AssertReadOnly();

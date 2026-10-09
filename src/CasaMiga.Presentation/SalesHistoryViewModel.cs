@@ -11,7 +11,8 @@ public sealed record SalesHistoryRowView(SalesHistoryRow Row, TimeZoneInfo TimeZ
     // Folio visible (C01-001061); el interno sigue en Row.Folio.
     public string Folio => DisplayFolio.FromInternal(Row.Folio, Row.TerminalName);
     public string SaleNumber => $"Venta {Folio}";
-    public string Date => TimeZoneInfo.ConvertTime(Row.ConfirmedAt,TimeZone).ToString("dd/MM/yyyy · HH:mm",CultureInfo.InvariantCulture);
+    public string Date => TimeZoneInfo.ConvertTime(Row.ConfirmedAt,TimeZone).ToString("dd/MM/yyyy HH:mm:ss zzz",CultureInfo.InvariantCulture);
+    public string CashSession => Row.CashSessionId.ToString("D");
     public string Total => Format(Row.Total);
     public string Method => PaymentLabel(Row.PaymentMethod);
     public string Cashier => Row.CashierName;
@@ -23,9 +24,10 @@ public sealed record SalesHistoryRowView(SalesHistoryRow Row, TimeZoneInfo TimeZ
 
 public sealed record SalesHistoryItemView(int Position, SaleItem Item)
 {
+    public string ProductId=>Item.ProductId.ToString("D");
     public string Name=>Item.ProductName;
     public string UnitPrice=>Format(Item.UnitPrice);
-    public string Quantity=>$"{Item.Quantity} {(Item.Quantity==1?"pieza":"piezas")}";
+    public int Quantity=>Item.Quantity;
     public string LineTotal=>Format(Item.LineTotal);
     private static string Format(Money value)=>(value.Cents/100m).ToString("C2",CultureInfo.GetCultureInfo("es-MX"));
 }
@@ -113,9 +115,10 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
     public ReceiptPrintResult? ReprintResult {get;private set;}
     public string ReprintMessage {get;private set;}="";
     public string ReprintButtonText=>ReprintResult?.State is ReceiptPrintState.Failed or ReceiptPrintState.Unknown
-        ? "Reintentar reimpresión":"Reimprimir ticket";
+        ? "REINTENTAR REIMPRESIÓN":"REIMPRIMIR TICKET";
     public string DetailTitle=>Detail is null?"":$"Venta {DisplayFolio.For(Detail.TerminalName,Detail.Sale.Sequence)}";
-    public string DetailContext=>Detail is null?"":$"Fecha: {Local(Detail.Sale.ConfirmedAt):dd/MM/yyyy · HH:mm}\nResponsable: {Detail.CashierName}\nCaja: {Detail.TerminalName}";
+    public string DetailContext=>Detail is null?"":$"Fecha: {Local(Detail.Sale.ConfirmedAt):dd/MM/yyyy HH:mm:ss zzz}\nFolio interno: {Detail.Sale.Folio}\nCajero actual: {Detail.CashierName}\nUserId: {Detail.Sale.UserId:D}\nTerminal actual: {Detail.TerminalName}\nTerminalId: {Detail.Sale.TerminalId:D}\nCashSessionId: {Detail.Sale.CashSessionId:D}\nSaleId: {Detail.Sale.Id:D}";
+    public string DetailPayment=>Detail is null?"":$"Subtotal: {Format(Detail.Sale.Subtotal)}\nTotal: {Format(Detail.Sale.Total)}\nMétodo: {Payment.Label(Detail.Sale.Payment.Kind)}{(Detail.Sale.Payment.Reference is { } reference ? $" · Ref. {reference}" : "")}\nAplicado: {Format(Detail.Sale.Payment.Applied)}\nRecibido: {Format(Detail.Sale.Payment.Received)}\nCambio: {Format(Detail.Sale.Payment.Change)}";
     public string DetailSubtotal=>Detail is null?"":Format(Detail.Sale.Subtotal);
     public string DetailTotal=>Detail is null?"":Format(Detail.Sale.Total);
     public string DetailPaymentMethod=>Detail is null?"":Payment.Label(Detail.Sale.Payment.Kind)+(Detail.Sale.Payment.Reference is { } reference?$" · Ref. {reference}":"");
@@ -285,9 +288,9 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
         return Task.CompletedTask;
     }
     private static bool TryParseDate(string? text,out DateOnly value)=>DateOnly.TryParseExact(
-        text?.Trim(),"dd/MM/yyyy",CultureInfo.InvariantCulture,DateTimeStyles.None,out value);
+        text?.Trim(),["dd/MM/yyyy","yyyy-MM-dd"],CultureInfo.InvariantCulture,DateTimeStyles.None,out value);
     private static string FormatDate(DateOnly value)=>value.ToString("dd/MM/yyyy",CultureInfo.InvariantCulture);
-    private static string DateError(string value)=>string.IsNullOrWhiteSpace(value)?"Captura una fecha en formato dd/mm/aaaa.":"Fecha inválida. Usa dd/mm/aaaa.";
+    private static string DateError(string value)=>string.IsNullOrWhiteSpace(value)?"Captura una fecha en formato AAAA-MM-DD o dd/mm/aaaa.":"Fecha inválida. Usa AAAA-MM-DD o dd/mm/aaaa.";
     private void ClearDateErrors(){FromDateError="";ThroughDateError="";DateRangeError="";}
     private void ClearDates(){FromDate=null;ThroughDate=null;fromDateText="";throughDateText="";ClearDateErrors();}
     private void ResetFilters(){Folio="";ClearDates();cashSessionId=null;page=0;}

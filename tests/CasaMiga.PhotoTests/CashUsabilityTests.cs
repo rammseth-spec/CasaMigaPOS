@@ -27,17 +27,17 @@ public sealed class CashUsabilityTests
             vm.ShowOpening();vm.Amount="-1";await vm.OpenAsync();Assert.IsTrue(vm.IsOpening);Assert.IsFalse(vm.HasOpenCash);
             vm.Amount="500.001";await vm.OpenAsync();Assert.IsFalse(vm.HasOpenCash);
             vm.Amount="500.00";await Task.WhenAll(vm.OpenAsync(),vm.OpenAsync());Assert.IsTrue(vm.HasOpenCash,vm.Message);Assert.AreEqual(1L,f.Scalar("SELECT count(*) FROM cash_session"));
-            StringAssert.Contains(vm.CashDetails,"$500.00");Assert.IsFalse(vm.CashDetails.Contains("Efectivo esperado"));
+            StringAssert.Contains(vm.CashDetails,"Abierta por:");Assert.IsFalse(vm.CashDetails.Contains("Efectivo esperado"));
             await vm.ShowCashAsync();Assert.IsTrue(vm.CanClose);await vm.BeginClosingAsync();Assert.IsTrue(vm.IsCounting);Assert.AreEqual("",vm.ClosingDetails);
             WpfTestHost.Layout(window,width,height);Assert.IsFalse(Descendants<TextBlock>(window).Any(x=>x.IsVisible&&x.Text.Contains("Efectivo esperado")));
             foreach(var invalid in new[]{"","abc","NaN","Infinity","-1","1.001"}){vm.CountedAmount=invalid;await vm.SubmitCountAsync();Assert.IsTrue(vm.IsCounting);}
-            vm.CountedAmount="530";await vm.SubmitCountAsync();Assert.IsTrue(vm.IsClosingResult,vm.Message);StringAssert.Contains(vm.ClosingDetails,"Sobrante de $30.00");StringAssert.Contains(vm.ClosingDetails,"Ventas en efectivo: $0.00");
+            vm.CountedAmount="530";await vm.SubmitCountAsync();Assert.IsTrue(vm.IsClosingResult,vm.Message);StringAssert.Contains(vm.ClosingDetails,"SOBRANTE $30.00");StringAssert.Contains(vm.ClosingDetails,"Fondo inicial: $500.00");
             Assert.IsTrue(vm.RequiresDiscrepancyNote);Assert.IsFalse(vm.CanConfirmClose);vm.DiscrepancyNote="   ";await vm.ConfirmCloseAsync();Assert.IsTrue(vm.IsClosingResult);StringAssert.Contains(vm.Message,"nota");
             vm.DiscrepancyNote="Conteo sintético revisado";Assert.IsTrue(vm.CanConfirmClose);
             WpfTestHost.Layout(window,width,height);Capture(window,$"cash-result-{width}.png");
             Assert.IsTrue(window.DiscrepancyNoteEditor.IsVisible);Assert.IsFalse(window.NoDiscrepancyNoteMessage.IsVisible);
             Assert.IsTrue(Descendants<TextBlock>(window.DiscrepancyNoteEditor).Any(x=>x.IsVisible&&x.Text=="25/500 caracteres"));
-            var confirm=Descendants<Button>(window).Single(x=>Equals(x.Content,"Confirmar cierre definitivo"));Assert.IsTrue(confirm.IsVisible&&confirm.IsEnabled);Assert.IsTrue(confirm.ActualWidth>100);
+            var confirm=Descendants<Button>(window).Single(x=>Equals(x.Content,"Confirmar cierre"));Assert.IsTrue(confirm.IsVisible&&confirm.IsEnabled);Assert.IsTrue(confirm.ActualWidth>100);
             await Task.WhenAll(vm.ConfirmCloseAsync(),vm.ConfirmCloseAsync());Assert.IsTrue(vm.HasNoOpenCash,vm.Message);Assert.AreEqual(1,vm.CashClosures.Count);
             WpfTestHost.Layout(window,width,height);Capture(window,$"cash-list-{width}.png");
             var grid=Descendants<DataGrid>(window).Single(x=>x.IsVisible&&Equals(System.Windows.Automation.AutomationProperties.GetName(x),"Cierres anteriores"));
