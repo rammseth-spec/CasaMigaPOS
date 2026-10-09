@@ -1,3 +1,17 @@
+# Próximo paso — smoke físico manual de ticket 1K.4E
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4E.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4E`, DataDirectory `work/phase1k4e-smoke-20261008` (schema 17). No usar accesos anclados ni builds anteriores.
+
+1. Iniciar sesión con las credenciales verificadas entregadas en la conversación.
+2. Abrir Historial, localizar `Venta #000017` y revisar $72.00, Efectivo, recibido $100.00 y cambio $28.00; no debe aparecer GUID, `CASH` ni `Aplicado`.
+3. Revisar snapshot: nombre corto, nombre largo, acentos y cantidades múltiples.
+4. Sólo cuando el usuario decida hacer la prueba física, reimprimir esa venta. Confirmar «Hecho en:», Variante 04 nítida, dirección sin teléfono, TOTAL destacado, Facebook, Instagram, mensaje, corazón y corte parcial.
+5. Confirmar marca `REIMPRESIÓN`, que el cajón no abre y que no cambian venta, pago, caja, inventario ni producción.
+6. Para probar ORIGINAL físicamente, realizar una venta exclusivamente sintética desde el POS sólo con autorización humana expresa y usar «Cobrar + imprimir ticket». La preparación automática no crea requests de impresión.
+7. Salir. Reportar el resultado físico antes de cerrar formalmente 1K.4E.
+
+No iniciar 1K.4F, migración 018, instalador, cambio de driver/puerto/codepage/corte o activación de cajón. No hacer push durante esta fase.
+
 # FASE 1K.4D-R1 aprobada — siguiente trabajo pendiente de autorización
 
 El usuario aprobó el smoke visual final del build `work/Abrir-Casa-Miga-1K4D-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4D-R1`, con DataDirectory aislado `work/phase1k4d-r1-smoke-20261008` (schema 17).

@@ -10,12 +10,14 @@ assert sha256(master.read_bytes()).hexdigest().upper() == "7E67467CCF778EF40C40E
 assert sha256(source.read_bytes()).hexdigest().upper() == "A1858372624CDDC87091A3DCFCBC5FA5E21F8C2621C5D5C6E2ACEE6D363B06CC"
 logo = Image.open(source).convert("RGBA")
 # The approved 3080 x 1786 transparent render is derived directly from that SVG.
-# Scale uniformly; rounding to a whole thermal dot introduces <0.1% aspect error.
-height = round(560 * logo.height / logo.width)
-alpha = logo.getchannel("A").resize((560, height), Image.Resampling.LANCZOS)
+# R1 physical review found the 560-dot mark legible but slightly dominant.
+# Scale uniformly to 490 dots (12.5% smaller); rounding introduces <0.1% aspect error.
+ink_width = 490
+height = round(ink_width * logo.height / logo.width)
+alpha = logo.getchannel("A").resize((ink_width, height), Image.Resampling.LANCZOS)
 ink = alpha.point(lambda value: 0 if value >= 128 else 255).convert("1")
 canvas = Image.new("1", (576, height + 16), 1)
-canvas.paste(ink, (8, 8))
+canvas.paste(ink, ((canvas.width - ink_width) // 2, 8))
 destination = root / "assets/brand/Variant04/CasaMiga_Ticket_Termico_576px_1bit.png"
 canvas.save(destination)
 print(destination.name, canvas.size, "1-bit", sha256(destination.read_bytes()).hexdigest().upper())

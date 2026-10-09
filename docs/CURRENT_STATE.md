@@ -1,3 +1,9 @@
+# FASE 1K.4E TÉCNICAMENTE COMPLETADA — SMOKE FÍSICO PENDIENTE, 08/10/2026
+
+El ticket Qian definitivo conserva ESC/POS RAW, 48 columnas, CP850/ESC t 2 y corte parcial GS V 1. Usa Variante 04 a 490 puntos de ancho (12.5% menor que R2), «Hecho en:», dirección oficial, `Venta #NNNNNN`, fecha local, cajero humano, snapshots históricos, importes humanos, redes, mensaje final y corazón raster. `REIMPRESIÓN` queda visible antes de la venta; no crea venta/pago, no mueve caja/inventario y no abre cajón. El teléfono es configuración opcional: null/vacío no agrega línea.
+
+Fixture aislada `work/phase1k4e-smoke-20261008`, schema 17, venta sintética `#000017`, total $72, recibido $100, cambio $28 y caja abierta para revisión. Sus payloads original/reimpresión fueron generados fuera de línea; ninguno fue enviado a `POS-80`. Focales 28/28; suite completa 761/761 (574 generales + 187 WPF), sin fallas ni omisiones; Release 0 errores/advertencias. La base protegida permanece schema 16 y SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Sin migración 018. Ver `PHASE_1K4E_REPORT.md`, `printing-variant04.md` y `evidence/phase1k4e-byte-audit.json`.
+
 # FASE 1K.4D-R1 CERRADA Y APROBADA — 08/10/2026
 
 **Pulido visual de Caja implementado, verificado técnicamente y aprobado por el usuario en smoke visual.** El dashboard de Caja ahora ocupa el alto operativo disponible: la tabla de cierres crece dinámicamente, usa filas compactas y mantiene el pie de paginación fijo. A 1280×820 se verifican al menos siete filas visibles; a 1920×1080, al menos nueve. Una página con pocos resultados conserva espacio libre sin estirar filas.

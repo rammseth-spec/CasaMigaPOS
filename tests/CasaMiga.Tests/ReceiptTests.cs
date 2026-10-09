@@ -41,8 +41,61 @@ public sealed class ReceiptTests : SalesFixture
             original.Applied,original.Received,original.Change,business);
         var text=new TextReceiptRenderer().Render(document,ReceiptCopyKind.Reprint);
         Assert.Contains("REIMPRESIÓN",text);Assert.Contains("Niño",text);Assert.Contains("piñón",text);Assert.Contains("$38.00",text);
+        Assert.Contains("Hecho en:",text);Assert.Contains("Venta #",text);Assert.Contains("Pago:",text);Assert.Contains("Efectivo",text);
+        Assert.DoesNotContain(original.TerminalId.ToString(),text);Assert.DoesNotContain("CASH",text);Assert.DoesNotContain("Aplicado",text);
         Assert.IsTrue(text.Split('\n',StringSplitOptions.RemoveEmptyEntries).All(line=>line.Length<=48));
         Assert.AreEqual(text,new TextReceiptRenderer().Render(document,ReceiptCopyKind.Reprint));
+    }
+
+    [TestMethod] public void FinalQianTicketUsesHumanDataOptionalPhoneAndExactFinancialLabels()
+    {
+        var document=FinalTicketDocument(null);var renderer=new TextReceiptRenderer(48);
+        var original=renderer.Render(document);var reprint=renderer.Render(document,ReceiptCopyKind.Reprint);
+        Assert.Contains("Hecho en:",original);Assert.Contains("Venta #000012",original);
+        Assert.Contains("Fecha: 08/10/2026 · 14:35",original);Assert.Contains("Cajero: Administrador catálogo",original);
+        Assert.Contains("Insurgentes 116",original);Assert.Contains("Esquina con Albino García",original);
+        Assert.Contains("Barrio de Santiaguito",original);Assert.Contains("C.P. 38000",original);Assert.Contains("Celaya, Gto.",original);
+        Assert.Contains("Facebook: Casa Miga",original);Assert.Contains("Instagram: @casamiga126",original);
+        var outputLines=original.Split('\n',StringSplitOptions.RemoveEmptyEntries);
+        Assert.IsTrue(outputLines.Single(x=>x.StartsWith("Subtotal:",StringComparison.Ordinal)).EndsWith("$72.00",StringComparison.Ordinal));
+        Assert.IsTrue(outputLines.Single(x=>x.StartsWith("TOTAL:",StringComparison.Ordinal)).EndsWith("$72.00",StringComparison.Ordinal));
+        Assert.IsTrue(outputLines.Single(x=>x.StartsWith("Pago:",StringComparison.Ordinal)).EndsWith("Efectivo",StringComparison.Ordinal));
+        Assert.IsTrue(outputLines.Single(x=>x.StartsWith("Recibido:",StringComparison.Ordinal)).EndsWith("$100.00",StringComparison.Ordinal));
+        Assert.IsTrue(outputLines.Single(x=>x.StartsWith("Cambio:",StringComparison.Ordinal)).EndsWith("$28.00",StringComparison.Ordinal));
+        Assert.DoesNotContain("CASH",original);Assert.DoesNotContain("Aplicado",original);
+        Assert.DoesNotContain(document.TerminalId.ToString(),original);Assert.DoesNotContain(document.TerminalName,original);
+        Assert.DoesNotContain("Tel",original);Assert.IsTrue(original.Split('\n',StringSplitOptions.RemoveEmptyEntries).All(x=>x.Length<=48));
+        Assert.IsTrue(reprint.IndexOf("REIMPRESIÓN",StringComparison.Ordinal)<reprint.IndexOf("Venta #000012",StringComparison.Ordinal));
+
+        var whitespace=renderer.Render(FinalTicketDocument("   "));
+        Assert.DoesNotContain("Tel",whitespace);
+        var configured=renderer.Render(FinalTicketDocument("461 000 0000"));
+        Assert.AreEqual(1,configured.Split('\n').Count(x=>x.Contains("461 000 0000",StringComparison.Ordinal)));
+    }
+
+    [TestMethod] public void FinalQianPayloadKeepsCp850TotalResetHeartFeedCutAndNoDrawer()
+    {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);var encoding=Encoding.GetEncoding("ibm850");
+        var settings=Settings() with{QueueName="POS-80",EncodingName="ibm850",CharacterTable=2,CutMode="Partial",Business=FinalBusiness(null)};
+        var document=FinalTicketDocument(null);var renderer=new EscPosReceiptRenderer();
+        var original=renderer.Render(document,ReceiptCopyKind.Original,settings);
+        var reprint=renderer.Render(document,ReceiptCopyKind.Reprint,settings);
+        foreach(var payload in new[]{original,reprint})
+        {
+            CollectionAssert.AreEqual(new byte[]{0x1b,0x74,0x02},payload[..3]);
+            Assert.AreEqual(1,Occurrences(payload,OfficialReceiptLogo.Command()));Assert.AreEqual(1,Occurrences(payload,ReceiptHeartRaster.Command()));
+            Assert.AreEqual(1,Occurrences(payload,[0x1d,0x21,0x01]));Assert.AreEqual(2,Occurrences(payload,[0x1d,0x21,0x00]));
+            Assert.AreEqual(1,Occurrences(payload,[0x1d,0x56,0x01]));CollectionAssert.AreEqual(new byte[]{10,10,10,10,29,86,1},payload[^7..]);
+            Assert.AreEqual(0,OccurrencesOutsideLogo(payload,[0x1b,0x70]));
+            Assert.IsTrue(IndexOf(payload,encoding.GetBytes("Esquina con Albino García"))>=0);
+            Assert.IsTrue(IndexOf(payload,encoding.GetBytes("Cuernito especial con almendra y piñón"))>=0);
+            var totalLine=new TextReceiptRenderer(48).Render(document).Split('\n').Single(x=>x.StartsWith("TOTAL:",StringComparison.Ordinal));
+            var total=encoding.GetBytes(totalLine+"\r\n");
+            var totalIndex=IndexOf(payload,total);Assert.IsGreaterThan(2,totalIndex);
+            CollectionAssert.AreEqual(new byte[]{0x1d,0x21,0x01},payload[(totalIndex-3)..totalIndex]);
+            CollectionAssert.AreEqual(new byte[]{0x1d,0x21,0x00},payload[(totalIndex+total.Length)..(totalIndex+total.Length+3)]);
+        }
+        Assert.IsTrue(IndexOf(reprint,encoding.GetBytes("REIMPRESIÓN"))<IndexOf(reprint,encoding.GetBytes("Venta #000012")));
     }
 
     [TestMethod] public void EscPosStylesHeaderAndTotalButDoesNotCutWhenDisabled()
@@ -286,7 +339,7 @@ public sealed class ReceiptTests : SalesFixture
         Assert.AreEqual(850,encoding.CodePage);
         const string lower="á é í ó ú";const string upper="Á É Í Ó Ú";
         var business=new BusinessReceiptProfile("PRUEBA CASA MIGA","PRUEBA ESPANOL",lower,upper,"ü Ü | ñ Ñ | ¿Como esta? | ¡Gracias! | $19.00",
-            "PANADERIA CASA MIGA - Gracias por su compra");
+            "PANADERÍA CASA MIGA - Gracias por su compra");
         var settings=Settings() with{QueueName="POS-80",EncodingName="ibm850",CharacterTable=2,CutMode="Partial",Business=business};
         var beforeSales=Sql("SELECT count(*) FROM sale");var beforeCash=work.Run(s=>s.CashSalesTotal(cash.Id));var transport=new ProbeTransport();
         var result=new ControlledReceiptPrintTest(new FixedSettings(new(settings,null)),new EscPosReceiptRenderer(),transport,clock,
@@ -363,6 +416,21 @@ public sealed class ReceiptTests : SalesFixture
             [new ReceiptLine(Guid.Parse("33333333-3333-3333-3333-333333333333"),"Producto prueba",total,1,total)],
             total,total,"CASH",total,new Money(2000),new Money(100),business);
     }
+    private static BusinessReceiptProfile FinalBusiness(string? phone)=>new("Casa Miga",
+        "Insurgentes 116\nEsquina con Albino García\nBarrio de Santiaguito\nC.P. 38000\nCelaya, Gto.",phone,null,
+        "Facebook: Casa Miga\nInstagram: @casamiga126","Gracias por su compra");
+    private static ReceiptDocument FinalTicketDocument(string? phone)
+    {
+        var lines=new[]
+        {
+            new ReceiptLine(Guid.Parse("33333333-3333-3333-3333-333333333331"),"Concha de vainilla",new Money(1300),2,new Money(2600)),
+            new ReceiptLine(Guid.Parse("33333333-3333-3333-3333-333333333332"),"Cuernito especial con almendra y piñón",new Money(1500),2,new Money(3000)),
+            new ReceiptLine(Guid.Parse("33333333-3333-3333-3333-333333333333"),"Café de olla",new Money(800),2,new Money(1600))
+        };
+        return new(ReceiptDocument.CurrentVersion,"22222222222222222222222222222222-00000012",
+            new DateTimeOffset(2026,10,8,14,35,0,TimeSpan.FromHours(-6)),Guid.Parse("11111111-1111-1111-1111-111111111111"),"Administrador catálogo",
+            Guid.Parse("22222222-2222-2222-2222-222222222222"),"CASA-MIGA-CAJA-01",lines,new Money(7200),new Money(7200),"CASH",new Money(7200),new Money(10000),new Money(2800),FinalBusiness(phone));
+    }
     private static int Occurrences(byte[] source,byte[] sequence)
     {
         var count=0;
@@ -378,9 +446,13 @@ public sealed class ReceiptTests : SalesFixture
     }
     private static int OccurrencesOutsideLogo(byte[] source,byte[] sequence)
     {
-        var logo=OfficialReceiptLogo.Command();var start=IndexOf(source,logo);var count=0;
+        var logo=OfficialReceiptLogo.Command();var heart=ReceiptHeartRaster.Command();var count=0;
         for(var index=0;index<=source.Length-sequence.Length;index++)
-            if((start<0||index<start||index>=start+logo.Length)&&source.AsSpan(index,sequence.Length).SequenceEqual(sequence))count++;
+        {
+            if(source.AsSpan(index).StartsWith(logo)){index+=logo.Length-1;continue;}
+            if(source.AsSpan(index).StartsWith(heart)){index+=heart.Length-1;continue;}
+            if(source.AsSpan(index,sequence.Length).SequenceEqual(sequence))count++;
+        }
         return count;
     }
 

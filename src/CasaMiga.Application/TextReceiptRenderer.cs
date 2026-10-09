@@ -12,17 +12,17 @@ public sealed class TextReceiptRenderer(int columns = 48)
     {
         ArgumentNullException.ThrowIfNull(receipt);
         var lines = new List<string>();
-        if (copyKind != ReceiptCopyKind.Original) AddCentered(lines, "*** REIMPRESIÓN ***");
+        AddCentered(lines, "Hecho en:");
         AddCentered(lines, receipt.Business.DisplayName);
         AddOptionalCentered(lines, receipt.Business.Address);
         AddOptionalCentered(lines, receipt.Business.Phone);
         AddOptionalCentered(lines, receipt.Business.TaxId);
         AddOptionalCentered(lines, receipt.Business.Contact);
+        if (copyKind != ReceiptCopyKind.Original) AddCentered(lines, "*** REIMPRESIÓN ***");
         lines.Add(new string('-', Columns));
-        AddWrapped(lines, $"Folio: {receipt.Folio}");
-        AddWrapped(lines, $"Fecha: {receipt.ConfirmedAt:dd/MM/yyyy HH:mm:ss zzz}");
+        AddWrapped(lines, HumanSaleNumber(receipt.Folio));
+        AddWrapped(lines, $"Fecha: {receipt.ConfirmedAt:dd/MM/yyyy · HH:mm}");
         AddWrapped(lines, $"Cajero: {receipt.CashierName}");
-        AddWrapped(lines, $"Terminal: {receipt.TerminalName}");
         lines.Add(new string('-', Columns));
         foreach (var item in receipt.Items)
         {
@@ -31,19 +31,25 @@ public sealed class TextReceiptRenderer(int columns = 48)
             lines.Add(Pair(left, Money(item.LineTotal)));
         }
         lines.Add(new string('-', Columns));
-        lines.Add(Pair("Subtotal", Money(receipt.Subtotal)));
-        lines.Add(Pair("TOTAL", Money(receipt.Total)));
-        lines.Add(Pair("Pago", receipt.PaymentMethod));
-        lines.Add(Pair("Efectivo", Money(receipt.Received)));
-        lines.Add(Pair("Aplicado", Money(receipt.Applied)));
-        lines.Add(Pair("Cambio", Money(receipt.Change)));
+        lines.Add(Pair("Subtotal:", Money(receipt.Subtotal)));
+        lines.Add(Pair("TOTAL:", Money(receipt.Total)));
+        lines.Add(Pair("Pago:", Payment(receipt.PaymentMethod)));
+        lines.Add(Pair("Recibido:", Money(receipt.Received)));
+        lines.Add(Pair("Cambio:", Money(receipt.Change)));
         lines.Add(new string('-', Columns));
         AddCentered(lines, receipt.Business.ClosingMessage);
-        if (copyKind != ReceiptCopyKind.Original) AddCentered(lines, "COPIA · NO ABRE CAJÓN");
         return string.Join("\n", lines) + "\n";
     }
 
     private static string Money(Money value) => "$" + (value.Cents / 100m).ToString("N2", CultureInfo.GetCultureInfo("es-MX"));
+    private static string Payment(string method)=>string.Equals(method,"CASH",StringComparison.Ordinal)?"Efectivo":method;
+    private static string HumanSaleNumber(string folio)
+    {
+        var separator=folio.LastIndexOf('-');var token=separator>=0?folio[(separator+1)..]:folio;
+        if(!long.TryParse(token,NumberStyles.None,CultureInfo.InvariantCulture,out var sequence)||sequence<1)
+            throw new InvalidDataException("El folio histórico no contiene una secuencia de venta válida.");
+        return $"Venta #{sequence:D6}";
+    }
     private string Pair(string left,string right)
     {
         if (right.Length >= Columns) return right[^Columns..];
@@ -51,7 +57,12 @@ public sealed class TextReceiptRenderer(int columns = 48)
         if(left.Length>available)left=left[..Math.Max(0,available)];
         return left+new string(' ',Columns-left.Length-right.Length)+right;
     }
-    private void AddOptionalCentered(List<string> lines,string? value){if(!string.IsNullOrWhiteSpace(value))AddCentered(lines,value);}
+    private void AddOptionalCentered(List<string> lines,string? value)
+    {
+        if(string.IsNullOrWhiteSpace(value))return;
+        foreach(var paragraph in value.Replace("\r","").Split('\n'))
+            if(!string.IsNullOrWhiteSpace(paragraph))AddCentered(lines,paragraph.Trim());
+    }
     private void AddCentered(List<string> lines,string value)
     {
         foreach(var part in Wrap(value))lines.Add(part.Length>=Columns?part:new string(' ',(Columns-part.Length)/2)+part);
