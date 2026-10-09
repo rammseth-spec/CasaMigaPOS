@@ -1,6 +1,6 @@
 # Identidad oficial Casa Miga — Variante 04
 
-1K.4E incorpora `CasaMiga_Ticket_Termico_576px_1bit.png`: lienzo 576×300, marca 490 puntos de ancho, 1-bit, SHA-256 `37927561B9F1BE2FD839C769CE845C62A6A3573653D9533239A1BC7F7175BCDD`. Es 12.5% menor que la marca térmica R2 de 560 puntos y conserva la proporción oficial. Derivación reproducible desde el PNG HD verificado del maestro mediante `scripts/prepare-ticket-logo.py`; ver `docs/printing-variant04.md`. Único recurso térmico embebido activo.
+1K.4E-R1 incorpora `CasaMiga_Ticket_Termico_576px_1bit.png`: lienzo 576×275, marca 446 puntos de ancho, 1-bit, SHA-256 `EA3258058C9060D85FBAD830C845EE5BD52813F7F9D29BD6EA43FFCD2395AFFD`. Es 9.0% menor que la marca térmica de 1K.4E (490 puntos) y conserva la proporción oficial. Derivación reproducible desde el PNG HD verificado del maestro mediante `scripts/prepare-ticket-logo.py`; ver `docs/printing-variant04.md`. Único recurso térmico de marca embebido activo.
 
 Fuente de verdad de FASE 1K:
 

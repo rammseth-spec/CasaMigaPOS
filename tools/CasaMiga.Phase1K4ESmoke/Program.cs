@@ -25,7 +25,7 @@ using(var sourceLease=new FileStream(Path.Combine(source,"casamiga.lock"),FileMo
 
 var profile=new BusinessReceiptProfile(
     "Casa Miga",
-    "Insurgentes 116\nEsquina con Albino García\nBarrio de Santiaguito\nC.P. 38000\nCelaya, Gto.",
+    "Insurgentes 116\nEsquina con Albino García\nBarrio de Santiaguito\nC.P. 38000 · Celaya, Gto.",
     Phone:null,
     TaxId:null,
     Contact:"Facebook: Casa Miga\nInstagram: @casamiga126",
@@ -92,8 +92,8 @@ var manifest=new
     snapshot=snapshot.Sha256,printing=new{settings.Enabled,settings.QueueName,settings.Columns,settings.EncodingName,settings.CharacterTable,settings.CutMode,settings.OpenCashDrawer},
     payloads=new{original=new{bytes=originalPayload.Length,sha256=HashBytes(originalPayload)},reprint=new{bytes=reprintPayload.Length,sha256=HashBytes(reprintPayload)}},
     audit=new{codepage=Count(originalPayload,[0x1b,0x74,0x02]),alignLeft=Count(originalPayload,[0x1b,0x61,0x00]),alignCenter=Count(originalPayload,[0x1b,0x61,0x01]),
-        logo=Count(originalPayload,OfficialReceiptLogo.Command()),heart=Count(originalPayload,ReceiptHeartRaster.Command()),totalDoubleHeight=Count(originalPayload,[0x1d,0x21,0x01]),
-        normalSize=Count(originalPayload,[0x1d,0x21,0x00]),partialCut=Count(originalPayload,[0x1d,0x56,0x01]),drawerKick=Count(originalPayload,[0x1b,0x70]),finalFeedBytes=4},
+        logo=Count(originalPayload,OfficialReceiptLogo.Command()),socialLogos=Count(originalPayload,ReceiptSocialRaster.Command()),heart=Count(originalPayload,ReceiptHeartRaster.Command()),totalDoubleHeight=Count(originalPayload,[0x1d,0x21,0x01]),
+        normalSize=Count(originalPayload,[0x1d,0x21,0x00]),partialCut=Count(originalPayload,[0x1d,0x56,0x01]),drawerKick=Count(originalPayload,[0x1b,0x70]),finalFeedBytes=6},
     guardedCountsBefore=before,guardedCountsAfter=after,noPhysicalPrintSubmitted=true,protectedHashUnchanged=true,databaseHash=Hash(db.FilePath)
 };
 File.WriteAllText(Path.Combine(target,"ticket-fixture-manifest.json"),JsonSerializer.Serialize(manifest,jsonOptions)+Environment.NewLine,new UTF8Encoding(false));

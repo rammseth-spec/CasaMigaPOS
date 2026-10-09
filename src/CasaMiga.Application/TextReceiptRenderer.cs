@@ -17,27 +17,32 @@ public sealed class TextReceiptRenderer(int columns = 48)
         AddOptionalCentered(lines, receipt.Business.Address);
         AddOptionalCentered(lines, receipt.Business.Phone);
         AddOptionalCentered(lines, receipt.Business.TaxId);
-        AddOptionalCentered(lines, receipt.Business.Contact);
-        if (copyKind != ReceiptCopyKind.Original) AddCentered(lines, "*** REIMPRESIÓN ***");
         lines.Add(new string('-', Columns));
+        if (copyKind != ReceiptCopyKind.Original) AddCentered(lines, "*** REIMPRESIÓN ***");
         AddWrapped(lines, HumanSaleNumber(receipt.Folio));
         AddWrapped(lines, $"Fecha: {receipt.ConfirmedAt:dd/MM/yyyy · HH:mm}");
         AddWrapped(lines, $"Cajero: {receipt.CashierName}");
         lines.Add(new string('-', Columns));
-        foreach (var item in receipt.Items)
+        for(var index=0;index<receipt.Items.Count;index++)
         {
-            AddWrapped(lines, item.ProductName);
+            var item=receipt.Items[index];
+            AddWrapped(lines, item.ProductName,Math.Min(31,Columns));
             var left = $"{item.Quantity} x {Money(item.UnitPrice)}";
             lines.Add(Pair(left, Money(item.LineTotal)));
+            if(index<receipt.Items.Count-1)lines.Add("");
         }
         lines.Add(new string('-', Columns));
-        lines.Add(Pair("Subtotal:", Money(receipt.Subtotal)));
-        lines.Add(Pair("TOTAL:", Money(receipt.Total)));
-        lines.Add(Pair("Pago:", Payment(receipt.PaymentMethod)));
+        lines.Add(Pair("Subtotal", Money(receipt.Subtotal)));
+        lines.Add(Pair("TOTAL", Money(receipt.Total)));
+        lines.Add(new string('-', Columns));
+        AddWrapped(lines,$"Pago: {Payment(receipt.PaymentMethod)}");
         lines.Add(Pair("Recibido:", Money(receipt.Received)));
         lines.Add(Pair("Cambio:", Money(receipt.Change)));
         lines.Add(new string('-', Columns));
+        AddContactFooter(lines, receipt.Business.Contact);
+        lines.Add("");
         AddCentered(lines, receipt.Business.ClosingMessage);
+        lines.Add("");
         return string.Join("\n", lines) + "\n";
     }
 
@@ -63,19 +68,37 @@ public sealed class TextReceiptRenderer(int columns = 48)
         foreach(var paragraph in value.Replace("\r","").Split('\n'))
             if(!string.IsNullOrWhiteSpace(paragraph))AddCentered(lines,paragraph.Trim());
     }
+    private void AddContactFooter(List<string> lines,string? value)
+    {
+        if(string.IsNullOrWhiteSpace(value))return;
+        var entries=value.Replace("\r","").Split('\n',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries);
+        var facebook=entries.SingleOrDefault(line=>line.StartsWith("Facebook:",StringComparison.OrdinalIgnoreCase));
+        var instagram=entries.SingleOrDefault(line=>line.StartsWith("Instagram:",StringComparison.OrdinalIgnoreCase));
+        if(facebook is not null&&instagram is not null&&entries.Length==2)
+        {
+            AddCentered(lines,"Síguenos en:");
+            var facebookAccount=facebook[(facebook.IndexOf(':')+1)..].Trim();
+            var instagramAccount=instagram[(instagram.IndexOf(':')+1)..].Trim();
+            AddCentered(lines,$"{facebookAccount}   {instagramAccount}");
+            return;
+        }
+        AddOptionalCentered(lines,value);
+    }
     private void AddCentered(List<string> lines,string value)
     {
         foreach(var part in Wrap(value))lines.Add(part.Length>=Columns?part:new string(' ',(Columns-part.Length)/2)+part);
     }
-    private void AddWrapped(List<string> lines,string value)=>lines.AddRange(Wrap(value));
-    private IEnumerable<string> Wrap(string value)
+    private void AddWrapped(List<string> lines,string value,int? width=null)=>lines.AddRange(Wrap(value,width));
+    private IEnumerable<string> Wrap(string value,int? requestedWidth=null)
     {
+        var width=requestedWidth??Columns;
+        if(width<1||width>Columns)throw new ArgumentOutOfRangeException(nameof(requestedWidth));
         var normalized=value.Replace("\r","").Replace('\n',' ').Trim();
         if(normalized.Length==0){yield return "";yield break;}
-        while(normalized.Length>Columns)
+        while(normalized.Length>width)
         {
-            var split=normalized.LastIndexOf(' ',Columns);
-            if(split<1)split=Columns;
+            var split=normalized.LastIndexOf(' ',width);
+            if(split<1)split=width;
             yield return normalized[..split].TrimEnd();normalized=normalized[split..].TrimStart();
         }
         yield return normalized;

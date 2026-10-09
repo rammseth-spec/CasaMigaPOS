@@ -37,6 +37,13 @@ public sealed class EscPosReceiptRenderer : IReceiptPayloadRenderer
         }
         for(var index=0;index<lines.Length-1;index++)
         {
+            if(index==0)
+            {
+                output.Write(AlignCenter);
+                WriteLine(output,encoding,lines[index].Trim());
+                output.Write(AlignLeft);
+                continue;
+            }
             if(index==headerIndex)
             {
                 // Current brand is a rendering policy, independent of immutable historical snapshots.
@@ -63,6 +70,12 @@ public sealed class EscPosReceiptRenderer : IReceiptPayloadRenderer
                 continue;
             }
             WriteLine(output,encoding,lines[index]);
+            if(settings.Columns==48&&string.Equals(lines[index].Trim(),"Síguenos en:",StringComparison.Ordinal))
+            {
+                output.Write(AlignCenter);
+                output.Write(ReceiptSocialRaster.Command());
+                output.Write(AlignLeft);
+            }
         }
         if(settings.Columns==48)
         {
@@ -72,7 +85,7 @@ public sealed class EscPosReceiptRenderer : IReceiptPayloadRenderer
         }
         if(settings.CutMode=="Partial")
         {
-            output.Write([0x0a,0x0a,0x0a,0x0a]);
+            output.Write([0x0a,0x0a,0x0a,0x0a,0x0a,0x0a]);
             output.Write(PartialCut);
         }
         return output.ToArray();

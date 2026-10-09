@@ -7,9 +7,9 @@ namespace CasaMiga.Infrastructure;
 /// <summary>Decodes the pinned, approved 1-bit PNG without resampling or redrawing.</summary>
 public static class OfficialReceiptLogo
 {
-    public const string Sha256 = "37927561B9F1BE2FD839C769CE845C62A6A3573653D9533239A1BC7F7175BCDD";
+    public const string Sha256 = "EA3258058C9060D85FBAD830C845EE5BD52813F7F9D29BD6EA43FFCD2395AFFD";
     public const string AssetId = "Variant04:" + Sha256;
-    public const int Width = 576, Height = 300, RowBytes = 72;
+    public const int Width = 576, Height = 275, RowBytes = 72;
 
     public static byte[] ReadPng()
     {

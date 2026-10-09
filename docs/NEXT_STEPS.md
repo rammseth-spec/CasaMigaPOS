@@ -1,4 +1,20 @@
-# Próximo paso — smoke físico manual de ticket 1K.4E
+# Próximo paso — smoke físico manual de ticket 1K.4E-R1
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4E-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4E-R1`, DataDirectory `work/phase1k4e-r1-smoke-20261008` (schema 17). No usar accesos anclados ni builds anteriores.
+
+1. Iniciar sesión con las credenciales verificadas entregadas en la conversación.
+2. Abrir Historial, localizar `Venta #000017` y revisar $72.00, Efectivo, recibido $100.00 y cambio $28.00.
+3. Reimprimir sólo cuando el usuario decida ejecutar la prueba física. Confirmar el orden: «Hecho en:», Variante 04 reducida, dirección, separador, REIMPRESIÓN, venta, productos, totales, pago, «Síguenos en:», logotipos de Facebook/Instagram, cuentas, agradecimiento, corazón, espacio final y corte.
+4. Confirmar que no aparecen las palabras Facebook/Instagram, pero sí sus logotipos y `Casa Miga   @casamiga126`.
+5. Confirmar legibilidad del nombre largo en dos líneas, TOTAL destacado, seis LF de separación, ausencia de apertura de cajón y ausencia de mutaciones comerciales.
+6. Para probar ORIGINAL físicamente, realizar una venta exclusivamente sintética desde POS sólo con autorización humana expresa y usar «Cobrar + imprimir ticket».
+7. Reportar el resultado físico antes de cerrar 1K.4E-R1.
+
+No iniciar 1K.4F, migración 018, instalador, cambio de driver/puerto/codepage/corte o activación de cajón. No hacer push.
+
+## Registro anterior — 1K.4E
+
+# Próximo paso anterior — smoke físico manual de ticket 1K.4E
 
 Usar exclusivamente `work/Abrir-Casa-Miga-1K4E.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4E`, DataDirectory `work/phase1k4e-smoke-20261008` (schema 17). No usar accesos anclados ni builds anteriores.
 

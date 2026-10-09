@@ -1,4 +1,14 @@
-# FASE 1K.4E TÉCNICAMENTE COMPLETADA — SMOKE FÍSICO PENDIENTE, 08/10/2026
+# FASE 1K.4E-R1 TÉCNICAMENTE COMPLETADA — SMOKE FÍSICO PENDIENTE, 08/10/2026
+
+La discrepancia física de 1K.4E provenía de la composición real compartida: `TextReceiptRenderer` colocaba las redes en la cabecera, carecía de separador entre TOTAL y pago y dejaba sólo cuatro LF finales; las pruebas verificaban presencia, no el orden físico completo. No existía un renderer alterno ni una configuración vieja en la fixture. R1 conserva el pipeline validado y ordena explícitamente original/reimpresión: «Hecho en:», logo, dirección, separador, marca opcional, venta, productos, totales, pago, pie y corte.
+
+Variante 04 se redujo de 490 a 446 puntos (9.0%), sin deformación. Los nombres de producto usan hasta 31 columnas y tienen respiración vertical; TOTAL conserva doble altura y restaura el tamaño. Se agregaron separadores antes del pago y del pie, seis LF finales, corazón y corte parcial. Por instrucción posterior del usuario, el pie dice «Síguenos en:», imprime un raster 1-bit con los logotipos de Facebook e Instagram y después sólo `Casa Miga   @casamiga126`; las palabras de las plataformas ya no se imprimen.
+
+Fixture aislada `work/phase1k4e-r1-smoke-20261008`, schema 17, venta `#000017`, total $72, recibido $100 y cambio $28. Payloads fuera de línea: original 23,853 bytes, SHA-256 `50DE3C3831D9F11B1A0CA41F6993123A45B49EE7784AD300EC989BBAA5C1D0EB`; reimpresión 23,888 bytes, SHA-256 `58A496A312948C5D00BFEC055BF9F8AD1CEA051255DAD8067DA2FF552DDC3BFA`. Auditoría: un logo, un raster social, un corazón, un corte, cero ESC p. Focales 30/30; suite completa 763/763 (576 generales + 187 WPF), sin fallas/omisiones; Release 0 errores/advertencias. Base protegida intacta, schema 16 y hash `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Sin migración 018 ni impresión automática. Ver `PHASE_1K4E_R1_REPORT.md`.
+
+## Registro anterior — 1K.4E
+
+# FASE 1K.4E TÉCNICAMENTE COMPLETADA — SMOKE FÍSICO NO APROBADO, 08/10/2026
 
 El ticket Qian definitivo conserva ESC/POS RAW, 48 columnas, CP850/ESC t 2 y corte parcial GS V 1. Usa Variante 04 a 490 puntos de ancho (12.5% menor que R2), «Hecho en:», dirección oficial, `Venta #NNNNNN`, fecha local, cajero humano, snapshots históricos, importes humanos, redes, mensaje final y corazón raster. `REIMPRESIÓN` queda visible antes de la venta; no crea venta/pago, no mueve caja/inventario y no abre cajón. El teléfono es configuración opcional: null/vacío no agrega línea.
 

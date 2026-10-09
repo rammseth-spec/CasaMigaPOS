@@ -8,6 +8,16 @@ namespace CasaMiga.Tests;
 [TestClass]
 public sealed class OfficialLogoTests
 {
+    [TestMethod] public void ThermalSocialRasterContainsDistinctFacebookAndInstagramMarks()
+    {
+        var raster=ReceiptSocialRaster.Raster();
+        Assert.AreEqual(ReceiptSocialRaster.RowBytes*ReceiptSocialRaster.Height,raster.Length);
+        bool Black(int x,int y)=>(raster[y*ReceiptSocialRaster.RowBytes+x/8]&(128>>(x%8)))!=0;
+        Assert.IsTrue(Black(198,3));Assert.IsFalse(Black(200,10));Assert.IsTrue(Black(184,20));
+        Assert.IsTrue(Black(348,2));Assert.IsTrue(Black(342,12));Assert.IsFalse(Black(360,20));Assert.IsTrue(Black(370,10));
+        CollectionAssert.AreEqual(new byte[]{0x1d,0x76,0x30,0,72,0,40,0},ReceiptSocialRaster.Command()[..8]);
+    }
+
     [TestMethod] public void OfficialAssetIsPinnedOneBitAndHasCleanBordersAndTwoBreadCuts()
     {
         var png=OfficialReceiptLogo.ReadPng();
@@ -16,10 +26,10 @@ public sealed class OfficialLogoTests
         var raster=OfficialReceiptLogo.Raster();
         bool Black(int x,int y)=>(raster[y*OfficialReceiptLogo.RowBytes+x/8]&(128>>(x%8)))!=0;
         for(var x=0;x<OfficialReceiptLogo.Width;x++){Assert.IsFalse(Black(x,0));Assert.IsFalse(Black(x,OfficialReceiptLogo.Height-1));}
-        for(var y=0;y<OfficialReceiptLogo.Height;y++)for(var x=0;x<43;x++){Assert.IsFalse(Black(x,y));Assert.IsFalse(Black(OfficialReceiptLogo.Width-1-x,y));}
-        // Both white incisions intersect row 97 inside the uniformly scaled Variant 04 bread silhouette.
+        for(var y=0;y<OfficialReceiptLogo.Height;y++)for(var x=0;x<65;x++){Assert.IsFalse(Black(x,y));Assert.IsFalse(Black(OfficialReceiptLogo.Width-1-x,y));}
+        // Both white incisions intersect row 88 inside the uniformly scaled Variant 04 bread silhouette.
         var whiteRuns=0;var wasWhite=false;
-        for(var x=235;x<335;x++){var white=!Black(x,97);if(white&&!wasWhite)whiteRuns++;wasWhite=white;}
+        for(var x=240;x<332;x++){var white=!Black(x,88);if(white&&!wasWhite)whiteRuns++;wasWhite=white;}
         Assert.AreEqual(2,whiteRuns);
         Assert.AreEqual("CasaMiga.Variant04.Ticket.png",typeof(OfficialReceiptLogo).Assembly.GetManifestResourceNames().Single(n=>n.EndsWith(".png",StringComparison.Ordinal)));
     }
@@ -49,7 +59,7 @@ public sealed class OfficialLogoTests
             var result=test.Run();Assert.AreEqual(ReceiptPrintState.Submitted,result.State);Assert.AreEqual(1,transport.Calls);
             Assert.Contains("TOTAL",result.ReceiptText);Assert.Contains("Gracias por su compra",result.ReceiptText);
             Assert.IsFalse(result.ReceiptText.Contains("PRUEBA CASA MIGA",StringComparison.Ordinal));
-            CollectionAssert.AreEqual(new byte[]{10,10,10,10,29,86,1},transport.Payload[^7..]);
+            CollectionAssert.AreEqual(new byte[]{10,10,10,10,10,10,29,86,1},transport.Payload[^9..]);
             // Exclude the length-delimited raster; data bytes are not commands.
             Assert.AreEqual(0,OccurrencesOutsideRasters(transport.Payload,[0x1b,0x70]));
             Assert.IsFalse(Directory.EnumerateFiles(directory,"*.db").Any());
@@ -67,10 +77,11 @@ public sealed class OfficialLogoTests
 
     private static int OccurrencesOutsideRasters(byte[] source,byte[] sequence)
     {
-        var logo=OfficialReceiptLogo.Command();var heart=ReceiptHeartRaster.Command();var count=0;
+        var logo=OfficialReceiptLogo.Command();var social=ReceiptSocialRaster.Command();var heart=ReceiptHeartRaster.Command();var count=0;
         for(var index=0;index<=source.Length-sequence.Length;index++)
         {
             if(source.AsSpan(index).StartsWith(logo)){index+=logo.Length-1;continue;}
+            if(source.AsSpan(index).StartsWith(social)){index+=social.Length-1;continue;}
             if(source.AsSpan(index).StartsWith(heart)){index+=heart.Length-1;continue;}
             if(source.AsSpan(index,sequence.Length).SequenceEqual(sequence))count++;
         }
