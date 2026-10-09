@@ -1,6 +1,14 @@
-# Próximo paso — completar BLOQUE B 1K.4E-R2
+# Próximo paso — smoke conjunto 1K.4F-R2 + 1K.4E-R2
 
-El bloque A de 1K.4F-R2 está validado y debe conservarse sin cambios funcionales. Implementar de forma independiente el contacto oficial de pedidos en el ticket usando `Business.Phone`, texto visible «Pedidos por WhatsApp», número `461 276 7429` e icono térmico 1-bit local. Validar original/reimpresión, orden, bytes y ausencia de impresión automática; crear el segundo commit local y después preparar un único build de revisión 1K.4F-R2 con ambos commits. No push, no PR y no iniciar 1K.4G/1K.5.
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4F-R2.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4F-R2`, DataDirectory `work/phase1k4f-r2-smoke-20261009`. La apertura automática queda en login y no equivale a aprobación humana.
+
+1. Iniciar sesión; revisar a 1280×820, 1920×1080, ultrawide y F11 el orden Caja, resumen operativo cuando exista, reloj y F11.
+2. Confirmar Caja abierta en la fixture; cerrar sesión sólo si se desea comprobar que el login no expone información operativa. No cerrar la caja.
+3. Abrir el Centro operativo desde el reloj y desde el resumen; comprobar R1, Escape, temporizadores/listos/urgentes y ausencia de ceros sin actividad.
+4. Desde Historial localizar `Venta #000017`. Sólo cuando el usuario autorice la prueba física, reimprimir en POS-80 y revisar dirección, icono, «Pedidos por WhatsApp», `461 276 7429`, separador, marca REIMPRESIÓN, productos, TOTAL, redes, agradecimiento, corazón, seis LF y corte.
+5. La prueba de original requiere una venta sintética manual con autorización expresa; usar «Cobrar + imprimir ticket». Confirmar cero apertura de cajón y ausencia de duplicación.
+
+No push, no PR, no iniciar 1K.4G/1K.5 y no modificar driver, puerto, codepage, corte o cajón.
 
 ## Registro anterior — smoke manual final de FASE 1K.4F-R1
 

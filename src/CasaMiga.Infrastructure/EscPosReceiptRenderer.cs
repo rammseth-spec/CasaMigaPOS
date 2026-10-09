@@ -69,6 +69,12 @@ public sealed class EscPosReceiptRenderer : IReceiptPayloadRenderer
                 output.Write(DoubleHeight);WriteLine(output,encoding,lines[index]);output.Write(NormalSize);
                 continue;
             }
+            if(settings.Columns==48&&string.Equals(lines[index].Trim(),"Pedidos por WhatsApp",StringComparison.Ordinal))
+            {
+                output.Write(AlignCenter);
+                output.Write(ReceiptOrderContactRaster.Command());
+                output.Write(AlignLeft);
+            }
             WriteLine(output,encoding,lines[index]);
             if(settings.Columns==48&&string.Equals(lines[index].Trim(),"Síguenos en:",StringComparison.Ordinal))
             {

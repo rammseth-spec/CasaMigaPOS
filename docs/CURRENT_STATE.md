@@ -1,4 +1,12 @@
-# FASE 1K.4F-R2 — BLOQUE A COMPLETADO, 09/10/2026
+# FASES 1K.4F-R2 + 1K.4E-R2 TÉCNICAMENTE COMPLETADAS, 09/10/2026
+
+El pase controlado concluyó en dos correcciones independientes. El commit A separa en el header estado real de caja, resumen contextual, reloj clickable y F11. El commit B usa `Business.Phone` para imprimir «Pedidos por WhatsApp» y `461 276 7429`, con un raster local 1-bit de teléfono en círculo de 32×32, después de la dirección y antes del primer separador. Original y reimpresión recorren el mismo renderer; Variante 04 permanece intacta a 446 puntos.
+
+Focales A **21/21** y B **27/27**. Suite conjunta `scripts/verify.ps1`: **783/783** (577 generales + 206 WPF/Presentation), 0 fallidas y 0 omitidas; Release 0 errores/advertencias. Payloads fuera de línea: original 24,063 bytes, SHA-256 `0C32856DBC6D8F24B2612A63941F9AB68527FB67115C952650160E1DA3629B4A`; reimpresión 24,098 bytes, SHA-256 `47B73172C36A03B9231256C21B76A92233C19D399605E6172FB358D4F7B43699`. Un ESC t 2, un logo, un icono de pedidos, un raster social, un corazón, un GS V 1, seis LF y cero ESC p. Ningún trabajo se envió a POS-80.
+
+Revisión conjunta: `src/CasaMiga.Presentation/bin/Phase1K4F-R2/`, launcher `work/Abrir-Casa-Miga-1K4F-R2.cmd`, DataDirectory `work/phase1k4f-r2-smoke-20261009`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4F-R2`. Base protegida schema 16 y SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`; fixture schema 17; sin migración 018. Smoke humano de header y prueba física del ticket pendientes. Sin push/PR; no iniciar 1K.4G/1K.5.
+
+## Registro de bloque A — 1K.4F-R2
 
 El encabezado operativo separa ahora cuatro piezas compactas: estado real de caja, resumen contextual del Centro operativo, reloj/fecha y acceso F11. El estado usa `MainViewModel.HasOpenCash`, que se actualiza desde `CashService.Current` y las operaciones reales de apertura/cierre; no existe estado financiero duplicado. El resumen desaparece sin actividad y prioriza urgente, listo y activo. El reloj conserva `HH:mm`, fecha compacta y abre el panel; F11 mantiene un target de 40 DIP, texto visible y ayuda accesible.
 

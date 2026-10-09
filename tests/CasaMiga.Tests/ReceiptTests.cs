@@ -72,22 +72,28 @@ public sealed class ReceiptTests : SalesFixture
         Assert.IsTrue(original.IndexOf("Casa Miga   @casamiga126",StringComparison.Ordinal)<original.IndexOf("Gracias por su compra",StringComparison.Ordinal));
 
         var whitespace=renderer.Render(FinalTicketDocument("   "));
-        Assert.DoesNotContain("Tel",whitespace);
-        var configured=renderer.Render(FinalTicketDocument("461 000 0000"));
-        Assert.AreEqual(1,configured.Split('\n').Count(x=>x.Contains("461 000 0000",StringComparison.Ordinal)));
+        Assert.DoesNotContain("Pedidos por WhatsApp",whitespace);Assert.DoesNotContain("Tel",whitespace);
+        var configured=renderer.Render(FinalTicketDocument("461 276 7429"));
+        Assert.AreEqual(1,configured.Split('\n').Count(x=>x.Contains("Pedidos por WhatsApp",StringComparison.Ordinal)));
+        Assert.AreEqual(1,configured.Split('\n').Count(x=>x.Contains("461 276 7429",StringComparison.Ordinal)));
+        var address=configured.IndexOf("C.P. 38000 · Celaya, Gto.",StringComparison.Ordinal);
+        var ordering=configured.IndexOf("Pedidos por WhatsApp",StringComparison.Ordinal);
+        var number=configured.IndexOf("461 276 7429",StringComparison.Ordinal);
+        var separator=configured.IndexOf(new string('-',48),StringComparison.Ordinal);
+        Assert.IsTrue(address<ordering&&ordering<number&&number<separator);
     }
 
     [TestMethod] public void FinalQianPayloadKeepsCp850TotalResetHeartFeedCutAndNoDrawer()
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);var encoding=Encoding.GetEncoding("ibm850");
-        var settings=Settings() with{QueueName="POS-80",EncodingName="ibm850",CharacterTable=2,CutMode="Partial",Business=FinalBusiness(null)};
-        var document=FinalTicketDocument(null);var renderer=new EscPosReceiptRenderer();
+        var settings=Settings() with{QueueName="POS-80",EncodingName="ibm850",CharacterTable=2,CutMode="Partial",Business=FinalBusiness("461 276 7429")};
+        var document=FinalTicketDocument("461 276 7429");var renderer=new EscPosReceiptRenderer();
         var original=renderer.Render(document,ReceiptCopyKind.Original,settings);
         var reprint=renderer.Render(document,ReceiptCopyKind.Reprint,settings);
         foreach(var payload in new[]{original,reprint})
         {
             CollectionAssert.AreEqual(new byte[]{0x1b,0x74,0x02},payload[..3]);
-            Assert.AreEqual(1,Occurrences(payload,OfficialReceiptLogo.Command()));Assert.AreEqual(1,Occurrences(payload,ReceiptSocialRaster.Command()));Assert.AreEqual(1,Occurrences(payload,ReceiptHeartRaster.Command()));
+            Assert.AreEqual(1,Occurrences(payload,OfficialReceiptLogo.Command()));Assert.AreEqual(1,Occurrences(payload,ReceiptOrderContactRaster.Command()));Assert.AreEqual(1,Occurrences(payload,ReceiptSocialRaster.Command()));Assert.AreEqual(1,Occurrences(payload,ReceiptHeartRaster.Command()));
             Assert.AreEqual(1,Occurrences(payload,[0x1d,0x21,0x01]));Assert.AreEqual(2,Occurrences(payload,[0x1d,0x21,0x00]));
             Assert.AreEqual(1,Occurrences(payload,[0x1d,0x56,0x01]));CollectionAssert.AreEqual(new byte[]{10,10,10,10,10,10,29,86,1},payload[^9..]);
             Assert.AreEqual(0,OccurrencesOutsideLogo(payload,[0x1b,0x70]));
@@ -102,17 +108,32 @@ public sealed class ReceiptTests : SalesFixture
             CollectionAssert.AreEqual(new byte[]{0x1d,0x21,0x00},payload[(totalIndex+total.Length)..(totalIndex+total.Length+3)]);
         }
         Assert.IsTrue(IndexOf(reprint,encoding.GetBytes("REIMPRESIÓN"))<IndexOf(reprint,encoding.GetBytes("Venta #000012")));
+        Assert.IsTrue(IndexOf(reprint,encoding.GetBytes("Esquina con Albino García"))<IndexOf(reprint,ReceiptOrderContactRaster.Command()));
+        Assert.IsTrue(IndexOf(reprint,ReceiptOrderContactRaster.Command())<IndexOf(reprint,encoding.GetBytes("Pedidos por WhatsApp")));
+        Assert.IsTrue(IndexOf(reprint,encoding.GetBytes("Pedidos por WhatsApp"))<IndexOf(reprint,encoding.GetBytes("461 276 7429")));
         Assert.IsTrue(IndexOf(reprint,encoding.GetBytes("Cambio:"))<IndexOf(reprint,encoding.GetBytes("Síguenos en:")));
         Assert.IsTrue(IndexOf(reprint,ReceiptSocialRaster.Command())<IndexOf(reprint,encoding.GetBytes("Casa Miga   @casamiga126")));
         Assert.IsTrue(IndexOf(reprint,encoding.GetBytes("Casa Miga   @casamiga126"))<IndexOf(reprint,encoding.GetBytes("Gracias por su compra")));
         Assert.IsTrue(IndexOf(reprint,encoding.GetBytes("Gracias por su compra"))<IndexOf(reprint,ReceiptHeartRaster.Command()));
     }
 
+    [TestMethod] public void OrderingContactRasterIsCompactOneBitAndAbsentWithoutConfiguredPhone()
+    {
+        var command=ReceiptOrderContactRaster.Command();var raster=ReceiptOrderContactRaster.Raster();
+        Assert.AreEqual(32,ReceiptOrderContactRaster.Width);Assert.AreEqual(32,ReceiptOrderContactRaster.Height);
+        Assert.AreEqual(128,raster.Length);Assert.IsTrue(raster.Any(value=>value!=0));
+        CollectionAssert.AreEqual(new byte[]{0x1d,0x76,0x30,0,4,0,32,0},command[..8]);
+        Assert.AreEqual(136,command.Length);
+        var settings=Settings() with{QueueName="POS-80",EncodingName="ibm850",CharacterTable=2,CutMode="Partial",Business=FinalBusiness(null)};
+        var withoutPhone=new EscPosReceiptRenderer().Render(FinalTicketDocument(null),ReceiptCopyKind.Original,settings);
+        Assert.AreEqual(0,Occurrences(withoutPhone,command));
+    }
+
     [TestMethod] public void FinalQianOriginalAndReprintFollowTheApprovedPhysicalBlockOrder()
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);var encoding=Encoding.GetEncoding("ibm850");
-        var settings=Settings() with{QueueName="POS-80",EncodingName="ibm850",CharacterTable=2,CutMode="Partial",Business=FinalBusiness(null)};
-        var renderer=new EscPosReceiptRenderer();var document=FinalTicketDocument(null);
+        var settings=Settings() with{QueueName="POS-80",EncodingName="ibm850",CharacterTable=2,CutMode="Partial",Business=FinalBusiness("461 276 7429")};
+        var renderer=new EscPosReceiptRenderer();var document=FinalTicketDocument("461 276 7429");
         foreach(var kind in new[]{ReceiptCopyKind.Original,ReceiptCopyKind.Reprint})
         {
             var payload=renderer.Render(document,kind,settings);var separator=encoding.GetBytes(new string('-',48));
@@ -121,6 +142,9 @@ public sealed class ReceiptTests : SalesFixture
                 IndexOf(payload,encoding.GetBytes("Hecho en:")),
                 IndexOf(payload,OfficialReceiptLogo.Command()),
                 IndexOf(payload,encoding.GetBytes("Insurgentes 116")),
+                IndexOf(payload,ReceiptOrderContactRaster.Command()),
+                IndexOf(payload,encoding.GetBytes("Pedidos por WhatsApp")),
+                IndexOf(payload,encoding.GetBytes("461 276 7429")),
                 IndexOf(payload,separator)
             };
             var reprint=IndexOf(payload,encoding.GetBytes("REIMPRESIÓN"));
@@ -493,10 +517,11 @@ public sealed class ReceiptTests : SalesFixture
     }
     private static int OccurrencesOutsideLogo(byte[] source,byte[] sequence)
     {
-        var logo=OfficialReceiptLogo.Command();var social=ReceiptSocialRaster.Command();var heart=ReceiptHeartRaster.Command();var count=0;
+        var logo=OfficialReceiptLogo.Command();var ordering=ReceiptOrderContactRaster.Command();var social=ReceiptSocialRaster.Command();var heart=ReceiptHeartRaster.Command();var count=0;
         for(var index=0;index<=source.Length-sequence.Length;index++)
         {
             if(source.AsSpan(index).StartsWith(logo)){index+=logo.Length-1;continue;}
+            if(source.AsSpan(index).StartsWith(ordering)){index+=ordering.Length-1;continue;}
             if(source.AsSpan(index).StartsWith(social)){index+=social.Length-1;continue;}
             if(source.AsSpan(index).StartsWith(heart)){index+=heart.Length-1;continue;}
             if(source.AsSpan(index,sequence.Length).SequenceEqual(sequence))count++;

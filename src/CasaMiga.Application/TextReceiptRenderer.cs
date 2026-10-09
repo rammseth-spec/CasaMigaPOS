@@ -15,7 +15,7 @@ public sealed class TextReceiptRenderer(int columns = 48)
         AddCentered(lines, "Hecho en:");
         AddCentered(lines, receipt.Business.DisplayName);
         AddOptionalCentered(lines, receipt.Business.Address);
-        AddOptionalCentered(lines, receipt.Business.Phone);
+        AddOrderingContact(lines, receipt.Business.Phone);
         AddOptionalCentered(lines, receipt.Business.TaxId);
         lines.Add(new string('-', Columns));
         if (copyKind != ReceiptCopyKind.Original) AddCentered(lines, "*** REIMPRESIÓN ***");
@@ -67,6 +67,12 @@ public sealed class TextReceiptRenderer(int columns = 48)
         if(string.IsNullOrWhiteSpace(value))return;
         foreach(var paragraph in value.Replace("\r","").Split('\n'))
             if(!string.IsNullOrWhiteSpace(paragraph))AddCentered(lines,paragraph.Trim());
+    }
+    private void AddOrderingContact(List<string> lines,string? phone)
+    {
+        if(string.IsNullOrWhiteSpace(phone))return;
+        AddCentered(lines,"Pedidos por WhatsApp");
+        AddOptionalCentered(lines,phone);
     }
     private void AddContactFooter(List<string> lines,string? value)
     {
