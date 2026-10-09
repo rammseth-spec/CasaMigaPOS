@@ -1,3 +1,20 @@
+# Próximo paso — smoke manual final de FASE 1K.4F
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4F.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4F`, DataDirectory `work/phase1k4f-smoke-20261008`. La apertura automática queda en login y no equivale a aprobación humana.
+
+1. Confirmar que antes de iniciar sesión sólo aparecen hora y fecha, sin información operativa.
+2. Iniciar sesión con las credenciales verificadas entregadas en la conversación y abrir Centro operativo desde Header D.
+3. Revisar los iconos de línea, selectores compactos, tarjetas Ready, prioridad urgente y header sin saturación.
+4. Crear dos timers de un minuto con categorías distintas; dejar que terminen juntos y confirmar una sola alerta breve, doble pulso/micro-shake de 600 ms y estado persistente `¡Listo!`.
+5. Con Casa Miga minimizado o detrás de otra aplicación, dejar vencer un recordatorio y confirmar sonido local + atención discreta en taskbar, sin robo de foco.
+6. Probar recordatorio normal/urgente, Atender y Posponer 5/10/15; revisar que el icono y prioridad sobreviven navegación/reinicio.
+7. Revisar Alt+Tab, minimizar/restaurar, Escape, 1280×820, 1920×1080 y F11. Confirmar targets, contraste, scroll interno, ausencia de parpadeo y estabilidad del catálogo/POS.
+8. Cerrar sesión: sale de F11 y vuelve a login sin datos operativos.
+
+No imprimir, usar cajón, vender, abrir/cerrar caja, modificar inventario/recetas/producción ni iniciar 1K.5. `operations-hub.json` sigue fuera de `.cmbackup`. Esperar aprobación humana antes de publicar; no push.
+
+## Registro anterior — 1K.4E-R1
+
 # Próximo paso — smoke físico manual de ticket 1K.4E-R1
 
 Usar exclusivamente `work/Abrir-Casa-Miga-1K4E-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4E-R1`, DataDirectory `work/phase1k4e-r1-smoke-20261008` (schema 17). No usar accesos anclados ni builds anteriores.
@@ -506,3 +523,20 @@ Antes de producción continúan pendientes datos reales, logo monocromático apr
 Checkpoint vigente 1I.5: reabrir instalación existente, login SMOKECASHIER y comprobar venta con consumo ACTIVO; principal anterior fue Administrator. No cerrar fase ni repetir esa intención.
 
 Revisión adicional completada: logo completo, iconos, hover estable, ausencia de cambios visuales al bloquear la navegación y pestañas de Catálogo/Recetas con selección verde.
+# Próximo paso — smoke manual de FASE 1K.4F
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4F.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4F`, DataDirectory `work/phase1k4f-smoke-20261008`. La apertura automática queda en login y no equivale a aprobación humana.
+
+1. Antes de autenticar, confirmar la composición Login opción 3: usuario/contraseña cómodos, reloj a la derecha, hora y fecha únicamente; no deben verse nombres, estados ni conteos operativos.
+2. Iniciar sesión con las credenciales verificadas entregadas en la conversación. Revisar Header D, F11 y el botón completo del reloj.
+3. Abrir Panel 4; confirmar ancho compacto, scroll interno, tarjetas y ausencia de parpadeo o reconstrucción del módulo actual.
+4. Revisar los escenarios aislados ya preparados: timer activo, pausado, listo; nota sin recordatorio, futura y vencida. No son datos de producto.
+5. Crear un timer de 1 minuto y otro adicional; pausar, reanudar, navegar al POS, cerrar el panel, esperar finalización, abrir desde `1 listo`, atender, reiniciar y eliminar.
+6. Crear una nota, editarla, agregar recordatorio corto, esperar su vencimiento, atenderla y eliminarla.
+7. Con el panel abierto probar Escape, Alt+Tab y minimizar/restaurar. F11 debe conservar su prioridad después de cerrar el panel.
+8. Revisar 1280×820 y 1920×1080/F11; confirmar targets cómodos, encabezado limpio sin actividad y CPU estable sin refresh del catálogo o fotos.
+9. Cerrar sesión: debe salir de fullscreen y volver al login sin mostrar información operativa.
+
+No imprimir, no usar cajón, no vender, no abrir/cerrar caja ni modificar inventario/recetas/producción. `operations-hub.json` no está incluido en `.cmbackup`; reprogramación se realiza mediante Editar y guardar una nueva fecha/hora. Esperar aprobación del smoke antes de cualquier publicación. No hacer push y no iniciar 1K.5.
+
+## Registro anterior — 1K.4E-R1

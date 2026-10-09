@@ -8,6 +8,7 @@ namespace CasaMiga.Presentation;
 
 public sealed partial class MainViewModel : INotifyPropertyChanged
 {
+    public OperationCenterViewModel? Operations { get; private set; }
     public PosViewModel? Pos { get; private set; }
     public bool IsPos => screen == "pos";
     public bool IsNotPos => !IsPos;
@@ -84,6 +85,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
 
     public async Task InitializeAsync(FoundationOptions options)
     {
+        Operations = new OperationCenterViewModel(options.DataDirectory);
         runtime = new(options);
         await Execute(async () =>
         {
@@ -132,7 +134,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
         if (!await Task.Run(() => login!.Login(name, password))) { Message = "No se pudo iniciar sesión. Revisa tus datos o espera un minuto e inténtalo de nuevo."; return; }
         await RefreshAsync(); screen = "dashboard";
     });
-    public void Logout() { if (Busy) return; user?.SignOut(); ClearCashHistory(); Pos?.ForgetView(); SalesHistory?.Forget(); Inventory?.Forget(); opened = null; closingResult = null; CountedAmount = ""; CanViewSales=false; CanViewInventory=false;CanViewRecipes=false;CanViewProduction=false;CurrentRoleLabel=""; screen = "login"; Message = ""; Notify(); }
+    public void Logout() { if (Busy) return; Operations?.ClosePanel(); user?.SignOut(); ClearCashHistory(); Pos?.ForgetView(); SalesHistory?.Forget(); Inventory?.Forget(); opened = null; closingResult = null; CountedAmount = ""; CanViewSales=false; CanViewInventory=false;CanViewRecipes=false;CanViewProduction=false;CurrentRoleLabel=""; screen = "login"; Message = ""; Notify(); }
     public void ShowOpening() { if (Busy || !CanOpen) return; Amount = "0.00"; screen = "opening"; Message = ""; Notify(); }
     public void CancelOpening() { if (Busy) return; screen = "dashboard"; Message = ""; Notify(); }
     public Task OpenAsync() => Execute(async () =>

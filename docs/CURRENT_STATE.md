@@ -1,3 +1,17 @@
+# FASE 1K.4F TÉCNICAMENTE COMPLETADA — SMOKE VISUAL HUMANO PENDIENTE, 09/10/2026
+
+Casa Miga incorpora un Centro operativo en Presentation sin migraciones ni cambios de negocio. El Header D muestra hora local `HH:mm`, fecha abreviada y un indicador acotado de activos/listos/urgentes. El botón completo abre el Panel 4 de 420 DIP dentro del mismo árbol visual y HWND; no existe Popup o Window principal adicional. Escape lo cierra antes de salir de F11, y desactivación/minimización también lo cierran para evitar superficies huérfanas.
+
+Los temporizadores usan deadline UTC, remaining real al pausar, nuevo deadline al reanudar y un único `DispatcherTimer` de presentación. El tick notifica únicamente propiedades nombradas, no llama `PropertyChanged(null)`, no guarda cada segundo y no toca Catálogo, POS, fotos ni Views. Se admiten múltiples timers, presets 5/10/15/30/45/60, pausa, reanudación, reinicio, eliminación y atención. Timers y notas comparten iconografía vectorial local, prioridad Normal/Urgente y persistencia retrocompatible; recordatorios listos pueden posponerse 5/10/15 minutos.
+
+Un vencimiento conserva `¡Listo!` y genera una sola alerta agrupada por tick: doble pulso + micro-shake de 600 ms en Header D, `SystemSounds.Asterisk` una vez y, sin foco/minimizado, tres destellos discretos de barra de tareas mediante `FlashWindowEx` sin restaurar ni robar foco. No hay MessageBox, loop ni animación continua.
+
+La persistencia local versionada está en `DataDirectory/operations-hub.json`, con escritura atómica; sobrevive navegación y reinicio. La auditoría de `InstallationBackup` confirma que `.cmbackup` sólo incluye DB, terminal y fotos activas, por lo que este archivo no se respalda ni restaura. Integrarlo requeriría un cambio estructural posterior. Login opción 3 muestra únicamente hora y fecha junto a los campos; nunca expone temporizadores, notas ni recordatorios antes de autenticar.
+
+Fixture aislada `work/phase1k4f-smoke-20261008`; build `src/CasaMiga.Presentation/bin/Phase1K4F/`; launcher `work/Abrir-Casa-Miga-1K4F.cmd`; título `Casa Miga POS · Caja · DESARROLLO · 1K.4F`. Focales **13/13**; suite completa **776/776** (576 generales + 200 WPF/Presentation), 0 fallidas y 0 omitidas. Release: 0 errores y 0 advertencias. Base protegida schema 16 y SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`, sin cambios; sólo la fixture avanza a schema 17. No existe migración 018. Impresión 1K.4E-R1, Qian, `printing.json`, cajón y datos comerciales permanecen intactos. Ver `PHASE_1K4F_REPORT.md` y `evidence/phase1k4f-annex-verification.md`.
+
+## Registro anterior — 1K.4E-R1
+
 # FASE 1K.4E-R1 TÉCNICAMENTE COMPLETADA — SMOKE FÍSICO PENDIENTE, 08/10/2026
 
 La discrepancia física de 1K.4E provenía de la composición real compartida: `TextReceiptRenderer` colocaba las redes en la cabecera, carecía de separador entre TOTAL y pago y dejaba sólo cuatro LF finales; las pruebas verificaban presencia, no el orden físico completo. No existía un renderer alterno ni una configuración vieja en la fixture. R1 conserva el pipeline validado y ordena explícitamente original/reimpresión: «Hecho en:», logo, dirección, separador, marca opcional, venta, productos, totales, pago, pie y corte.
