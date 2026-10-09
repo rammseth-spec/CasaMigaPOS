@@ -190,6 +190,8 @@ function sell(data) {
         h('span', { class: 'pill ok', text: 'Turno abierto' }),
         h('span', { class: 'muted small', text: ` ${s.openedBy || '—'} desde ${time(s.openedAt)} · ${s.tickets} tickets` })),
       h('div', { class: 'toolbar' },
+        h('button', { type: 'button', onclick: () => ticketsDialog(data) }, 'Tickets'),
+        can('cash.movement') ? h('button', { type: 'button', onclick: () => movementDialog(data) }, 'Gasto, entrada o retiro') : null,
         can('cash.close') ? h('button', { type: 'button', onclick: () => countDialog(data) }, 'Corte de caja') : null,
         changeTill(data))),
     h('section', { class: 'pos-catalog' }, search, chips, grid),
@@ -245,9 +247,10 @@ function payDialog(data, lines, total, done) {
   } });
 }
 
-function ticketLines(r) {
+function ticketLines(r, copy = false) {
   const row = (left, right, cls) => h('div', { class: `line ${cls ?? ''}`.trim() }, h('span', { text: left }), h('span', { class: 'num', text: right }));
   return [
+    copy ? h('p', { class: 'center', text: '*** REIMPRESIÓN ***' }) : null,
     h('p', { class: 'center', text: 'Casa Miga' }), h('p', { class: 'center muted', text: r.branch }),
     h('hr'),
     h('p', { text: `Folio: ${r.folio}` }), h('p', { text: `Fecha: ${new Date(r.at).toLocaleString('es-MX', { timeZone: state.timeZone, dateStyle: 'short', timeStyle: 'medium' })}` }),
@@ -258,12 +261,12 @@ function ticketLines(r) {
     row('Subtotal', fmt(r.total)), row('TOTAL', fmt(r.total), 'total'),
     r.method === 'CASH' ? [row('Pago', 'EFECTIVO'), row('Efectivo', fmt(r.received)), row('Cambio', fmt(r.change))]
       : [row('Pago', r.method === 'CARD' ? 'TARJETA' : 'TRANSFERENCIA'), row('Pagado', fmt(r.total)), r.reference ? row('Referencia', r.reference) : null],
-    h('hr'), h('p', { class: 'center', text: 'Gracias por su compra.' })];
+    h('hr'), h('p', { class: 'center', text: 'Gracias por su compra.' }), copy ? h('p', { class: 'center', text: 'COPIA' }) : null];
 }
-export function printTicket(r) {
+export function printTicket(r, copy = false) {
   let area = document.getElementById('print-area');
   if (!area) { area = h('div', { id: 'print-area' }); document.body.append(area); }
-  area.replaceChildren(h('div', { class: 'receipt' }, ticketLines(r)));
+  area.replaceChildren(h('div', { class: 'receipt' }, ticketLines(r, copy)));
   window.print();
 }
 function receiptDialog(r) {
@@ -273,4 +276,139 @@ function receiptDialog(r) {
       h('div', { class: 'receipt on-screen' }, ticketLines(r))),
       h('div', { class: 'wide toolbar' }, h('button', { type: 'button', onclick: () => printTicket(r) }, 'Imprimir ticket')));
   }, { submit: 'Nueva venta', cancel: null, onSubmit: async () => { render({ silent: true }); } });
+}
+
+// ---------- Tickets: reimprimir, cancelar y devolver ----------
+
+// Operación pendiente por contenido: reintentar lo mismo (por ejemplo, tras una falla de red) nunca lo registra dos veces.
+const pendingOps = new Map();
+const opFor = key => { if (!pendingOps.has(key)) pendingOps.set(key, crypto.randomUUID()); return pendingOps.get(key); };
+const KIND_LABEL = { CANCELLATION: 'Cancelación', RETURN: 'Devolución' };
+
+function ticketsDialog(data) {
+  const list = h('div', { class: 'ticket-list wide' }, h('p', { class: 'muted', text: 'Cargando…' }));
+  let timer = 0;
+  const load = async text => {
+    try {
+      const rows = await api('pos-tickets', { till: data.till.id, q: text });
+      list.replaceChildren(...(rows.length ? rows.map(r => h('button', { type: 'button', class: 'ticket-row', onclick: () => ticketDialog(data, r.id) },
+        h('span', {}, h('strong', { text: r.folio }), h('small', { text: `${time(r.at)} · ${r.pieces} pz · ${METHOD[r.method] ?? r.method}` })),
+        h('span', { class: 'num' }, h('b', { text: fmt(r.total) }),
+          r.cancelled ? h('small', { class: 'short', text: 'Cancelada' }) : r.refunded ? h('small', { class: 'over', text: `Dev. −${fmt(r.refunded)}` }) : null)))
+        : [h('p', { class: 'empty', text: text ? 'No se encontró ese folio.' : 'Todavía no hay ventas en este turno.' })]));
+    } catch (error) { list.replaceChildren(h('p', { class: 'error', text: error.message })); }
+  };
+  dialog('Tickets', body => {
+    body.append(h('input', { class: 'wide', type: 'search', placeholder: 'Folio, por ejemplo C02-000015 o 15', 'aria-label': 'Buscar folio',
+      oninput: e => { clearTimeout(timer); timer = setTimeout(() => load(e.target.value.trim()), 300); } }),
+      h('p', { class: 'muted small wide', text: 'Del turno abierto; con un folio buscas cualquier venta de la sucursal.' }), list);
+    load('');
+  });
+}
+
+async function ticketDialog(data, saleId) {
+  let t;
+  try { t = await api('pos-ticket', { till: data.till.id, id: saleId }); } catch (error) { toast(error.message); return; }
+  const r = t.receipt;
+  const refunds = can('sales.refund');
+  dialog(`Venta ${r.folio}`, (body, close) => {
+    body.append(h('div', { class: 'wide receipt on-screen' }, ticketLines(r)),
+      t.refunds.length ? h('div', { class: 'wide ticket' }, h('h3', { text: 'Devoluciones' }), t.refunds.map(x =>
+        h('div', { class: 'line' }, h('span', { text: `${KIND_LABEL[x.kind] ?? x.kind} · ${time(x.at)} · ${x.by || '—'} · «${x.reason}»` }), h('b', { class: 'short', text: `−${fmt(x.total)}` })))) : null,
+      refunds && t.blocker ? h('p', { class: 'notice wide', text: t.blocker }) : null,
+      h('div', { class: 'wide toolbar' },
+        can('sales.receipt.reprint') ? h('button', { type: 'button', onclick: () => printTicket(r, true) }, 'Reimprimir') : null,
+        refunds && t.canCancel ? h('button', { type: 'button', class: 'danger', onclick: () => { close(); refundDialog(data, t, 'CANCELLATION'); } }, 'Cancelar venta') : null,
+        refunds && t.canReturn ? h('button', { type: 'button', onclick: () => { close(); refundDialog(data, t, 'RETURN'); } }, 'Devolver productos') : null));
+  });
+}
+
+function refundDialog(data, t, kind) {
+  const r = t.receipt;
+  const back = new Map(t.lines.map(l => [l.position, kind === 'CANCELLATION' ? l.sold : 0]));
+  const total = () => t.lines.reduce((a, l) => a + l.unitPrice * back.get(l.position), 0);
+  const summary = h('div', { class: 'totals wide' });
+  const refresh = () => summary.replaceChildren(h('span', { text: kind === 'CANCELLATION' ? 'Se cancela la venta completa' : `${[...back.values()].reduce((a, b) => a + b, 0)} pz` }),
+    h('span', { text: `${r.method === 'CASH' ? 'Sale de la caja' : 'A reembolsar'} ${fmt(total())}` }));
+  dialog(kind === 'CANCELLATION' ? `Cancelar ${r.folio}` : `Devolver de ${r.folio}`, body => {
+    body.append(kind === 'RETURN'
+      ? h('div', { class: 'stepper-list wide' }, t.lines.filter(l => l.remaining > 0).map(l => h('div', { class: 'stepper-row' },
+        h('span', {}, l.name, h('small', { text: `Vendidas ${l.sold}${l.refunded ? ` · ya devueltas ${l.refunded}` : ''} · ${fmt(l.unitPrice)} c/u` })),
+        stepper(0, l.remaining, v => { back.set(l.position, v); refresh(); }, `devolver de ${l.name}`))))
+      : h('p', { class: 'wide', text: 'La venta original no cambia: se registra una cancelación por el total y queda en la bitácora.' }),
+      summary, field('Motivo', h('input', { name: 'reason', maxlength: '200', required: true, placeholder: 'Por ejemplo, pan aplastado' }), true));
+    refresh();
+  }, { submit: kind === 'CANCELLATION' ? 'Cancelar venta' : 'Registrar devolución', onSubmit: async form => {
+    const reason = form.elements.reason.value.trim();
+    if (reason.length < 3) throw new Error('Escribe el motivo (de 3 a 200 caracteres).');
+    const lines = [...back.entries()].filter(([, q]) => q > 0).map(([position, quantity]) => ({ position, quantity }));
+    if (!lines.length) throw new Error('Indica al menos una pieza a devolver.');
+    const key = `refund|${r.id}|${kind}|${JSON.stringify(lines)}|${reason}`;
+    let done;
+    try {
+      done = await post('pos-refund', { tillId: data.till.id, sessionId: data.session.id, operationId: opFor(key), saleId: r.id, kind, lines: kind === 'RETURN' ? lines : undefined, reason });
+    } catch (error) {
+      if (error.status === 0) throw new Error('No se pudo confirmar. Revisa la conexión y vuelve a tocar el botón: si ya se registró, no se duplica.');
+      throw error;
+    }
+    pendingOps.delete(key);
+    setTimeout(() => dialog(kind === 'CANCELLATION' ? 'Venta cancelada' : 'Devolución registrada', b => b.append(
+      h('div', { class: 'wide big-change' }, h('span', { text: done.method === 'CASH' ? 'Entrega' : 'Reembolsa' }), h('strong', { class: 'num', text: fmt(done.total) })),
+      h('p', { class: 'wide', text: done.instruction })), { submit: 'Listo', cancel: null, onSubmit: async () => { render({ silent: true }); } }));
+  } });
+}
+function stepper(value, max, onchange, label) {
+  const output = h('output', { 'aria-live': 'polite', text: String(value) });
+  const set = next => { value = Math.max(0, Math.min(max, next)); output.textContent = String(value); onchange(value); };
+  return h('span', { class: 'stepper' },
+    h('button', { type: 'button', 'aria-label': `Menos ${label}`, onclick: () => set(value - 1) }, '−'), output,
+    h('button', { type: 'button', 'aria-label': `Más ${label}`, onclick: () => set(value + 1) }, '+'));
+}
+
+// ---------- Gastos, retiros y entradas ----------
+
+const MOVE = { EXPENSE: 'Gasto', DEPOSIT: 'Entrada', WITHDRAWAL: 'Retiro' };
+const MOVE_HELP = { EXPENSE: 'Efectivo que sale para pagar algo del negocio.', DEPOSIT: 'Efectivo que entra a la caja (cambio, fondo extra).', WITHDRAWAL: 'Efectivo que se saca para guardarlo (encargado o administrador).' };
+const CATEGORY = { SUPPLIES: 'Insumos', GAS: 'Gas', CLEANING: 'Limpieza', TRANSPORT: 'Transporte', MAINTENANCE: 'Mantenimiento', OTHER: 'Otro' };
+
+function movementDialog(data) {
+  let kind = 'EXPENSE', category = null;
+  const kinds = h('div', { class: 'chips wide', role: 'group', 'aria-label': 'Tipo de movimiento' });
+  const help = h('p', { class: 'muted small wide' });
+  const categories = h('div', { class: 'chips wide', role: 'group', 'aria-label': 'Categoría' });
+  const draw = () => {
+    kinds.replaceChildren(...Object.entries(MOVE).filter(([k]) => k !== 'WITHDRAWAL' || can('cash.withdrawal')).map(([k, label]) =>
+      h('button', { type: 'button', class: 'chip', 'aria-pressed': String(kind === k), onclick: () => { kind = k; if (k !== 'EXPENSE') category = null; draw(); } }, label)));
+    help.textContent = MOVE_HELP[kind];
+    categories.hidden = kind !== 'EXPENSE';
+    categories.replaceChildren(...Object.entries(CATEGORY).map(([k, label]) =>
+      h('button', { type: 'button', class: 'chip', 'aria-pressed': String(category === k), onclick: () => { category = k; draw(); } }, label)));
+  };
+  draw();
+  const list = data.session.movements ?? [];
+  dialog('Movimiento de efectivo', body => {
+    body.append(kinds, help, categories,
+      field('Importe (MXN)', h('input', { name: 'amount', inputmode: 'decimal', autocomplete: 'off', required: true })),
+      field('Nota', h('input', { name: 'note', maxlength: '200', placeholder: 'Opcional (obligatoria en «Otro»)' })),
+      h('div', { class: 'wide' }, h('h3', { text: 'En este turno' }), list.length ? h('ul', { class: 'rows' }, list.map(m => h('li', {},
+        h('span', {}, h('strong', { text: MOVE[m.kind] ?? m.kind }), h('small', { class: 'muted', text: ` ${[m.category ? CATEGORY[m.category] : '', m.note].filter(Boolean).join(' · ')}` })),
+        h('span', { class: 'muted small', text: `${time(m.at)} · ${m.by || '—'}` }),
+        h('b', { class: 'num', text: `${m.kind === 'DEPOSIT' ? '+' : '−'}${fmt(m.amount)}` }))))
+        : h('p', { class: 'empty', text: 'Sin gastos, retiros ni entradas todavía.' })));
+  }, { submit: 'Registrar', onSubmit: async form => {
+    const text = String(form.elements.amount.value).trim().replace(/[$\s]/g, '').replace(',', '.');
+    if (!/^\d{1,7}(\.\d{1,2})?$/.test(text) || Number(text) <= 0) throw new Error('Escribe un importe mayor a cero, por ejemplo 150.00.');
+    if (kind === 'EXPENSE' && !category) throw new Error('Elige la categoría del gasto.');
+    const note = form.elements.note.value.trim();
+    const amountCents = Math.round(Number(text) * 100);
+    const key = `move|${data.session.id}|${kind}|${category}|${amountCents}|${note}`;
+    try { await post('pos-movement', { tillId: data.till.id, sessionId: data.session.id, operationId: opFor(key), kind, category, amountCents, note }); }
+    catch (error) {
+      if (error.status === 0) throw new Error('No se pudo confirmar. Revisa la conexión y vuelve a tocar Registrar: si ya se registró, no se duplica.');
+      throw error;
+    }
+    pendingOps.delete(key);
+    toast(`${MOVE[kind]} de ${fmt(amountCents)} registrado.`);
+    render({ silent: true });
+  } });
 }

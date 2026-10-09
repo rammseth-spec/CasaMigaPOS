@@ -80,7 +80,7 @@ export async function saleDetail(q: Query, branch: string | null, id: string) {
   return {
     id, branch: k.branch.get(s(row.branch_id)) ?? '', terminal, folio: displayFolio(terminal, n(p.sale.sequence)), at: s(p.sale.confirmed_utc),
     cashier: k.user.get(s(p.sale.user_id)) ?? '', subtotal: n(p.sale.subtotal_cents), total: n(p.sale.total_cents),
-    items: p.items.map(i => ({ position: n(i.position), name: s(i.product_name), quantity: n(i.quantity), unitPrice: n(i.unit_price_cents), total: n(i.line_total_cents) })),
+    items: p.items.map(i => ({ position: n(i.position), productId: s(i.product_id), name: s(i.product_name), quantity: n(i.quantity), unitPrice: n(i.unit_price_cents), total: n(i.line_total_cents) })),
     payment: p.payment ? { method: s(p.payment.method), applied: n(p.payment.applied_cents), received: n(p.payment.received_cents), change: n(p.payment.change_cents), reference: s(p.payment.reference) } : null,
     refunds: refunds.map(r => {
       const f = (r.payload as Row & { refund: Row; items: Row[] });
@@ -231,7 +231,7 @@ export async function consignment(q: Query, r: Range) {
       list.push({ id: s(p.delivery.id), store, at: s(p.delivery.delivered_utc), pieces, sold, returned,
         status: p.void ? 'voided' : p.settlement ? 'collected' : 'pending', charged: p.settlement ? n(p.settlement.sold_cents) : 0,
         collectedAt: p.settlement ? s(p.settlement.collected_utc) : null,
-        items: p.items.map(i => ({ name: s(i.product_name), quantity: n(i.quantity), price: n(i.unit_price_cents) })) });
+        items: p.items.map(i => ({ productId: s(i.product_id), name: s(i.product_name), quantity: n(i.quantity), price: n(i.unit_price_cents) })) });
   }
   const paymentList = [];
   for (const x of payments) {
@@ -277,7 +277,7 @@ export async function route(q: Query, branch: string | null) {
     if (!p.settlement && !p.void) {
       const list = open.get(store) ?? []; open.set(store, list);
       list.push({ id: s(p.delivery.id), at: s(p.delivery.delivered_utc), note: s(p.delivery.note),
-        items: p.items.map(i => ({ position: n(i.position), name: s(i.product_name), quantity: n(i.quantity), price: n(i.unit_price_cents) })) });
+        items: p.items.map(i => ({ position: n(i.position), productId: s(i.product_id), name: s(i.product_name), quantity: n(i.quantity), price: n(i.unit_price_cents) })) });
     }
   }
   for (const x of payments) { const p = x.payload as Row; paid.set(s(p.store_id), (paid.get(s(p.store_id)) ?? 0) + n(p.amount_cents)); }

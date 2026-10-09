@@ -149,7 +149,7 @@ export async function trayAnalytics(q: Query, r: Range) {
   const local = (iso: string) => new Date(iso).toLocaleDateString('en-CA', { timeZone: r.timeZone });
   const weekday = (iso: string) => Number(new Date(local(iso) + 'T12:00:00Z').getUTCDay());
   const names = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
-  const byStore = new Map<string, { delivered: string[]; products: Map<string, { name: string; delivered: number; sold: number; returned: number; revenue: number }>; sold: number; returned: number; deliveredPieces: number; revenue: number }>();
+  const byStore = new Map<string, { delivered: string[]; products: Map<string, { productId: string; name: string; delivered: number; sold: number; returned: number; revenue: number }>; sold: number; returned: number; deliveredPieces: number; revenue: number }>();
   for (const d of deliveries) {
     const p = d.payload as { delivery: Row; items: Row[]; settlement: Row | null; settlementItems: Row[]; void: Row | null };
     if (p.void) continue;
@@ -161,7 +161,7 @@ export async function trayAnalytics(q: Query, r: Range) {
     st.delivered.push(s(p.delivery.delivered_utc));
     for (const item of p.items) {
       const settled = p.settlementItems.find(si => n(si.position) === n(item.position));
-      const prod = st.products.get(s(item.product_id)) ?? { name: s(item.product_name), delivered: 0, sold: 0, returned: 0, revenue: 0 };
+      const prod = st.products.get(s(item.product_id)) ?? { productId: s(item.product_id), name: s(item.product_name), delivered: 0, sold: 0, returned: 0, revenue: 0 };
       st.products.set(s(item.product_id), prod);
       prod.delivered += n(item.quantity); st.deliveredPieces += n(item.quantity);
       if (settled) { prod.sold += n(settled.sold); prod.returned += n(settled.returned); prod.revenue += n(settled.line_total_cents); st.sold += n(settled.sold); st.returned += n(settled.returned); st.revenue += n(settled.line_total_cents); }

@@ -1,3 +1,13 @@
+# Punto de venta en la web, fase 2 y fotos en el panel — 09/10/2026
+
+**Implementado y probado en local.** Ver [POS_WEB.md](POS_WEB.md).
+
+- **Tickets** del turno y búsqueda por folio; **reimprimir** (encargado y administrador); **cancelar venta** (mismo turno, sin devoluciones) y **devolver productos** con motivo, con la instrucción de qué hacer con el dinero; **gastos, entradas y retiros** con categoría y nota. Mismas reglas que la caja: sólo antes del conteo, no sacar más efectivo del esperado, retiros sólo encargado/administrador, identificador de operación (migración de la nube 005).
+- **Fotos de los panes en todo el panel**: más vendidos, ticket, charolas, análisis, ganancia, producción sugerida y recetas.
+- Inventario: el descuento al vender está apagado en la caja; web y escritorio se comportan igual mientras siga así.
+- Prueba en el navegador: venta C02-000001 de 2 conchas, devolución de 1 ($13, «Entrega $13.00 en efectivo»), gasto de gas $50; el panel muestra el turno con esperado $463 = 500 + 26 − 13 − 50. Pruebas de la nube 43/43.
+- Pull de QAv1: el commit «Charolas» del usuario (README, .gitignore, .gitattributes) no afecta; `cloud/.gitignore` sigue ignorando `node_modules`, `.vercel` y `.env`.
+
 # Punto de venta en la web, fase 1 — 08/10/2026
 
 **Implementado y probado en local.** Ver [POS_WEB.md](POS_WEB.md).

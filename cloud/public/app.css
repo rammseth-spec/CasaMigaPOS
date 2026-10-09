@@ -197,7 +197,20 @@ th.num, td.num { text-align: right; }
 .cart-totals .pay { min-height: 54px; font-size: 17px; }
 .pic { width: 52px; height: 52px; border-radius: 12px; overflow: hidden; background: var(--surface-2); display: grid; place-items: center; color: var(--faint); font-weight: 700; }
 .pic img { width: 100%; height: 100%; object-fit: cover; }
+.pic.sm { width: 34px; height: 34px; border-radius: 9px; font-size: 13px; flex: none; }
+.pic.xs { width: 22px; height: 22px; border-radius: 6px; font-size: 11px; flex: none; }
+.with-pic { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.with-pic-text { display: grid; min-width: 0; }
+.pieces { display: flex; flex-wrap: wrap; gap: 6px; }
+td .pieces { min-width: 260px; }
+.piece { white-space: nowrap; }
+.piece { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 3px 10px 3px 4px; }
 .pos-bar-mobile { display: none; }
+.ticket-list { display: grid; gap: 6px; max-height: 55dvh; overflow-y: auto; }
+.ticket-row { justify-content: space-between; text-align: left; min-height: 52px; }
+.ticket-row > span { display: grid; } .ticket-row > span.num { text-align: right; }
+.ticket-row small { color: var(--muted); font-size: 12.5px; }
+.ticket-row small.short { color: var(--error); } .ticket-row small.over { color: var(--warn-text); }
 .till-list { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
 .till { display: grid; justify-items: start; gap: 4px; padding: 14px 16px; min-height: 0; text-align: left; }
 .open-shift { display: grid; gap: 12px; max-width: 420px; }

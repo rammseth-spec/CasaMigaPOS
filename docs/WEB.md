@@ -25,6 +25,8 @@ Decisiones del usuario (07/10/2026): consultar todo lo que se ve en la caja; edi
 
 **Vender** (punto de venta con fotos, cobro, ticket y corte; ver [POS_WEB.md](POS_WEB.md)), Resumen, Ventas (búsqueda por folio C01-001061 o producto, forma de pago, detalle del ticket con devoluciones), Reportes (comparativo contra el periodo anterior, ventas por hora, ganancia, control de caja, producción sugerida), Caja (cortes con su resultado o el esperado del turno abierto; gastos, retiros y entradas), Charolas (ruta, análisis por tienda, tiendas con saldo, entregas, cobros), Catálogo (fotos, precios, precio de charola), Inventario (con costo de referencia por insumo), Recetas, Producción, Usuarios (sólo administrador) y Cajas (última conexión y cambios enviados con su estado por caja).
 
+Las fotos de los panes salen en todo el panel, como en la app: más vendidos, ticket de la venta, charolas (ruta, entregar, recoger, entregas, análisis), ganancia, producción sugerida y recetas. Se buscan por producto y, en ventas viejas, por nombre.
+
 Responsiva: menú lateral en computadora, riel de íconos en tablet (≤1100 px) y menú desplegable en celular (≤720 px), donde las tablas se vuelven tarjetas y los diálogos hojas inferiores.
 
 ## Tiempo real
