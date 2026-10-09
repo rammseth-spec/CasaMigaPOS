@@ -1,6 +1,6 @@
 # FASE 1K.4D-R1 — Pulido visual final de Caja
 
-Fecha: 08/10/2026. Estado: implementación visual y verificación técnica completadas; smoke visual pendiente. No hay autorización de push, PR o fase siguiente.
+Fecha: 08/10/2026. Estado: implementación visual y verificación técnica completadas; smoke visual aprobado por el usuario. Se autoriza el checkpoint de cierre en `origin/QA`; no se autoriza promoción a `main`, PR ni fase siguiente.
 
 ## Alcance y baseline
 
@@ -51,10 +51,12 @@ El launcher limpia `CASAMIGA_DATA_DIR` sólo en su proceso, usa el runtime local
 
 ## Smoke manual corto
 
+El usuario confirmó la aprobación del smoke visual el 08/10/2026. El siguiente listado queda como evidencia del recorrido aprobado:
+
 1. Login; Caja cerrada; revisar altura y páginas 1/2 y 2/2.
 2. Abrir un cierre, revisar los tres bloques y volver.
 3. Abrir una sesión sintética; confirmar conteo exacto y ausencia del editor grande.
 4. Revisar un escenario con diferencia: nota visible, cierre deshabilitado sin nota y habilitado con nota válida.
 5. Revisar F11 y Escape. No imprimir ni accionar cajón.
 
-Checkpoint local previsto: `fix: polish cash management usability for phase 1K.4D`. GitHub queda pendiente del smoke y aprobación explícita. No iniciar la fase siguiente.
+Checkpoint funcional local: `4533ced14f0fd0ac0a348ecdc46325c5be42eff8` (`fix: polish cash management usability for phase 1K.4D`). La aprobación habilita publicar el cierre en `origin/QA`. No promover a `main` ni iniciar la fase siguiente.
