@@ -78,13 +78,84 @@ public sealed class OperationCenterPresentationTests
         Assert.AreEqual(WindowStyle.None,window.WindowStyle,"The brief alert does not exit F11.");
         Assert.AreEqual(WindowState.Minimized,window.WindowState,"The alert never forces the window to the foreground.");
         Assert.AreEqual("1 urgente",center.HeaderStatus);
-        var trigger=(Button)window.FindName("OperationsButton");
+        var trigger=(Button)window.FindName("OperationsStatusButton");
         if(SystemParameters.ClientAreaAnimation)Assert.IsTrue(trigger.HasAnimatedProperties,"The 600 ms double pulse starts without blocking the dispatcher.");
         window.Close();
 
         Assert.IsTrue(center.CreateTimer("Segundo horno","0","1",OperationIconKind.Oven));
         center.Tick(DateTimeOffset.Now.AddMinutes(4));
         Assert.AreEqual(1,sounds,"Closing the window detaches the alert handler.");
+    });
+
+    [TestMethod]
+    public Task OperationalHeaderUsesRealCashStateAndKeepsClockClickable()=>WpfTestHost.OnUi(async()=>
+    {
+        using var fixture=new Fixture();await fixture.InitializeAsync();
+        var window=Offscreen(new MainWindow{DataContext=fixture.Model});
+        try
+        {
+            window.Show();WpfTestHost.Layout(window,1280,820);
+            Assert.IsFalse(fixture.Model.HasOpenCash);
+            Assert.AreEqual("Caja cerrada",((TextBlock)window.FindName("CashStatusText")).Text);
+            var clock=(Button)window.FindName("OperationsButton");
+            clock.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            Assert.IsTrue(fixture.Model.Operations!.IsPanelOpen,"The clock remains the entry point to the operations panel.");
+            fixture.Model.Operations.ClosePanel();
+
+            fixture.Model.ShowOpening();fixture.Model.Amount="0.00";await fixture.Model.OpenAsync();
+            WpfTestHost.Layout(window,1280,820);
+            Assert.IsTrue(fixture.Model.HasOpenCash,fixture.Model.Message);
+            Assert.AreEqual("Caja abierta",((TextBlock)window.FindName("CashStatusText")).Text);
+        }
+        finally{window.Close();}
+    });
+
+    [TestMethod]
+    public Task HeaderStatusIsHiddenWithoutActivityAndPrioritizesReadyUrgentAndActive()=>WpfTestHost.OnUi(async()=>
+    {
+        using var fixture=new Fixture();await fixture.InitializeAsync();
+        var center=fixture.Model.Operations!;
+        Assert.IsFalse(center.HasHeaderStatus);
+        Assert.IsTrue(center.CreateTimer("Activo","0","10"));
+        Assert.IsTrue(center.HasHeaderStatus);Assert.StartsWith("1 activo",center.HeaderStatus);
+        Assert.IsTrue(center.CreateTimer("Listo","0","1"));
+        center.Tick(DateTimeOffset.Now.AddMinutes(2));
+        Assert.AreEqual("1 listo · 1 activo",center.HeaderStatus);
+        Assert.IsTrue(center.CreateTimer("Urgente","0","1",OperationIconKind.Oven,OperationPriority.Urgent));
+        center.Tick(DateTimeOffset.Now.AddMinutes(4));
+        Assert.AreEqual("1 urgente",center.HeaderStatus,"Urgent ready work has precedence over lower-priority counts.");
+    });
+
+    [TestMethod]
+    public Task HeaderFitsThreeTargetResolutionsAndOperationTicksDoNotRefreshShellViews()=>WpfTestHost.OnUi(async()=>
+    {
+        using var fixture=new Fixture();await fixture.InitializeAsync();
+        var center=fixture.Model.Operations!;
+        Assert.IsTrue(center.CreateTimer("Horno","0","10",OperationIconKind.Oven));
+        var pos=fixture.Model.Pos;var catalog=fixture.Model.Catalog;var shellNotifications=0;
+        fixture.Model.PropertyChanged+=(_,_)=>shellNotifications++;
+        center.Tick(DateTimeOffset.Now.AddSeconds(5));
+        Assert.AreSame(pos,fixture.Model.Pos);Assert.AreSame(catalog,fixture.Model.Catalog);Assert.AreEqual(0,shellNotifications);
+
+        foreach(var size in new[]{new Size(1280,820),new Size(1920,1080),new Size(3440,1440)})
+        {
+            var window=Offscreen(new MainWindow{DataContext=fixture.Model});
+            try
+            {
+                window.Show();WpfTestHost.Layout(window,size.Width,size.Height);
+                foreach(var name in new[]{"CashStatusChip","OperationsStatusButton","OperationsButton","FullScreenButton"})
+                {
+                    var element=(FrameworkElement)window.FindName(name);
+                    Assert.IsTrue(element.IsVisible,$"{name} must be visible at {size.Width}×{size.Height}.");
+                    Assert.IsTrue(IsInside(element,window),$"{name} must stay inside the header at {size.Width}×{size.Height}.");
+                }
+            }
+            finally{window.Close();}
+        }
+
+        var fullScreen=Offscreen(new MainWindow{DataContext=fixture.Model});
+        try{fullScreen.Show();WpfTestHost.Layout(fullScreen,1280,820);Send(fullScreen,Key.F11);Assert.AreEqual(WindowStyle.None,fullScreen.WindowStyle);Assert.AreEqual("F11",((Button)fullScreen.FindName("FullScreenButton")).Content);}
+        finally{fullScreen.Close();}
     });
 
     [TestMethod]

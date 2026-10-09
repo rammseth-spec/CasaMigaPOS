@@ -78,6 +78,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
     public string CurrentTerminalName => terminal?.Name ?? "";
     public string CurrentRoleLabel { get; private set; } = "";
     public string CashLabel => opened is null ? "CAJA CERRADA" : "CAJA ABIERTA";
+    public string CashHeaderLabel => opened is null ? "Caja cerrada" : "Caja abierta";
     public string CashDetails => opened is null ? "No hay una sesión de caja abierta." :
         $"Caja: {CurrentTerminalName}\nResponsable: {opened.OpenedByName}\nApertura: {opened.Session.OpenedAt.ToLocalTime():dd/MM/yyyy · HH:mm}\nFondo inicial: {Format(opened.Session.OpeningFund)}";
     public event PropertyChangedEventHandler? PropertyChanged;

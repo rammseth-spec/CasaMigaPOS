@@ -1,4 +1,8 @@
-# Próximo paso — smoke manual final de FASE 1K.4F-R1
+# Próximo paso — completar BLOQUE B 1K.4E-R2
+
+El bloque A de 1K.4F-R2 está validado y debe conservarse sin cambios funcionales. Implementar de forma independiente el contacto oficial de pedidos en el ticket usando `Business.Phone`, texto visible «Pedidos por WhatsApp», número `461 276 7429` e icono térmico 1-bit local. Validar original/reimpresión, orden, bytes y ausencia de impresión automática; crear el segundo commit local y después preparar un único build de revisión 1K.4F-R2 con ambos commits. No push, no PR y no iniciar 1K.4G/1K.5.
+
+## Registro anterior — smoke manual final de FASE 1K.4F-R1
 
 Usar exclusivamente `work/Abrir-Casa-Miga-1K4F-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4F-R1`, DataDirectory `work/phase1k4f-r1-smoke-20261009`. La apertura automática queda en login y no equivale a aprobación humana.
 

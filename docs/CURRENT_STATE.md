@@ -1,3 +1,11 @@
+# FASE 1K.4F-R2 — BLOQUE A COMPLETADO, 09/10/2026
+
+El encabezado operativo separa ahora cuatro piezas compactas: estado real de caja, resumen contextual del Centro operativo, reloj/fecha y acceso F11. El estado usa `MainViewModel.HasOpenCash`, que se actualiza desde `CashService.Current` y las operaciones reales de apertura/cierre; no existe estado financiero duplicado. El resumen desaparece sin actividad y prioriza urgente, listo y activo. El reloj conserva `HH:mm`, fecha compacta y abre el panel; F11 mantiene un target de 40 DIP, texto visible y ayuda accesible.
+
+El bloque no cambió la altura del header ni la lógica del Centro operativo R1. Pruebas focales: **21/21** (19 de Centro operativo/modelo/WPF y dos del shell), sin fallas ni omisiones. Se verificaron caja abierta/cerrada, ausencia/actividad/listo/urgente/combinación, click del reloj, F11, 1280×820, 1920×1080 y 3440×1440, además de que los ticks no notifican ni recrean POS/Catálogo. Ver `PHASE_1K4F_R2_REPORT.md`. Continúa el bloque B independiente de 1K.4E-R2 antes del build conjunto; sin push.
+
+## Registro anterior — 1K.4F-R1
+
 # FASE 1K.4F-R1 TÉCNICAMENTE COMPLETADA — SMOKE VISUAL HUMANO PENDIENTE, 09/10/2026
 
 R1 convierte el Centro operativo en una vista de trabajo primero. Los editores de temporizador y nota aparecen colapsados; `+ Nuevo`/`+ Nueva` los abren dentro de la misma sección, Cancelar descarta sin crear y una creación o guardado válido vuelve automáticamente a la lista. Editar una nota reutiliza el editor con el rótulo «Editar nota». Las tarjetas reducen moderadamente padding y separación; a 1280×820 las pruebas WPF confirman al menos tres tarjetas de temporizador completas con los editores cerrados.

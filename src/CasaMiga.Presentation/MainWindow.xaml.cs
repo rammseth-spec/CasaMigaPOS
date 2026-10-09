@@ -125,9 +125,9 @@ public partial class MainWindow : Window
     private void AnimateOperationIndicator()
     {
         if(!SystemParameters.ClientAreaAnimation)return;
-        if(OperationsButton.RenderTransform is not TranslateTransform transform)
+        if(OperationsStatusButton.RenderTransform is not TranslateTransform transform)
         {
-            transform=new TranslateTransform();OperationsButton.RenderTransform=transform;OperationsButton.RenderTransformOrigin=new Point(.5,.5);
+            transform=new TranslateTransform();OperationsStatusButton.RenderTransform=transform;OperationsStatusButton.RenderTransformOrigin=new Point(.5,.5);
         }
         var pulse=new DoubleAnimationUsingKeyFrames{Duration=TimeSpan.FromMilliseconds(600)};
         pulse.KeyFrames.Add(new LinearDoubleKeyFrame(1,KeyTime.FromPercent(0)));
@@ -142,7 +142,7 @@ public partial class MainWindow : Window
         shake.KeyFrames.Add(new LinearDoubleKeyFrame(-2,KeyTime.FromPercent(.36)));
         shake.KeyFrames.Add(new LinearDoubleKeyFrame(2,KeyTime.FromPercent(.48)));
         shake.KeyFrames.Add(new LinearDoubleKeyFrame(0,KeyTime.FromPercent(.66)));
-        OperationsButton.BeginAnimation(OpacityProperty,pulse,HandoffBehavior.SnapshotAndReplace);
+        OperationsStatusButton.BeginAnimation(OpacityProperty,pulse,HandoffBehavior.SnapshotAndReplace);
         transform.BeginAnimation(TranslateTransform.XProperty,shake,HandoffBehavior.SnapshotAndReplace);
     }
     private void RequestTaskbarAttention()
@@ -175,7 +175,8 @@ public partial class MainWindow : Window
         ResizeMode = ResizeMode.NoResize;
         WindowState = WindowState.Maximized;
         isFullScreen = true;
-        FullScreenButton.Content = "Salir de pantalla completa · F11";
+        FullScreenButton.Content = "F11";
+        FullScreenButton.ToolTip = "Salir de pantalla completa · F11";
     }
     private void ExitFullScreen()
     {
@@ -185,7 +186,8 @@ public partial class MainWindow : Window
         ResizeMode = resizeModeBeforeFullScreen;
         WindowState = windowStateBeforeFullScreen;
         isFullScreen = false;
-        FullScreenButton.Content = "Pantalla completa · F11";
+        FullScreenButton.Content = "F11";
+        FullScreenButton.ToolTip = "Pantalla completa · F11";
     }
     private bool DiscardBefore(string action)
     {

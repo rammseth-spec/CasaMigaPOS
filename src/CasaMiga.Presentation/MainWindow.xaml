@@ -91,10 +91,33 @@
      <StackPanel>
       <DockPanel LastChildFill="True">
        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top" Margin="16,0,0,0">
-        <Button x:Name="OperationsButton" Click="OperationsClick" Style="{StaticResource SecondaryButton}" MinWidth="144" MinHeight="40" Padding="11,5" Margin="0,0,8,0" ToolTip="Centro operativo" AutomationProperties.Name="Centro operativo" AutomationProperties.LiveSetting="Assertive">
-         <StackPanel Orientation="Horizontal"><Path Data="M12,3 A9,9 0 1 1 11.99,3 M12,7 L12,12 16,14" Width="17" Height="17" Stretch="Fill" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Margin="0,0,7,0"/><TextBlock Text="{Binding Operations.ClockTime}" FontWeight="SemiBold"/><TextBlock Text="{Binding Operations.ClockDate}" FontSize="13" VerticalAlignment="Center" Margin="7,0,0,0"/><Border Background="{StaticResource AvocadoLeafBrush}" CornerRadius="8" Padding="7,2" Margin="8,0,0,0" Visibility="{Binding Operations.HasHeaderStatus,Converter={StaticResource VisibleWhen}}"><TextBlock Text="{Binding Operations.HeaderStatus}" Foreground="White" FontSize="12"/></Border></StackPanel>
+        <Border x:Name="CashStatusChip" CornerRadius="12" Padding="10,7" MinHeight="40" Margin="0,0,8,0" AutomationProperties.Name="Estado de caja">
+         <Border.Style>
+          <Style TargetType="Border">
+           <Setter Property="Background" Value="{DynamicResource SurfaceSecondaryBrush}"/>
+           <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+           <Setter Property="BorderThickness" Value="1"/>
+           <Style.Triggers>
+            <DataTrigger Binding="{Binding HasOpenCash}" Value="True"><Setter Property="Background" Value="{StaticResource AvocadoLeafBrush}"/><Setter Property="BorderBrush" Value="{StaticResource AvocadoLeafBrush}"/></DataTrigger>
+           </Style.Triggers>
+          </Style>
+         </Border.Style>
+         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <Path Data="M4,7 L4,18 20,18 20,7 M2,7 L22,7 20,3 4,3 Z M8,11 L8,15 M12,11 L12,15 M16,11 L16,15" Width="17" Height="15" Stretch="Fill" StrokeThickness="1.7" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Margin="0,0,7,0">
+           <Path.Style><Style TargetType="Path"><Setter Property="Stroke" Value="{DynamicResource PrimaryBrush}"/><Style.Triggers><DataTrigger Binding="{Binding HasOpenCash}" Value="True"><Setter Property="Stroke" Value="White"/></DataTrigger></Style.Triggers></Style></Path.Style>
+          </Path>
+          <TextBlock x:Name="CashStatusText" Text="{Binding CashHeaderLabel}" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center">
+           <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Style.Triggers><DataTrigger Binding="{Binding HasOpenCash}" Value="True"><Setter Property="Foreground" Value="White"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+          </TextBlock>
+         </StackPanel>
+        </Border>
+        <Button x:Name="OperationsStatusButton" Click="OperationsClick" Style="{StaticResource SecondaryButton}" MinHeight="40" Padding="10,6" Margin="0,0,8,0" Visibility="{Binding Operations.HasHeaderStatus,Converter={StaticResource VisibleWhen}}" ToolTip="Abrir Centro operativo" AutomationProperties.Name="Resumen del Centro operativo" AutomationProperties.LiveSetting="Assertive">
+         <StackPanel Orientation="Horizontal"><Path Data="M12,2 L22,20 2,20 Z M12,8 L12,14 M12,17 L12,17.1" Width="17" Height="17" Stretch="Fill" Stroke="{StaticResource AvocadoLeafBrush}" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Margin="0,0,7,0"/><TextBlock Text="{Binding Operations.HeaderStatus}" FontSize="13" FontWeight="SemiBold"/></StackPanel>
         </Button>
-        <Button x:Name="FullScreenButton" Content="Pantalla completa · F11" Click="FullScreenClick" Style="{StaticResource SecondaryButton}" MinWidth="174" MinHeight="40" Padding="12,7" VerticalAlignment="Top" AutomationProperties.Name="Alternar pantalla completa"/>
+        <Button x:Name="OperationsButton" Click="OperationsClick" Style="{StaticResource SecondaryButton}" MinHeight="40" Padding="10,5" Margin="0,0,8,0" ToolTip="Abrir Centro operativo" AutomationProperties.Name="Centro operativo">
+         <StackPanel Orientation="Horizontal"><Path Data="M12,3 A9,9 0 1 1 11.99,3 M12,7 L12,12 16,14" Width="17" Height="17" Stretch="Fill" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Margin="0,0,7,0"/><StackPanel><TextBlock Text="{Binding Operations.ClockTime}" FontWeight="SemiBold"/><TextBlock Text="{Binding Operations.ClockDate}" Style="{StaticResource CaptionText}" FontSize="11"/></StackPanel></StackPanel>
+        </Button>
+        <Button x:Name="FullScreenButton" Content="F11" Click="FullScreenClick" Style="{StaticResource SecondaryButton}" MinWidth="58" MinHeight="40" Padding="10,7" VerticalAlignment="Top" ToolTip="Pantalla completa · F11" AutomationProperties.Name="Alternar pantalla completa con F11"/>
        </StackPanel>
        <StackPanel><TextBlock Text="{Binding Heading}" Style="{StaticResource PageTitleText}"/><TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="14" Margin="0,3,0,0"/></StackPanel>
       </DockPanel>
