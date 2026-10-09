@@ -14,7 +14,7 @@ export interface Env { SESSION_SECRET?: string; PANEL_TIME_ZONE?: string; BACKUP
 const VIEW: Record<string, string> = {
   dashboard: 'sales.view', sales: 'sales.view', sale: 'sales.view', compare: 'sales.view', heatmap: 'sales.view', 'cash-control': 'sales.view',
   'production-suggestion': 'sales.view', terminals: 'sales.view', cash: 'cash.view', consignment: 'consignment.view', catalog: 'catalog.view',
-  photo: 'catalog.view', pos: 'pos.use', route: 'consignment.view', profit: 'recipe.view', 'tray-analytics': 'consignment.view', backups: 'users.manage', backup: 'users.manage', inventory: 'inventory.view', recipes: 'recipe.view', production: 'production.view', users: 'users.manage', commands: 'sales.view',
+  photo: 'catalog.view', pos: 'pos.use', 'pos-tickets': 'pos.use', 'pos-ticket': 'pos.use', route: 'consignment.view', profit: 'recipe.view', 'tray-analytics': 'consignment.view', backups: 'users.manage', backup: 'users.manage', inventory: 'inventory.view', recipes: 'recipe.view', production: 'production.view', users: 'users.manage', commands: 'sales.view',
 };
 
 function me(user: WebUser) {
@@ -72,6 +72,8 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       'pos-sale': body => pos.checkout(q, user, body),
       'pos-count': body => pos.countSession(q, user, body),
       'pos-close': body => pos.closeSession(q, user, body),
+      'pos-refund': body => pos.refund(q, user, body),
+      'pos-movement': body => pos.movement(q, user, body),
     };
     if (POS[op] && request.method === 'POST') return json(200, await POS[op]((await readJson(request, 50_000)) as Record<string, unknown> | null));
     if (request.method !== 'GET') throw new ProtocolError('Método no permitido', 405);
@@ -105,6 +107,8 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       case 'consignment': return json(200, await web.consignment(q, range()));
       case 'catalog': return json(200, await web.catalog(q, branch));
       case 'route': return json(200, await web.route(q, branch));
+      case 'pos-tickets': return json(200, await pos.tickets(q, user, url.searchParams.get('till'), (url.searchParams.get('q') ?? '').slice(0, 40)));
+      case 'pos-ticket': return json(200, await pos.ticket(q, user, url.searchParams.get('till'), url.searchParams.get('id')));
       case 'pos': {
         const where = branch ?? (await branches(q))[0]?.id;
         if (!where) throw new ProtocolError('Sin sucursales', 404);

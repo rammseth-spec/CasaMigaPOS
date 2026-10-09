@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('click', e => { if (document.body.classList.contains('menu-open') && !e.target.closest('#nav') && !e.target.closest('#menu')) document.body.classList.remove('menu-open'); });
   const custom = () => { if ($('from').value && $('to').value) { state.from = $('from').value; state.to = $('to').value; choose('custom'); } };
   $('from').addEventListener('change', custom); $('to').addEventListener('change', custom);
-  $('branch').addEventListener('change', () => { state.branch = $('branch').value; remember(); render(); });
+  $('branch').addEventListener('change', () => { state.branch = $('branch').value; remember(); window.dispatchEvent(new Event('cm-branch')); render(); });
   window.addEventListener('hashchange', () => { if (state.me) render(); });
   $('refresh').addEventListener('click', () => { lastRefresh = Date.now(); render({ silent: true }); });
   setInterval(() => { if (Date.now() - lastRefresh >= REFRESH_MS) autoRefresh(); }, 5_000);

@@ -68,7 +68,7 @@ export async function createTill(q: Query, user: WebUser, branchValue: unknown) 
 
 // ---------- Escritura atómica ----------
 
-type Event = { entity: 'cash_session' | 'cash_count' | 'sale' | 'audit_entry'; entity_id: string; change: 'insert' | 'update'; payload: unknown };
+type Event = { entity: 'cash_session' | 'cash_count' | 'sale' | 'sale_refund' | 'cash_movement' | 'audit_entry'; entity_id: string; change: 'insert' | 'update'; payload: unknown };
 
 /** Condición sobre la caja y lo que cambia en ella. $4 = turno. */
 const GUARD = {
@@ -76,19 +76,22 @@ const GUARD = {
   sale: ['open_session_id = $4::uuid AND NOT session_counted', 'sale_seq = sale_seq + 1'],
   count: ['open_session_id = $4::uuid AND NOT session_counted', 'session_counted = true'],
   close: ['open_session_id = $4::uuid AND session_counted', 'open_session_id = NULL, session_counted = false'],
+  // Devoluciones y movimientos: sólo con el turno abierto y sin contar; no cambian nada más de la caja.
+  drawer: ['open_session_id = $4::uuid AND NOT session_counted', ''],
 } as const;
 
 /**
  * Una sentencia: si la caja cumple la condición, reserva consecutivos, guarda el identificador de operación (cobros),
  * y escribe los eventos (la venta recibe aquí su consecutivo). Devuelve los registros escritos; vacío si no se cumplió.
  */
-async function write(q: Query, tillId: string, guard: keyof typeof GUARD, session: string, events: Event[], operation?: { id: string; entityId: string }) {
+async function write(q: Query, tillId: string, guard: keyof typeof GUARD, session: string, events: Event[],
+  operation?: { id: string; entityId: string; kind?: 'sale' | 'refund' | 'movement' }) {
   const [where, set] = GUARD[guard];
   const rows = await q(`WITH t AS (
-      UPDATE web_till SET event_seq = event_seq + $2, ${set}
+      UPDATE web_till SET event_seq = event_seq + $2${set ? `, ${set}` : ''}
       WHERE terminal_id = $1 AND ${where}
       RETURNING branch_id, event_seq - $2 AS base, sale_seq),
-    op AS (INSERT INTO web_operation(operation_id, terminal_id, kind, entity_id) SELECT $5::uuid, $1, 'sale', $6::text FROM t WHERE $5::uuid IS NOT NULL),
+    op AS (INSERT INTO web_operation(operation_id, terminal_id, kind, entity_id) SELECT $5::uuid, $1, $7::text, $6::text FROM t WHERE $5::uuid IS NOT NULL),
     ev AS (SELECT t.branch_id, t.base + e.ord AS seq, e.value->>'entity' AS entity, e.value->>'entity_id' AS entity_id, e.value->>'change' AS change,
         CASE WHEN e.value->>'entity' = 'sale' THEN jsonb_set(e.value->'payload', '{sale,sequence}', to_jsonb(t.sale_seq)) ELSE e.value->'payload' END AS payload
       FROM t, jsonb_array_elements($3::jsonb) WITH ORDINALITY AS e(value, ord)),
@@ -100,7 +103,7 @@ async function write(q: Query, tillId: string, guard: keyof typeof GUARD, sessio
     ON CONFLICT (branch_id, entity, entity_id) DO UPDATE SET terminal_id = EXCLUDED.terminal_id, seq = EXCLUDED.seq,
       enqueued_at = EXCLUDED.enqueued_at, deleted = false, payload = EXCLUDED.payload, received_at = now()
     RETURNING entity, entity_id, payload`,
-    [tillId, events.length, JSON.stringify(events), session, operation?.id ?? null, operation?.entityId ?? null]);
+    [tillId, events.length, JSON.stringify(events), session, operation?.id ?? null, operation?.entityId ?? null, operation?.kind ?? 'sale']);
   await q('UPDATE terminal SET last_seen_at = now() WHERE id = $1', [tillId]);
   return rows;
 }
@@ -324,6 +327,217 @@ export async function checkout(q: Query, user: WebUser, body: Row | null) {
   return receipt(q, t.branchId, saleId);
 }
 
+// ---------- Tickets, reimpresión y devoluciones ----------
+
+const peso = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+const money = (cents: number) => peso.format(cents / 100);
+type SalePayload = { sale: Row; items: Row[]; payment: Row };
+
+async function findSale(q: Query, branchId: string, saleId: string) {
+  const [row] = await q(`SELECT e.payload, e.terminal_id, t.name, t.kind FROM entity_state e JOIN terminal t ON t.id = e.terminal_id
+    WHERE e.branch_id = $1 AND e.entity = 'sale' AND e.entity_id = $2 AND NOT e.deleted`, [branchId, saleId]);
+  return row ? { payload: row.payload as SalePayload, terminalId: s(row.terminal_id), web: row.kind === 'web' } : null;
+}
+async function refundsOf(q: Query, branchId: string, saleId: string) {
+  const rows = await q(`SELECT r.payload, u.payload->>'display_name' AS by FROM entity_state r
+    LEFT JOIN entity_state u ON u.branch_id = r.branch_id AND u.entity = 'app_user' AND u.entity_id = r.payload->'refund'->>'user_id'
+    WHERE r.branch_id = $1 AND r.entity = 'sale_refund' AND NOT r.deleted AND r.payload->'refund'->>'sale_id' = $2
+    ORDER BY r.payload->'refund'->>'refunded_utc'`, [branchId, saleId]);
+  return rows.map(r => ({ ...(r.payload as { refund: Row; items: Row[] }), by: s(r.by) }));
+}
+
+/** Tickets del turno abierto de la caja (o los últimos de la caja); con folio busca cualquier venta de la sucursal. */
+export async function tickets(q: Query, user: WebUser, tillValue: unknown, search: string) {
+  requirePermission(user, 'pos.use');
+  const t = await till(q, user, tillValue);
+  const folio = /^(?:[Cc](\d{1,4})\s*-\s*)?(\d{1,12})$/.exec(search.trim());
+  let rows: Row[];
+  if (folio) {
+    const code = folio[1] ? 'C' + folio[1].padStart(2, '0') : terminalCode(t.name);
+    const terminals = (await q('SELECT id, name FROM terminal WHERE branch_id = $1', [t.branchId])).filter(x => terminalCode(s(x.name)) === code).map(x => s(x.id));
+    rows = await q(`SELECT e.entity_id, e.payload, t.name FROM entity_state e JOIN terminal t ON t.id = e.terminal_id
+      WHERE e.branch_id = $1 AND e.entity = 'sale' AND NOT e.deleted AND e.terminal_id = ANY($2::uuid[]) AND (e.payload->'sale'->>'sequence')::bigint = $3`,
+      [t.branchId, terminals, Number(folio[2])]);
+  } else if (t.openSessionId) {
+    rows = await q(`SELECT e.entity_id, e.payload, t.name FROM entity_state e JOIN terminal t ON t.id = e.terminal_id
+      WHERE e.branch_id = $1 AND e.entity = 'sale' AND NOT e.deleted AND e.payload->'sale'->>'cash_session_id' = $2
+      ORDER BY (e.payload->'sale'->>'sequence')::bigint DESC LIMIT 100`, [t.branchId, t.openSessionId]);
+  } else {
+    rows = await q(`SELECT e.entity_id, e.payload, t.name FROM entity_state e JOIN terminal t ON t.id = e.terminal_id
+      WHERE e.branch_id = $1 AND e.entity = 'sale' AND NOT e.deleted AND e.terminal_id = $2
+      ORDER BY (e.payload->'sale'->>'sequence')::bigint DESC LIMIT 30`, [t.branchId, t.id]);
+  }
+  const refunded = rows.length ? await q(`SELECT payload->'refund'->>'sale_id' AS sale_id, sum((payload->'refund'->>'total_cents')::bigint) AS total,
+      bool_or(payload->'refund'->>'kind' = 'CANCELLATION') AS cancelled
+    FROM entity_state WHERE branch_id = $1 AND entity = 'sale_refund' AND NOT deleted AND payload->'refund'->>'sale_id' = ANY($2::text[]) GROUP BY 1`,
+    [t.branchId, rows.map(r => s(r.entity_id))]) : [];
+  const back = new Map(refunded.map(r => [s(r.sale_id), r]));
+  return rows.map(r => {
+    const p = r.payload as SalePayload;
+    const b = back.get(s(r.entity_id));
+    return { id: s(r.entity_id), folio: displayFolio(s(r.name), n(p.sale.sequence)), at: s(p.sale.confirmed_utc), total: n(p.sale.total_cents),
+      method: s(p.payment?.method ?? 'CASH'), pieces: p.items.reduce((a, i) => a + n(i.quantity), 0), refunded: n(b?.total), cancelled: b?.cancelled === true };
+  });
+}
+
+/** Ticket con lo que se puede devolver desde esta caja (mismas reglas que RefundService de la caja de escritorio). */
+async function refundable(q: Query, t: Till, saleId: string) {
+  const sale = await findSale(q, t.branchId, saleId);
+  if (!sale) throw new ProtocolError('No se encontró la venta.', 404);
+  const refunds = await refundsOf(q, t.branchId, saleId);
+  const done = new Map<number, number>();
+  for (const r of refunds) for (const i of r.items) done.set(n(i.position), (done.get(n(i.position)) ?? 0) + n(i.quantity));
+  const lines = sale.payload.items.map(i => ({ position: n(i.position), name: s(i.product_name), unitPrice: n(i.unit_price_cents), sold: n(i.quantity), refunded: done.get(n(i.position)) ?? 0 }))
+    .map(l => ({ ...l, remaining: l.sold - l.refunded }));
+  let blocker = '';
+  if (!sale.web) blocker = 'Esta venta es de la caja de escritorio: devuélvela en esa caja.';
+  else if (!t.openSessionId) blocker = 'Abre el turno de esta caja para registrar devoluciones.';
+  else if (t.counted) blocker = 'La caja ya tiene conteo confirmado; ciérrala y abre un turno nuevo para registrar devoluciones.';
+  else if (lines.every(l => l.remaining === 0)) blocker = 'Esta venta ya fue cancelada o devuelta por completo.';
+  const canCancel = !blocker && refunds.length === 0 && t.openSessionId === s(sale.payload.sale.cash_session_id);
+  return { sale, refunds, lines, blocker, canCancel, canReturn: !blocker };
+}
+
+export async function ticket(q: Query, user: WebUser, tillValue: unknown, saleValue: unknown) {
+  requirePermission(user, 'pos.use');
+  const t = await till(q, user, tillValue);
+  const r = await refundable(q, t, id(saleValue, 'Venta'));
+  return {
+    receipt: await receipt(q, t.branchId, s(r.sale.payload.sale.id)),
+    refunds: r.refunds.map(x => ({ kind: s(x.refund.kind), at: s(x.refund.refunded_utc), by: x.by, reason: s(x.refund.reason), total: n(x.refund.total_cents) })),
+    lines: r.lines, blocker: r.blocker, canCancel: r.canCancel, canReturn: r.canReturn,
+  };
+}
+
+const instruction = (method: string, total: number) => method === 'CASH' ? `Entrega ${money(total)} en efectivo al cliente.`
+  : method === 'CARD' ? `Reembolsa ${money(total)} a la tarjeta del cliente desde la terminal bancaria. No entregues efectivo de la caja.`
+  : `Reembolsa ${money(total)} al cliente por transferencia. No entregues efectivo de la caja.`;
+
+/** Cancelación (venta completa, del mismo turno, sin devoluciones previas) o devolución de piezas. La venta original no cambia. */
+export async function refund(q: Query, user: WebUser, body: Row | null) {
+  requirePermission(user, 'sales.refund');
+  if (!body) throw new ProtocolError('Devolución inválida');
+  const t = await till(q, user, body.tillId);
+  const operationId = id(body.operationId, 'Operación');
+  const sessionId = id(body.sessionId, 'Turno');
+  const saleId = id(body.saleId, 'Venta');
+  const kind = body.kind === 'CANCELLATION' ? 'CANCELLATION' : body.kind === 'RETURN' ? 'RETURN' : null;
+  if (!kind) throw new ProtocolError('Tipo de devolución inválido.');
+  const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+  if (reason.length < 3 || reason.length > 200) throw new ProtocolError('Escribe el motivo (de 3 a 200 caracteres).');
+
+  const [op] = await q(`SELECT o.entity_id, e.payload FROM web_operation o LEFT JOIN entity_state e ON e.entity = 'sale_refund' AND e.entity_id = o.entity_id
+    WHERE o.operation_id = $1 AND o.kind = 'refund'`, [operationId]);
+  if (op) {
+    const p = op.payload as { refund: Row } | null;
+    if (!p || s(p.refund.sale_id) !== saleId || s(p.refund.kind) !== kind || s(p.refund.user_id) !== user.id) throw conflict('El identificador de operación ya corresponde a otro contenido.');
+    const sale = await findSale(q, t.branchId, saleId);
+    const method = s(sale?.payload.payment?.method ?? 'CASH');
+    return { refundId: s(op.entity_id), kind, total: n(p.refund.total_cents), method, instruction: instruction(method, n(p.refund.total_cents)) };
+  }
+  if (t.openSessionId !== sessionId) throw conflict('Abre el turno de esta caja para registrar devoluciones.');
+  const options = await refundable(q, t, saleId);
+  if (options.blocker) throw conflict(options.blocker);
+  if (kind === 'CANCELLATION' && !options.canCancel)
+    throw conflict('Sólo se puede cancelar una venta completa, sin devoluciones previas y en el mismo turno de caja. Usa «Devolver productos».');
+
+  let lines: { position: number; quantity: number }[];
+  if (kind === 'CANCELLATION') lines = options.lines.map(l => ({ position: l.position, quantity: l.sold }));
+  else {
+    if (!Array.isArray(body.lines)) throw new ProtocolError('Indica al menos una pieza a devolver.');
+    const wanted = new Map<number, number>();
+    for (const raw of body.lines as Row[]) {
+      const position = raw?.position, quantity = raw?.quantity;
+      if (typeof position !== 'number' || !Number.isInteger(position) || typeof quantity !== 'number' || !Number.isInteger(quantity)) throw new ProtocolError('Partida inválida.');
+      if (quantity < 0) throw new ProtocolError('La cantidad a devolver no puede ser negativa.');
+      wanted.set(position, (wanted.get(position) ?? 0) + quantity);
+    }
+    lines = [];
+    for (const [position, quantity] of [...wanted.entries()].sort((a, b) => a[0] - b[0])) {
+      if (quantity === 0) continue;
+      const line = options.lines.find(l => l.position === position);
+      if (!line) throw new ProtocolError('La partida no pertenece a la venta.');
+      if (quantity > line.remaining) throw new ProtocolError(`Sólo quedan ${line.remaining} pieza(s) de ${line.name} por devolver.`);
+      lines.push({ position, quantity });
+    }
+    if (!lines.length) throw new ProtocolError('Indica al menos una pieza a devolver.');
+  }
+  const refundId = randomUUID();
+  const items = lines.map(l => {
+    const line = options.lines.find(x => x.position === l.position)!;
+    return { refund_id: refundId, sale_id: saleId, position: l.position, quantity: l.quantity, line_total_cents: line.unitPrice * l.quantity };
+  });
+  const total = items.reduce((a, i) => a + i.line_total_cents, 0);
+  if (total <= 0) throw conflict('La devolución debe tener un importe mayor que cero.');
+  const method = s(options.sale.payload.payment?.method ?? 'CASH');
+  if (method === 'CASH' && total > (await expectedCash(q, t.branchId, sessionId)).expected)
+    throw conflict(`No hay suficiente efectivo esperado en caja para devolver ${money(total)}.`);
+  const at = new Date().toISOString();
+  const written = await write(q, t.id, 'drawer', sessionId, [
+    { entity: 'sale_refund', entity_id: refundId, change: 'insert', payload: {
+      refund: { id: refundId, operation_id: operationId, sale_id: saleId, kind, reason, user_id: user.id, terminal_id: t.id, cash_session_id: sessionId, refunded_utc: at, total_cents: total },
+      items } },
+    audit(user, t.id, kind === 'CANCELLATION' ? 'sale.cancelled' : 'sale.returned', refundId, at,
+      { saleId, cashSessionId: sessionId, totalCents: total, items: items.map(i => ({ position: i.position, quantity: i.quantity, lineTotalCents: i.line_total_cents })) }),
+  ], { id: operationId, entityId: refundId, kind: 'refund' });
+  if (!written.length) throw conflict('La caja ya tiene conteo confirmado; ciérrala y abre un turno nuevo para registrar devoluciones.');
+  return { refundId, kind, total, method, instruction: instruction(method, total) };
+}
+
+// ---------- Gastos, retiros y entradas ----------
+
+const MOVEMENT_KINDS = ['EXPENSE', 'WITHDRAWAL', 'DEPOSIT'] as const;
+const CATEGORIES = ['SUPPLIES', 'GAS', 'CLEANING', 'TRANSPORT', 'MAINTENANCE', 'OTHER'] as const;
+
+async function movements(q: Query, branchId: string, sessionId: string) {
+  const rows = await q(`SELECT m.payload, u.payload->>'display_name' AS by FROM entity_state m
+    LEFT JOIN entity_state u ON u.branch_id = m.branch_id AND u.entity = 'app_user' AND u.entity_id = m.payload->>'user_id'
+    WHERE m.branch_id = $1 AND m.entity = 'cash_movement' AND NOT m.deleted AND m.payload->>'cash_session_id' = $2
+    ORDER BY m.payload->>'occurred_utc' DESC`, [branchId, sessionId]);
+  return rows.map(r => { const p = r.payload as Row; return { id: s(p.id), kind: s(p.kind), category: p.category === null ? null : s(p.category), amount: n(p.amount_cents), note: s(p.note), at: s(p.occurred_utc), by: s(r.by) }; });
+}
+
+/** Gasto, retiro (encargado y administrador) o entrada en el turno abierto. Inmutable: un error se corrige con el movimiento contrario. */
+export async function movement(q: Query, user: WebUser, body: Row | null) {
+  requirePermission(user, 'cash.movement');
+  if (!body) throw new ProtocolError('Movimiento inválido');
+  const t = await till(q, user, body.tillId);
+  const operationId = id(body.operationId, 'Operación');
+  const sessionId = id(body.sessionId, 'Turno');
+  const kind = body.kind as typeof MOVEMENT_KINDS[number];
+  if (!MOVEMENT_KINDS.includes(kind)) throw new ProtocolError('Movimiento inválido.');
+  if (kind === 'WITHDRAWAL' && !user.permissions.has('cash.withdrawal')) throw new ProtocolError('Sólo el encargado o el administrador registran retiros.', 403);
+  const amount = cents(body.amountCents, 'Importe', 1);
+  const category = body.category === null || body.category === undefined ? null : body.category as typeof CATEGORIES[number];
+  if (kind === 'EXPENSE' && (!category || !CATEGORIES.includes(category))) throw new ProtocolError('Elige la categoría del gasto.');
+  if (kind !== 'EXPENSE' && category !== null) throw new ProtocolError('Sólo los gastos llevan categoría.');
+  const note = typeof body.note === 'string' ? body.note.trim() : '';
+  if (note.length > 200) throw new ProtocolError('La nota admite hasta 200 caracteres.');
+  if (/[\u0000-\u001f\u007f]/.test(note)) throw new ProtocolError('La nota no admite saltos de línea ni caracteres de control.');
+  if (category === 'OTHER' && note.length < 3) throw new ProtocolError('Explica el gasto en la nota cuando la categoría es «Otro».');
+
+  const [op] = await q(`SELECT o.entity_id, e.payload FROM web_operation o LEFT JOIN entity_state e ON e.entity = 'cash_movement' AND e.entity_id = o.entity_id
+    WHERE o.operation_id = $1 AND o.kind = 'movement'`, [operationId]);
+  if (op) {
+    const p = op.payload as Row | null;
+    if (!p || s(p.kind) !== kind || n(p.amount_cents) !== amount || s(p.user_id) !== user.id) throw conflict('El identificador de operación ya corresponde a otro contenido.');
+    return { id: s(p.id), kind, category: p.category === null ? null : s(p.category), amount, note: s(p.note), at: s(p.occurred_utc), by: user.name };
+  }
+  if (t.openSessionId !== sessionId) throw conflict('Abre la caja antes de registrar movimientos de efectivo.');
+  if (t.counted) throw conflict('La caja ya tiene su conteo de cierre; los movimientos se registran antes de contar.');
+  if (kind !== 'DEPOSIT' && (await expectedCash(q, t.branchId, sessionId)).expected < amount)
+    throw conflict(`No hay suficiente efectivo esperado en caja para sacar ${money(amount)}.`);
+  const movementId = randomUUID();
+  const at = new Date().toISOString();
+  const written = await write(q, t.id, 'drawer', sessionId, [
+    { entity: 'cash_movement', entity_id: movementId, change: 'insert', payload: { id: movementId, operation_id: operationId, cash_session_id: sessionId, terminal_id: t.id,
+      user_id: user.id, kind, category, amount_cents: amount, note, occurred_utc: at } },
+    audit(user, t.id, `cash.${kind.toLowerCase()}`, movementId, at, { operationId, cashSessionId: sessionId, kind, category, amountCents: amount, note }),
+  ], { id: operationId, entityId: movementId, kind: 'movement' });
+  if (!written.length) throw conflict('La caja ya tiene su conteo de cierre; los movimientos se registran antes de contar.');
+  return { id: movementId, kind, category, amount, note, at, by: user.name };
+}
+
 // ---------- Pantalla ----------
 
 /** Todo lo que necesita la pantalla de venta: cajas web de la sucursal, la elegida con su turno, y el catálogo vendible con fotos. */
@@ -340,7 +554,7 @@ export async function posState(q: Query, user: WebUser, branch: string, tillValu
       const e = await expectedCash(q, branch, sessionId);
       // Conteo ciego: el esperado sólo se muestra después de contar.
       session = { id: sessionId, openedAt: s(p.opened_utc), openedBy: s(opener?.name), mine: s(p.opened_by) === user.id, opening: n(p.opening_cents), tickets: e.tickets,
-        count: chosen.counted ? await countResult(q, branch, sessionId) : null };
+        count: chosen.counted ? await countResult(q, branch, sessionId) : null, movements: await movements(q, branch, sessionId) };
     }
   }
   const [categories, products, photos] = await Promise.all([

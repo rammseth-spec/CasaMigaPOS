@@ -139,3 +139,63 @@ test('the cashier signs in to the web but only reaches the point of sale', async
   assert.equal((await call(luis, 'pos-till', { method: 'POST', body: JSON.stringify({ branchId: centro }) })).status, 403);
   assert.equal((await call(luis, 'cash')).status, 403, 'The Caja screen shows the running expected cash: not for a blind count.');
 });
+
+test('refunds from a web till: cancel within the shift, partial returns, cash on hand, desktop sales stay on the desktop', async () => {
+  const { q, admin, ana, luis } = await seeded();
+  const till = await pos.createTill(q, admin, centro);
+  const { sessionId } = await pos.openSession(q, luis, { tillId: till.id, openingCents: 0 });
+  const sell = (lines: { productId: string; quantity: number }[], method: string, receivedCents?: number) =>
+    pos.checkout(q, luis, { tillId: till.id, sessionId, operationId: op(), lines, method, receivedCents });
+  const cash = await sell([{ productId: concha, quantity: 3 }], 'CASH', 5000);
+  const card = await sell([{ productId: cafe, quantity: 2 }], 'CARD');
+  const back = (sale: string, kind: string, lines?: { position: number; quantity: number }[], operationId = op(), who = ana) =>
+    pos.refund(q, who, { tillId: till.id, sessionId, operationId, saleId: sale, kind, lines, reason: 'Cliente lo regresó' });
+
+  await assert.rejects(back(cash.id, 'RETURN', [{ position: 1, quantity: 1 }], op(), luis), status(403), 'Cashiers do not refund, like on the desktop.');
+  assert.equal((await pos.ticket(q, ana, till.id, cash.id)).canCancel, true);
+  const id = op();
+  const first = await back(cash.id, 'RETURN', [{ position: 1, quantity: 1 }], id);
+  assert.deepEqual([first.total, first.instruction], [1300, 'Entrega $13.00 en efectivo al cliente.']);
+  assert.equal((await back(cash.id, 'RETURN', [{ position: 1, quantity: 1 }], id)).refundId, first.refundId, 'Same operation, same refund.');
+  await assert.rejects(back(cash.id, 'CANCELLATION'), /Sólo se puede cancelar/, 'After a return the sale can no longer be cancelled.');
+  await assert.rejects(back(cash.id, 'RETURN', [{ position: 1, quantity: 3 }]), /Sólo quedan 2/);
+  await assert.rejects(pos.refund(q, ana, { tillId: till.id, sessionId, operationId: op(), saleId: cash.id, kind: 'RETURN', lines: [{ position: 1, quantity: 1 }], reason: 'x' }), /motivo/);
+  const cancelled = await back(card.id, 'CANCELLATION');
+  assert.equal(cancelled.total, 4000); assert.match(cancelled.instruction, /tarjeta/);
+  assert.match((await pos.ticket(q, ana, till.id, card.id)).blocker, /cancelada o devuelta/);
+
+  // Movimientos: el cajero registra gastos y entradas; los retiros, el encargado. No se saca más efectivo del que hay.
+  const move = (who: typeof luis, kind: string, amountCents: number, category: string | null = null, note = '', operationId = op()) =>
+    pos.movement(q, who, { tillId: till.id, sessionId, operationId, kind, amountCents, category, note });
+  const mid = op();
+  const gas = await move(luis, 'EXPENSE', 500, 'GAS', 'Tanque', mid);
+  assert.equal((await move(luis, 'EXPENSE', 500, 'GAS', 'Tanque', mid)).id, gas.id, 'Same operation, same movement.');
+  await move(luis, 'DEPOSIT', 200);
+  await assert.rejects(move(luis, 'WITHDRAWAL', 100), status(403));
+  await assert.rejects(move(luis, 'EXPENSE', 100, 'OTHER'), /Otro/);
+  await assert.rejects(move(luis, 'DEPOSIT', 100, 'GAS'), /Sólo los gastos/);
+  await assert.rejects(move(luis, 'EXPENSE', 100, 'GAS', 'a\nb'), /saltos de línea/);
+  // Efectivo esperado: 0 + 3900 − 1300 − 500 + 200 = 2300.
+  await assert.rejects(move(ana, 'WITHDRAWAL', 2400), /No hay suficiente efectivo/);
+  await move(ana, 'WITHDRAWAL', 2000);
+  await assert.rejects(back(cash.id, 'RETURN', [{ position: 1, quantity: 1 }]), /No hay suficiente efectivo esperado en caja para devolver \$13\.00/);
+  const state = await pos.posState(q, luis, centro, till.id);
+  assert.deepEqual(state.session?.movements.map(m => m.kind).sort(), ['DEPOSIT', 'EXPENSE', 'WITHDRAWAL']);
+
+  // Tickets del turno y búsqueda por folio (también de la caja de escritorio, que no se devuelve aquí).
+  const list = await pos.tickets(q, luis, till.id, '');
+  assert.deepEqual(list.map(t => [t.folio, t.refunded, t.cancelled]), [['C02-000002', 4000, true], ['C02-000001', 1300, false]]);
+  await send(q, caja1, centro, [{ entity: 'sale', id: 'f0000000-0000-4000-8000-000000000001', payload: {
+    sale: { id: 'f0000000-0000-4000-8000-000000000001', cash_session_id: 'x', confirmed_utc: '2026-10-08T15:00:00Z', subtotal_cents: 1300, total_cents: 1300, sequence: 7, user_id: 'u' },
+    items: [{ position: 1, product_id: concha, product_name: 'Concha de vainilla', unit_price_cents: 1300, quantity: 1, line_total_cents: 1300 }],
+    payment: { method: 'CASH', applied_cents: 1300, received_cents: 1300, change_cents: 0, reference: null } } }]);
+  const desktop = await pos.tickets(q, luis, till.id, 'C01-000007');
+  assert.deepEqual(desktop.map(t => t.folio), ['C01-000007']);
+  assert.match((await pos.ticket(q, ana, till.id, desktop[0].id)).blocker, /caja de escritorio/);
+  assert.deepEqual((await pos.tickets(q, luis, till.id, '1')).map(t => t.folio), ['C02-000001'], 'Without a till code, the folio is of this till.');
+
+  const counted = await pos.countSession(q, ana, { tillId: till.id, sessionId, countedCents: 300 });
+  assert.deepEqual([counted.cashRefunds, counted.movements, counted.expected], [1300, -2300, 300]);
+  await assert.rejects(move(luis, 'DEPOSIT', 100), /conteo/);
+  await assert.rejects(back(cash.id, 'RETURN', [{ position: 1, quantity: 1 }]), /conteo confirmado/);
+});

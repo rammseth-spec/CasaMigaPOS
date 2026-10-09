@@ -18,11 +18,30 @@ const uuid = () => crypto.randomUUID();
 const tabsBar = (tabs, active, onpick) => h('div', { class: 'tabs', role: 'tablist' }, tabs.map(([id, label]) =>
   h('button', { type: 'button', class: 'chip', role: 'tab', 'aria-pressed': String(id === active), 'aria-selected': String(id === active), onclick: () => onpick(id) }, label)));
 const kpi = (label, value, detail, cls) => h('article', { class: 'card kpi' }, h('span', { text: label }), h('strong', { class: cls, text: value }), h('small', { text: detail ?? '' }));
+// Fotos de los panes en todo el panel (como en la app): un índice del catálogo por identificador y por nombre.
+let photoIndex = null;
+window.addEventListener('cm-branch', () => { photoIndex = null; });
+const plain = text => String(text ?? '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+function indexPhotos(products) {
+  photoIndex = new Map();
+  for (const p of products) if (p.photo) { photoIndex.set(p.id, p); photoIndex.set(`${p.branchId}/${plain(p.name)}`, p); if (!photoIndex.has(plain(p.name))) photoIndex.set(plain(p.name), p); }
+}
+async function loadPhotos() {
+  if (photoIndex) return;
+  try { indexPhotos(can('catalog.view') ? (await api('catalog', { branch: state.branch })).products : []); } catch { photoIndex = new Map(); }
+}
+/** Miniatura del pan por identificador o, si no hay, por nombre (ventas viejas guardan el nombre). */
+function pic({ id, name, branchId } = {}, size = 'sm') {
+  const p = photoIndex?.get(id) ?? photoIndex?.get(`${branchId}/${plain(name)}`) ?? photoIndex?.get(plain(name));
+  return h('span', { class: `pic ${size}` }, p ? h('img', { src: `/api/web/photo?product=${p.id}&branch=${p.branchId}&v=${p.photo.sha}`, alt: '', loading: 'lazy' })
+    : h('span', { text: String(name ?? '?').slice(0, 1) }));
+}
+const withPic = (item, ...content) => h('span', { class: 'with-pic' }, pic(item), h('span', { class: 'with-pic-text' }, ...content));
 const diffCell = d => d === null ? h('span', { class: 'pill info', text: 'Abierta' }) : h('span', { class: d < 0 ? 'short' : d > 0 ? 'over' : 'even', text: d === 0 ? 'Cuadra' : fmt(d) });
 
 // ---------- Resumen ----------
 async function resumen() {
-  const data = await api('dashboard', range());
+  const [data] = await Promise.all([api('dashboard', range()), loadPhotos()]);
   const t = data.totals;
   const byDay = new Map();
   for (const d of data.days) { const r = byDay.get(d.day) ?? { day: d.day, net: 0, tickets: 0 }; r.net += d.gross - d.refunds; r.tickets += d.tickets; byDay.set(d.day, r); }
@@ -42,7 +61,7 @@ async function resumen() {
           return h('div', { class: 'meter' }, h('span', { text: name }), h('b', { class: 'num', text: fmt(cents) }), h('div', { class: 'track' }, fill));
         })),
         h('h2', { text: 'Más vendidos', style: { marginTop: '20px' } }),
-        data.products.length ? h('ul', { class: 'rows' }, data.products.map(p => h('li', {}, h('strong', { text: p.name }), h('span', { class: 'muted num', text: `${p.quantity} pz` }), h('b', { class: 'num', text: fmt(p.total) }))))
+        data.products.length ? h('ul', { class: 'rows' }, data.products.map(p => h('li', {}, withPic({ name: p.name }, h('strong', { text: p.name })), h('span', { class: 'muted num', text: `${p.quantity} pz` }), h('b', { class: 'num', text: fmt(p.total) }))))
           : h('p', { class: 'empty', text: 'Sin ventas en el periodo.' }))),
     card(h('div', { class: 'toolbar', style: { justifyContent: 'space-between', width: '100%' } }, h('h2', { text: 'Cortes recientes' }), h('a', { href: '#/caja', class: 'button ghost' }, 'Ver caja')),
       sessionsTable(data.sessions.slice(0, 6))),
@@ -93,12 +112,12 @@ async function ventas() {
       h('button', { type: 'button', disabled: salesState.page + 1 >= pages, onclick: () => { salesState.page++; render(); } }, 'Siguientes')) : null);
 }
 async function saleDialog(id) {
-  const s = await api('sale', { id, branch: state.branch });
+  const [s] = await Promise.all([api('sale', { id, branch: state.branch }), loadPhotos()]);
   dialog(`Venta ${s.folio}`, body => {
     body.append(h('div', { class: 'wide ticket' },
       h('p', { class: 'muted', text: `${dateLong(s.at)} · ${time(s.at)} · ${s.terminal}${s.branch ? ' · ' + s.branch : ''}` }),
       h('p', { class: 'muted', text: `Cobró: ${s.cashier || '—'}` }),
-      s.items.map(i => h('div', { class: 'line' }, h('span', { text: `${i.quantity} × ${i.name} (${fmt(i.unitPrice)})` }), h('b', { text: fmt(i.total) }))),
+      s.items.map(i => h('div', { class: 'line' }, withPic({ id: i.productId, name: i.name }, h('span', { text: `${i.quantity} × ${i.name} (${fmt(i.unitPrice)})` })), h('b', { text: fmt(i.total) }))),
       h('div', { class: 'line total' }, h('span', { text: 'Total' }), h('span', { text: fmt(s.total) })),
       s.payment ? h('p', { class: 'muted', text: `${METHOD[s.payment.method] ?? s.payment.method}${s.payment.method === 'CASH' ? ` · recibido ${fmt(s.payment.received)} · cambio ${fmt(s.payment.change)}` : s.payment.reference ? ` · ref. ${s.payment.reference}` : ''}` }) : null,
       s.refunds.length ? h('div', { style: { marginTop: '14px' } }, h('h3', { text: 'Devoluciones' }), s.refunds.map(r =>
@@ -109,6 +128,7 @@ async function saleDialog(id) {
 // ---------- Reportes ----------
 let reportTab = 'compare';
 async function reportes() {
+  await loadPhotos();
   const pick = id => { reportTab = id; render(); };
   const tabs = tabsBar([['compare', 'Comparativo'], ['heatmap', 'Ventas por hora'], ['profit', 'Ganancia'], ['cash-control', 'Control de caja'], ['production', 'Producción sugerida']]
     .filter(([id]) => id !== 'profit' || can('recipe.view')), reportTab, pick);
@@ -169,7 +189,7 @@ async function reportes() {
     input.value = p.day;
     body = [card(h('div', { class: 'toolbar', style: { width: '100%' } }, h('h2', { text: 'Piezas sugeridas para' }), input),
       h('p', { class: 'muted small', text: `Promedio del mismo día de la semana en las 4 semanas anteriores (${p.weeks.map(dayLabel).join(', ')}) + 10 %.` }),
-      table([{ label: 'Producto', value: x => h('strong', { text: x.name }) }, { label: 'Promedio', num: true, value: x => String(x.average) },
+      table([{ label: 'Producto', value: x => withPic({ name: x.name }, h('strong', { text: x.name })) }, { label: 'Promedio', num: true, value: x => String(x.average) },
         { label: 'Semanas con venta', num: true, value: x => `${x.weeksWithSales} de 4` }, { label: 'Sugeridas', num: true, value: x => h('b', { text: String(x.suggested) }) }],
       p.products, { empty: 'Sin ventas esos días.' }))];
   }
@@ -201,6 +221,7 @@ async function caja() {
 // ---------- Charolas ----------
 let trayTab = 'route';
 async function charolas(ctx) {
+  await loadPhotos();
   const tabs = tabsBar([['route', 'Ruta'], ['analysis', 'Análisis'], ['stores', 'Tiendas'], ['deliveries', 'Entregas'], ['payments', 'Cobros']], trayTab, id => { trayTab = id; render(); });
   if (trayTab === 'route') return h('div', { style: { display: 'grid', gap: '16px' } }, tabs, await ruta());
   if (trayTab === 'analysis') return h('div', { style: { display: 'grid', gap: '16px' } }, tabs, await analisisCharolas());
@@ -232,7 +253,7 @@ async function charolas(ctx) {
       { label: 'Estado', value: d => h('span', { class: 'pill ' + label[d.status][1], text: label[d.status][0] }) },
       { label: 'Piezas', num: true, value: d => String(d.pieces) }, { label: 'Vendidas / regreso', num: true, value: d => d.status === 'collected' ? `${d.sold} / ${d.returned}` : '—' },
       { label: 'Cobrado', num: true, value: d => d.status === 'collected' ? fmt(d.charged) : '—' },
-      { label: 'Contenido', span: true, value: d => h('small', { text: d.items.map(i => `${i.quantity} ${i.name}`).join(' · ') }) },
+      { label: 'Contenido', span: true, value: d => h('div', { class: 'pieces' }, d.items.map(i => h('span', { class: 'piece' }, pic({ id: i.productId, name: i.name }, 'xs'), `${i.quantity} ${i.name}`))) },
     ], data.deliveries, { empty: 'Sin entregas en el periodo.' }))];
   } else {
     body = [card('Cobros en el periodo', table([
@@ -258,7 +279,7 @@ async function ruta() {
       store.lastDelivery ? h('span', { class: 'muted small', text: `Última entrega: ${at(store.lastDelivery)}` }) : null,
       store.atStore.map(tray => h('div', { class: 'tray' },
         h('header', {}, h('strong', { text: `Charola del ${at(tray.at)}` }), h('span', { class: 'pill warn', text: `${tray.items.reduce((a, i) => a + i.quantity, 0)} pz` })),
-        h('span', { class: 'small', text: tray.items.map(i => `${i.quantity} ${i.name}`).join(' · ') }),
+        h('div', { class: 'pieces' }, tray.items.map(i => h('span', { class: 'piece' }, pic({ id: i.productId, name: i.name, branchId: store.branchId }, 'xs'), `${i.quantity} ${i.name}`))),
         manage && !store.sent.some(c => c.payload.deliveryId === tray.id) ? h('button', { type: 'button', class: 'primary', onclick: () => collectDialog(store, tray) }, 'Recoger') : null)),
       store.sent.map(c => h('p', { class: 'sent', text: `${SENT[c.kind] ?? 'Cambio'} enviada ${time(c.at)} · esperando a la caja` })),
       manage ? h('div', { class: 'actions' },
@@ -288,7 +309,7 @@ function deliverDialog(store, products) {
   dialog(`Entregar a ${store.name}`, body => {
     body.append(h('p', { class: 'muted small wide', text: store.template.length ? 'Viene con la charola habitual; ajusta lo que cambie.' : 'Sin charola habitual: agrega las piezas.' }),
       h('div', { class: 'stepper-list wide' }, products.length ? products.map(p => h('div', { class: 'stepper-row' },
-        h('span', {}, p.name, h('small', { text: `${fmt(p.price)} c/u` })), stepper(quantities.get(p.id), 999, v => { quantities.set(p.id, v); refresh(); }, p.name)))
+        withPic({ id: p.id, name: p.name, branchId: p.branchId }, p.name, h('small', { text: `${fmt(p.price)} c/u` })), stepper(quantities.get(p.id), 999, v => { quantities.set(p.id, v); refresh(); }, p.name)))
         : h('p', { class: 'empty', text: 'Ningún pan tiene precio de charola.' })),
       summary, field('Nota', h('input', { name: 'note', maxlength: '200' }), true));
     refresh();
@@ -313,7 +334,7 @@ function collectDialog(store, tray) {
     paidInput = h('input', { name: 'paid', inputmode: 'decimal', oninput: e => { e.target.dataset.touched = '1'; } });
     body.append(h('p', { class: 'muted small wide', text: `Charola del ${at(tray.at)}. Marca cuántas piezas regresan; las demás se vendieron.` }),
       h('div', { class: 'stepper-list wide' }, tray.items.map(i => h('div', { class: 'stepper-row' },
-        h('span', {}, i.name, h('small', { text: `Entregadas ${i.quantity} · ${fmt(i.price)} c/u · regresan:` })),
+        withPic({ id: i.productId, name: i.name, branchId: store.branchId }, i.name, h('small', { text: `Entregadas ${i.quantity} · ${fmt(i.price)} c/u · regresan:` })),
         stepper(0, i.quantity, v => { back.set(i.position, v); refresh(); }, `regresan de ${i.name}`)))),
       summary,
       field('Cobro ahora (MXN)', paidInput), ...methodField(),
@@ -390,6 +411,7 @@ async function templateDialog(store) {
 const catalogState = { q: '', category: '', inactive: false };
 async function catalogo(ctx) {
   const data = await api('catalog', { branch: state.branch });
+  indexPhotos(data.products);
   const categories = new Map(data.categories.map(c => [c.id, c]));
   const text = catalogState.q.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
   const list = data.products.filter(p => (catalogState.inactive || p.active) && (!catalogState.category || p.categoryId === catalogState.category)
@@ -499,7 +521,7 @@ function costDialog(item, measures) {
 }
 
 async function recetas() {
-  const data = await api('recipes', { branch: state.branch });
+  const [data] = await Promise.all([api('recipes', { branch: state.branch }), loadPhotos()]);
   const lines = list => list.length ? h('ul', { class: 'rows' }, list.map(l => h('li', {}, h('span', { text: l.item ?? l.formula }), h('span'), h('b', { class: 'num', text: quantity(l.atomic, l.dimension, data.measures) })))) : h('p', { class: 'empty', text: 'Sin ingredientes.' });
   return h('div', { style: { display: 'grid', gap: '16px' } },
     card('Preparaciones (fórmulas)', data.formulas.length ? h('section', { class: 'grid-3' }, data.formulas.map(f => h('div', { class: 'card' },
@@ -507,7 +529,7 @@ async function recetas() {
       f.active ? lines(f.active.ingredients) : null,
       f.active?.alternatives.map(g => h('p', { class: 'small', text: `${g.name}: ${g.options.map(o => `${o.item} ${quantity(o.atomic, o.dimension, data.measures)}`).join(' o ')}` }))))) : h('p', { class: 'empty', text: 'Sin preparaciones.' })),
     card('Recetas por producto', data.profiles.length ? h('section', { class: 'grid-3' }, data.profiles.map(p => h('div', { class: 'card' },
-      h('h3', { text: p.product }), h('p', { class: 'muted small', text: p.active ? `Versión ${p.active.version} · por pieza` : '' }),
+      withPic({ name: p.product }, h('h3', { text: p.product, style: { margin: 0 } })), h('p', { class: 'muted small', text: p.active ? `Versión ${p.active.version} · por pieza` : '' }),
       p.active ? [lines(p.active.ingredients), p.active.formulas.length ? lines(p.active.formulas) : null] : null))) : h('p', { class: 'empty', text: 'Sin recetas de producto.' })));
 }
 async function produccion() {
@@ -606,7 +628,7 @@ async function ganancia() {
       channel('Ganancia en mostrador', p.counter, `${p.counter.pieces} piezas vendidas`),
       channel('Ganancia en charolas', p.trays, `${p.trays.pieces} vendidas · ${p.trays.returned} regresaron (costo ${fmt(p.trays.returnedCost)})`)),
     card('Por pan', table([
-      { label: 'Pan', value: x => [h('strong', { text: x.name }), x.unitCost === null ? h('small', { text: 'sin costo' }) : h('small', { text: `costo ${fmt(x.unitCost)} por pieza` })] },
+      { label: 'Pan', value: x => withPic({ id: x.productId, name: x.name, branchId: x.branchId }, h('strong', { text: x.name }), x.unitCost === null ? h('small', { text: 'sin costo' }) : h('small', { text: `costo ${fmt(x.unitCost)} por pieza` })) },
       { label: 'Mostrador', num: true, value: x => [`${x.counterPieces} pz`, h('small', { text: x.perPieceCounter === null ? fmt(x.counterRevenue) : `${fmt(x.counterRevenue)} · gana ${fmt(x.perPieceCounter)}/pz` })] },
       { label: 'Charolas', num: true, value: x => [`${x.trayPieces} pz`, h('small', { text: x.perPieceTray === null ? fmt(x.trayRevenue) : `${fmt(x.trayRevenue)} · gana ${fmt(x.perPieceTray)}/pz` })] },
       { label: 'Regresaron', num: true, value: x => String(x.returned) },
@@ -631,7 +653,7 @@ async function analisisCharolas() {
         h('li', {}, h('span', { text: 'Vendido / regresó' }), h('span'), h('b', { class: 'num', text: `${st.sold} / ${st.returned} pz (${pct(st.sellThrough)})` })),
         h('li', {}, h('span', { text: 'Última entrega' }), h('span'), h('b', { class: 'num', text: st.lastDelivery ? at(st.lastDelivery) : '—' }))),
       st.products.length ? [h('h3', { text: 'Lo que más se vende aquí', style: { marginTop: '10px' } }),
-        h('ul', { class: 'rows' }, st.products.map(p => h('li', {}, h('span', { text: p.name }), h('span', { class: 'muted small', text: `${p.returned} regresaron` }), h('b', { class: 'num', text: `${p.sold} pz` }))))] : null))));
+        h('ul', { class: 'rows' }, st.products.map(p => h('li', {}, withPic({ id: p.productId, name: p.name, branchId: st.branchId }, h('span', { text: p.name })), h('span', { class: 'muted small', text: `${p.returned} regresaron` }), h('b', { class: 'num', text: `${p.sold} pz` }))))] : null))));
 }
 
 // ---------- Respaldos ----------

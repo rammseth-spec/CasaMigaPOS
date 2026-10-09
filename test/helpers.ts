@@ -46,7 +46,7 @@ export function sale(id: string, session: string, at: string, method: string, it
 
 // Como en la caja (migraciones 001–022): el cajero vende y abre caja, pero no ve reportes ni hace el corte.
 const SELL = ['pos.use', 'sales.complete', 'cash.open'];
-const CLOSE = ['cash.close', 'cash.close.other'];
+const CLOSE = ['cash.close', 'cash.close.other', 'sales.refund', 'sales.receipt.reprint', 'cash.withdrawal', 'cash.movement'];
 export const PERMISSIONS: Record<string, string[]> = {
   Administrator: ['sales.view', 'cash.view', 'catalog.view', 'consignment.view', 'consignment.manage', 'inventory.view', 'recipe.view', 'production.view', 'users.manage',
     'products.create', 'products.edit', 'products.deactivate', 'categories.create', 'categories.edit', 'categories.deactivate', ...SELL, ...CLOSE],
