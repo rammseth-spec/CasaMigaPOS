@@ -7,6 +7,8 @@ const n = (v: unknown) => (v === null || v === undefined ? 0 : Number(v));
 const s = (v: unknown) => (v === null || v === undefined ? '' : String(v));
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isUuid = (v: unknown): v is string => typeof v === 'string' && UUID.test(v);
+/** Almacén principal: existe en toda caja (migración 009) aunque nunca se haya subido. */
+export const MAIN_LOCATION = '10000000-0000-0000-0000-000000000001';
 
 /** Mismo folio visible que la caja (DisplayFolio): clave por el número al final del nombre de la caja + consecutivo de 6 cifras. */
 export function terminalCode(name: string): string {
@@ -345,17 +347,21 @@ export async function inventory(q: Query, branch: string | null, timeZone: strin
     units(q),
   ]);
   const location = new Map(locations.map(l => [s((l.payload as Row).id), s((l.payload as Row).name)]));
+  // El almacén principal existe en toda caja aunque nunca se haya subido.
+  const places = new Map<string, { id: string; branchId: string; name: string }>();
+  for (const l of locations) { const p = l.payload as Row; if (n(p.active) === 1) places.set(`${s(l.branch_id)}/${s(p.id)}`, { id: s(p.id), branchId: s(l.branch_id), name: s(p.name) }); }
+  for (const i of items) if (!places.has(`${s(i.branch_id)}/${MAIN_LOCATION}`)) places.set(`${s(i.branch_id)}/${MAIN_LOCATION}`, { id: MAIN_LOCATION, branchId: s(i.branch_id), name: 'Almacén principal' });
   const itemName = new Map(items.map(i => [s((i.payload as { item: Row }).item.id), s((i.payload as { item: Row }).item.name)]));
   const k = await names(q);
   return {
-    measures, timeZone,
+    measures, timeZone, locations: [...places.values()],
     items: items.map(x => {
       const p = x.payload as { item: Row; units: Row[]; balances: Row[] };
       const cost = (p as { cost?: Row | null }).cost;
       return { id: s(p.item.id), branchId: s(x.branch_id), code: s(p.item.code), name: s(p.item.name), kind: s(p.item.kind), dimension: s(p.item.dimension), active: n(p.item.active) === 1,
         cost: cost ? { cents: n(cost.cost_cents), perAtomic: n(cost.per_atomic), unit: s(cost.unit_label), updatedAt: s(cost.updated_utc) } : null,
         units: p.units.filter(u => n(u.active) === 1).map(u => ({ code: s(u.code), name: s(u.name), atomic: n(u.atomic_units_per_whole_unit) })),
-        balances: p.balances.map(b => ({ location: location.get(s(b.location_id)) ?? 'Almacén', atomic: n(b.quantity_atomic), updatedAt: s(b.updated_utc) })) };
+        balances: p.balances.map(b => ({ locationId: s(b.location_id), location: location.get(s(b.location_id)) ?? 'Almacén', atomic: n(b.quantity_atomic), updatedAt: s(b.updated_utc) })) };
     }).sort((a, b) => a.name.localeCompare(b.name)),
     operations: operations.map(x => {
       const p = x.payload as { operation: Row; movements: Row[] };
@@ -393,7 +399,8 @@ export async function recipes(q: Query, branch: string | null) {
     profiles: profiles.map(x => {
       const p = x.payload as { profile: Row; versions: Row[]; directIngredients: Row[]; formulaRequirements: Row[] };
       const active = p.versions.find(v => s(v.id) === s(p.profile.active_version_id)) ?? p.versions[p.versions.length - 1];
-      return { id: s(p.profile.id), product: product.get(s(p.profile.product_id)) ?? 'Producto', finishedItem: item.get(s(p.profile.finished_item_id)) ?? '',
+      return { id: s(p.profile.id), branchId: s(x.branch_id), productId: s(p.profile.product_id), product: product.get(s(p.profile.product_id)) ?? 'Producto',
+        finishedItem: item.get(s(p.profile.finished_item_id)) ?? '', activeVersionId: s(p.profile.active_version_id) || null,
         active: active ? { version: n(active.version), name: s(active.name), state: s(active.state),
           ingredients: p.directIngredients.filter(i => s(i.profile_version_id) === s(active.id)).map(line),
           formulas: p.formulaRequirements.filter(f => s(f.profile_version_id) === s(active.id)).map(f => ({ formula: formulaName.get(s(f.formula_version_id)) ?? 'Preparación', dimension: s(f.dimension), atomic: n(f.quantity_atomic) })) } : null };

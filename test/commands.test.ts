@@ -5,7 +5,7 @@ import { ProtocolError } from '../lib/protocol.js';
 import { login, verifyIdentityHash } from '../lib/auth.js';
 import { createCommand, listCommands, pendingFor, recordResults } from '../lib/commands.js';
 import { caja1, caja2, centro, database, norte, permissions, send, user } from './helpers.js';
-import { route as routeView } from '../lib/web.js';
+import { inventory as inventoryView, route as routeView } from '../lib/web.js';
 
 const status = (code: number) => (e: unknown) => e instanceof ProtocolError && e.status === code;
 const category = 'c1000000-0000-4000-8000-000000000001';
@@ -117,4 +117,106 @@ test('route from the phone: deliver, collect once, pay and void are validated ag
   await assert.rejects(createCommand(q, ana, centro, 'consignment.payment', { storeId: store, amountCents: 100, method: 'CHEQUE' }), /Forma de pago/);
   const [pulled] = (await pendingFor(q, { id: caja1, branchId: centro }, 0)).filter(c => c.kind === 'consignment.payment');
   assert.deepEqual(pulled.payload, { storeId: store, amountCents: 1000, method: 'TRANSFER', reference: 'SPEI 123', note: '' });
+});
+
+const flour = 'aaaaaaaa-0000-4000-8000-000000000001';
+const MAIN = '10000000-0000-0000-0000-000000000001';
+
+test('inventory from the web: receive, waste and count are validated before reaching the terminal', async () => {
+  const q = await seeded();
+  const inactive = 'aaaaaaaa-0000-4000-8000-000000000002';
+  await send(q, caja1, centro, [
+    { entity: 'inventory_item', id: flour, payload: { item: { id: flour, code: 'HAR', name: 'Harina', kind: 'RAW_MATERIAL', dimension: 'MASS', active: 1 },
+      units: [{ code: 'BULTO', name: 'Bulto 44 kg', atomic_units_per_whole_unit: 44_000_000, active: 1 }], balances: [{ location_id: MAIN, quantity_atomic: 5_000_000 }] } },
+    { entity: 'inventory_item', id: inactive, payload: { item: { id: inactive, code: 'OLD', name: 'Viejo', kind: 'SUPPLY', dimension: 'COUNT', active: 0 }, units: [], balances: [] } },
+  ]);
+  const ana = await login(q, 'ana', 'Ana#2026centro');
+  const admin = await login(q, 'admin', 'Admin#2026centro');
+  const luis = await login(q, 'luis', 'Luis#2026centro');
+
+  await createCommand(q, ana, centro, 'inventory.receive', { itemId: flour, quantity: '2.5', unitCode: 'kg', reference: 'Factura 18', note: '' });
+  await createCommand(q, ana, centro, 'inventory.receive', { itemId: flour, locationId: MAIN, quantity: '2', unitCode: 'BULTO' });
+  await assert.rejects(createCommand(q, ana, centro, 'inventory.receive', { itemId: flour, quantity: '1.5', unitCode: 'BULTO' }), /enteros/);
+  await assert.rejects(createCommand(q, ana, centro, 'inventory.receive', { itemId: flour, quantity: '0', unitCode: 'kg' }), /mayor que cero/);
+  await assert.rejects(createCommand(q, ana, centro, 'inventory.receive', { itemId: flour, quantity: '1', unitCode: 'piece' }), /no corresponde/);
+  await assert.rejects(createCommand(q, ana, centro, 'inventory.receive', { itemId: flour, quantity: '0.5', unitCode: 'mg' }), /decimales/);
+  await assert.rejects(createCommand(q, ana, centro, 'inventory.receive', { itemId: flour, quantity: 2, unitCode: 'kg' }), /Cantidad/, 'Quantities travel as text.');
+  await assert.rejects(createCommand(q, ana, centro, 'inventory.receive', { itemId: inactive, quantity: '1', unitCode: 'piece' }), /inactivo/);
+  await assert.rejects(createCommand(q, ana, centro, 'inventory.receive', { itemId: flour, locationId: randomUUID(), quantity: '1', unitCode: 'kg' }), status(404));
+  await assert.rejects(createCommand(q, luis, centro, 'inventory.receive', { itemId: flour, quantity: '1', unitCode: 'kg' }), status(403));
+
+  await createCommand(q, ana, centro, 'inventory.waste', { itemId: flour, quantity: '300', unitCode: 'g', reason: 'Damaged' });
+  await assert.rejects(createCommand(q, ana, centro, 'inventory.waste', { itemId: flour, quantity: '1', unitCode: 'kg', reason: 'Other', note: ' ' }), /observación/);
+  await assert.rejects(createCommand(q, ana, centro, 'inventory.waste', { itemId: flour, quantity: '1', unitCode: 'kg', reason: 'Robo' }), /Motivo/);
+
+  await assert.rejects(createCommand(q, ana, centro, 'inventory.count', { itemId: flour, quantity: '4', unitCode: 'kg' }), status(403), 'Only the administrator adjusts.');
+  await createCommand(q, admin, centro, 'inventory.count', { itemId: flour, quantity: '0', unitCode: 'kg' });
+
+  const pulled = await pendingFor(q, { id: caja1, branchId: centro }, 0);
+  assert.deepEqual(pulled.map(c => c.payload), [
+    { itemId: flour, locationId: MAIN, quantity: '2.5', unitCode: 'kg', reference: 'Factura 18' },
+    { itemId: flour, locationId: MAIN, quantity: '2', unitCode: 'BULTO' },
+    { itemId: flour, locationId: MAIN, quantity: '300', unitCode: 'g', reason: 'Damaged' },
+    { itemId: flour, locationId: MAIN, quantity: '0', unitCode: 'kg', reason: 'PhysicalCountVariance' },
+  ]);
+  const view = await inventoryView(q, centro, 'America/Mexico_City');
+  assert.deepEqual(view.locations, [{ id: MAIN, branchId: centro, name: 'Almacén principal' }], 'The main warehouse is always there.');
+  assert.equal(view.items.find(i => i.id === flour)!.balances[0].locationId, MAIN);
+});
+
+/** JPEG mínimo: inicio, cuadro SOF0 con alto y ancho, fin. Basta para validar su forma en la nube. */
+function jpeg(width: number, height: number): string {
+  const sof = [0xff, 0xc0, 0x00, 0x11, 0x08, height >> 8, height & 255, width >> 8, width & 255, 0x03, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1];
+  return Buffer.from([0xff, 0xd8, ...sof, 0xff, 0xd9]).toString('base64');
+}
+
+test('production and photos from the web reach the terminal; photos never reach the list of changes', async () => {
+  const q = await seeded();
+  const profile = 'cccccccc-0000-4000-8000-000000000001', active = 'cccccccc-0000-4000-8000-000000000002', draft = 'cccccccc-0000-4000-8000-000000000003';
+  await send(q, caja1, centro, [{ entity: 'production_profile', id: profile, payload: { profile: { id: profile, product_id: product, active_version_id: active },
+    versions: [{ id: active, version: 1, state: 'PUBLISHED' }, { id: draft, version: 2, state: 'DRAFT' }], directIngredients: [], formulaRequirements: [] } }]);
+  const ana = await login(q, 'ana', 'Ana#2026centro');
+  const luis = await login(q, 'luis', 'Luis#2026centro');
+
+  await createCommand(q, ana, centro, 'production.record', { outputs: [{ profileVersionId: active, planned: 24, actual: 22 }], notes: 'Mañana' });
+  await assert.rejects(createCommand(q, ana, centro, 'production.record', { outputs: [{ profileVersionId: draft, planned: 1, actual: 1 }] }), /cambió/, 'Only the active published recipe.');
+  await assert.rejects(createCommand(q, ana, centro, 'production.record', { outputs: [{ profileVersionId: active, planned: 1, actual: 1 }, { profileVersionId: active, planned: 2, actual: 2 }] }), /repetido/);
+  await assert.rejects(createCommand(q, ana, centro, 'production.record', { outputs: [{ profileVersionId: active, planned: 0, actual: 1 }] }), /planeadas/);
+  await assert.rejects(createCommand(q, ana, centro, 'production.record', { outputs: [] }), /1 a 20/);
+  await assert.rejects(createCommand(q, luis, centro, 'production.record', { outputs: [{ profileVersionId: active, planned: 1, actual: 1 }] }), status(403));
+
+  const photo = await createCommand(q, ana, centro, 'product.photo', { productId: product, image: jpeg(512, 512) });
+  await assert.rejects(createCommand(q, ana, centro, 'product.photo', { productId: product, image: jpeg(512, 300) }), /cuadrada/);
+  await assert.rejects(createCommand(q, ana, centro, 'product.photo', { productId: product, image: Buffer.from([0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10]).toString('base64') }), /JPEG/);
+  await assert.rejects(createCommand(q, ana, centro, 'product.photo', { productId: randomUUID(), image: jpeg(512, 512) }), status(404));
+  await assert.rejects(createCommand(q, luis, centro, 'product.photo', { productId: product, image: jpeg(512, 512) }), status(403));
+  // Un producto recién dado de alta en la web puede llevar su foto de una vez.
+  const fresh = randomUUID();
+  await createCommand(q, ana, centro, 'product.save', { id: fresh, categoryId: category, name: 'Rol de canela', priceCents: 2500 });
+  await createCommand(q, ana, centro, 'product.photo', { productId: fresh, image: jpeg(1024, 1024) });
+
+  const pulled = await pendingFor(q, { id: caja1, branchId: centro }, 0);
+  assert.deepEqual(pulled[0].payload, { outputs: [{ profileVersionId: active, planned: 24, actual: 22 }], notes: 'Mañana' });
+  assert.deepEqual(pulled[1].payload, { productId: product, image: jpeg(512, 512), edge: 512, name: 'foto-web.jpg' });
+  assert.equal((pulled[3].payload as { edge: number }).edge, 1024);
+  const listed = await listCommands(q, centro);
+  assert.ok(listed.every(c => !('image' in c.payload)), 'The photo bytes stay out of the web list.');
+
+  // Lo que la caja ya reportó no vuelve a bajar; las cajas web no cuentan como cajas que aplican cambios.
+  await q(`INSERT INTO terminal(id, branch_id, name, key_sha256, kind) VALUES ($1, $2, 'CAJA-WEB-02', repeat('c', 64), 'web')`, [randomUUID(), centro]);
+  await recordResults(q, { id: caja1, branchId: centro }, { results: [{ id: photo.id, status: 'applied' }] });
+  assert.ok(!(await pendingFor(q, { id: caja1, branchId: centro }, 0)).some(c => c.id === photo.id));
+  assert.equal((await listCommands(q, centro)).find(c => c.id === photo.id)!.status, 'applied');
+});
+
+test('a terminal never downloads more than about 3 MB of changes at once', async () => {
+  const q = await seeded();
+  const ana = await login(q, 'ana', 'Ana#2026centro');
+  const big = 'A'.repeat(1_000_000 - 2) + '==';
+  // Cuatro filas de ~1 MB: sólo caben tres; la cuarta baja en la siguiente vuelta.
+  for (let i = 0; i < 4; i++) await q(`INSERT INTO branch_command(id, branch_id, kind, payload, requested_by_id, requested_by_name) VALUES ($1, $2, 'product.photo', $3::jsonb, $4, 'Ana')`,
+    [randomUUID(), centro, JSON.stringify({ productId: product, image: big, edge: 512, name: 'x.jpg' }), ana.id]);
+  const first = await pendingFor(q, { id: caja1, branchId: centro }, 0);
+  assert.equal(first.length, 3);
+  assert.equal((await pendingFor(q, { id: caja1, branchId: centro }, first[2].seq)).length, 1);
 });

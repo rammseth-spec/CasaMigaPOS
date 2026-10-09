@@ -433,15 +433,47 @@ async function catalogo(ctx) {
     h('p', { class: 'muted small', text: `${list.length} productos` }),
     list.length ? grid : h('p', { class: 'empty', text: 'Sin productos con ese filtro.' }));
 }
+/**
+ * Foto elegida en el celular o la computadora: se endereza, se recorta al centro en cuadro y se reduce (máx. 1024 px, JPEG < 0.9 MB).
+ * Se dibuja en un lienzo, así no hace falta abrir permisos de imágenes externas.
+ */
+async function squarePhoto(file) {
+  if (!window.createImageBitmap) throw new Error('Este navegador no puede preparar la foto; usa uno más reciente.');
+  if (file.size > 25 * 1024 * 1024) throw new Error('La foto pesa más de 25 MB.');
+  let bitmap;
+  try { bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' }); } catch { throw new Error('No se pudo leer esa imagen; usa JPEG o PNG.'); }
+  const side = Math.min(bitmap.width, bitmap.height);
+  if (side < 256) throw new Error('La foto es muy chica (mínimo 256 × 256 píxeles).');
+  const edge = Math.min(1024, side);
+  const canvas = h('canvas', { class: 'photo-preview', width: String(edge), height: String(edge), 'aria-label': 'Foto nueva' });
+  canvas.getContext('2d').drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, edge, edge);
+  bitmap.close?.();
+  let blob = null;
+  for (let quality = 0.86; quality > 0.4; quality -= 0.12) { blob = await new Promise(done => canvas.toBlob(done, 'image/jpeg', quality)); if (blob && blob.size <= 900_000) break; }
+  if (!blob || blob.size > 1_000_000) throw new Error('No se pudo reducir la foto; prueba con otra.');
+  const image = await new Promise((done, fail) => { const reader = new FileReader(); reader.onload = () => done(String(reader.result).split(',')[1]); reader.onerror = fail; reader.readAsDataURL(blob); });
+  return { image, canvas };
+}
 function productDialog(product, categories, branchId) {
   const editable = product ? can('products.edit') : can('products.create');
   const branch = product?.branchId ?? branchId;
+  let photo = null;
   const options = branchId => categories.filter(c => c.branchId === branchId && (c.active || c.id === product?.categoryId));
   dialog(product ? product.name : 'Nuevo producto', body => {
     const categorySelect = h('select', { name: 'category', required: true, disabled: !editable }, options(branch).map(c => h('option', { value: c.id, text: c.name, selected: c.id === product?.categoryId })));
     const picker = product ? null : branchPicker(branch);
     picker?.querySelector('select').addEventListener('change', e => categorySelect.replaceChildren(...options(e.target.value).map(c => h('option', { value: c.id, text: c.name }))));
-    body.append(product?.photo ? h('img', { class: 'wide', src: `/api/web/photo?product=${product.id}&branch=${product.branchId}&v=${product.photo.sha}`, alt: '', style: { width: '100%', maxHeight: '220px', objectFit: 'cover', borderRadius: '12px' } }) : '',
+    const current = product?.photo ? h('img', { src: `/api/web/photo?product=${product.id}&branch=${product.branchId}&v=${product.photo.sha}`, alt: '', class: 'photo-preview' }) : h('span', { class: 'photo-preview empty', text: 'Sin foto' });
+    const frame = h('div', { class: 'photo-frame' }, current);
+    const choose = h('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp,image/heic', hidden: true, onchange: async e => {
+      const file = e.target.files[0]; e.target.value = '';
+      if (!file) return;
+      try { photo = await squarePhoto(file); frame.replaceChildren(photo.canvas); status.textContent = 'Foto nueva: se guarda con el producto y la caja la aplica al conectarse.'; }
+      catch (error) { toast(error.message); }
+    } });
+    const status = h('small', { class: 'muted', text: product?.photo?.provisional ? 'Foto provisional.' : '' });
+    body.append(h('div', { class: 'wide photo-field' }, frame, h('div', { class: 'photo-actions' },
+        editable && can('products.edit') ? h('button', { type: 'button', onclick: () => choose.click() }, product?.photo ? 'Cambiar foto' : 'Agregar foto') : null, choose, status)),
       picker ?? '',
       field('Nombre', h('input', { name: 'name', required: true, maxlength: '160', value: product?.name ?? '', disabled: !editable }), true),
       field('Categoría', categorySelect), field('SKU', h('input', { name: 'sku', maxlength: '40', value: product?.sku ?? '', disabled: !editable })),
@@ -459,8 +491,10 @@ function productDialog(product, categories, branchId) {
     const text = String(f.price.value).trim().replace(',', '.');
     if (!/^\d{1,6}(\.\d{1,2})?$/.test(text)) throw new Error('Escribe el precio, por ejemplo 19.50.');
     const price = Math.round(Number(text) * 100);
-    await command(product?.branchId ?? f.branch?.value ?? branch, 'product.save', { id: product?.id ?? uuid(), categoryId: f.category.value, sku: f.sku.value.trim() || null, name: f.name.value,
+    const target = product?.branchId ?? f.branch?.value ?? branch, id = product?.id ?? uuid();
+    await command(target, 'product.save', { id, categoryId: f.category.value, sku: f.sku.value.trim() || null, name: f.name.value,
       description: f.description.value, priceCents: price, trackInventory: f.track.checked });
+    if (photo) await command(target, 'product.photo', { productId: id, image: photo.image });
   } } : {});
 }
 function categoriesDialog(categories, branchId) {
@@ -486,24 +520,114 @@ function categoriesDialog(categories, branchId) {
 }
 
 // ---------- Inventario, recetas y producción ----------
+// Lo que se pide desde aquí lo aplica la caja con sus reglas (docs/POS_WEB.md, fase 3); las existencias cambian cuando la caja lo sube.
+const WASTE_REASONS = { Damaged: 'Dañado', Expired: 'Caducado', ProductionError: 'Error de producción', Spill: 'Derrame', Other: 'Otro' };
+const COUNT_REASONS = { PhysicalCountVariance: 'Diferencia en el conteo físico', DataCorrection: 'Corrección de captura', Other: 'Otro' };
+const STOCK_OPS = {
+  receive: { title: 'Entrada de inventario', label: 'Entrada', permission: 'inventory.receive', kind: 'inventory.receive', submit: 'Registrar entrada' },
+  waste: { title: 'Merma', label: 'Merma', permission: 'inventory.waste', kind: 'inventory.waste', submit: 'Registrar merma' },
+  count: { title: 'Conteo físico', label: 'Conteo', permission: 'inventory.adjust', kind: 'inventory.count', submit: 'Guardar conteo' },
+};
+// Unidades para capturar (sin mg ni µL); si la caja no subió su catálogo de unidades se usan las del sistema.
+const BASE_UNITS = [{ code: 'kg', symbol: 'kg', dimension: 'MASS', atomic: 1_000_000 }, { code: 'g', symbol: 'g', dimension: 'MASS', atomic: 1_000 },
+  { code: 'L', symbol: 'L', dimension: 'VOLUME', atomic: 1_000_000 }, { code: 'ml', symbol: 'ml', dimension: 'VOLUME', atomic: 1_000 }, { code: 'piece', symbol: 'pieza', dimension: 'COUNT', atomic: 1 }];
+const captureUnits = (item, measures) => [
+  ...(measures?.length ? measures : BASE_UNITS).filter(u => u.dimension === item.dimension && (u.dimension === 'COUNT' || u.atomic >= 1_000)).sort((a, b) => b.atomic - a.atomic).map(u => ({ code: u.code, label: u.symbol })),
+  ...item.units.map(u => ({ code: u.code, label: u.name }))];
+const stockOps = () => Object.entries(STOCK_OPS).filter(([, o]) => can(o.permission));
+
 async function inventario() {
-  const data = await api('inventory', { branch: state.branch });
+  const [data, sent] = await Promise.all([api('inventory', { branch: state.branch }), can('sales.view') ? api('commands', { branch: state.branch }) : []]);
   const kinds = { RAW_MATERIAL: 'Materia prima', FINISHED_GOOD: 'Producto terminado', PACKAGING: 'Empaque', SUPPLY: 'Insumo' };
+  const names = new Map(data.items.map(i => [i.id, i]));
+  const recent = iso => Date.now() - new Date(iso).getTime() < 2 * 86_400_000;
+  const waiting = sent.filter(c => STOCK_KINDS.has(c.kind) && (c.status === 'pending' || (c.status === 'rejected' && recent(c.at))));
+  const actionable = stockOps().length > 0 || can('inventory.configure');
   return h('div', { style: { display: 'grid', gap: '16px' } },
+    stockOps().length ? h('div', { class: 'toolbar' }, stockOps().map(([op, o]) => h('button', { type: 'button', class: op === 'receive' ? 'primary' : '', onclick: () => stockDialog(op, data) }, o.label))) : null,
+    waiting.length ? card('Enviado a la caja', h('p', { class: 'muted small', text: 'La caja lo aplica en cuanto se conecta; entonces cambia la existencia de abajo.', style: { marginBottom: '8px' } }),
+      h('ul', { class: 'rows' }, waiting.map(c => { const item = names.get(c.payload.itemId);
+        return h('li', {}, h('div', {}, h('strong', { text: `${KIND[c.kind]} · ${item?.name ?? 'Insumo'}` }), h('small', { class: 'muted', text: ` ${stockAmount(c.payload, item, data.measures)} · ${c.by} · ${at(c.at)}` })),
+          h('span', { class: 'pill ' + (c.status === 'pending' ? 'warn' : 'bad'), text: c.status === 'pending' ? 'Pendiente' : 'Rechazado' }), h('small', { class: 'muted', text: c.message ?? '' })); }))) : null,
     card('Existencias', table([
       { label: 'Insumo', value: i => [h('strong', { text: i.name }), h('small', { text: i.code })] },
       { label: 'Tipo', value: i => kinds[i.kind] ?? i.kind },
-      { label: 'Existencia', num: true, value: i => h('b', { text: quantity(i.balances.reduce((a, b) => a + b.atomic, 0), i.dimension, data.measures) }) },
+      { label: 'Existencia', num: true, value: i => i.balances.length ? h('b', { text: quantity(i.balances.reduce((a, b) => a + b.atomic, 0), i.dimension, data.measures) }) : h('span', { class: 'muted', text: 'Sin conteo inicial' }) },
       { label: 'Ubicación', value: i => i.balances.map(b => b.location).join(', ') || '—' },
       { label: 'Costo', num: true, value: i => i.cost ? [fmt(i.cost.cents), h('small', { text: `por ${i.cost.unit}` })] : h('span', { class: 'muted', text: 'Sin costo' }) },
       { label: 'Estado', value: i => h('span', { class: 'pill ' + (i.active ? 'ok' : ''), text: i.active ? 'Activo' : 'Inactivo' }) },
-    ], data.items, { empty: 'Sin insumos registrados.', onclick: can('inventory.configure') ? i => costDialog(i, data.measures) : null })),
-    can('inventory.configure') ? h('p', { class: 'muted small', text: 'Toca un insumo para capturar su costo; con las recetas se calcula el costo de cada pan (Reportes → Ganancia).' }) : null,
+    ], data.items, { empty: 'Sin insumos registrados.', onclick: actionable ? i => itemActions(i, data) : null })),
+    actionable ? h('p', { class: 'muted small', text: 'Toca un insumo para registrar una entrada, una merma o un conteo' + (can('inventory.configure') ? ', o para capturar su costo (con las recetas se calcula el costo de cada pan en Reportes → Ganancia).' : '.') }) : null,
     card('Movimientos recientes', table([
       { label: 'Fecha', value: o => at(o.at) }, { label: 'Operación', value: o => [o.kind, o.reason ? h('small', { text: o.reason }) : null] },
       { label: 'Estado', value: o => o.state }, { label: 'Quién', value: o => o.user || '—' },
       { label: 'Renglones', span: true, value: o => h('small', { text: o.lines.map(l => `${l.item} ${l.delta > 0 ? '+' : ''}${quantity(l.delta, l.dimension, data.measures)}`).join(' · ') }) },
     ], data.operations, { empty: 'Sin movimientos de inventario.' })));
+}
+const STOCK_KINDS = new Set(['inventory.receive', 'inventory.waste', 'inventory.count']);
+function stockAmount(payload, item, measures) {
+  const unit = item ? captureUnits(item, measures).find(u => u.code === payload.unitCode)?.label : null;
+  return `${Number(payload.quantity).toLocaleString('es-MX', { maximumFractionDigits: 3 })} ${unit ?? payload.unitCode}`;
+}
+/** Lo que se puede hacer con un insumo: entrada, merma, conteo o costo, según el rol. */
+function itemActions(item, data) {
+  const ops = item.active ? stockOps() : [];
+  dialog(item.name, (body, close) => {
+    body.append(
+      h('ul', { class: 'rows wide' }, item.balances.length ? item.balances.map(b => h('li', {}, h('span', { text: b.location }), h('span'), h('b', { class: 'num', text: quantity(b.atomic, item.dimension, data.measures) })))
+        : h('li', {}, h('span', { class: 'muted', text: 'Todavía sin conteo inicial.' }), h('span'), h('span'))),
+      item.active ? '' : h('p', { class: 'notice wide', text: 'Insumo inactivo: se reactiva en la caja.' }),
+      h('div', { class: 'wide toolbar' },
+        ops.map(([op, o]) => h('button', { type: 'button', class: op === 'receive' ? 'primary' : '', onclick: () => { close(); stockDialog(op, data, item); } }, o.label)),
+        can('inventory.configure') ? h('button', { type: 'button', onclick: () => { close(); costDialog(item, data.measures); } }, 'Costo') : null));
+  });
+}
+/** Entrada, merma o conteo de un insumo. La cantidad va como texto decimal; la caja la convierte y revisa existencia y permisos. */
+function stockDialog(op, data, item = null) {
+  const o = STOCK_OPS[op];
+  const items = data.items.filter(i => i.active);
+  if (!items.length) return toast('No hay insumos activos.');
+  dialog(o.title, body => {
+    const itemSelect = h('select', { name: 'supply', required: true }, items.map(i => h('option', { value: i.id, text: i.name + (multi() ? ` (${branchName(i.branchId)})` : ''), selected: i.id === item?.id })));
+    const locationSelect = h('select', { name: 'location' });
+    const unitSelect = h('select', { name: 'unit' });
+    const hint = h('p', { class: 'muted small wide' });
+    const current = () => items.find(i => i.id === itemSelect.value);
+    const showStock = () => {
+      const it = current(); const balance = it.balances.find(b => b.locationId === locationSelect.value);
+      hint.textContent = balance ? `Existencia: ${quantity(balance.atomic, it.dimension, data.measures)}`
+        : op === 'count' ? 'Sin saldo todavía: este conteo será el saldo inicial.' : 'Sin saldo todavía: primero el administrador registra el conteo inicial.';
+      // El saldo inicial no lleva motivo: sólo se pide cuando ya hay existencia que corregir.
+      if (op === 'count') body.querySelector('[name=reason]').closest('label').hidden = !balance;
+    };
+    const sync = () => {
+      const it = current();
+      const places = data.locations.filter(l => l.branchId === it.branchId);
+      locationSelect.replaceChildren(...places.map(l => h('option', { value: l.id, text: l.name })));
+      locationSelect.closest('label').hidden = places.length < 2;
+      const preferred = { MASS: 'kg', VOLUME: 'L', COUNT: 'piece' }[it.dimension];
+      unitSelect.replaceChildren(...captureUnits(it, data.measures).map(u => h('option', { value: u.code, text: u.label, selected: u.code === preferred })));
+      showStock();
+    };
+    itemSelect.addEventListener('change', sync); locationSelect.addEventListener('change', showStock);
+    body.append(field('Insumo', itemSelect, true), field('Ubicación', locationSelect, true),
+      field(op === 'count' ? 'Cantidad contada' : 'Cantidad', h('input', { name: 'quantity', required: true, inputmode: 'decimal', autocomplete: 'off', placeholder: op === 'count' ? 'Lo que hay físicamente' : 'Ej. 2.5' })),
+      field('Unidad', unitSelect), hint,
+      op === 'receive' ? field('Referencia (factura, nota)', h('input', { name: 'reference', maxlength: '200' })) : '',
+      op === 'waste' ? field('Motivo', h('select', { name: 'reason' }, Object.entries(WASTE_REASONS).map(([v, l]) => h('option', { value: v, text: l })))) : '',
+      op === 'count' ? field('Motivo de la diferencia', h('select', { name: 'reason' }, Object.entries(COUNT_REASONS).map(([v, l]) => h('option', { value: v, text: l })))) : '',
+      field(op === 'receive' ? 'Observación (opcional)' : 'Observación (obligatoria con «Otro»)', h('input', { name: 'note', maxlength: '500' }), op !== 'receive'));
+    sync();
+  }, { submit: o.submit, onSubmit: async form => {
+    const f = form.elements;
+    const amount = String(f.quantity.value).trim().replace(',', '.');
+    if (!/^\d{1,6}(\.\d{1,3})?$/.test(amount) || (op !== 'count' && Number(amount) === 0)) throw new Error(op === 'count' ? 'Escribe lo que contaste, por ejemplo 12.5 (0 si no hay).' : 'Escribe una cantidad mayor que cero, por ejemplo 2.5.');
+    if (f.reason?.value === 'Other' && !f.note.value.trim()) throw new Error('Con motivo «Otro» escribe una observación.');
+    const it = items.find(i => i.id === f.supply.value);
+    await command(it.branchId, o.kind, { itemId: it.id, locationId: f.location.value, quantity: amount, unitCode: f.unit.value,
+      ...(f.reference?.value.trim() ? { reference: f.reference.value.trim() } : {}), ...(f.reason ? { reason: f.reason.value } : {}), ...(f.note.value.trim() ? { note: f.note.value.trim() } : {}) });
+    render({ silent: true });
+  } });
 }
 function costDialog(item, measures) {
   const units = [...measures.filter(u => u.dimension === item.dimension).map(u => ({ label: u.symbol, atomic: u.atomic })),
@@ -533,15 +657,64 @@ async function recetas() {
       p.active ? [lines(p.active.ingredients), p.active.formulas.length ? lines(p.active.formulas) : null] : null))) : h('p', { class: 'empty', text: 'Sin recetas de producto.' })));
 }
 async function produccion() {
-  const batches = await api('production', range());
+  const recording = can('production.create') && can('production.confirm');
+  const [batches, recipes, sent] = await Promise.all([api('production', range()), recording ? api('recipes', { branch: state.branch }) : null,
+    recording && can('sales.view') ? api('commands', { branch: state.branch }) : [], loadPhotos()]);
   const status = { CONFIRMED: ['Registrada', 'ok'], DRAFT: ['Borrador', ''], PLANNED: ['Planeada', 'info'], CANCELLED: ['Cancelada', 'bad'] };
+  const ready = recipes?.profiles.filter(p => p.activeVersionId) ?? [];
+  const byVersion = new Map(ready.map(p => [p.activeVersionId, p]));
+  const recent = iso => Date.now() - new Date(iso).getTime() < 2 * 86_400_000;
+  const waiting = sent.filter(c => c.kind === 'production.record' && (c.status === 'pending' || (c.status === 'rejected' && recent(c.at))));
   return h('div', { style: { display: 'grid', gap: '16px' } },
+    recording ? h('div', { class: 'toolbar' }, h('button', { type: 'button', class: 'primary', disabled: !ready.length, onclick: () => productionDialog(ready) }, '+ Registrar producción'),
+      ready.length ? null : h('span', { class: 'muted small', text: 'Ningún pan tiene receta activa; se configuran en la caja (Recetas).' })) : null,
+    waiting.length ? card('Enviado a la caja', h('ul', { class: 'rows' }, waiting.map(c => h('li', {},
+      h('div', {}, h('strong', { text: c.payload.outputs.map(o => `${byVersion.get(o.profileVersionId)?.product ?? 'Pan'}: ${o.actual} pz`).join(' · ') }), h('small', { class: 'muted', text: ` ${c.by} · ${at(c.at)}` })),
+      h('span', { class: 'pill ' + (c.status === 'pending' ? 'warn' : 'bad'), text: c.status === 'pending' ? 'Pendiente' : 'Rechazado' }), h('small', { class: 'muted', text: c.message ?? '' }))))) : null,
     h('p', { class: 'notice', text: 'Para saber cuánto producir mañana: Reportes → Producción sugerida.' }),
     card('Producciones del periodo', table([
       { label: 'Fecha', value: b => at(b.at) }, { label: 'Estado', value: b => h('span', { class: 'pill ' + (status[b.status]?.[1] ?? ''), text: status[b.status]?.[0] ?? b.status }) },
-      { label: 'Productos', value: b => b.outputs.map(o => `${o.product}: ${o.actual ?? o.planned}${o.actual !== null && o.actual !== o.planned ? ` de ${o.planned}` : ''} pz`).join(' · ') },
+      { label: 'Productos', value: b => h('div', { class: 'pieces' }, b.outputs.map(o => h('span', { class: 'piece' }, pic({ name: o.product }, 'xs'), `${o.product}: ${o.actual ?? o.planned}${o.actual !== null && o.actual !== o.planned ? ` de ${o.planned}` : ''} pz`))) },
       { label: 'Quién', value: b => b.by || '—' },
     ], batches, { empty: 'Sin producciones en el periodo.' })));
+}
+/**
+ * Producción ya hecha: panes con receta activa, piezas planeadas y las que salieron. La caja la prepara con esa receta, descuenta
+ * los insumos y suma lo que salió; si falta existencia la rechaza y aquí se ve el motivo.
+ */
+function productionDialog(profiles) {
+  dialog('Registrar producción', body => {
+    const rows = h('div', { class: 'wide production-rows' });
+    const row = () => {
+      const planned = h('input', { name: 'planned', type: 'number', min: '1', max: '100000', inputmode: 'numeric', required: true });
+      const actual = h('input', { name: 'actual', type: 'number', min: '0', max: '100000', inputmode: 'numeric', required: true });
+      planned.addEventListener('input', () => { if (!actual.dataset.touched) actual.value = planned.value; });
+      actual.addEventListener('input', () => { actual.dataset.touched = '1'; });
+      const line = h('div', { class: 'production-row' },
+        field('Pan', h('select', { name: 'profile', required: true }, h('option', { value: '', text: 'Elige un pan' }),
+          profiles.map(p => h('option', { value: p.activeVersionId, text: p.product + (multi() ? ` (${branchName(p.branchId)})` : '') })))),
+        field('Planeadas', planned), field('Salieron', actual),
+        h('button', { type: 'button', class: 'icon ghost', 'aria-label': 'Quitar pan', onclick: () => { if (rows.children.length > 1) line.remove(); } }, '✕'));
+      return line;
+    };
+    body.append(h('p', { class: 'muted small wide', text: 'La caja descuenta los insumos de la receta y suma al inventario las piezas que salieron.' }),
+      rows, h('div', { class: 'wide' }, h('button', { type: 'button', onclick: () => { if (rows.children.length < 20) rows.append(row()); } }, '+ Otro pan')),
+      field('Notas (opcional)', h('input', { name: 'notes', maxlength: '500' }), true));
+    rows.append(row());
+  }, { submit: 'Registrar', onSubmit: async form => {
+    const whole = (v, min) => /^\d{1,6}$/.test(String(v).trim()) && Number(v) >= min && Number(v) <= 100_000;
+    const outputs = [...form.querySelectorAll('.production-row')].map(r => ({ profileVersionId: r.querySelector('[name=profile]').value,
+      planned: r.querySelector('[name=planned]').value, actual: r.querySelector('[name=actual]').value }));
+    if (outputs.some(o => !o.profileVersionId)) throw new Error('Elige el pan de cada renglón.');
+    if (new Set(outputs.map(o => o.profileVersionId)).size !== outputs.length) throw new Error('No repitas el mismo pan.');
+    if (outputs.some(o => !whole(o.planned, 1) || !whole(o.actual, 0))) throw new Error('Piezas en enteros: planeadas desde 1, salieron desde 0.');
+    const branches = new Set(outputs.map(o => profiles.find(p => p.activeVersionId === o.profileVersionId).branchId));
+    if (branches.size > 1) throw new Error('Registra cada sucursal por separado.');
+    const notes = form.elements.notes.value.trim();
+    await command([...branches][0], 'production.record', { outputs: outputs.map(o => ({ profileVersionId: o.profileVersionId, planned: Number(o.planned), actual: Number(o.actual) })),
+      ...(notes ? { notes } : {}) });
+    render({ silent: true });
+  } });
 }
 
 // ---------- Usuarios ----------
@@ -584,7 +757,8 @@ function userDialog(user, branchId) {
 const KIND = { 'consignment.deliver': 'Entrega de charola', 'consignment.collect': 'Recolección de charola', 'consignment.payment': 'Cobro de charola', 'consignment.void': 'Anulación de charola',
   'category.save': 'Categoría', 'product.save': 'Producto', 'product.active': 'Activar/desactivar producto', 'user.create': 'Alta de usuario', 'user.update': 'Usuario',
   'user.active': 'Activar/desactivar usuario', 'user.reset_password': 'Restablecer contraseña', 'consignment.store.save': 'Tienda de charolas', 'consignment.template.save': 'Charola habitual',
-  'inventory.cost': 'Costo de insumo' };
+  'inventory.cost': 'Costo de insumo', 'inventory.receive': 'Entrada de inventario', 'inventory.waste': 'Merma', 'inventory.count': 'Conteo de inventario',
+  'production.record': 'Producción', 'product.photo': 'Foto de producto' };
 function describe(c) {
   const p = c.payload;
   if (c.kind === 'product.save') return `${p.name} · ${fmt(p.priceCents)}`;
@@ -597,6 +771,9 @@ function describe(c) {
   if (c.kind === 'consignment.payment') return fmt(p.amountCents);
   if (c.kind === 'consignment.void') return p.reason;
   if (c.kind === 'inventory.cost') return `${fmt(p.costCents)} por ${p.unitLabel}`;
+  if (STOCK_KINDS.has(c.kind)) return `${stockAmount(p, null)}${p.reason ? ` · ${WASTE_REASONS[p.reason] ?? COUNT_REASONS[p.reason] ?? p.reason}` : ''}`;
+  if (c.kind === 'production.record') return `${p.outputs.reduce((a, o) => a + o.actual, 0)} piezas de ${p.outputs.length} ${p.outputs.length === 1 ? 'pan' : 'panes'}`;
+  if (c.kind === 'product.photo') return `${p.edge} × ${p.edge} px`;
   return p.name ?? p.displayName ?? '';
 }
 async function cajas() {
