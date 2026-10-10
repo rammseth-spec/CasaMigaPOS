@@ -5,7 +5,7 @@ using CasaMiga.Domain;
 
 namespace CasaMiga.Presentation;
 
-public enum ConsignmentTab { Route, Stores, Prices, Report }
+public enum ConsignmentTab { Route, Stores, Prices, Report, Deliveries, Payments }
 public enum ConsignmentAction { None, Deliver, Collect, Pay }
 public sealed record MethodOption(PaymentMethod Method, string Label);
 
@@ -146,12 +146,8 @@ public sealed record TrayCategory(string? Name, string Label, bool Selected);
 public sealed class ConsignmentViewModel(ConsignmentService service, Action<string, string?> log, IProductPhotoUiGateway? photos = null) : INotifyPropertyChanged
 {
     private static readonly CultureInfo Spanish = CultureInfo.GetCultureInfo("es-MX");
-    internal static string Format(Money value) => (value.Cents / 100m).ToString("C2", Spanish);
-    internal static string Day(DateTimeOffset at)
-    {
-        var text = at.ToLocalTime().ToString("ddd d MMM", Spanish).Replace(".", "");
-        return char.ToUpper(text[0], Spanish) + text[1..];
-    }
+    internal static string Format(Money value) => TrayText.Format(value);
+    internal static string Day(DateTimeOffset at) => TrayText.Day(at);
     /// <summary>Acepta «500», «500.50», «$1,500.00»; vacío = sin importe.</summary>
     internal static bool TryParseMoney(string text, out Money? value)
     {
@@ -182,6 +178,10 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
     public bool IsStores => Tab == ConsignmentTab.Stores;
     public bool IsPrices => Tab == ConsignmentTab.Prices;
     public bool IsReport => Tab == ConsignmentTab.Report;
+    public bool IsDeliveries => Tab == ConsignmentTab.Deliveries;
+    public bool IsPayments => Tab == ConsignmentTab.Payments;
+    /// <summary>Reporte, Entregas y Cobros comparten el periodo.</summary>
+    public bool IsPeriod => IsReport || IsDeliveries || IsPayments;
     public IReadOnlyList<MethodOption> Methods { get; } = [new(PaymentMethod.Cash, "Efectivo"), new(PaymentMethod.Card, "Tarjeta"), new(PaymentMethod.Transfer, "Transferencia")];
 
     // ---------- Ruta ----------
@@ -300,6 +300,13 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
     public string ReportLeft => Format(Report?.LeftToStores ?? new(0));
     public string ReportAtStore => Report is { AtStore: > 0 } r ? $"{r.AtStore} piezas siguen en las tiendas (charolas sin recoger)." : "";
     public string GeneratedLabel { get; private set; } = "";
+    public IReadOnlyList<PeriodDeliveryView> PeriodDeliveries { get; private set; } = [];
+    public IReadOnlyList<PeriodPaymentView> PeriodPayments { get; private set; } = [];
+    public bool HasPeriodDeliveries => PeriodDeliveries.Count > 0;
+    public bool NoPeriodDeliveries => Report is not null && PeriodDeliveries.Count == 0;
+    public bool HasPeriodPayments => PeriodPayments.Count > 0;
+    public bool NoPeriodPayments => Report is not null && PeriodPayments.Count == 0;
+    public string PeriodPaymentsTotal => PeriodPaymentView.Summary(PeriodPayments);
 
     // ---------- Navegación ----------
     public async Task LoadAsync()
@@ -536,7 +543,10 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
     public Task GenerateAsync() => RunAsync(async () =>
     {
         if (FromSelected is not { } from || ThroughSelected is not { } through) throw new ReportException("Elige la fecha inicial y la final.");
-        var report = await Task.Run(() => service.Report(DateOnly.FromDateTime(from), DateOnly.FromDateTime(through)));
+        var (report, period) = await Task.Run(() => (service.Report(DateOnly.FromDateTime(from), DateOnly.FromDateTime(through)),
+            service.Period(DateOnly.FromDateTime(from), DateOnly.FromDateTime(through))));
+        PeriodDeliveries = period.Deliveries.Select(d => new PeriodDeliveryView(d)).ToArray();
+        PeriodPayments = period.Payments.Select(p => new PeriodPaymentView(p)).ToArray();
         Report = report;
         StoreRows = report.Stores.Select(s => new StoreReportView(s)).ToArray();
         ProductRows = report.Products.Select(p => new ProductReportRowView(p)).ToArray();
@@ -551,7 +561,7 @@ public sealed class ConsignmentViewModel(ConsignmentService service, Action<stri
         photoLoad.Cancel();
         Route = []; Selected = null; Action = ConsignmentAction.None; Collecting = null; DeliverLines = []; DeliverTiles = []; TrayLines = []; DeliverCategories = []; CollectLines = [];
         Stores = []; SelectedStore = null; TemplateLines = []; Account = null; Movements = []; Prices = [];
-        Report = null; StoreRows = []; ProductRows = []; SellThroughBars = []; GeneratedLabel = "";
+        Report = null; StoreRows = []; ProductRows = []; SellThroughBars = []; GeneratedLabel = ""; PeriodDeliveries = []; PeriodPayments = [];
         Tab = ConsignmentTab.Route; Message = ""; Notify();
     }
 }

@@ -209,12 +209,32 @@ public sealed class ConsignmentService(ILocalUnitOfWork database, UserSession id
     // ---------- Reporte ----------
     public ConsignmentReport Report(DateOnly from, DateOnly through)
     {
+        var (fromUtc, untilUtc) = Range(from, through);
+        return View(store => Summarize(from, through, store.QueryConsignmentDeliveries(fromUtc, untilUtc, null, openOnly: false),
+            store.QueryConsignmentPayments(fromUtc, untilUtc, null), store.ListConsignmentStores(includeInactive: true).ToDictionary(s => s.Id, s => store.ConsignmentBalance(s.Id))));
+    }
+
+    /// <summary>Las 300 entregas (también anuladas) y los 300 cobros más recientes del periodo, como la web.</summary>
+    public ConsignmentPeriod Period(DateOnly from, DateOnly through)
+    {
+        var (fromUtc, untilUtc) = Range(from, through);
+        return View(store =>
+        {
+            var names = store.ListConsignmentStores(includeInactive: true).ToDictionary(s => s.Id, s => s.Name);
+            return new ConsignmentPeriod(
+                store.QueryConsignmentDeliveries(fromUtc, untilUtc, null, openOnly: false).OrderByDescending(d => d.DeliveredAt).Take(MaxPeriodRows).ToList(),
+                store.QueryConsignmentPayments(fromUtc, untilUtc, null).OrderByDescending(p => p.ReceivedAt).Take(MaxPeriodRows)
+                    .Select(p => new ConsignmentPaymentRow(p, names.GetValueOrDefault(p.StoreId, "—"))).ToList());
+        });
+    }
+    public const int MaxPeriodRows = 300;
+
+    private (DateTimeOffset From, DateTimeOffset Until) Range(DateOnly from, DateOnly through)
+    {
         if (from > through) throw new ReportException("La fecha Desde no puede ser posterior a Hasta.");
         if (through.DayNumber - from.DayNumber + 1 > ReportService.MaxDays) throw new ReportException($"El periodo máximo es de {ReportService.MaxDays} días.");
         if (through == DateOnly.MaxValue) throw new ReportException("La fecha Hasta excede el límite permitido.");
-        var fromUtc = ToUtc(from); var untilUtc = ToUtc(through.AddDays(1));
-        return View(store => Summarize(from, through, store.QueryConsignmentDeliveries(fromUtc, untilUtc, null, openOnly: false),
-            store.QueryConsignmentPayments(fromUtc, untilUtc, null), store.ListConsignmentStores(includeInactive: true).ToDictionary(s => s.Id, s => store.ConsignmentBalance(s.Id))));
+        return (ToUtc(from), ToUtc(through.AddDays(1)));
     }
 
     /// <summary>Cálculo puro del reporte: charolas entregadas en el periodo (sin anuladas) y pagos recibidos en el periodo.</summary>

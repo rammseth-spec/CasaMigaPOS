@@ -105,6 +105,8 @@
    <Button Content="Tiendas" Style="{StaticResource Tab}" Tag="{Binding IsStores}" Click="StoresClick"/>
    <Button Content="Precios de charola" Style="{StaticResource Tab}" Tag="{Binding IsPrices}" Click="PricesClick"/>
    <Button Content="Reporte" Style="{StaticResource Tab}" Tag="{Binding IsReport}" Click="ReportClick"/>
+   <Button Content="Entregas" Style="{StaticResource Tab}" Tag="{Binding IsDeliveries}" Click="DeliveriesClick"/>
+   <Button Content="Cobros" Style="{StaticResource Tab}" Tag="{Binding IsPayments}" Click="PaymentsClick"/>
   </WrapPanel>
   <TextBlock Text="{Binding Message}" TextWrapping="Wrap" FontSize="15" Margin="0,0,0,10" AutomationProperties.LiveSetting="Polite">
    <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource ValidBrush}"/></DataTrigger><DataTrigger Binding="{Binding Message}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
@@ -424,7 +426,7 @@
   </StackPanel>
 
   <!-- ===== Reporte ===== -->
-  <StackPanel Visibility="{Binding IsReport,Converter={StaticResource VisibleWhen}}">
+  <StackPanel Visibility="{Binding IsPeriod,Converter={StaticResource VisibleWhen}}">
    <Grid>
     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
     <StackPanel Margin="0,0,12,0"><TextBlock Text="Desde" Style="{StaticResource KpiLabel}"/><DatePicker SelectedDate="{Binding FromSelected}" Width="200" Margin="0,4,0,0" AutomationProperties.Name="Fecha desde"/></StackPanel>
@@ -437,6 +439,36 @@
     <Button Content="Últimos 7 días" Click="LastSevenDaysClick" Style="{StaticResource Chip}"/>
     <Button Content="Este mes" Click="MonthClick" Style="{StaticResource Chip}"/>
    </WrapPanel>
+   <!-- Entregas y Cobros del periodo (D3, como la web) -->
+   <StackPanel Visibility="{Binding IsDeliveries,Converter={StaticResource VisibleWhen}}">
+    <TextBlock Text="Charolas entregadas en el periodo elegido arriba." Style="{StaticResource KpiLabel}" Margin="0,0,0,8"/>
+    <TextBlock Text="Sin entregas en el periodo." Style="{StaticResource EmptyStateText}" Visibility="{Binding NoPeriodDeliveries,Converter={StaticResource VisibleWhen}}"/>
+    <DataGrid ItemsSource="{Binding PeriodDeliveries}" MaxHeight="560" AutomationProperties.Name="Entregas del periodo" Visibility="{Binding HasPeriodDeliveries,Converter={StaticResource VisibleWhen}}">
+     <DataGrid.Columns>
+      <DataGridTextColumn Header="Entrega" Binding="{Binding Date}" Width="Auto" MinWidth="120"/>
+      <DataGridTextColumn Header="Tienda" Binding="{Binding Store}" Width="Auto" MinWidth="150"/>
+      <DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="Auto" MinWidth="100"/>
+      <DataGridTextColumn Header="Piezas" Binding="{Binding Pieces}" Width="Auto" MinWidth="70" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Vendidas / regreso" Binding="{Binding SoldReturned}" Width="Auto" MinWidth="130" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Cobrado" Binding="{Binding Charged}" Width="Auto" MinWidth="96" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Contenido" Binding="{Binding Contents}" Width="*" MinWidth="200"/>
+     </DataGrid.Columns>
+    </DataGrid>
+   </StackPanel>
+   <StackPanel Visibility="{Binding IsPayments,Converter={StaticResource VisibleWhen}}">
+    <DockPanel Margin="0,0,0,8"><TextBlock DockPanel.Dock="Right" Text="{Binding PeriodPaymentsTotal}" FontSize="15" FontWeight="SemiBold" Typography.NumeralAlignment="Tabular"/><TextBlock Text="Cobros recibidos en el periodo elegido arriba." Style="{StaticResource KpiLabel}"/></DockPanel>
+    <TextBlock Text="Sin cobros en el periodo." Style="{StaticResource EmptyStateText}" Visibility="{Binding NoPeriodPayments,Converter={StaticResource VisibleWhen}}"/>
+    <DataGrid ItemsSource="{Binding PeriodPayments}" MaxHeight="560" AutomationProperties.Name="Cobros del periodo" Visibility="{Binding HasPeriodPayments,Converter={StaticResource VisibleWhen}}">
+     <DataGrid.Columns>
+      <DataGridTextColumn Header="Fecha" Binding="{Binding Date}" Width="Auto" MinWidth="120"/>
+      <DataGridTextColumn Header="Tienda" Binding="{Binding Store}" Width="Auto" MinWidth="150"/>
+      <DataGridTextColumn Header="Forma" Binding="{Binding Method}" Width="Auto" MinWidth="120"/>
+      <DataGridTextColumn Header="Nota" Binding="{Binding Note}" Width="*" MinWidth="160"/>
+      <DataGridTextColumn Header="Importe" Binding="{Binding Amount}" Width="Auto" MinWidth="100" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+     </DataGrid.Columns>
+    </DataGrid>
+   </StackPanel>
+   <StackPanel Visibility="{Binding IsReport,Converter={StaticResource VisibleWhen}}">
    <TextBlock Text="Sin charolas entregadas en este periodo." Style="{StaticResource EmptyStateText}" Visibility="{Binding NoReportRows,Converter={StaticResource VisibleWhen}}"/>
    <StackPanel Visibility="{Binding HasReportRows,Converter={StaticResource VisibleWhen}}">
     <UniformGrid Columns="4" Margin="0,4,-12,0">
@@ -482,6 +514,7 @@
       <DataGridTextColumn Header="Cargo" Binding="{Binding Charged}" Width="Auto" MinWidth="100" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
      </DataGrid.Columns>
     </DataGrid>
+   </StackPanel>
    </StackPanel>
   </StackPanel>
  </StackPanel>

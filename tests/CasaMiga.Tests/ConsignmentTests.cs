@@ -1,5 +1,6 @@
 using CasaMiga.Application;
 using CasaMiga.Domain;
+using CasaMiga.Presentation;
 using Microsoft.Data.Sqlite;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -137,6 +138,37 @@ public sealed class ConsignmentTests : SalesFixture
         Assert.AreEqual(8, concha.Delivered); Assert.AreEqual(6, concha.Sold); Assert.AreEqual(2, concha.Returned); Assert.AreEqual(75.0m, concha.SellThrough);
         Assert.AreEqual(2, report.Returned, "Piezas que regresan para Piedra.");
         Assert.IsEmpty(Trays.Report(Today.AddDays(1), Today.AddDays(1)).Stores);
+    }
+
+    [TestMethod]
+    public void DeliveriesAndPaymentsOfThePeriodListEverythingNewestFirst()
+    {
+        var tray = DeliverDozen();
+        Trays.Collect(tray.Id, new Dictionary<int, int> { [1] = 2 }, new Money(5000), PaymentMethod.Cash, null, "");
+        var open = Trays.Deliver(lupita.Id, [new(bolillo.Id, 15)], "");
+        var voided = Trays.Void(Trays.Deliver(lupita.Id, [new(product.Id, 3)], "").Id, "Error de captura");
+        Trays.ReceivePayment(lupita.Id, new Money(5600), PaymentMethod.Transfer, "SPEI 123", "Saldo de la semana");
+
+        var period = Trays.Period(Today, Today);
+        CollectionAssert.AreEquivalent(new[] { tray.Id, open.Id, voided.Id }, period.Deliveries.Select(d => d.Id).ToArray(), "Voided ones are listed too, unlike the report.");
+        Assert.IsTrue(period.Deliveries.Zip(period.Deliveries.Skip(1)).All(p => p.First.DeliveredAt >= p.Second.DeliveredAt));
+        Assert.HasCount(2, period.Payments);
+        Assert.IsTrue(period.Payments.All(p => p.StoreName == "Abarrotes Lupita"));
+        Assert.AreEqual(10600L, period.Payments.Sum(p => p.Payment.Amount.Cents));
+        Assert.IsEmpty(Trays.Period(Today.AddDays(1), Today.AddDays(1)).Deliveries);
+        Assert.ThrowsExactly<ReportException>(() => Trays.Period(Today, Today.AddDays(-1)));
+
+        // Lo que muestran las pestañas Entregas y Cobros de la caja.
+        var rows = period.Deliveries.Select(d => new PeriodDeliveryView(d)).ToDictionary(r => r.Row.Id);
+        Assert.AreEqual("Recogida", rows[tray.Id].Status); Assert.AreEqual("10 / 2", rows[tray.Id].SoldReturned); Assert.AreEqual("$106.00", rows[tray.Id].Charged);
+        Assert.AreEqual($"8 {product.Name} · 4 Bolillo", rows[tray.Id].Contents);
+        Assert.AreEqual("Por recoger", rows[open.Id].Status); Assert.AreEqual("—", rows[open.Id].Charged);
+        Assert.AreEqual("Anulada", rows[voided.Id].Status); Assert.AreEqual("—", rows[voided.Id].SoldReturned);
+        var payments = period.Payments.Select(p => new PeriodPaymentView(p)).ToList();
+        Assert.AreEqual("2 cobros · $106.00", PeriodPaymentView.Summary(payments));
+        var transfer = payments.Single(p => p.Row.Payment.Method == PaymentMethod.Transfer);
+        Assert.AreEqual("Transferencia · Ref. SPEI 123", transfer.Method); Assert.AreEqual("Saldo de la semana", transfer.Note);
+        Assert.AreEqual("Al recoger la charola", payments.Single(p => p.Row.Payment.Method == PaymentMethod.Cash).Note);
     }
 
     [TestMethod]

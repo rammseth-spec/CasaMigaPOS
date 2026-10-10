@@ -55,6 +55,9 @@ public sealed record ConsignmentProductRow(Guid ProductId, string ProductName, i
 {
     public decimal? SellThrough => Sold + Returned == 0 ? null : Math.Round(Sold * 100m / (Sold + Returned), 1);
 }
+/// <summary>Entregas y cobros del periodo (D3, igual que Charolas → Entregas y Cobros en la web), del más reciente al más antiguo.</summary>
+public sealed record ConsignmentPaymentRow(ConsignmentPayment Payment, string StoreName);
+public sealed record ConsignmentPeriod(IReadOnlyList<ConsignmentDelivery> Deliveries, IReadOnlyList<ConsignmentPaymentRow> Payments);
 public sealed record ConsignmentReport(DateOnly From, DateOnly Through, IReadOnlyList<ConsignmentStoreRow> Stores, IReadOnlyList<ConsignmentProductRow> Products)
 {
     public int Trays => Stores.Sum(s => s.Trays);

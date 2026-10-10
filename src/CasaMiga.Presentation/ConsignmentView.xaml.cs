@@ -49,6 +49,8 @@ public partial class ConsignmentView : UserControl
     private async void StoresClick(object sender, RoutedEventArgs e) => await Model.ShowAsync(ConsignmentTab.Stores);
     private async void PricesClick(object sender, RoutedEventArgs e) => await Model.ShowAsync(ConsignmentTab.Prices);
     private async void ReportClick(object sender, RoutedEventArgs e) => await Model.ShowAsync(ConsignmentTab.Report);
+    private async void DeliveriesClick(object sender, RoutedEventArgs e) => await Model.ShowAsync(ConsignmentTab.Deliveries);
+    private async void PaymentsClick(object sender, RoutedEventArgs e) => await Model.ShowAsync(ConsignmentTab.Payments);
 
     private async void DeliverClick(object sender, RoutedEventArgs e) { if (Item<StoreStatusView>(sender) is { } store) await Model.StartDeliverAsync(store); }
     private void CollectClick(object sender, RoutedEventArgs e) { if (Item<StoreStatusView>(sender) is { } store) Model.StartCollect(store); }
