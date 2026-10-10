@@ -101,6 +101,9 @@ public interface ISyncTransport
     /// <summary>Cambios hechos en la versión web para la sucursal, posteriores al cursor.</summary>
     Task<IReadOnlyList<CloudCommand>> PullCommandsAsync(Uri api, string terminalKey, long after, CancellationToken cancel) => Task.FromResult<IReadOnlyList<CloudCommand>>([]);
     Task ReportCommandsAsync(Uri api, string terminalKey, IReadOnlyList<CloudCommandResult> results, CancellationToken cancel) => Task.CompletedTask;
+    /// <summary>Lo registrado por las cajas web de la sucursal después de cada cursor (D5, para los reportes).</summary>
+    Task<IReadOnlyList<WebSaleEvent>> PullWebSalesAsync(Uri api, string terminalKey, IReadOnlyDictionary<Guid, long> cursors, CancellationToken cancel) =>
+        Task.FromResult<IReadOnlyList<WebSaleEvent>>([]);
 }
 
 public sealed class HttpSyncTransport(HttpClient http) : ISyncTransport
@@ -171,6 +174,21 @@ public sealed class HttpSyncTransport(HttpClient http) : ISyncTransport
         if (!response.IsSuccessStatusCode || body is null) throw new HttpRequestException((string?)body?["error"] ?? "Respuesta no válida del servidor.");
     }
 
+    public async Task<IReadOnlyList<WebSaleEvent>> PullWebSalesAsync(Uri api, string terminalKey, IReadOnlyDictionary<Guid, long> cursors, CancellationToken cancel)
+    {
+        var after = string.Join(",", cursors.Select(c => $"{c.Key:D}:{c.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}"));
+        using var request = new HttpRequestMessage(HttpMethod.Get, new Uri(api, "api/sync/web-sales" + (after.Length > 0 ? "?after=" + after : "")));
+        request.Headers.Authorization = new("Bearer", terminalKey);
+        using var response = await http.SendAsync(request, cancel);
+        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden) throw new SyncUnauthorizedException("El servidor rechazó la terminal. Vuelve a registrarla.");
+        // Una nube sin actualizar todavía no tiene la ruta: no es un error, sólo no hay ventas web que bajar.
+        if (response.StatusCode == HttpStatusCode.NotFound) return [];
+        var body = await ReadBody(response, cancel);
+        if (!response.IsSuccessStatusCode || body?["events"] is not JsonArray list) throw new HttpRequestException((string?)body?["error"] ?? "Respuesta no válida del servidor.");
+        return list.OfType<JsonObject>().Select(e => new WebSaleEvent(Guid.Parse((string)e["terminal"]!), (string?)e["terminalName"] ?? "Caja web", (long)e["seq"]!,
+            (string)e["entity"]!, (string)e["entityId"]!, (string?)e["change"] ?? "insert", e["payload"] as JsonObject ?? [])).ToList();
+    }
+
     /// <summary>Lee el cuerpo sin fallar si no es JSON (páginas de error de un gateway, portales cautivos).</summary>
     private static async Task<JsonObject?> ReadBody(HttpResponseMessage response, CancellationToken cancel)
     {
@@ -188,8 +206,9 @@ public sealed record SyncStatus(SyncState State, long Pending, DateTimeOffset? L
 /// Un conflicto (mismo seq con otro contenido) detiene el envío hasta revisión.
 /// </summary>
 public sealed class SyncEngine(SqliteSyncOutbox outbox, ISyncTransport transport, string dataDirectory, TimeProvider? time = null, CloudCommandService? commands = null,
-    CloudBackupService? backup = null, HttpClient? backupHttp = null)
+    CloudBackupService? backup = null, HttpClient? backupHttp = null, SqliteWebSalesMirror? webSales = null)
 {
+    public const int WebSalesBatch = 500;
     /// <summary>Dirección con la que se registró esta caja (null si no está registrada).</summary>
     public Uri? RegisteredApi => SyncSettings.Load(dataDirectory)?.ApiUrl;
 
@@ -229,10 +248,11 @@ public sealed class SyncEngine(SqliteSyncOutbox outbox, ISyncTransport transport
         if (settings is null) return Status = new(SyncState.NotConfigured, outbox.PendingCount(), null, "Registra esta terminal para sincronizar.");
         var key = settings.TerminalKey();
         var status = await PushAsync(settings, key, cancel);
-        if (status.State != SyncState.UpToDate || commands is null) return status;
+        if (status.State != SyncState.UpToDate || (commands is null && webSales is null)) return status;
         try
         {
-            if (await ApplyCommandsAsync(settings, key, cancel)) status = await PushAsync(settings, key, cancel);
+            if (commands is not null && await ApplyCommandsAsync(settings, key, cancel)) status = await PushAsync(settings, key, cancel);
+            if (webSales is not null) await PullWebSalesAsync(settings, key, cancel);
             return status;
         }
         catch (SyncUnauthorizedException error)
@@ -267,6 +287,20 @@ public sealed class SyncEngine(SqliteSyncOutbox outbox, ISyncTransport transport
             await ReportAsync(settings, key, cancel);
             // Un lote lleno puede traer más; si el cursor no avanzó, ya no hay nada nuevo (evita repetir el mismo tramo).
             if (pulled.Count < 50 || commands.LastSequence() == before) return changed;
+        }
+    }
+
+    /// <summary>Baja lo nuevo de las cajas web hasta ponerse al día; si un lote lleno no avanza ningún cursor, se detiene.</summary>
+    private async Task PullWebSalesAsync(SyncSettings settings, string key, CancellationToken cancel)
+    {
+        while (true)
+        {
+            var before = webSales!.Cursors();
+            var events = await transport.PullWebSalesAsync(settings.ApiUrl, key, before, cancel);
+            webSales.Apply(events);
+            if (events.Count < WebSalesBatch) return;
+            var after = webSales.Cursors();
+            if (after.Count == before.Count && after.All(c => before.TryGetValue(c.Key, out var seq) && seq == c.Value)) return;
         }
     }
 

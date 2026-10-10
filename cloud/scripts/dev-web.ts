@@ -53,7 +53,7 @@ createServer(async (req, res) => {
   const chunks: Buffer[] = [];
   for await (const chunk of req) chunks.push(chunk as Buffer);
   let response: Response;
-  const terminalRoute = ({ '/api/terminals/register': 'register', '/api/sync/batch': 'batch', '/api/sync/commands': 'commands' } as const)[url.pathname as '/api/sync/batch'];
+  const terminalRoute = ({ '/api/terminals/register': 'register', '/api/sync/batch': 'batch', '/api/sync/commands': 'commands', '/api/sync/web-sales': 'web-sales' } as const)[url.pathname as '/api/sync/batch'];
   if (url.pathname.startsWith('/dev-blob/')) {
     const data = storage.files.get(url.href);
     response = data ? new Response(new Uint8Array(data), { headers: { 'content-type': 'application/octet-stream' } }) : new Response('No encontrado', { status: 404 });

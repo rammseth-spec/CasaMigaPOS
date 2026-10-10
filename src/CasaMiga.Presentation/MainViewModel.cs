@@ -170,7 +170,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
                 Sync = new(new SyncEngine(syncOutbox, new HttpSyncTransport(new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(30) }), options.DataDirectory,
                         commands: new CloudCommandService(database, clock, terminal.Id, TimeZoneInfo.Local, new CloudCommandModules(new SqliteInventoryStore(sqlite, clock), database,
                             new SqliteProductionUnitOfWork(sqlite), session => new ProductPhotoService(new SqliteProductPhotoStore(sqlite), new ProductPhotoFileStore(options.DataDirectory), new WpfProductPhotoProcessor(), session, clock, terminal.Id))),
-                        backup: new CloudBackupService(options.DataDirectory, sqlite), backupHttp: new System.Net.Http.HttpClient { Timeout = TimeSpan.FromMinutes(2) }),
+                        backup: new CloudBackupService(options.DataDirectory, sqlite), backupHttp: new System.Net.Http.HttpClient { Timeout = TimeSpan.FromMinutes(2) },
+                        webSales: new SqliteWebSalesMirror(sqlite)),
                     syncOutbox, terminal.Id, terminal.Name, (eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 Sync.Start();
                 var inventoryService=new InventoryService(new SqliteInventoryStore(sqlite,clock),database,user,clock,terminal.Id);

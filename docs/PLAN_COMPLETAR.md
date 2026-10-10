@@ -27,7 +27,7 @@ Base: auditoría pantalla por pantalla de la caja contra la web (09/10/2026). Ca
 | D2 | Costo de referencia de insumos en Inventario | Hecho (botón «Costo de referencia» en el detalle del artículo; sube como siempre) |
 | D3 | Charolas: análisis por tienda, entregas y cobros del periodo | Hecho (pestañas Entregas y Cobros con el periodo del Reporte, que ya trae el análisis por tienda) |
 | D4 | Historial de ventas: forma de pago y búsqueda por producto | Hecho (se combinan con Todos, Hoy, Ayer, fechas y Sesión actual; el folio los ignora) |
-| D5 | Las ventas de las cajas web en los reportes de la caja | Pendiente |
+| D5 | Las ventas de las cajas web en los reportes de la caja | Hecho (la caja baja ventas, devoluciones, turnos, conteos y movimientos de las cajas web con `/api/sync/web-sales`; migración 029 con copia de sólo lectura y vistas `report_*`) |
 
 ## Independencia de la web
 

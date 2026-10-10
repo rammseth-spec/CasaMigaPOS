@@ -79,7 +79,7 @@ Recetas (fórmulas y versiones) siguen configurándose en la caja.
 
 - Necesita Internet en todo momento (no hay modo sin conexión).
 - Imprime con el diálogo del navegador; no abre cajón ni manda ESC/POS.
-- Las ventas web **no descuentan inventario** de la caja de escritorio ni aparecen en los reportes de la app de escritorio (sí en todos los de la web).
+- Las ventas web **no descuentan inventario** de la caja de escritorio. Sí aparecen en sus reportes (D5): en cada sincronización la caja baja lo nuevo de las cajas web de su sucursal (`GET /api/sync/web-sales?after=caja:seq,…`, sólo lectura del registro inmutable) a una copia local (migración 029) y Resumen, Comparativo, Ventas por hora, Control de caja y Ganancia lo cuentan igual que la web. El Historial de ventas de la caja sigue mostrando sólo sus propias ventas (las devoluciones de una venta web se hacen en la web).
 
 ## Fases
 
