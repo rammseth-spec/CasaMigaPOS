@@ -38,6 +38,24 @@ public sealed class WebPhotoCommandTests
     }
 
     [TestMethod]
+    public void ProvenanceAndRemovalFromTheWebWorkLikeTheCatalogScreen()
+    {
+        var provisional = Photo(PhotoFixture.Chart("jpeg", 512, 512), 512);
+        provisional.Payload["provenance"] = "PROVISIONAL";
+        Assert.IsTrue(Commands.Apply(provisional).Applied);
+        Assert.AreEqual("PROVISIONAL", f.Service.Current(f.Product.Id).Photo!.Provenance);
+
+        var remove = new CloudCommand(Guid.NewGuid(), ++sequence, "product.photo.remove", new JsonObject { ["productId"] = f.Product.Id.ToString() }, f.User.Current!.Id, "Encargado web");
+        Assert.IsTrue(Commands.Apply(remove).Applied);
+        var after = f.Service.Current(f.Product.Id);
+        Assert.IsNull(after.Photo, "«Quitar foto» leaves the product without a photo.");
+        Assert.AreEqual(remove.Id, Commands.Apply(remove).Id);
+        Assert.AreEqual(after.Revision, f.Service.Current(f.Product.Id).Revision, "Applying it again changes nothing.");
+        Assert.IsTrue(Commands.Apply(new CloudCommand(Guid.NewGuid(), ++sequence, "product.photo.remove", new JsonObject { ["productId"] = f.Product.Id.ToString() }, f.User.Current!.Id, "Encargado web")).Applied,
+            "Removing when there is no photo is a no-op.");
+    }
+
+    [TestMethod]
     public void BrokenImagesOrUnknownProductsAreRejectedWithAReason()
     {
         var broken = Commands.Apply(Photo([1, 2, 3, 4], 512));

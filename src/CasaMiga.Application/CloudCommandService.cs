@@ -160,7 +160,18 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
                 catch (FormatException) { throw new InvalidCommandException(); }
                 var edge = Int(p, "edge");
                 // La web manda la foto ya recortada en cuadro (edge × edge); aquí se procesa igual que una importada en la caja.
-                photos.Import(new PhotoImport(product, photos.Current(product).Revision, command.Id, Text(p, "name"), "REAL", new PhotoCrop(0, 0, edge)), new MemoryStream(image, false));
+                var provenance = Optional(p, "provenance") ?? "REAL";
+                photos.Import(new PhotoImport(product, photos.Current(product).Revision, command.Id, Text(p, "name"), provenance, new PhotoCrop(0, 0, edge)), new MemoryStream(image, false));
+                break;
+            }
+            case "product.photo.remove":
+            {
+                var product = Id(p, "productId");
+                var photos = Modules.Photos(session);
+                if (photos.Recover(product, command.Id) is not null) break;
+                var current = photos.Current(product);
+                // Sin foto no hay nada que quitar: el cambio queda aplicado sin tocar nada (como «Quitar foto» desactivado en la caja).
+                if (current.Photo is not null) photos.Remove(product, current.Revision, command.Id);
                 break;
             }
             default: throw new InvalidCommandException("Esta caja no reconoce ese cambio; actualiza Casa Miga.");
@@ -210,6 +221,7 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
         ProductionDomainException => "Revisa las cantidades y la configuración de la receta.",
         _ => error.Message,
     };
+
 
     private sealed class InvalidCommandException(string message = "Cambio con formato inválido.") : Exception(message);
     private sealed class FixedClock(DateTimeOffset at) : IClock { public DateTimeOffset UtcNow => at; }

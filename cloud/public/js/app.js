@@ -108,7 +108,7 @@ export function field(label, input, wide = false) { return h('label', { class: '
 /** Envía un cambio a las cajas de la sucursal; avisa que se aplicará cuando la caja se conecte. */
 export async function command(branchId, kind, payload) {
   const result = await post('command', { branchId, kind, payload });
-  toast('Enviado. La caja lo aplica en cuanto se conecta (ver Cajas → Cambios).');
+  toast('Enviado. La caja lo aplica en cuanto se conecta (ver Nube → Cajas y cambios).');
   return result;
 }
 
