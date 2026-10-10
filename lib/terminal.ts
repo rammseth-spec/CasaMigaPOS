@@ -2,6 +2,7 @@
 import { bearer, failure, json, newTerminalKey, parseBatch, parseRegistration, ProtocolError, readJson, secretMatches, sha256Hex } from './protocol.js';
 import { storeBatch } from './store.js';
 import { pendingFor, recordResults } from './commands.js';
+import { parseCursors, webSalesFor } from './webSales.js';
 import type { Query } from './panel.js';
 
 /** Resuelve la terminal por su llave; nunca se guarda la llave, sólo su SHA-256. */
@@ -30,8 +31,8 @@ export async function register(q: Query, body: unknown, enrollmentSecret: string
 
 export interface SyncEnv { ENROLLMENT_SECRET?: string }
 
-/** /api/terminals/register, /api/sync/batch y /api/sync/commands. */
-export async function handleTerminal(q: Query, request: Request, route: 'register' | 'batch' | 'commands', env: SyncEnv): Promise<Response> {
+/** /api/terminals/register, /api/sync/batch, /api/sync/commands y /api/sync/web-sales. */
+export async function handleTerminal(q: Query, request: Request, route: 'register' | 'batch' | 'commands' | 'web-sales', env: SyncEnv): Promise<Response> {
   try {
     if (route === 'register' && request.method === 'POST') return json(200, await register(q, await readJson(request, 10_000), env.ENROLLMENT_SECRET));
     const terminal = await authenticate(q, request.headers.get('authorization'));
@@ -46,6 +47,7 @@ export async function handleTerminal(q: Query, request: Request, route: 'registe
       return json(200, { commands: await pendingFor(q, terminal, Number.isSafeInteger(after) && after >= 0 ? after : 0) });
     }
     if (route === 'commands' && request.method === 'POST') return json(200, await recordResults(q, terminal, await readJson(request, 100_000)));
+    if (route === 'web-sales' && request.method === 'GET') return json(200, { events: await webSalesFor(q, terminal, parseCursors(new URL(request.url).searchParams.get('after'))) });
     throw new ProtocolError('Método no permitido', 405);
   } catch (error) {
     return failure(error);
