@@ -107,6 +107,20 @@ public sealed class CloudCommandTests : SalesFixture
     }
 
     [TestMethod]
+    public void APasswordChangedOnTheWebIsFinalAndOnlyForItsOwner()
+    {
+        var identity = new IdentityService(work, new LocalPasswords(), clock, user);
+        var temporary = identity.CreateUser("ana", "Ana", "Manager");
+        var ana = work.Run(s => s.FindUser("ANA"))!.Id;
+        Assert.AreEqual("rejected", Commands.Apply(Command("user.password", new() { ["id"] = ana.ToString(), ["passwordHash"] = CloudHash })).Status,
+            "The administrator cannot set someone else's password this way.");
+        Ok(Commands.Apply(Command("user.password", new() { ["id"] = ana.ToString(), ["passwordHash"] = CloudHash }, ana)));
+        Assert.AreEqual(LoginOutcome.SignedIn, identity.Authenticate("ana", "Prueba#2026nube"), "The new password works here and is not temporary.");
+        Assert.AreNotEqual(LoginOutcome.SignedIn, identity.Authenticate("ana", temporary));
+        Assert.AreEqual(1L, Convert.ToInt64(Sql($"SELECT count(*) FROM audit_entry WHERE action='identity.password.changed' AND entity_id='{ana}'")));
+    }
+
+    [TestMethod]
     public void TrayPricesFromTheWebWorkLikeThePricesTab()
     {
         JsonObject Prices(long? cents) => new() { ["prices"] = new JsonArray(new JsonObject { ["productId"] = product.Id.ToString(), ["priceCents"] = cents }) };

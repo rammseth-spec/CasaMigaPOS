@@ -65,7 +65,7 @@ async function request(op, init = {}, params = {}) {
   try { response = await fetch(`/api/web/${op}${qs ? '?' + qs : ''}`, { ...init, headers: { accept: 'application/json', ...(init.body ? { 'content-type': 'application/json' } : {}) } }); }
   catch { throw new ApiError('Sin conexión con la nube. Las cajas siguen vendiendo; reintenta en un momento.', 0); }
   const body = await response.json().catch(() => ({}));
-  if (response.status === 401 && op !== 'login') { showLogin(''); throw new ApiError('Inicia sesión', 401); }
+  if (response.status === 401 && op !== 'login' && op !== 'password') { showLogin(''); throw new ApiError('Inicia sesión', 401); }
   if (!response.ok) throw new ApiError(body.error || 'No se pudo completar.', response.status);
   return body;
 }
@@ -266,7 +266,8 @@ function autoRefresh() {
 
 // ---------- Acceso ----------
 export function showLogin(message) {
-  $('app').hidden = true; $('login').hidden = false; $('login-error').textContent = message || '';
+  $('app').hidden = true; $('login').hidden = false; $('password-form').hidden = true; $('login-form').hidden = false;
+  $('login-error').textContent = message || '';
   $('username').focus();
 }
 async function login(event) {
@@ -276,7 +277,45 @@ async function login(event) {
     await post('login', { username: $('username').value, password: $('password').value });
     $('password').value = '';
     await start();
-  } catch (e) { $('login-error').textContent = e.message; }
+  } catch (e) {
+    // Contraseña temporal: como la caja, primero se crea la definitiva.
+    if (e.status === 428) showPasswordForm($('username').value, $('password').value, e.message);
+    else $('login-error').textContent = e.message;
+  }
+  finally { button.disabled = false; }
+}
+
+// ---------- Cambiar contraseña (PasswordPolicy de la caja) ----------
+const PASSWORD_RULES = [
+  ['De 8 a 16 caracteres', p => [...p].length >= 8 && [...p].length <= 16], ['Una mayúscula', p => /\p{Lu}/u.test(p)], ['Una minúscula', p => /\p{Ll}/u.test(p)],
+  ['Un número', p => /\p{Nd}/u.test(p)], ['Un carácter especial (# $ % & * ! …)', p => [...p].some(c => !/[\p{L}\p{Nd}\s\p{Cc}]/u.test(c))]];
+function drawChecklist() {
+  const value = $('pw-next').value;
+  $('pw-checklist').replaceChildren(...PASSWORD_RULES.map(([label, ok]) => h('li', { class: ok(value) ? 'ok' : '', text: `${ok(value) ? '✓' : '•'} ${label}` })));
+}
+function showPasswordForm(username = '', current = '', message = '') {
+  $('login-form').hidden = true; $('password-form').hidden = false;
+  $('pw-username').value = username; $('pw-current').value = current; $('pw-next').value = ''; $('pw-confirm').value = '';
+  $('pw-error').textContent = message; $('pw-error').className = message ? 'muted' : 'error';
+  drawChecklist();
+  (username ? (current ? $('pw-next') : $('pw-current')) : $('pw-username')).focus();
+}
+async function changePassword(event) {
+  event.preventDefault();
+  const username = $('pw-username').value, current = $('pw-current').value, next = $('pw-next').value;
+  const fail = message => { $('pw-error').className = 'error'; $('pw-error').textContent = message; };
+  const missing = PASSWORD_RULES.filter(([, ok]) => !ok(next)).map(([label]) => label.toLowerCase());
+  if (missing.length) return fail(`La contraseña debe tener ${missing.join(', ')}.`);
+  if (next !== $('pw-confirm').value) return fail('La confirmación no coincide con la contraseña nueva.');
+  if (next === current) return fail('La contraseña nueva debe ser distinta de la actual.');
+  const button = $('password-form').querySelector('button[type=submit]'); button.disabled = true;
+  try {
+    await post('password', { username, current, next });
+    await post('login', { username, password: next });
+    $('password-form').reset();
+    toast('Contraseña guardada. La caja la recibe en cuanto se conecta.');
+    await start();
+  } catch (e) { fail(e.message); }
   finally { button.disabled = false; }
 }
 // Servidor de prueba sin contraseña (npm run dev:web): elegir usuario. En la nube publicada /dev-users no existe.
@@ -318,6 +357,11 @@ async function start() {
 document.addEventListener('DOMContentLoaded', () => {
   recall();
   $('login-form').addEventListener('submit', login);
+  $('password-form').addEventListener('submit', changePassword);
+  $('pw-next').addEventListener('input', drawChecklist);
+  $('pw-cancel').addEventListener('click', () => showLogin(''));
+  $('change-password').addEventListener('click', () => showPasswordForm($('username').value));
+  $('forgot').addEventListener('click', () => { $('login-help').hidden = !$('login-help').hidden; });
   $('logout').addEventListener('click', async () => {
     await post('logout', {}).catch(() => {}); state.me = null;
     setKey('cm-dev-out', '1', true); // en el servidor de prueba, no volver a entrar solo

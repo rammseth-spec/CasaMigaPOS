@@ -1,6 +1,6 @@
 // Acceso a la versión web con el usuario y la contraseña de la caja (docs/WEB.md).
 // La contraseña sólo se compara contra el hash PBKDF2 que subió la caja; nunca se guarda ni viaja de regreso.
-import { createHash, createHmac, pbkdf2, randomBytes, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, pbkdf2, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { ProtocolError } from './protocol.js';
 import type { Query, Row } from './panel.js';
@@ -80,7 +80,8 @@ let dummy: Promise<string> | null = null;
 const dummyHash = () => (dummy ??= identityHash(randomBytes(12).toString('hex')));
 
 /** Entra con el usuario de la caja. Cinco errores seguidos bloquean ese usuario 15 minutos en la web (la caja no se afecta). */
-export async function login(q: Query, username: unknown, password: unknown, now = new Date()): Promise<WebUser> {
+/** Usuario y contraseña contra el hash que subió la caja, con el bloqueo por intentos fallidos. Devuelve el renglón del usuario. */
+async function check(q: Query, username: unknown, password: unknown, now: Date): Promise<Row> {
   if (typeof username !== 'string' || typeof password !== 'string' || !username.trim() || username.length > 80 || !password || password.length > 200)
     throw new ProtocolError('Escribe usuario y contraseña');
   const key = normalize(username);
@@ -111,11 +112,52 @@ export async function login(q: Query, username: unknown, password: unknown, now 
     throw new ProtocolError('Usuario o contraseña incorrectos', 401);
   }
   await q('DELETE FROM web_lockout WHERE username = $1', [key]);
+  return match;
+}
+
+export async function login(q: Query, username: unknown, password: unknown, now = new Date()): Promise<WebUser> {
+  const match = await check(q, username, password, now);
+  // Como la caja: con contraseña temporal primero se crea la definitiva (la web abre «Cambiar contraseña»).
   if (Number((match.payload as Row).must_change_password) === 1)
-    throw new ProtocolError('Tu contraseña es temporal: cámbiala primero en la caja.', 403);
+    throw new ProtocolError('Tu contraseña es temporal: crea tu contraseña nueva.', 428);
   const user = await toUser(q, match);
   if (!canUseWeb(user.permissions)) throw new ProtocolError('Tu usuario no tiene acceso a la versión web.', 403);
   return user;
+}
+
+/** PasswordPolicy de la caja: de 8 a 16 caracteres, mayúscula, minúscula, número y carácter especial; sin caracteres de control. */
+export function passwordProblems(password: string): string[] {
+  const chars = [...password];
+  const missing = [
+    ['de 8 a 16 caracteres', chars.length >= 8 && chars.length <= 16],
+    ['una mayúscula', chars.some(c => /\p{Lu}/u.test(c))],
+    ['una minúscula', chars.some(c => /\p{Ll}/u.test(c))],
+    ['un número', chars.some(c => /\p{Nd}/u.test(c))],
+    ['un carácter especial (# $ % & * ! …)', chars.some(c => !/[\p{L}\p{Nd}\s\p{Cc}]/u.test(c))],
+  ].filter(([, ok]) => !ok).map(([label]) => String(label));
+  if (chars.some(c => /\p{Cc}/u.test(c))) missing.push('sin caracteres de control');
+  return missing;
+}
+
+/**
+ * «Cambiar contraseña» desde la pantalla de inicio de la web, igual que en la caja: usuario, contraseña actual o temporal y la nueva.
+ * La nueva vale en la web al momento y llega a la caja como cambio («user.password»); la caja la guarda como definitiva.
+ */
+export async function changePassword(q: Query, username: unknown, current: unknown, next: unknown, now = new Date()): Promise<{ branchId: string; userId: string }> {
+  if (typeof next !== 'string') throw new ProtocolError('Escribe la contraseña nueva');
+  const problems = passwordProblems(next);
+  if (problems.length) throw new ProtocolError(`La contraseña debe tener ${problems.join(', ')}.`);
+  if (next === current) throw new ProtocolError('La contraseña nueva debe ser distinta de la actual.');
+  const match = await check(q, username, current, now);
+  const user = match.payload as Row;
+  const hash = await identityHash(next);
+  const branchId = String(match.branch_id), userId = String(user.id);
+  await q(`INSERT INTO branch_command(id, branch_id, kind, payload, requested_by_id, requested_by_name) VALUES ($1, $2, 'user.password', $3::jsonb, $4, $5)`,
+    [randomUUID(), branchId, JSON.stringify({ id: userId, passwordHash: hash }), userId, String(user.display_name ?? user.username)]);
+  // La web ya entra con la nueva; la caja sube el mismo hash al aplicarlo.
+  await q(`UPDATE entity_state SET payload = payload || jsonb_build_object('password_hash', $3::text, 'must_change_password', 0)
+    WHERE branch_id = $1 AND entity = 'app_user' AND entity_id = $2`, [branchId, userId, hash]);
+  return { branchId, userId };
 }
 
 // ---------- Sesión ----------

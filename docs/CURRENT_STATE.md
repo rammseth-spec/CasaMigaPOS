@@ -1,4 +1,4 @@
-# Catálogo, Inventario, Recetas, Producción y Charolas de la web iguales a la caja — 09/10/2026
+# Todas las pantallas de la web iguales a la caja (Catálogo a Usuarios) — 09/10/2026
 
 **Implementado y probado en local.** Pedido del usuario: «Sigue con Ventas y el resto de pantallas y termina todo… tanto la App de C# como la de Web con todas las pruebas correspondientes». Plan por fases en [PLAN_COMPLETAR.md](PLAN_COMPLETAR.md).
 
@@ -9,6 +9,7 @@
 - **Recetas (W5):** copia de RecipeView con recetas y perfiles de producto: versiones, borradores, publicar y activar; editores con ingredientes directos, grupos de alternativas, preparaciones publicadas y política de cantidad. Cambios `recipe.formula.*` y `recipe.profile.*`: la caja numera la versión, revisa artículos activos, preparaciones publicadas, código y producto sin perfil antes de escribir, y no repite lo ya aplicado. Textos de error compartidos (`RecipeProblems`). Pruebas: caja `CloudRecipeCommandTests` (3), nube `recipes.test.ts` (2).
 - **Producción (W6):** copia de ProductionView en dos pasos: plan con piezas, Calcular necesidades (la nube porta ProductionPlan/ProductionScaling con fracciones exactas, piezas hacia arriba y alternativas por preferencia), Preparar registro (`production.prepare`) y Registrar producción con lo que salió (`production.confirm`, sólo quien creó el borrador); borradores e historial con detalle. **Migración 028:** cada producción sube también sus preparaciones (y se reenvían las existentes). Pruebas: caja 2 nuevas en `RecipePersistenceTests.WebProduction`, nube `production.test.ts` (2).
 - **Charolas (W7):** copia de ConsignmentView: Ruta del día, Entregar a pantalla completa, Recoger con saldo anterior y anulación, Cobrar, Tiendas con charola habitual y estado de cuenta, Precios de charola (`consignment.price.save`) y Reporte del periodo (la nube porta Summarize y Account de la caja: anuladas fuera, % de venta con redondeo al par). Pruebas: caja `TrayPricesFromTheWebWorkLikeThePricesTab`, nube `trays.test.ts` (4).
+- **Usuarios (W8):** copia del panel Usuarios con confirmación al restablecer; en el inicio «Cambiar contraseña» (política de la caja con lista en vivo) y «¿Olvidaste tu contraseña?». La contraseña temporal ya no manda a la caja: abre «Cambiar contraseña». La nueva vale en la web al momento y llega a la caja como `user.password` (sólo el propio usuario; `IdentityService.ChangeOwnPasswordWithHash`).
 - Pruebas: caja `CloudInventoryCommandTests` (3), nube `inventory.test.ts` (4); probado en el navegador con la base de demostración (saldo inicial, presentación, asociación, artículo nuevo, merma con motivo Otro, conteo con diferencia, activar consumo).
 
 # Web igual a la caja de escritorio y sincronización cada 5 segundos — 09/10/2026

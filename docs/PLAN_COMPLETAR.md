@@ -17,7 +17,7 @@ Base: auditoría pantalla por pantalla de la caja contra la web (09/10/2026). Ca
 | W5 | Recetas: crear y editar recetas (fórmulas) y perfiles de producto con versiones, borradores, publicar y activar, alternativas | Hecho (8 cambios `recipe.*`; la caja numera las versiones) |
 | W6 | Producción en dos pasos: plan, necesidades y faltantes, alternativas, borrador, registrar con lo que salió, borradores e historial con detalle | Hecho (cálculo de necesidades en la nube igual al de la caja; `production.prepare` / `production.confirm`; migración 028) |
 | W7 | Charolas: resumen de ruta, ayuda, entregar como en la caja, recoger con saldo anterior, estado de cuenta, precios de charola, reporte | Hecho (`consignment.price.save`; reporte y estado de cuenta en la nube con los cálculos de la caja) |
-| W8 | Usuarios con confirmaciones; cambiar contraseña desde la web; «¿Olvidaste tu contraseña?» | Pendiente |
+| W8 | Usuarios con confirmaciones; cambiar contraseña desde la web; «¿Olvidaste tu contraseña?» | Hecho (`user.password`; la contraseña temporal lleva a «Cambiar contraseña») |
 
 ## Caja igual a la web
 

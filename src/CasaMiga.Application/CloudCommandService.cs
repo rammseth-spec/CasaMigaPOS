@@ -102,6 +102,7 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
             case "user.update": identity.UpdateUser(Id(p, "id"), Text(p, "displayName"), Text(p, "role")); break;
             case "user.active": identity.SetActive(Id(p, "id"), Bool(p, "active")); break;
             case "user.reset_password": identity.ResetPasswordWithHash(Id(p, "id"), Text(p, "passwordHash")); break;
+            case "user.password": identity.ChangeOwnPasswordWithHash(Id(p, "id"), Text(p, "passwordHash")); break;
             case "consignment.store.save":
             {
                 var id = Id(p, "id");

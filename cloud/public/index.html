@@ -20,8 +20,29 @@
     <label class="field">Contraseña<input id="password" name="password" type="password" autocomplete="current-password" required maxlength="200"></label>
     <button type="submit" class="primary">Entrar</button>
     <p id="login-error" class="error" role="alert"></p>
+    <div class="login-links">
+      <button type="button" id="change-password" class="link">Cambiar contraseña</button>
+      <button type="button" id="forgot" class="link">¿Olvidaste tu contraseña?</button>
+    </div>
+    <p id="login-help" class="muted small" hidden>Pide a un administrador que restablezca tu contraseña en Usuarios. Te dará una contraseña temporal; al entrar con ella crearás una nueva.</p>
     <div id="dev-users" class="dev-users" hidden></div>
     <p class="muted small">Cajeros: sólo Vender. Encargados ven su sucursal; el administrador, todas.</p>
+  </form>
+  <!-- «Cambiar contraseña» como la caja: usuario, contraseña actual o temporal y la nueva dos veces. -->
+  <form id="password-form" class="login-card" autocomplete="on" hidden>
+    <img src="logo.png" alt="Casa Miga Panadería">
+    <h1>Cambiar contraseña</h1>
+    <p class="muted">Confirma tu contraseña actual o temporal y elige una nueva.</p>
+    <label class="field">Usuario<input id="pw-username" autocomplete="username" required maxlength="80" autocapitalize="none" spellcheck="false"></label>
+    <label class="field">Contraseña actual o temporal<input id="pw-current" type="password" autocomplete="current-password" required maxlength="200"></label>
+    <label class="field">Contraseña nueva<input id="pw-next" type="password" autocomplete="new-password" required maxlength="16"></label>
+    <ul id="pw-checklist" class="pw-checklist" aria-live="polite"></ul>
+    <label class="field">Confirmar contraseña nueva<input id="pw-confirm" type="password" autocomplete="new-password" required maxlength="16"></label>
+    <p id="pw-error" class="error" role="alert"></p>
+    <div class="login-actions">
+      <button type="button" id="pw-cancel" class="secondary">Cancelar</button>
+      <button type="submit" class="primary">Guardar contraseña</button>
+    </div>
   </form>
 </main>
 

@@ -130,6 +130,25 @@ public sealed class IdentityService(ILocalUnitOfWork database, IPasswords passwo
         });
     }
 
+    /// <summary>
+    /// «Cambiar contraseña» hecho en la versión web por el propio usuario (con su contraseña actual o temporal): ya viene como hash y queda
+    /// como definitiva. Sólo el mismo usuario, activo; el administrador también (su contraseña es suya).
+    /// </summary>
+    public void ChangeOwnPasswordWithHash(Guid userId, string passwordHash)
+    {
+        if (string.IsNullOrWhiteSpace(passwordHash)) throw new ArgumentException("Cambio de contraseña inválido.");
+        database.Run(store =>
+        {
+            if (session.Current?.Id != userId) throw new AccessDeniedException();
+            var user = store.FindUser(userId) ?? throw new ArgumentException("El usuario ya no existe.");
+            if (!user.Active) throw new ArgumentException("El usuario está inactivo.");
+            store.SetPassword(user.Id, passwordHash, mustChangePassword: false);
+            store.AddAudit(new(Guid.NewGuid(), user.Id, null, "identity.password.changed", user.Id, clock.UtcNow,
+                JsonSerializer.Serialize(new { fromTemporary = user.MustChangePassword, source = "web" })));
+            return true;
+        });
+    }
+
     /// <summary>Restablecimiento hecho en la versión web: la contraseña temporal ya viene como hash; debe cambiarse al entrar.</summary>
     public void ResetPasswordWithHash(Guid userId, string passwordHash)
     {
