@@ -5,6 +5,7 @@ import { ProtocolError } from './protocol.js';
 import { identityHash, requirePermission, temporaryPassword, type WebUser } from './auth.js';
 import { isUuid, MAIN_LOCATION } from './web.js';
 import { parsePlan, productionPlan } from './planning.js';
+import { project, settle } from './optimistic.js';
 import type { Query, Row } from './panel.js';
 
 export const KINDS = ['category.save', 'product.save', 'product.active', 'user.create', 'user.update', 'user.active', 'user.reset_password',
@@ -381,6 +382,8 @@ export async function createCommand(q: Query, user: WebUser, branchId: unknown, 
   const commandId = randomUUID();
   await q(`INSERT INTO branch_command(id, branch_id, kind, payload, requested_by_id, requested_by_name) VALUES ($1, $2, $3, $4::jsonb, $5, $6)`,
     [commandId, branch, kind, JSON.stringify(payload!), user.id, user.name]);
+  // I1: catálogo, usuarios y tiendas se ven cambiados en la web desde ya; la caja lo confirma o, si lo rechaza, se regresa.
+  await project(q, branch, commandId, kind as string, payload!);
   return { id: commandId, kind: kind as Kind, ...(temporary ? { temporaryPassword: temporary } : {}) };
 }
 
@@ -676,5 +679,6 @@ export async function recordResults(q: Query, terminal: { id: string; branchId: 
     SELECT r.id, $1, r.status, r.message FROM jsonb_to_recordset($2::jsonb) AS r(id uuid, status text, message text)
     WHERE EXISTS (SELECT 1 FROM branch_command c WHERE c.id = r.id AND c.branch_id = $3)
     ON CONFLICT (command_id, terminal_id) DO NOTHING`, [terminal.id, JSON.stringify(clean), terminal.branchId]);
+  await settle(q, clean.map(r => r.id));
   return { recorded: clean.length };
 }

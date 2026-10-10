@@ -1,7 +1,7 @@
 // Catálogo como la caja de escritorio (CatalogView y PhotoCropDialog de QAv1): pestañas Productos / Categorías,
 // tabla con búsqueda, filtro, inactivos y páginas de 50; editores en la misma pantalla; foto con origen, recorte manual y «Quitar foto».
 // Los cambios se mandan a la caja (lib/commands.ts) y la caja los aplica con sus reglas.
-import { api, can, command, dialog, fmt, h, icon, pesos, render, state, toast } from './app.js';
+import { api, can, command, dialog, fmt, h, icon, pendingPill, pesos, render, state, toast } from './app.js';
 
 const PAGE = 50;
 const BREAD = 'M4,5 L16,5 18,8 18,17 2,17 2,8 Z M7,5 L8.5,2 11.5,2 13,5 M10,9 A3,3 0 1 1 9.99,9';
@@ -42,7 +42,7 @@ function productsList(data, ctx) {
     const tr = h('tr', { class: 'click' + (cat.selected === p.id ? ' selected' : '') + (p.active ? '' : ' off'), tabindex: '0',
       onclick: () => { if (cat.selected === p.id && can('products.edit')) return edit(p); cat.selected = p.id; for (const r of tr.parentNode.children) r.classList.toggle('selected', r === tr); },
       ondblclick: () => can('products.edit') && edit(p) },
-      h('td', { 'data-label': 'Producto' }, thumb(p), h('span', { text: p.name + (multi() ? ` (${branchName(p.branchId)})` : '') })),
+      h('td', { 'data-label': 'Producto' }, thumb(p), h('span', { text: p.name + (multi() ? ` (${branchName(p.branchId)})` : '') }), pendingPill(p)),
       h('td', { 'data-label': 'SKU', text: p.sku ?? '' }), h('td', { 'data-label': 'Categoría', text: categories.get(p.categoryId)?.name ?? '' }),
       h('td', { class: 'num', 'data-label': 'Precio', text: fmt(p.price) }), h('td', { 'data-label': 'Estado', text: p.active ? 'Activo' : 'Inactivo' }));
     return tr;
@@ -277,7 +277,7 @@ function categoriesList(data) {
     const tr = h('tr', { class: 'click' + (cat.selectedCategory === c.id ? ' selected' : ''), tabindex: '0',
       onclick: () => { if (cat.selectedCategory === c.id && can('categories.edit')) return open(c); cat.selectedCategory = c.id; for (const r of tr.parentNode.children) r.classList.toggle('selected', r === tr); },
       ondblclick: () => can('categories.edit') && open(c) },
-      h('td', { 'data-label': 'Nombre', text: c.name + (multi() ? ` (${branchName(c.branchId)})` : '') }), h('td', { class: 'num', 'data-label': 'Orden', text: String(c.sortOrder) }),
+      h('td', { 'data-label': 'Nombre' }, c.name + (multi() ? ` (${branchName(c.branchId)})` : ''), pendingPill(c)), h('td', { class: 'num', 'data-label': 'Orden', text: String(c.sortOrder) }),
       h('td', { 'data-label': 'Activa' }, h('input', { type: 'checkbox', checked: c.active, disabled: true, 'aria-label': c.active ? 'Activa' : 'Inactiva' })));
     return tr;
   });

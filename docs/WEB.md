@@ -11,6 +11,7 @@ Decisiones del usuario (07/10/2026): consultar todo lo que se ve en la caja; edi
 | Caja → nube | Ventas, devoluciones, cortes, gastos/retiros/entradas, bitácora, sucursal, usuarios (sólo el hash), permisos, categorías, productos, fotos (miniatura de 512 px), charolas (tiendas, charola habitual, precios, entregas, recolecciones, cobros), inventario, recetas y producción | Cola local `sync_outbox` (migraciones 018, 019 y 023). Cada entrada dice qué registro cambió; el contenido se lee al enviar, así que llega el estado más reciente. Lotes de hasta 1.5 MB. |
 | Nube | Historial inmutable (`sync_event`) y último contenido de cada registro (`entity_state`) | `cloud/db/002_web.sql`; las migraciones de la nube se aplican solas al primer acceso, con candado. |
 | Nube → caja | Cambios hechos en la web (`branch_command`) | Después de subir lo pendiente, la caja pide los cambios de su sucursal, los aplica en orden con sus propias reglas y permisos, informa el resultado (`command_result`) y sube lo que cambió. Registro local en `cloud_command` (migración 024): aplicar dos veces no repite nada. |
+| Caja → nube (ventas web) | Lo registrado en las cajas web de la sucursal | `GET /api/sync/web-sales?after=caja:seq,…`: la caja baja ventas, devoluciones, turnos, conteos y movimientos web a una copia local de sólo lectura (migración 029) para sus reportes (D5). |
 
 ## Acceso
 
@@ -85,3 +86,7 @@ El código de la nube es TypeScript con importaciones `.js` (estilo NodeNext): V
 - El administrador de cualquier sucursal entra como administrador de todas (decisión «un solo administrador», SYNC_PLAN). Con varias sucursales conviene que sea la misma persona.
 - Si dos personas guardan el mismo producto en la web en el mismo instante, puede quedar el primero de los dos guardados (caso extremo; se corrige guardando otra vez).
 - Estado más reciente: dentro de una misma caja manda el orden de su cola (aunque su reloj se atrase); entre cajas distintas, la hora en que se encoló.
+
+## Cambios que se ven al momento (I1)
+
+Categorías, productos, usuarios y tiendas cambiados en la web se ven y funcionan en la web desde que se guardan, aunque la caja esté apagada (un usuario nuevo o con contraseña restablecida ya entra a la web; un precio nuevo ya cobra en la Venta web). La nube escribe en `entity_state` lo que la caja dejará y lo marca con `pending_command` (migración de la nube 008); las pantallas lo muestran «Por confirmar». Cuando la caja sube su versión, ésa gana. Si la caja lo rechaza, el registro vuelve a lo último que subió la caja (o desaparece si era nuevo) y los cambios que siguen pendientes se vuelven a poner encima; el motivo sale en «Enviado a la caja» y en Nube → Cajas y cambios. Inventario, producción, recetas y la ruta de charolas siguen esperando a que la caja los aplique.

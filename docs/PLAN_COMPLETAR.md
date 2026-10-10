@@ -33,6 +33,6 @@ Base: auditoría pantalla por pantalla de la caja contra la web (09/10/2026). Ca
 
 | Fase | Qué | Estado |
 |---|---|---|
-| I1 | Lo que se cambia en la web se ve al momento en la web aunque la caja esté apagada (catálogo, usuarios, tiendas); la caja lo confirma al conectarse y, si lo rechaza, se regresa | Pendiente |
+| I1 | Lo que se cambia en la web se ve al momento en la web aunque la caja esté apagada (catálogo, usuarios, tiendas); la caja lo confirma al conectarse y, si lo rechaza, se regresa | Hecho (migración de la nube 008: `entity_state.pending_command`; «Por confirmar» en Catálogo, Usuarios y Tiendas) |
 
 Fuera de alcance por ahora (necesitan decisión o equipo físico): vender sin Internet en la web, impresora térmica y cajón desde el navegador.

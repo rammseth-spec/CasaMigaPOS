@@ -83,6 +83,7 @@ label.check { display: flex; gap: 10px; align-items: center; font-size: 14px; }
 .pill.warn { background: var(--warn-soft); color: var(--warn-text); }
 .pill.bad { background: var(--error-soft); color: var(--error); }
 .pill.info { background: var(--primary-soft); color: var(--primary-hover); }
+.pending-pill { margin-left: 8px; vertical-align: middle; }
 
 /* ---------- Acceso ---------- */
 .login { min-height: 100dvh; display: grid; place-items: center; padding: 16px; }
