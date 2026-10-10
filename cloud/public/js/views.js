@@ -165,7 +165,7 @@ async function ganancia(period) {
       : `${c.coveredRevenue < c.revenue ? `Venta con costo ${fmt(c.coveredRevenue)} de ${fmt(c.revenue)}` : `Venta ${fmt(c.revenue)}`} · costo ${fmt(c.cost)} · margen ${pct(c.margin)}` }),
     extra ? h('small', { text: extra }) : null);
   return [
-    missing.length ? h('p', { class: 'notice', text: `${missing.length} productos sin costo (sin receta o con insumos sin costo); su venta no entra en la ganancia. Captura costos en Inventario.` }) : null,
+    missing.length ? h('p', { class: 'notice', text: `${missing.length} ${missing.length === 1 ? 'producto' : 'productos'} sin costo (sin receta o con insumos sin costo); su venta no entra en la ganancia. Captura costos en Inventario.` }) : null,
     h('section', { class: 'grid-2' },
       channel('Ganancia en mostrador', p.counter, `${p.counter.pieces} piezas vendidas`),
       channel('Ganancia en charolas', p.trays, `${p.trays.pieces} vendidas · ${p.trays.returned} regresaron (costo ${fmt(p.trays.returnedCost)})`)),

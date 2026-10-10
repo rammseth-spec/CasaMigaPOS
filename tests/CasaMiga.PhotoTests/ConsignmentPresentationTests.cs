@@ -149,6 +149,50 @@ public sealed class ConsignmentPresentationTests
     });
 
     [TestMethod]
+    public Task DeliveriesAndPaymentsTabsListThePeriodInTheShell() => WpfTestHost.OnUi(async () =>
+    {
+        using var fixture = new Fixture();
+        var window = OffscreenWindow(new MainWindow { DataContext = fixture.Model });
+        try
+        {
+            window.Show(); WpfTestHost.Layout(window, 1280, 820);
+            await fixture.InitializeAsync(); WpfTestHost.Layout(window, 1280, 820);
+            var model = fixture.Model.Consignment!;
+            // Una charola recogida con cobro parcial, el resto pagado aparte y otra charola que sigue en la tienda.
+            await model.StartDeliverAsync(model.Route.Single()); await model.ConfirmDeliverAsync();
+            model.StartCollect(model.Route.Single()); model.PaidText = "50.00"; await model.ConfirmCollectAsync();
+            Assert.IsTrue(model.MessageIsSuccess, model.Message);
+            model.StartPay(model.Route.Single()); await model.ConfirmPayAsync();
+            Assert.IsTrue(model.MessageIsSuccess, model.Message);
+            await model.StartDeliverAsync(model.Route.Single()); await model.ConfirmDeliverAsync();
+
+            await model.ShowAsync(ConsignmentTab.Deliveries); WpfTestHost.Layout(window, 1280, 820);
+            Assert.AreEqual("", model.Message);
+            var deliveries = Descendants<DataGrid>(window).Single(g => AutomationProperties.GetName(g) == "Entregas del periodo");
+            Assert.AreEqual(2, deliveries.Items.Count); Assert.IsTrue(deliveries.ActualHeight > 0, "Las entregas se dibujan.");
+            CollectionAssert.AreEquivalent(new[] { "Recogida", "Por recoger" }, model.PeriodDeliveries.Select(d => d.Status).ToArray());
+            Capture(window, "charolas-entregas.png");
+
+            await model.ShowAsync(ConsignmentTab.Payments); WpfTestHost.Layout(window, 1280, 820);
+            var payments = Descendants<DataGrid>(window).Single(g => AutomationProperties.GetName(g) == "Cobros del periodo");
+            Assert.AreEqual(2, payments.Items.Count); Assert.IsTrue(payments.ActualHeight > 0, "Los cobros se dibujan.");
+            Assert.AreEqual("2 cobros · $126.00", model.PeriodPaymentsTotal, "12 piezas a $10.50.");
+            Capture(window, "charolas-cobros.png");
+        }
+        finally { window.Close(); }
+    });
+
+    /// <summary>Evidencia visual opcional: con CASAMIGA_CONSIGNMENT_EVIDENCE=carpeta guarda la ventana como PNG.</summary>
+    private static void Capture(Window window, string name)
+    {
+        var folder = Environment.GetEnvironmentVariable("CASAMIGA_CONSIGNMENT_EVIDENCE"); if (string.IsNullOrEmpty(folder)) return;
+        Directory.CreateDirectory(folder);
+        var image = new System.Windows.Media.Imaging.RenderTargetBitmap((int)window.ActualWidth, (int)window.ActualHeight, 96, 96, PixelFormats.Pbgra32); image.Render(window);
+        var png = new System.Windows.Media.Imaging.PngBitmapEncoder(); png.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(image));
+        using var file = File.Create(Path.Combine(folder, name)); png.Save(file);
+    }
+
+    [TestMethod]
     public Task CollectingFillsTheShellPageWithoutScrollingIt() => WpfTestHost.OnUi(async () =>
     {
         using var fixture = new Fixture();

@@ -156,7 +156,7 @@ public sealed class ReportsViewModel(ReportService service, Action<string, strin
     public string TrayProfit => Profit is { } p ? ChannelValue(p.Trays) : "";
     public string TrayProfitDetail => Profit is { } p ? $"{ChannelDetail(p.Trays)}\n{p.Trays.Pieces} vendidas · {p.Returned} regresaron (costo {Format(p.ReturnedCost)})" : "";
     public string MissingCosts => Profit is { } p && p.Costs.Count(c => c.Cost is null) is var n and > 0
-        ? $"{n} productos sin costo (sin receta o con insumos sin costo); su venta no entra en la ganancia. Captura costos en Inventario → Costo de referencia." : "";
+        ? $"{n} {(n == 1 ? "producto" : "productos")} sin costo (sin receta o con insumos sin costo); su venta no entra en la ganancia. Captura costos en Inventario → Costo de referencia." : "";
     public bool HasMissingCosts => MissingCosts.Length > 0;
 
     public DateTime? FromSelected { get; set; } = DateTime.Today;

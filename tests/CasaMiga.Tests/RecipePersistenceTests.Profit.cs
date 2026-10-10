@@ -54,7 +54,7 @@ public sealed partial class RecipePersistenceTests
         await model.ShowAsync(ReportTab.Profit);
         Assert.IsTrue(model.HasProfit);
         Assert.AreEqual("—", model.CounterProfit, "No costs yet.");
-        StringAssert.Contains(model.MissingCosts, "1 productos sin costo");
+        StringAssert.Contains(model.MissingCosts, "1 producto sin costo");
         StringAssert.StartsWith(model.Csv()!, "Ganancia,");
         StringAssert.StartsWith(model.SuggestedFileName, "CasaMiga-ganancia-");
         var cashier = new ReportsViewModel(new ReportService(work, user, TimeZoneInfo.Local), (_, _) => { });
