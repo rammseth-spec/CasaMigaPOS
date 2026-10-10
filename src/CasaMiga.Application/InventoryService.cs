@@ -80,12 +80,13 @@ public sealed class InventoryService(IInventoryStore inventory, ILocalReadUnitOf
             ?? throw Error(InventoryError.InconsistentBalance, "El saldo confirmado no pudo leerse."));
     }
 
+    /// <param name="id">Lo fija la web cuando el alta se pide desde ahí; en la caja se genera.</param>
     public InventoryItem CreateInventoryItem(string code, string name, InventoryItemKind kind,
-        InventoryDimension dimension)
+        InventoryDimension dimension, Guid? id = null)
     {
         var actor = Authorize("inventory.configure");
         var at = clock.UtcNow.ToUniversalTime();
-        var item = Guard(() => new InventoryItem(Guid.NewGuid(), code, name, kind, dimension, true, at, at), InventoryError.Conflict);
+        var item = Guard(() => new InventoryItem(id ?? Guid.NewGuid(), code, name, kind, dimension, true, at, at), InventoryError.Conflict);
         RunStore(() => inventory.CreateItem(item, Audit(actor, "inventory.item.created", item.Id, null, ItemSnapshot(item), at)));
         return item;
     }

@@ -77,7 +77,8 @@ public sealed class SyncOutboxTests
         var db = new Database(Path.Combine(directory, "cash.db")); db.Initialize();
         var app = Open(db);
         Assert.AreEqual("audit_entry:insert", Commercial(db), "Bootstrap audit is queued.");
-        StringAssert.StartsWith(Outbox(db), "branch:insert,role_permission:insert,measurement_unit:insert,inventory_location:insert,app_user:insert", "Seeded master data first, then the administrator.");
+        StringAssert.StartsWith(Outbox(db), "branch:insert,role_permission:insert,measurement_unit:insert,inventory_location:insert,branch:update,app_user:insert",
+            "Seeded master data first (027 sends the branch again with the sale-consumption state), then the administrator.");
         var opened = app.Cash.Open(app.Terminal.Id, new Money(50000));
         var closing = new CashClosingService(app.Work, app.Session, clock);
         closing.SubmitCount(opened.Session.Id, new Money(50000));
@@ -113,8 +114,8 @@ public sealed class SyncOutboxTests
         db.Initialize(); db.Validate();
         Assert.AreEqual((long)Database.LatestVersion, Scalar(db, "SELECT max(version) FROM schema_migration"));
         Assert.AreEqual("cash_session:insert,audit_entry:insert,audit_entry:insert", Commercial(db), "Sessions are queued before audit history.");
-        Assert.AreEqual("cash_session:insert,audit_entry:insert,audit_entry:insert,branch:insert,role_permission:insert,app_user:insert,measurement_unit:insert,inventory_location:insert", Outbox(db),
-            "018 queues history first; 023 then queues master data once, users before what they created.");
+        Assert.AreEqual("cash_session:insert,audit_entry:insert,audit_entry:insert,branch:insert,role_permission:insert,app_user:insert,measurement_unit:insert,inventory_location:insert,branch:update", Outbox(db),
+            "018 queues history first; 023 then queues master data once, users before what they created; 027 sends the branch with the sale-consumption state.");
         Assert.AreEqual(auditsBefore, Scalar(db, "SELECT count(*) FROM audit_entry"));
 
         var queued = (long)Scalar(db, "SELECT count(*) FROM sync_outbox")!;

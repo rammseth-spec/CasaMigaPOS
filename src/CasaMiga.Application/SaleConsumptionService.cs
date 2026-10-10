@@ -16,6 +16,24 @@ public sealed record ConsumptionPreflight(ConsumptionStatus Status,DateTimeOffse
     public long CurrentVersion=>Status.Version;
 }
 public sealed record ConsumptionTransition(bool NoChange,ConsumptionStatus Status);
+/// <summary>Cómo se explica cada problema de «Verificar configuración», igual en la caja y en lo que ve la web.</summary>
+public static class ConsumptionProblems
+{
+    public static string Describe(PreflightIssue issue)
+    {
+        var product=issue.ProductName??issue.InventoryItemName??"El artículo";
+        return issue.Code switch
+        {
+            PreflightCode.TrackedProductWithoutInventoryLink=>$"{product} controla inventario pero no tiene un artículo asociado.",
+            PreflightCode.UnexpectedInventoryLink=>$"{product} tiene un artículo asociado, pero no está marcado para controlar inventario.",
+            PreflightCode.InventoryItemInactive=>$"{product} está asociado a un artículo de inventario inactivo.",
+            PreflightCode.NotInitialized=>$"{product} no tiene saldo inicial registrado.",
+            PreflightCode.ReconciliationMismatch=>"Hay diferencias entre los movimientos y las existencias. Solicita revisión administrativa; no se repararán automáticamente.",
+            PreflightCode.MainInvalid=>$"{product} requiere un almacén principal válido y activo.",
+            _=>$"{product} tiene una asociación o cantidad de inventario inválida. Revisa su configuración."
+        };
+    }
+}
 public sealed class ConsumptionException(ConsumptionError error,ConsumptionPreflight? preflight=null):Exception(error.ToString())
 {public ConsumptionError Error {get;}=error;public ConsumptionPreflight? Preflight {get;}=preflight;}
 

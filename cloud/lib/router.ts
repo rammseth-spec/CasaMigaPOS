@@ -15,7 +15,7 @@ export interface Env { SESSION_SECRET?: string; PANEL_TIME_ZONE?: string; BACKUP
 const VIEW: Record<string, string> = {
   dashboard: 'sales.view', sales: 'sales.view', sale: 'sales.view', compare: 'sales.view', heatmap: 'sales.view', 'cash-control': 'sales.view',
   'production-suggestion': 'sales.view', report: 'sales.view', forecast: 'sales.view', terminals: 'sales.view', cash: 'cash.view', consignment: 'consignment.view', catalog: 'catalog.view',
-  photo: 'catalog.view', pos: 'pos.use', 'pos-tickets': 'pos.use', 'pos-ticket': 'pos.use', 'pos-closures': 'cash.view', route: 'consignment.view', profit: 'recipe.view', 'tray-analytics': 'consignment.view', backups: 'users.manage', backup: 'users.manage', inventory: 'inventory.view', recipes: 'recipe.view', production: 'production.view', users: 'users.manage', commands: 'sales.view',
+  photo: 'catalog.view', pos: 'pos.use', 'pos-tickets': 'pos.use', 'pos-ticket': 'pos.use', 'pos-closures': 'cash.view', route: 'consignment.view', profit: 'recipe.view', 'tray-analytics': 'consignment.view', backups: 'users.manage', backup: 'users.manage', inventory: 'inventory.view', 'inventory-item': 'inventory.view', 'inventory-check': 'inventory.sale_consumption.configure', recipes: 'recipe.view', production: 'production.view', users: 'users.manage', commands: 'sales.view',
 };
 
 function me(user: WebUser) {
@@ -132,6 +132,13 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
         return new Response(new Uint8Array(image.bytes), { headers: { 'content-type': 'image/jpeg', etag: `"${image.sha}"`, 'cache-control': 'private, max-age=86400' } });
       }
       case 'inventory': return json(200, await web.inventory(q, branch, timeZone));
+      case 'inventory-item': return json(200, await web.inventoryItem(q, branch, url.searchParams.get('id') ?? '', Number(url.searchParams.get('page') ?? '0')));
+      case 'inventory-check': {
+        // Una caja a la vez, como «Verificar configuración» en la caja.
+        const where = url.searchParams.get('branch') ? branch : user.admin ? null : user.branchId;
+        if (!where) throw new ProtocolError('Elige la sucursal', 400);
+        return json(200, await web.consumptionCheck(q, where));
+      }
       case 'recipes': return json(200, await web.recipes(q, branch));
       case 'production': return json(200, await web.production(q, range()));
       case 'users': return json(200, await web.users(q, branch));

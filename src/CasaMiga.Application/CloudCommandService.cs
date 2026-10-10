@@ -51,7 +51,7 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
             Execute(command, session);
         }
         catch (Exception error) when (error is AccessDeniedException or ArgumentException or CatalogException or ConsignmentException or InvalidCommandException or KeyNotFoundException
-            or ProductPhotoException or ProductionDomainException
+            or ProductPhotoException or ProductionDomainException or ConsumptionException
             or InventoryApplicationException { Error: not (InventoryError.ConcurrencyConflict or InventoryError.InconsistentBalance) }
             or ProductionException { Code: not (ProductionFailure.ConcurrencyConflict or ProductionFailure.RecoveryInconsistent) })
         {
@@ -149,6 +149,55 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
                 else Inventory(session).AdjustToPhysicalCount(new(command.Id, item, location, Quantity(p), Text(p, "unitCode"), Reason<AdjustmentReason>(p), Optional(p, "note")));
                 break;
             }
+            case "inventory.opening":
+            {
+                if (Modules.Inventory.FindOperation(command.Id) is not null) break;
+                Inventory(session).RegisterOpeningBalance(new(command.Id, Id(p, "itemId"), Id(p, "locationId"), Quantity(p), Text(p, "unitCode"), Optional(p, "reference")));
+                break;
+            }
+            // Artículos, presentaciones y asociaciones como en Inventario de la caja; si el cambio ya quedó (reintento), no se repite.
+            case "inventory.item.save":
+            {
+                var id = Id(p, "id");
+                if (Modules.Inventory.FindItem(id) is { } item) Inventory(session).UpdateInventoryItemMetadata(id, Text(p, "name"), Choice<InventoryItemKind>(p, "kind"), item.Dimension);
+                else Inventory(session).CreateInventoryItem(Text(p, "code"), Text(p, "name"), Choice<InventoryItemKind>(p, "kind"), Choice<InventoryDimension>(p, "dimension"), id);
+                break;
+            }
+            case "inventory.item.active":
+                try { Inventory(session).SetInventoryItemActive(Id(p, "id"), Bool(p, "active")); }
+                catch (InventoryApplicationException error) when (error.Error == InventoryError.InsufficientStock)
+                { throw new ArgumentException("No se puede desactivar un artículo con existencia.", error); }
+                break;
+            case "inventory.unit.add":
+            {
+                var item = Id(p, "itemId"); var code = Text(p, "code"); var atomic = Long(p, "atomic");
+                if (Modules.Inventory.FindItemUnit(item, code) is { } unit && unit.AtomicUnitsPerWholeUnit == atomic && unit.Name == Text(p, "name").Trim()) break;
+                Inventory(session).AddInventoryItemUnit(item, code, Text(p, "name"), atomic);
+                break;
+            }
+            case "inventory.link":
+            {
+                var product = Id(p, "productId"); var item = Id(p, "itemId"); var atomic = Long(p, "atomic");
+                if (Modules.Inventory.FindActiveProductLink(product) is { } link && link.InventoryItemId == item && link.QuantityAtomic == atomic) break;
+                Inventory(session).LinkProductToInventoryItem(product, item, atomic);
+                break;
+            }
+            case "inventory.unlink":
+            {
+                var product = Id(p, "productId");
+                if (Modules.Inventory.FindActiveProductLink(product) is null) break;
+                Inventory(session).UnlinkProductFromInventoryItem(product);
+                break;
+            }
+            // Consumo automático por ventas: la web manda el estado que vio; si otro lo cambió antes, se rechaza como en la caja.
+            case "inventory.consumption":
+            {
+                var consumption = new SaleConsumptionService(database, Modules.Security, session, clock, terminalId);
+                var current = consumption.GetStatus();
+                var expected = new ConsumptionStatus(Choice<InventorySaleConsumptionState>(p, "state"), Long(p, "version"), current.UpdatedUtc, current.UpdatedBy);
+                consumption.Change(Choice<ConsumptionAction>(p, "action"), expected);
+                break;
+            }
             case "production.record": RecordProduction(command, session); break;
             case "product.photo":
             {
@@ -219,6 +268,10 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
         ProductionException { Code: ProductionFailure.NotFound } => "La receta ya no existe o cambió de versión; actualiza la página.",
         ProductionException => "No se pudo registrar la producción con esos datos.",
         ProductionDomainException => "Revisa las cantidades y la configuración de la receta.",
+        ConsumptionException { Preflight: { } check } => "Corrige antes de activar o reanudar: " + string.Join(" ", check.Problems.Take(5).Select(ConsumptionProblems.Describe)) +
+            (check.Problems.Count > 5 ? $" Y {check.Problems.Count - 5} más." : ""),
+        ConsumptionException { Error: ConsumptionError.ConcurrencyConflict } => "Otro administrador cambió el estado del consumo automático. Actualiza y revisa antes de intentar nuevamente.",
+        ConsumptionException => "Este cambio no está disponible desde el estado actual del consumo automático.",
         _ => error.Message,
     };
 
@@ -260,6 +313,8 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
     /// <summary>Cantidad como texto decimal («2.5»), para no perder exactitud en el camino; la caja la convierte a su unidad mínima.</summary>
     private static decimal Quantity(JsonObject p) =>
         decimal.TryParse(Text(p, "quantity"), System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out var value) ? value : throw new InvalidCommandException();
-    private static T Reason<T>(JsonObject p) where T : struct, Enum =>
-        Enum.TryParse<T>(Text(p, "reason"), false, out var value) && Enum.IsDefined(value) && !int.TryParse(Text(p, "reason"), out _) ? value : throw new InvalidCommandException();
+    private static T Reason<T>(JsonObject p) where T : struct, Enum => Choice<T>(p, "reason");
+    /// <summary>Valor de una enumeración por su nombre exacto («RawMaterial», «Pause»); nunca por número.</summary>
+    private static T Choice<T>(JsonObject p, string name) where T : struct, Enum =>
+        Enum.TryParse<T>(Text(p, name), false, out var value) && Enum.IsDefined(value) && !int.TryParse(Text(p, name), out _) ? value : throw new InvalidCommandException();
 }

@@ -15,7 +15,12 @@ export const KINDS = ['category.save', 'product.save', 'product.active', 'user.c
   // Fase 3 del POS web (docs/POS_WEB.md): entradas, mermas y conteos de inventario, producción hecha y foto del producto.
   'inventory.receive', 'inventory.waste', 'inventory.count', 'production.record', 'product.photo',
   // Catálogo como la caja: quitar la foto de un producto.
-  'product.photo.remove'] as const;
+  'product.photo.remove',
+  // Inventario como la caja (W4): saldo inicial, artículos, presentaciones, asociaciones con productos y consumo automático por ventas.
+  'inventory.opening', 'inventory.item.save', 'inventory.item.active', 'inventory.unit.add', 'inventory.link', 'inventory.unlink', 'inventory.consumption'] as const;
+const ITEM_KINDS = ['RawMaterial', 'FinishedGood', 'Packaging', 'Supply'];
+const DIMENSIONS: Record<string, string> = { Mass: 'MASS', Volume: 'VOLUME', Count: 'COUNT' };
+const CONSUMPTION: Record<string, [string, string]> = { Enable: ['Disabled', 'ENABLED'], Pause: ['Enabled', 'PAUSED'], Resume: ['Paused', 'ENABLED'] };
 const METHODS = ['CASH', 'CARD', 'TRANSFER'];
 /** Unidades del sistema (InventoryUnits de la caja): dimensión y cuántas unidades mínimas tiene cada una. */
 const UNITS: Record<string, [string, number]> = { mg: ['MASS', 1], g: ['MASS', 1_000], kg: ['MASS', 1_000_000], uL: ['VOLUME', 1], ml: ['VOLUME', 1_000], L: ['VOLUME', 1_000_000], piece: ['COUNT', 1] };
@@ -48,6 +53,41 @@ function bool(v: unknown, field: string): boolean {
 async function queued(q: Query, branch: string, kind: string, entityId: string): Promise<boolean> {
   return (await q(`SELECT 1 FROM branch_command c WHERE c.branch_id = $1 AND c.kind = $2 AND c.payload->>'id' = $3
     AND NOT EXISTS (SELECT 1 FROM command_result r WHERE r.command_id = c.id AND r.status = 'rejected')`, [branch, kind, entityId])).length > 0;
+}
+
+/** Un cambio de ese tipo para ese registro ya está en la fila (sin rechazo): no se manda dos veces. */
+async function sent(q: Query, branch: string, kind: string, key: string, value: string): Promise<boolean> {
+  return (await q(`SELECT 1 FROM branch_command c WHERE c.branch_id = $1 AND c.kind = $2 AND c.payload->>$3 = $4
+    AND NOT EXISTS (SELECT 1 FROM command_result r WHERE r.command_id = c.id)`, [branch, kind, key, value])).length > 0;
+}
+
+/** Estado del consumo automático por ventas que subió la caja (dentro de la sucursal), o null si su versión todavía no lo sube. */
+export async function consumptionState(q: Query, branch: string): Promise<{ state: string; version: number; updatedAt: string; updatedBy: string | null } | null> {
+  const [row] = await q(`SELECT payload->'sale_consumption' AS c FROM entity_state WHERE branch_id = $1 AND entity = 'branch' AND NOT deleted`, [branch]);
+  const c = row?.c as Row | null | undefined;
+  if (!c || !s(c.state)) return null;
+  return { state: s(c.state), version: Number(c.version), updatedAt: s(c.updated_utc), updatedBy: c.updated_by ? s(c.updated_by) : null };
+}
+
+async function activeItem(q: Query, branch: string, itemId: unknown) {
+  const found = await state(q, branch, 'inventory_item', id(itemId, 'Artículo')) as (Row & { item: Row; units?: Row[] }) | null;
+  if (!found) throw new ProtocolError('Artículo inexistente', 404);
+  if (Number(found.item.active) !== 1) throw new ProtocolError('El artículo está inactivo');
+  return found;
+}
+
+/**
+ * Cantidad en la unidad de captura de la caja (g, ml o pieza), como InventoryDisplay.ParseCapture: hasta 3 decimales en g/ml,
+ * enteros en piezas. Devuelve unidades mínimas (mg, µL, pieza).
+ */
+function capture(v: unknown, dimension: string, field: string): number {
+  const value = s(v).trim();
+  const count = dimension === 'COUNT';
+  if (!(count ? /^\d{1,9}$/ : /^\d{1,9}(\.\d{1,3})?$/).test(value)) throw new ProtocolError(`${field}: ${count ? 'piezas enteras' : 'número con punto decimal, hasta 3 decimales'}`);
+  const [whole, fraction = ''] = value.split('.');
+  const atomic = count ? Number(whole) : Number(whole) * 1000 + Number(fraction.padEnd(3, '0'));
+  if (atomic <= 0) throw new ProtocolError(`${field}: mayor que cero`);
+  return atomic;
 }
 
 async function state(q: Query, branch: string, entity: string, entityId: string): Promise<Row | null> {
@@ -202,6 +242,86 @@ export async function createCommand(q: Query, user: WebUser, branchId: unknown, 
       const product = id(b.productId, 'Producto');
       if (!(await state(q, branch, 'product', product))) throw new ProtocolError('Producto inexistente', 404);
       payload = { productId: product };
+      break;
+    }
+    case 'inventory.opening': {
+      // Como «Saldo inicial» en la caja: sólo el administrador, una vez por artículo, y puede ser cero.
+      requirePermission(user, 'inventory.adjust');
+      if (!user.admin) throw new ProtocolError('El saldo inicial lo registra el administrador', 403);
+      const base = await stock(q, branch, b, true);
+      const found = await state(q, branch, 'inventory_item', base.itemId) as (Row & { balances: Row[] });
+      if (found.balances.some(x => s(x.location_id) === base.locationId)) throw new ProtocolError('Este artículo ya tiene saldo inicial; usa Conteo físico');
+      if (await sent(q, branch, 'inventory.opening', 'itemId', base.itemId)) throw new ProtocolError('Ya se mandó el saldo inicial de este artículo; espera a que la caja lo aplique');
+      payload = { ...base, ...optional(b.reference, 'Referencia', 160, 'reference') };
+      break;
+    }
+    case 'inventory.item.save': {
+      requirePermission(user, 'inventory.configure');
+      const target = id(b.id, 'Artículo');
+      const existing = await state(q, branch, 'inventory_item', target) as (Row & { item: Row }) | null;
+      const kindValue = s(b.kind);
+      if (!ITEM_KINDS.includes(kindValue)) throw new ProtocolError('Tipo de artículo inválido');
+      const name = text(b.name, 'Nombre', 1, 160);
+      if (existing) {
+        // El código y la dimensión quedan fijos después de crear, como en la caja.
+        payload = { id: target, name, kind: kindValue };
+      } else {
+        const code = text(b.code, 'Código', 1, 80);
+        if (!DIMENSIONS[s(b.dimension)]) throw new ProtocolError('Dimensión inválida');
+        const [taken] = await q(`SELECT 1 FROM entity_state WHERE branch_id = $1 AND entity = 'inventory_item' AND upper(payload->'item'->>'code') = upper($2)`, [branch, code]);
+        if (taken) throw new ProtocolError('Ya existe un artículo con ese código');
+        payload = { id: target, code, name, kind: kindValue, dimension: s(b.dimension) };
+      }
+      break;
+    }
+    case 'inventory.item.active': {
+      requirePermission(user, 'inventory.configure');
+      const target = id(b.id, 'Artículo');
+      const found = await state(q, branch, 'inventory_item', target) as (Row & { item: Row; balances: Row[] }) | null;
+      if (!found) throw new ProtocolError('Artículo inexistente', 404);
+      const active = bool(b.active, 'Activo');
+      if (!active && found.balances.some(x => s(x.location_id) === MAIN_LOCATION && Number(x.quantity_atomic) !== 0)) throw new ProtocolError('No se puede desactivar un artículo con existencia');
+      payload = { id: target, active };
+      break;
+    }
+    case 'inventory.unit.add': {
+      requirePermission(user, 'inventory.configure');
+      const item = await activeItem(q, branch, b.itemId);
+      const code = text(b.code, 'Código', 1, 80);
+      if (UNITS[code] || (item.units ?? []).some(u => s(u.code).toUpperCase() === code.toUpperCase())) throw new ProtocolError('Ya existe una presentación con ese código');
+      payload = { itemId: s(item.item.id), code, name: text(b.name, 'Nombre', 1, 100), atomic: capture(b.quantity, s(item.item.dimension), 'Cantidad por presentación') };
+      break;
+    }
+    case 'inventory.link': {
+      requirePermission(user, 'inventory.configure');
+      const item = await activeItem(q, branch, b.itemId);
+      const product = id(b.productId, 'Producto');
+      const found = await state(q, branch, 'product', product) as (Row & { product: Row; inventoryLinks?: Row[] }) | null;
+      if (!found) throw new ProtocolError('Producto inexistente', 404);
+      if ((found.inventoryLinks ?? []).some(l => Number(l.active) === 1)) throw new ProtocolError('El producto ya tiene una asociación activa; desvincúlalo primero');
+      payload = { itemId: s(item.item.id), productId: product, atomic: capture(b.quantity, s(item.item.dimension), 'Cantidad por unidad vendida') };
+      break;
+    }
+    case 'inventory.unlink': {
+      requirePermission(user, 'inventory.configure');
+      const product = id(b.productId, 'Producto');
+      const found = await state(q, branch, 'product', product) as (Row & { inventoryLinks?: Row[] }) | null;
+      if (!found || !(found.inventoryLinks ?? []).some(l => Number(l.active) === 1)) throw new ProtocolError('El producto no tiene una asociación activa');
+      payload = { productId: product };
+      break;
+    }
+    case 'inventory.consumption': {
+      requirePermission(user, 'inventory.sale_consumption.configure');
+      const action = s(b.action);
+      if (!CONSUMPTION[action]) throw new ProtocolError('Acción inválida');
+      const current = await consumptionState(q, branch);
+      if (!current) throw new ProtocolError('La caja todavía no sube el estado del consumo automático; actualízala', 409);
+      const [from] = CONSUMPTION[action];
+      if (current.state !== from.toUpperCase() || int(b.version, 'Versión', 1, Number.MAX_SAFE_INTEGER) !== current.version)
+        throw new ProtocolError('El estado cambió; actualiza la página y revisa antes de intentar nuevamente', 409);
+      if (await sent(q, branch, 'inventory.consumption', 'version', String(current.version)))
+        throw new ProtocolError('Ya se mandó un cambio del consumo automático; espera a que la caja lo aplique', 409);
+      payload = { action, state: from, version: current.version };
       break;
     }
   }

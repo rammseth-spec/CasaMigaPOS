@@ -105,7 +105,10 @@ public sealed class SqliteSyncOutbox(Database database)
             "sale_refund" => One("SELECT * FROM sale_refund WHERE id=$id") is { } refund
                 ? new JsonObject { ["refund"] = refund, ["items"] = Many("SELECT * FROM sale_refund_item WHERE refund_id=$id ORDER BY position") }
                 : null,
-            "branch" => One("SELECT id,name,created_utc FROM branch WHERE id=$id"),
+            // Con el estado del consumo automático por ventas (uno por caja), para Inventario en la web.
+            "branch" => One("SELECT id,name,created_utc FROM branch WHERE id=$id") is { } branch
+                ? With(branch, "sale_consumption", One("SELECT state,version,updated_utc,updated_by FROM inventory_sale_consumption_config WHERE id=1 AND $id IS NOT NULL"))
+                : null,
             // El hash (PBKDF2-SHA512, 210 000 iteraciones) permite entrar a la versión web con la misma contraseña de la caja.
             "app_user" => One("SELECT id,username,display_name,password_hash,role_name,active,must_change_password,created_utc FROM app_user WHERE id=$id"),
             "role_permission" => new JsonObject { ["rows"] = Many("SELECT role_name,permission_name FROM role_permission WHERE $id='all' ORDER BY role_name,permission_name") },
@@ -173,6 +176,8 @@ public sealed class SqliteSyncOutbox(Database database)
         };
         return payload ?? throw new InvalidDataException($"No existe el registro {entry.Entity} {entry.EntityId} de la cola.");
     }
+
+    private static JsonObject With(JsonObject row, string name, JsonNode? value) { row[name] = value; return row; }
 
     /// <summary>Foto vigente del producto con su miniatura (JPEG de 512 px) en base64; sin foto, sólo la marca.</summary>
     private static JsonObject PhotoPayload(JsonObject photo, JsonObject? asset, string dataDirectory)

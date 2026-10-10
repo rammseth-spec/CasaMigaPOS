@@ -42,18 +42,5 @@ public sealed class ConsumptionViewModel(SaleConsumptionService service):INotify
         catch(Exception){Message="No se pudo verificar el resultado. Actualiza el estado antes de intentar nuevamente.";}
         finally{Busy=false;Notify();}
     }
-    public static string Describe(PreflightIssue issue)
-    {
-        var product=issue.ProductName??issue.InventoryItemName??"El artículo";
-        return issue.Code switch
-        {
-            PreflightCode.TrackedProductWithoutInventoryLink=>$"{product} controla inventario pero no tiene un artículo asociado.",
-            PreflightCode.UnexpectedInventoryLink=>$"{product} tiene un artículo asociado, pero no está marcado para controlar inventario.",
-            PreflightCode.InventoryItemInactive=>$"{product} está asociado a un artículo de inventario inactivo.",
-            PreflightCode.NotInitialized=>$"{product} no tiene saldo inicial registrado.",
-            PreflightCode.ReconciliationMismatch=>"Hay diferencias entre los movimientos y las existencias. Solicita revisión administrativa; no se repararán automáticamente.",
-            PreflightCode.MainInvalid=>$"{product} requiere un almacén principal válido y activo.",
-            _=>$"{product} tiene una asociación o cantidad de inventario inválida. Revisa su configuración."
-        };
-    }
+    public static string Describe(PreflightIssue issue)=>ConsumptionProblems.Describe(issue);
 }
