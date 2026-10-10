@@ -1,3 +1,21 @@
+# Próximo paso — responder auditoría 1K.4G-A y autorizar 1K.4G-B
+
+Revisar `PHASE_1K4G_AUDIT.md` y `PHASE_1K4G_PRODUCT_MATRIX.md`. Completar `PHASE_1K4G_RECIPE_QUESTIONNAIRE.md` con datos reales de Casa Miga, empezando por:
+
+1. identificar qué productos se elaboran y cuáles son reventa;
+2. nombrar cada masa/preparación base y asignarle productos;
+3. indicar rendimiento, ingredientes y cantidades exactas;
+4. proporcionar gramaje/cantidad por pieza y extras;
+5. definir huevo/COUNT y alternativas de levadura;
+6. decidir qué productos terminados llevarán inventario;
+7. proporcionar reservas mínimas y confirmar si 1.0 requiere muestra/cortesía y uso interno.
+
+No convertir precios, fotos, nombres o el saldo de Harina del fixture en recetas confirmadas. No insertar datos, crear migración 018, iniciar 1K.4G-B, 1K.4H o reportes hasta autorización posterior. Si las respuestas confirman reservas, costos o destinos no venta persistentes, diseñar primero el alcance mínimo de 018 y detenerse antes de implementarlo.
+
+Modelo recomendado para 1K.4G-B: **GPT-6 Astra** por la reconciliación de datos comerciales con versionado, ledger y posible migración; **GPT-6 Sol** sólo si el bloque autorizado se limita a captura de datos usando schema 17 sin cambios estructurales.
+
+## Registro anterior — smoke conjunto 1K.4F-R2 + 1K.4E-R2
+
 # Próximo paso — smoke conjunto 1K.4F-R2 + 1K.4E-R2
 
 Usar exclusivamente `work/Abrir-Casa-Miga-1K4F-R2.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4F-R2`, DataDirectory `work/phase1k4f-r2-smoke-20261009`. La apertura automática queda en login y no equivale a aprobación humana.

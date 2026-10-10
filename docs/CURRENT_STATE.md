@@ -1,3 +1,15 @@
+# FASE 1K.4G-A — AUDITORÍA MAESTRA COMPLETADA, 09/10/2026
+
+El checkpoint aprobado previo se publicó mediante avance normal en `origin/QA`: `30887e85de0c3c1505c67c7c4169092e5e9b2b54` → `5f5da76f2885ce9deaa2e74f3f3f33519eced5ec`, sin commits remotos exclusivos, force, merge, rebase, reset ni rama nueva. La auditoría posterior permanece local y exclusivamente documental.
+
+La copia aislada vigente contiene 31 productos activos en cinco categorías, pero **cero fórmulas, cero perfiles de producción, cero ítems terminados vinculados y cero lotes**. Sólo existe Harina como materia prima; su saldo de 50 kg y presentación Bulto 25 kg pertenecen a la copia de revisión y no se declaran comerciales. Los 31 productos quedan `FALTA INFORMACIÓN`; 0 completos y 0 parciales.
+
+La arquitectura sí soporta fórmula base compartida, ingredientes directos, alternativas, agregación multiproducto, escala exacta MASS/VOLUME/COUNT, preview sin reserva, borrador con snapshots y confirmación atómica de consumo más salida real. Producción puede sumar producto terminado y el consumo por ventas puede restarlo, pero la copia no tiene perfiles, ítems terminados o `product_inventory_link`, y el flag de consumo está `DISABLED`.
+
+Documentos: `PHASE_1K4G_AUDIT.md`, `PHASE_1K4G_PRODUCT_MATRIX.md` y `PHASE_1K4G_RECIPE_QUESTIONNAIRE.md`. Verificación completa: **783/783** (577 generales + 206 WPF), 0 fallidas/omitidas; Release 0 errores/advertencias. Base protegida schema 16 y SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`; fixture schema 17. No se cargaron recetas ni datos comerciales, no se creó migración 018 y no se inició 1K.4G-B/1K.4H. El siguiente paso es obtener respuestas reales producto por producto y por masa.
+
+## Registro anterior — 1K.4F-R2 + 1K.4E-R2
+
 # FASES 1K.4F-R2 + 1K.4E-R2 TÉCNICAMENTE COMPLETADAS, 09/10/2026
 
 El pase controlado concluyó en dos correcciones independientes. El commit A separa en el header estado real de caja, resumen contextual, reloj clickable y F11. El commit B usa `Business.Phone` para imprimir «Pedidos por WhatsApp» y `461 276 7429`, con un raster local 1-bit de teléfono en círculo de 32×32, después de la dirección y antes del primer separador. Original y reimpresión recorren el mismo renderer; Variante 04 permanece intacta a 446 puntos.
