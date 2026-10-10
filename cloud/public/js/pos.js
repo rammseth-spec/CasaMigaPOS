@@ -128,7 +128,7 @@ function sell(data) {
     ticket.replaceChildren(
       h('div', { class: 'ticket-head' },
         h('div', {}, h('h2', { text: 'Ticket' }), h('p', { class: 'caption', text: 'Venta temporal hasta confirmar el cobro' })),
-        h('button', { type: 'button', class: 'ghost ticket-clear', disabled: !cart.size, 'aria-label': 'Limpiar', onclick: () => { cart.clear(); keepCart(); refresh(); } }, icon(ICON.trash), h('span', { text: 'Limpiar' }))),
+        h('button', { type: 'button', class: 'ghost ticket-clear', disabled: !cart.size, 'aria-label': 'Limpiar', onclick: () => discard('limpiar el carrito', () => { cart.clear(); keepCart(); refresh(); }) }, icon(ICON.trash), h('span', { text: 'Limpiar' }))),
       h('div', { class: 'ticket-body' }, cartLines()), totals());
     if (sheet?.isConnected) sheet.replaceChildren(cartLines(), totals());
     bar.replaceChildren(
@@ -142,6 +142,12 @@ function sell(data) {
     h('section', { class: 'pos-main' }, searchRow, chips, h('div', { class: 'tiles-scroll' }, grid), pager,
       h('p', { class: 'caption pos-operator', text: `Usuario: ${state.me.name} · Terminal: ${data.till.name}` })),
     ticket, bar);
+}
+
+/** Confirmación para descartar el carrito (DiscardDialog de la caja). */
+function discard(reason, done) {
+  dialog('Descartar carrito', body => body.append(h('p', { class: 'wide muted', text: `Hay partidas en el carrito temporal. Para ${reason} debes descartarlas. No se registrará una venta.` })),
+    { submit: 'Descartar', cancel: 'Conservar', onSubmit: async () => { done(); } });
 }
 
 // ---------- Cobro (CheckoutDialog) ----------
@@ -245,7 +251,7 @@ export function printTicket(r, copy = false) {
 // ---------- Tu caja ----------
 
 // Pantalla dentro de «Tu caja» (como la caja: tablero, abrir, conteo y resultado). Se conserva al redibujar.
-const cash = { screen: 'dashboard', till: null };
+const cash = { screen: 'dashboard', till: null, historyPage: 0, selected: null, detail: null };
 const MOVE = { EXPENSE: 'Gasto', DEPOSIT: 'Entrada', WITHDRAWAL: 'Retiro' };
 const MOVE_HINT = { EXPENSE: 'Efectivo que sale para pagar algo del negocio.', DEPOSIT: 'Efectivo que entra y no es venta: cambio que se trae o fondo extra.',
   WITHDRAWAL: 'Efectivo que sale a resguardo: depósito al banco o entrega al dueño. No es gasto.' };
@@ -274,7 +280,9 @@ export async function tuCaja(ctx) {
   if (cash.screen === 'counting' && s && !s.count) return counting(data);
   if (cash.screen === 'result' && s?.count) return closingResult(data);
   cash.screen = 'dashboard';
-  return dashboard(data);
+  const history = can('cash.view') ? await api('pos-closures', { till: data.till.id, page: cash.historyPage }).catch(() => null) : null;
+  if (cash.detail) return closureDetail(cash.detail);
+  return h('div', { class: 'cash-card' }, dashboard(data), history ? closures(history) : null);
 }
 const backTo = screen => { cash.screen = screen; render(); };
 const owner = s => `Abierta por: ${s.openedBy || '—'}${s.mine ? ' · Tu sesión' : ' · Cierre por otro usuario'}`;
@@ -298,8 +306,45 @@ function dashboard(data) {
     h('div', { class: 'cash-till' }, h('span', { class: 'caption', text: `Esta caja: ${data.till.name} · folios ${data.till.code}-000001…` }),
       s ? h('button', { type: 'button', class: 'ghost', onclick: () => ticketsDialog(data) }, 'Ventas de este turno') : null,
       h('button', { type: 'button', class: 'ghost', onclick: () => { saved.set(tillKey(data.branchId), null); render(); } }, 'Cambiar de caja')));
-  return h('div', { class: 'cash-card' }, h('div', { class: 'cash-wrap' }, status,
-    s && !s.count && can('cash.movement') ? movements(data) : null));
+  return h('div', { class: 'cash-wrap' }, status, s && !s.count && can('cash.movement') ? movements(data) : null);
+}
+
+const closureDate = iso => new Date(iso).toLocaleString('en-GB', { timeZone: state.timeZone, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).replace(', ', ' · ');
+const moneyOrNone = value => value === null || value === undefined ? 'No disponible' : fmt(value);
+function closures(history) {
+  const pages = Math.max(1, Math.ceil(history.total / history.pageSize));
+  const open = row => { cash.detail = row; render({ silent: true }); };
+  const rows = history.items.map(x => {
+    const tr = h('tr', { class: 'click' + (cash.selected === x.id ? ' selected' : ''), tabindex: '0',
+      onclick: () => { if (cash.selected === x.id) return open(x); cash.selected = x.id; for (const r of tr.parentNode.children) r.classList.toggle('selected', r === tr); },
+      ondblclick: () => open(x), onkeydown: e => { if (e.key === 'Enter') open(x); } },
+      h('td', { 'data-label': 'Cierre', text: closureDate(x.closedAt) }), h('td', { 'data-label': 'Caja', text: x.terminal }), h('td', { 'data-label': 'Responsable', text: x.closedBy }),
+      h('td', { class: 'num', 'data-label': 'Esperado', text: moneyOrNone(x.expected) }), h('td', { class: 'num', 'data-label': 'Contado', text: moneyOrNone(x.counted) }),
+      h('td', { 'data-label': 'Diferencia', text: x.difference === null ? 'No disponible' : differenceLabel(x.difference) }));
+    return tr;
+  });
+  return h('section', { class: 'closures' },
+    h('h2', { class: 'closures-title', text: 'Cierres anteriores' }), h('p', { class: 'caption', text: 'Sólo lectura · Cierres de esta caja' }),
+    history.total ? h('div', { class: 'table-wrap history-table' }, h('table', { class: 'cards', 'aria-label': 'Cierres anteriores' },
+      h('thead', {}, h('tr', {}, ['Cierre', 'Caja', 'Responsable', 'Esperado', 'Contado', 'Diferencia'].map((c, i) => h('th', { class: i === 3 || i === 4 ? 'num' : null, text: c })))),
+      h('tbody', {}, rows))) : h('p', { text: 'Todavía no hay cierres registrados en esta caja.', style: { marginTop: '6px' } }),
+    history.total ? h('div', { class: 'history-foot' }, h('span', { text: `${history.total} ${history.total === 1 ? 'cierre' : 'cierres'} · página ${cash.historyPage + 1} de ${pages}` }),
+      h('span', { class: 'history-actions' },
+        h('button', { type: 'button', class: 'secondary', disabled: cash.historyPage === 0, onclick: () => { cash.historyPage--; cash.selected = null; render({ silent: true }); } }, 'Anterior'),
+        h('button', { type: 'button', class: 'secondary', disabled: cash.historyPage + 1 >= pages, onclick: () => { cash.historyPage++; cash.selected = null; render({ silent: true }); } }, 'Siguiente'),
+        h('button', { type: 'button', class: 'primary', onclick: () => { const x = history.items.find(r => r.id === cash.selected); if (x) open(x); else toast('Selecciona un cierre.'); } }, 'Ver cierre'))) : null);
+}
+function closureDetail(x) {
+  setHeading('Tu caja', 'Detalle de un cierre anterior · Sólo lectura.');
+  const box = (title, lines) => h('div', { class: 'closure-box' }, h('strong', { text: title }), lines.map(l => h('p', { text: l })));
+  return h('div', { class: 'cash-card' }, h('div', { class: 'closure-detail' },
+    h('h2', { class: 'closures-title', text: 'Detalle del cierre' }), h('p', { class: 'caption', text: 'Sólo lectura', style: { marginBottom: '14px' } }),
+    h('div', { class: 'closure-boxes' },
+      box('Identificación', [`Caja: ${x.terminal}`, `Apertura: ${closureDate(x.openedAt)}`, `Abierta por: ${x.openedBy}`, `Cierre: ${closureDate(x.closedAt)}`, `Cerrada por: ${x.closedBy}`, `Conteo realizado por: ${x.countedBy}`]),
+      box('Resumen financiero', [`Fondo inicial: ${fmt(x.opening)}`, `Ventas en efectivo: ${x.expected === null ? 'No disponible' : fmt(x.expected - x.opening)}`, `Efectivo esperado: ${moneyOrNone(x.expected)}`,
+        `Efectivo contado: ${moneyOrNone(x.counted)}`, x.difference === null ? 'No disponible' : differenceLabel(x.difference)]),
+      box('Nota de discrepancia', [x.note ?? 'Sin nota registrada'])),
+    h('div', { class: 'toolbar', style: { marginTop: '14px' } }, h('button', { type: 'button', class: 'secondary', onclick: () => { cash.detail = null; render({ silent: true }); } }, 'Volver'))));
 }
 
 function chooseTill(data) {
@@ -429,7 +474,7 @@ function movements(data) {
       list.length ? list.map(m => h('div', { class: 'move-row' },
         h('span', { class: 'caption num', text: time(m.at) }),
         h('span', { class: 'move-kind' + (m.kind === 'DEPOSIT' ? ' income' : ''), text: MOVE[m.kind] ?? m.kind }),
-        h('span', { class: 'move-detail', text: [m.category ? CATEGORY[m.category] : '', m.note].filter(Boolean).join(' · ') || '—', title: m.note || '' }),
+        h('span', { class: 'move-detail', text: [m.category ? CATEGORY[m.category] : '', m.note, m.by].filter(Boolean).join(' · ') || '—', title: [m.note, m.by].filter(Boolean).join(' · ') }),
         h('b', { class: 'num', text: `${m.kind === 'DEPOSIT' ? '+' : '−'}${fmt(m.amount)}` })))
         : h('p', { class: 'caption', text: 'Sin gastos, retiros ni entradas todavía.' })));
 }

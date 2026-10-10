@@ -10,7 +10,7 @@ Base: auditoría pantalla por pantalla de la caja contra la web (09/10/2026). Ca
 |---|---|---|
 | W1 | Marco, Punto de venta, Cobro, Tu caja | Hecho (1cb85cc) |
 | W1b | Historial de ventas (folio, días, Hoy/Ayer/Sesión actual, detalle, reimpresión, cancelar/devolver) | Hecho (9621ba7) |
-| W1c | Pendientes chicos: confirmar «Limpiar» del ticket, usuario en cada movimiento de caja, «Ver cierre» con detalle y páginas en Cierres anteriores | Pendiente |
+| W1c | Pendientes chicos: confirmar «Limpiar» del ticket, usuario en cada movimiento de caja, «Ver cierre» con detalle y páginas en Cierres anteriores | Hecho |
 | W2 | Reportes con los mismos cálculos de la caja (Resumen, Comparativo, Ventas por hora, Control de caja, Producción) + Exportar CSV; Ganancia se queda como pestaña extra | Hecho (cifras iguales a la base de la caja: 1061 ventas, $71,583.00, $278.00) |
 | W3 | Catálogo: pestañas Productos/Categorías, tabla con páginas, categoría nueva sin salir del producto, origen de foto (real/provisional), Quitar foto, recorte manual | Pendiente |
 | W4 | Inventario: consumo automático por ventas, búsqueda y filtros, alta/edición/activar artículos, presentaciones, asociaciones con productos, historial por artículo, vista previa de la operación | Pendiente |

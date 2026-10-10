@@ -78,7 +78,7 @@ async function cajaPanel() {
       kpi('Cortes', String(c.sessions), `${c.open} abiertos`),
       kpi('Gastos', fmt(c.expenses.amount), `${c.expenses.count} movimientos`),
       kpi('Retiros', fmt(c.withdrawals.amount), `${c.withdrawals.count} · efectivo a resguardo`), kpi('Entradas', fmt(c.deposits.amount), `${c.deposits.count} · cambio o fondo extra`)),
-    card(h('div', {}, h('h2', { text: 'Cierres anteriores', style: { margin: 0 } }), h('span', { class: 'caption', text: 'Sólo lectura · Cortes de todas las cajas en el periodo elegido' })), sessionsTable(data.sessions)),
+    card(h('div', {}, h('h2', { text: 'Cortes de caja de la sucursal', style: { margin: 0 } }), h('span', { class: 'caption', text: 'Sólo lectura · Todas las cajas (escritorio y web) en el periodo elegido' })), sessionsTable(data.sessions)),
     card('Gastos, retiros y entradas', table([
       { label: 'Fecha', value: m => [at(m.at), multi() ? h('small', { text: m.branch }) : null] },
       { label: 'Tipo', value: m => h('span', { class: 'pill ' + kinds[m.kind][1], text: kinds[m.kind][0] }) },
