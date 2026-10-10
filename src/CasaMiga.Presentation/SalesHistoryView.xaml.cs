@@ -21,6 +21,8 @@ public partial class SalesHistoryView : UserControl
     private async void DetailClick(object sender,RoutedEventArgs e)=>await Model.OpenDetailAsync();
     private async void SearchFolioClick(object sender,RoutedEventArgs e)=>await Model.SearchFolioAsync();
     private async void FolioKeyDown(object sender,KeyEventArgs e){if(e.Key==Key.Enter){e.Handled=true;await Model.SearchFolioAsync();}}
+    private async void FilterClick(object sender,RoutedEventArgs e)=>await Model.ApplyFiltersAsync();
+    private async void ProductKeyDown(object sender,KeyEventArgs e){if(e.Key==Key.Enter){e.Handled=true;await Model.ApplyFiltersAsync();}}
     private async void ReprintClick(object sender,RoutedEventArgs e)=>await Model.ReprintAsync();
     private void BackClick(object sender,RoutedEventArgs e)=>Model.Back();
     private async void CancelSaleClick(object sender,RoutedEventArgs e)

@@ -75,6 +75,7 @@
    <Button Content="Ventas por hora" Style="{StaticResource Tab}" Tag="{Binding IsHeatmap}" Click="HeatmapClick"/>
    <Button Content="Control de caja" Style="{StaticResource Tab}" Tag="{Binding IsCashControl}" Click="CashControlClick"/>
    <Button Content="Producción" Style="{StaticResource Tab}" Tag="{Binding IsForecast}" Click="ForecastClick" AutomationProperties.Name="Pronóstico de producción"/>
+   <Button Content="Ganancia" Style="{StaticResource Tab}" Tag="{Binding IsProfit}" Click="ProfitClick" Visibility="{Binding CanViewProfit,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Ganancia por pan"/>
   </WrapPanel>
 
   <!-- Periodo: lo comparten todas las pestañas menos Producción -->
@@ -338,6 +339,43 @@
   </StackPanel>
 
   <!-- ===== Producción ===== -->
+  <!-- Ganancia (igual que Reportes → Ganancia en la web): costo de cada pan desde su receta y el costo de referencia de los insumos. -->
+  <StackPanel Visibility="{Binding IsProfit,Converter={StaticResource VisibleWhen}}">
+   <StackPanel Visibility="{Binding HasProfit,Converter={StaticResource VisibleWhen}}">
+    <TextBlock Text="{Binding PeriodLabel}" FontSize="15" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,10,0,10"/>
+    <Border Background="{DynamicResource WarningSoftBrush}" CornerRadius="10" Padding="12" Margin="0,0,0,12" Visibility="{Binding HasMissingCosts,Converter={StaticResource VisibleWhen}}">
+     <TextBlock Text="{Binding MissingCosts}" TextWrapping="Wrap"/>
+    </Border>
+    <UniformGrid Columns="2" Margin="0,0,-12,0">
+     <Border Style="{StaticResource Kpi}"><StackPanel><TextBlock Text="Ganancia en mostrador" Style="{StaticResource KpiLabel}"/><TextBlock Text="{Binding CounterProfit}" Style="{StaticResource KpiValue}"/><TextBlock Text="{Binding CounterProfitDetail}" Style="{StaticResource CaptionText}" TextWrapping="Wrap" Margin="0,4,0,0"/></StackPanel></Border>
+     <Border Style="{StaticResource Kpi}"><StackPanel><TextBlock Text="Ganancia en charolas" Style="{StaticResource KpiLabel}"/><TextBlock Text="{Binding TrayProfit}" Style="{StaticResource KpiValue}"/><TextBlock Text="{Binding TrayProfitDetail}" Style="{StaticResource CaptionText}" TextWrapping="Wrap" Margin="0,4,0,0"/></StackPanel></Border>
+    </UniformGrid>
+    <TextBlock Text="Por pan" Style="{StaticResource Section}"/>
+    <TextBlock Text="Sin ventas en el periodo." Style="{StaticResource Empty}" Visibility="{Binding NoProfitProducts,Converter={StaticResource VisibleWhen}}"/>
+    <DataGrid ItemsSource="{Binding ProfitProducts}" MaxHeight="420" HorizontalScrollBarVisibility="Auto" Visibility="{Binding HasProfitProducts,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Ganancia por pan">
+     <DataGrid.Columns>
+      <DataGridTextColumn Header="Pan" Binding="{Binding Name}" Width="*" MinWidth="160"/>
+      <DataGridTextColumn Header="Costo/pz" Binding="{Binding Cost}" Width="Auto" MinWidth="96" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Mostrador" Binding="{Binding Counter}" Width="Auto" MinWidth="130" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Gana" Binding="{Binding CounterGain}" Width="Auto" MinWidth="90" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Charolas" Binding="{Binding Trays}" Width="Auto" MinWidth="130" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Gana" Binding="{Binding TrayGain}" Width="Auto" MinWidth="90" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Regresaron" Binding="{Binding Returned}" Width="Auto" MinWidth="100" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Ganancia" Binding="{Binding Total}" Width="Auto" MinWidth="104" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+     </DataGrid.Columns>
+    </DataGrid>
+    <TextBlock Text="Costo por pieza (desde la receta)" Style="{StaticResource Section}"/>
+    <TextBlock Text="Versión activa de cada perfil: ingredientes directos y preparaciones (con la opción preferida de cada grupo de alternativas)." Style="{StaticResource CaptionText}" Margin="0,-4,0,8"/>
+    <DataGrid ItemsSource="{Binding ProfitCosts}" MaxHeight="360" AutomationProperties.Name="Costo por pieza">
+     <DataGrid.Columns>
+      <DataGridTextColumn Header="Pan" Binding="{Binding Name}" Width="*" MinWidth="160"/>
+      <DataGridTextColumn Header="Costo" Binding="{Binding Cost}" Width="Auto" MinWidth="100" ElementStyle="{StaticResource NumericCellText}" HeaderStyle="{StaticResource NumericHeader}"/>
+      <DataGridTextColumn Header="Falta" Binding="{Binding Pending}" Width="*" MinWidth="160"/>
+     </DataGrid.Columns>
+    </DataGrid>
+   </StackPanel>
+  </StackPanel>
+
   <StackPanel Visibility="{Binding IsForecast,Converter={StaticResource VisibleWhen}}">
    <StackPanel Visibility="{Binding HasForecast,Converter={StaticResource VisibleWhen}}">
     <TextBlock Text="{Binding ForecastTitle}" FontSize="21" FontWeight="SemiBold" Margin="0,12,0,2"/>

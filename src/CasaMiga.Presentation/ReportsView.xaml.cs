@@ -20,6 +20,7 @@ public partial class ReportsView : UserControl
     private async void HeatmapClick(object sender, RoutedEventArgs e) => await Model.ShowAsync(ReportTab.Heatmap);
     private async void CashControlClick(object sender, RoutedEventArgs e) => await Model.ShowAsync(ReportTab.CashControl);
     private async void ForecastClick(object sender, RoutedEventArgs e) => await Model.ShowAsync(ReportTab.Forecast);
+    private async void ProfitClick(object sender, RoutedEventArgs e) => await Model.ShowAsync(ReportTab.Profit);
     private async void CalculateForecastClick(object sender, RoutedEventArgs e) => await Model.ForecastAsync();
     private void ExportClick(object sender, RoutedEventArgs e)
     {

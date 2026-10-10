@@ -11,7 +11,10 @@ public sealed record SalesHistoryQuery(
     DateOnly? From = null,
     DateOnly? Through = null,
     int Page = 0,
-    Guid? CashSessionId = null);
+    Guid? CashSessionId = null,
+    // D4 (como Ventas en la web): forma de pago (CASH, CARD, TRANSFER) y nombre de producto; no aplican a la búsqueda por folio.
+    string? Method = null,
+    string Product = "");
 
 public sealed record SalesHistoryFilter(
     Guid? TerminalId,
@@ -19,7 +22,9 @@ public sealed record SalesHistoryFilter(
     DateTimeOffset? FromUtc,
     DateTimeOffset? UntilUtc,
     int Page,
-    Guid? CashSessionId = null);
+    Guid? CashSessionId = null,
+    string? Method = null,
+    string? Product = null);
 
 public sealed record SalesHistoryRow(
     Guid SaleId,
@@ -85,6 +90,10 @@ public sealed class SalesHistoryService(
                 => new SalesHistoryFilter(null, null, null, null, query.Page, session),
             _ => throw new SalesHistoryException("Usa la búsqueda por folio o por fechas, no ambas.")
         };
+        if (query.Method is not (null or "CASH" or "CARD" or "TRANSFER")) throw new SalesHistoryException("La forma de pago no es válida.");
+        var product = query.Product.Trim();
+        if (product.Length > 80) throw new SalesHistoryException("El producto admite hasta 80 caracteres.");
+        if (query.Mode != SalesHistoryMode.Folio) filter = filter with { Method = query.Method, Product = product.Length == 0 ? null : product };
         var result = store.QuerySales(filter);
         if (terminalCode is null) return result;
         // Folio visible con clave de caja (C01-001061): sólo las ventas de esa caja.

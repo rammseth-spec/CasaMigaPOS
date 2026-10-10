@@ -117,6 +117,34 @@ public sealed class SalesHistoryTests : SalesFixture
         Assert.IsFalse(probe.Calls.ContainsKey(nameof(ILocalStore.FindSaleDetail)));
     }
 
+    [TestMethod] public void PaymentMethodAndProductFiltersCombineWithThePeriodBeforePaging()
+    {
+        var at=new DateTimeOffset(2027,2,3,12,0,0,TimeSpan.Zero);
+        var concha=PersistAt(at,"Concha de vainilla",1900);
+        PersistAt(at.AddMinutes(1),"Bolillo",500);
+        var card=work.Run(store =>
+        {
+            var sale=new Sale(Guid.NewGuid(),Guid.NewGuid(),user.Current!.Id,terminal.Id,cash.Id,store.NextSaleSequence(terminal.Id),at.AddMinutes(2),
+                [new SaleItem(product.Id,"CONCHA de chocolate",new Money(2000),1)],Guid.NewGuid(),new Money(2000),PaymentMethod.Card,"4242");
+            store.AddSale(sale);return sale;
+        });
+        PersistAt(at.AddDays(1),"Concha de vainilla",1900);
+
+        var day=DateOnly.FromDateTime(at.UtcDateTime);
+        Assert.AreEqual(3,History().Search(new(SalesHistoryMode.DateRange,"",day,day)).Total);
+        var conchas=History().Search(new(SalesHistoryMode.DateRange,"",day,day,Product:"concha"));
+        Assert.AreEqual(2,conchas.Total,"Product search ignores case and matches any line.");
+        CollectionAssert.AreEquivalent(new[]{concha.Id,card.Id},conchas.Items.Select(x=>x.SaleId).ToArray());
+        var cards=History().Search(new(SalesHistoryMode.DateRange,"",day,day,Method:"CARD",Product:"  Concha "));
+        Assert.AreEqual(card.Id,cards.Items.Single().SaleId);Assert.AreEqual(1,cards.Total);
+        Assert.AreEqual(0,History().Search(new(SalesHistoryMode.DateRange,"",day,day,Method:"TRANSFER")).Total);
+        Assert.AreEqual(3,History().Search(new(Product:"concha")).Total,"Combines with Todos too.");
+        Assert.AreEqual(0,History().Search(new(Product:"50%_")).Total,"% and _ are literal text.");
+        Assert.AreEqual(1,History().Search(new(SalesHistoryMode.Folio,card.Folio,Method:"CASH",Product:"nada")).Total,"A folio finds its sale regardless of the other filters.");
+        Assert.ThrowsExactly<SalesHistoryException>(()=>History().Search(new(Method:"BITCOIN")));
+        Assert.ThrowsExactly<SalesHistoryException>(()=>History().Search(new(Product:new string('a',81))));
+    }
+
     [TestMethod] public void ExactFolioSearchValidatesAndFindsOnlyTheSale()
     {
         var sale=PersistAt(clock.UtcNow);PersistAt(clock.UtcNow.AddSeconds(1));

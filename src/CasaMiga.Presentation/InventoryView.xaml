@@ -57,6 +57,7 @@
    <TextBlock Text="{Binding DetailTitle}" FontSize="25" FontWeight="SemiBold" TextWrapping="Wrap"/>
    <TextBlock Text="{Binding DetailMetadata}" TextWrapping="Wrap" Margin="0,8,0,8"/>
    <TextBlock Text="{Binding DetailBalance}" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,8"/>
+   <TextBlock Text="{Binding CostLabel}" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,-4,0,8" Visibility="{Binding CanEditCost,Converter={StaticResource VisibleWhen}}"/>
    <Border Padding="12" Margin="0,0,0,12" CornerRadius="6" BorderThickness="1">
     <Border.Style><Style TargetType="Border"><Setter Property="BorderBrush" Value="{DynamicResource SuccessBrush}"/><Style.Triggers><DataTrigger Binding="{Binding ReconciliationWarning}" Value="True"><Setter Property="BorderBrush" Value="{DynamicResource ErrorBrush}"/></DataTrigger></Style.Triggers></Style></Border.Style>
     <TextBlock Text="{Binding ReconciliationMessage}"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/><Style.Triggers><DataTrigger Binding="{Binding ReconciliationWarning}" Value="True"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
@@ -69,6 +70,7 @@
     <Button Style="{StaticResource SecondaryButton}" Content="Entrada" Click="ReceiptClick" IsEnabled="{Binding CanReceiveDetail}" Visibility="{Binding CanReceive,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,8"/>
     <Button Style="{StaticResource SecondaryButton}" Content="Merma" Click="WasteClick" IsEnabled="{Binding CanWasteDetail}" Visibility="{Binding CanWaste,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,8"/>
     <Button Style="{StaticResource SecondaryButton}" Content="Conteo físico" Click="CountClick" IsEnabled="{Binding CanAdjustDetail}" Visibility="{Binding CanAdjust,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,8"/>
+    <Button Style="{StaticResource SecondaryButton}" Content="Costo de referencia" Click="CostClick" Visibility="{Binding CanEditCost,Converter={StaticResource VisibleWhen}}" Margin="0,0,8,8" AutomationProperties.Name="Costo de referencia del artículo"/>
    </WrapPanel>
    <TextBlock Text="Presentaciones" FontSize="21" FontWeight="SemiBold"/>
    <TextBlock Style="{StaticResource EmptyStateText}" Tag="{Binding Units.Count}" Text="No hay presentaciones registradas."/><DataGrid ItemsSource="{Binding Units}" Height="155" Margin="0,6,0,8" AutomationProperties.Name="Presentaciones del artículo">
@@ -128,6 +130,18 @@
    <StackPanel Visibility="{Binding IsCount,Converter={StaticResource VisibleWhen}}"><TextBlock Text="Motivo de ajuste"/><ComboBox ItemsSource="{Binding AdjustmentReasons}" SelectedItem="{Binding SelectedAdjustmentReason}" DisplayMemberPath="Label" Margin="0,4,0,12"/></StackPanel>
    <StackPanel Visibility="{Binding ShowsNote,Converter={StaticResource VisibleWhen}}"><TextBlock Text="Observación opcional · obligatoria cuando el motivo es Otro"/><TextBox Text="{Binding Note,UpdateSourceTrigger=PropertyChanged}" MaxLength="500" AcceptsReturn="True" Height="90" Margin="0,4,0,18"/></StackPanel>
    <WrapPanel><Button Content="Cancelar" Click="BackClick" Style="{StaticResource SecondaryButton}" Margin="0,0,12,0"/><Button Content="Confirmar" Click="SubmitOperationClick" IsEnabled="{Binding CanSubmitOperation}"/></WrapPanel>
+  </StackPanel>
+
+  <StackPanel Visibility="{Binding IsCostEditor,Converter={StaticResource VisibleWhen}}">
+   <TextBlock Text="Costo de referencia" FontSize="24" FontWeight="SemiBold"/>
+   <TextBlock Text="{Binding DetailTitle}" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,6,0,6"/>
+   <TextBlock Text="Precio de compra de referencia. Sólo se usa para estimar el costo de cada pan desde su receta (Reportes → Ganancia); no cambia el inventario." TextWrapping="Wrap" Margin="0,0,0,12"/>
+   <Grid>
+    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+    <StackPanel Margin="0,0,12,0"><TextBlock Text="Precio (MXN)"/><TextBox Text="{Binding CostText,UpdateSourceTrigger=PropertyChanged}" MaxLength="20" Margin="0,4,0,12" AutomationProperties.Name="Precio de referencia en pesos"/></StackPanel>
+    <StackPanel Grid.Column="1"><TextBlock Text="Por"/><ComboBox ItemsSource="{Binding CostUnits}" SelectedItem="{Binding SelectedCostUnit}" DisplayMemberPath="Label" Margin="0,4,0,12" AutomationProperties.Name="Unidad del precio de referencia"/></StackPanel>
+   </Grid>
+   <WrapPanel><Button Style="{StaticResource SecondaryButton}" Content="Cancelar" Click="BackClick" Margin="0,0,12,0"/><Button Content="Guardar costo" Click="SaveCostClick"/></WrapPanel>
   </StackPanel>
 
   <StackPanel Visibility="{Binding IsUnitEditor,Converter={StaticResource VisibleWhen}}">

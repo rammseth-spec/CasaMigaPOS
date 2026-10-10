@@ -84,6 +84,11 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
     public bool IsYesterdayFilter=>mode==SalesHistoryMode.DateRange&&FromDate==TodayDateTime.AddDays(-1)&&ThroughDate==TodayDateTime.AddDays(-1);
     public bool IsSessionFilter=>mode==SalesHistoryMode.CashSession;
     public string Folio {get;set;}="";
+    // D4 (como Ventas en la web): forma de pago y producto se combinan con Todos, Hoy, Ayer, fechas o Sesión actual.
+    public static IReadOnlyList<KeyValuePair<string,string?>> PaymentMethods {get;}=
+        [new("Todas",null),new("Efectivo","CASH"),new("Tarjeta","CARD"),new("Transferencia","TRANSFER")];
+    public KeyValuePair<string,string?> SelectedPaymentMethod {get;set;}=PaymentMethods[0];
+    public string ProductFilter {get;set;}="";
     public DateTime? FromDate {get;set;}
     public DateTime? ThroughDate {get;set;}
     public string FromDateText {get=>fromDateText;set{if(fromDateText==value)return;fromDateText=value??"";FromDateError="";DateRangeError="";Notify();}}
@@ -183,6 +188,12 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
         await Refresh();
     });
     public Task ClearAsync()=>ShowAllAsync();
+    public Task ApplyFiltersAsync()=>Run(async()=>
+    {
+        if(mode==SalesHistoryMode.Folio){Folio="";mode=SalesHistoryMode.Recent;}
+        if(mode==SalesHistoryMode.CashSession&&cashSessionId is null){await CurrentSessionAsync();return;}
+        page=0;await Refresh();
+    });
     public Task PageAsync(int delta)=>Run(async()=>{page=Math.Max(0,page+delta);await Refresh();});
     public Task OpenDetailAsync()=>Run(async()=>
     {
@@ -257,11 +268,13 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
     {
         DateOnly? from=FromDate is { } first?DateOnly.FromDateTime(first):null;
         DateOnly? through=ThroughDate is { } last?DateOnly.FromDateTime(last):null;
-        var result=await Task.Run(()=>service.Search(new(mode,Folio,from,through,page,cashSessionId)));
+        var method=SelectedPaymentMethod.Value;var product=ProductFilter;
+        var result=await Task.Run(()=>service.Search(new(mode,Folio,from,through,page,cashSessionId,method,product)));
         Sales=result.Items.Select(x=>new SalesHistoryRowView(x,timeZone)).ToArray();SelectedSale=null;
         var pageCount=result.Total==0?0:(result.Total+result.PageSize-1)/result.PageSize;
         PageLabel=result.Total==0?"":$"Página {page+1} de {pageCount} · {result.Total} {(result.Total==1?"venta":"ventas")} · {result.PageSize} por página";
-        FilterSummary=$"{FilterLabel()} · {result.Total} {(result.Total==1?"venta":"ventas")}";
+        var extra=mode==SalesHistoryMode.Folio?"":(method is null?"":$" · {SelectedPaymentMethod.Key}")+(ProductFilter.Trim().Length==0?"":$" · con «{ProductFilter.Trim()}»");
+        FilterSummary=$"{FilterLabel()}{extra} · {result.Total} {(result.Total==1?"venta":"ventas")}";
         HasNext=(page+1)*result.PageSize<result.Total;ClearDetail();
     }
     private string FilterLabel()=>mode switch
@@ -293,7 +306,7 @@ public sealed class SalesHistoryViewModel(SalesHistoryService service,ReceiptSer
     private static string DateError(string value)=>string.IsNullOrWhiteSpace(value)?"Captura una fecha en formato AAAA-MM-DD o dd/mm/aaaa.":"Fecha inválida. Usa AAAA-MM-DD o dd/mm/aaaa.";
     private void ClearDateErrors(){FromDateError="";ThroughDateError="";DateRangeError="";}
     private void ClearDates(){FromDate=null;ThroughDate=null;fromDateText="";throughDateText="";ClearDateErrors();}
-    private void ResetFilters(){Folio="";ClearDates();cashSessionId=null;page=0;}
+    private void ResetFilters(){Folio="";ClearDates();cashSessionId=null;page=0;SelectedPaymentMethod=PaymentMethods[0];ProductFilter="";}
     private void ClearDetail()
     {
         Detail=null;DetailItems=[];ReprintAllowed=false;ReprintResult=null;ReprintMessage="";

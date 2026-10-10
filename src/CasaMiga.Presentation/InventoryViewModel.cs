@@ -57,7 +57,7 @@ public sealed record InventoryHistoryRowView(InventoryMovementRow Row)
 }
 
 public sealed class InventoryViewModel(InventoryService service, CatalogService catalog,
-    Action<string, string?> log,ConsumptionViewModel? consumption=null) : INotifyPropertyChanged
+    Action<string, string?> log,ConsumptionViewModel? consumption=null,IngredientCostService? costs=null) : INotifyPropertyChanged
 {
     public ConsumptionViewModel? Consumption {get;}=consumption;
     private string screen = "list";
@@ -84,6 +84,37 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
     public bool IsOperationEditor => screen == "operation";
     public bool IsUnitEditor => screen == "unit";
     public bool IsLinkEditor => screen == "link";
+    public bool IsCostEditor => screen == "cost";
+
+    // ---------- Costo de referencia (D2, como en la web): estima el costo de cada pan; no cambia el inventario ----------
+    public bool CanEditCost => costs is not null && CanEditDetail;
+    public InventoryItemCostRow? Cost { get; private set; }
+    public string CostLabel => Cost is { CostCents: { } c } x ? $"Costo de referencia: {(c / 100m).ToString("C2", CultureInfo.GetCultureInfo("es-MX"))} por {x.UnitLabel}" : "Sin costo de referencia";
+    public string CostText { get; set; } = "";
+    public IReadOnlyList<InventoryUnitChoice> CostUnits { get; private set; } = [];
+    public InventoryUnitChoice? SelectedCostUnit { get; set; }
+    private long CostPerAtomic(string code) => InventoryUnits.All.FirstOrDefault(u => u.Code == code) is { } unit ? unit.AtomicUnitsPerUnit
+        : Detail?.Units.FirstOrDefault(u => u.Code == code)?.AtomicUnitsPerWholeUnit ?? 0;
+    public void BeginCost()
+    {
+        if (!Ready || !CanEditCost || Detail is null) return;
+        CostUnits = InventoryUnits.All.Where(x => x.Dimension == Detail.Item.Dimension && x.Code is not "mg" and not "uL").Select(x => new InventoryUnitChoice(x.Code, x.Symbol))
+            .Concat(Detail.Units.Where(x => x.IsActive).Select(x => new InventoryUnitChoice(x.Code, x.Name))).ToArray();
+        SelectedCostUnit = CostUnits.FirstOrDefault(u => u.Label == Cost?.UnitLabel) ?? CostUnits.FirstOrDefault(u => u.Code is "kg" or "L" or "piece") ?? CostUnits.FirstOrDefault();
+        CostText = Cost is { CostCents: { } c } ? (c / 100m).ToString("0.00", CultureInfo.InvariantCulture) : "";
+        screen = "cost"; Message = ""; Notify();
+    }
+    public Task SaveCostAsync() => Run(async () =>
+    {
+        if (!IsCostEditor || Detail is null || costs is null) return;
+        if (SelectedCostUnit is not { } unit) throw new ArgumentException("Elige la unidad del precio.");
+        if (!decimal.TryParse(CostText.Trim().Replace("$", "").Replace(",", ""), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var pesos) || pesos > 1_000_000 || decimal.Round(pesos, 2) != pesos)
+            throw new ArgumentException("Escribe el precio, por ejemplo 28.50.");
+        var item = Detail.Item.Id; var per = CostPerAtomic(unit.Code);
+        await Task.Run(() => costs.SetCost(item, Money.FromPesos(pesos), per, unit.Label));
+        screen = "detail"; MessageIsSuccess = true; Message = "Costo de referencia guardado. Con las recetas se calcula el costo de cada pan en Reportes → Ganancia.";
+        await RefreshDetail(preserveMessage: true);
+    });
     public bool IsOpening => operation == "opening";
     public bool IsReceipt => operation == "receipt";
     public bool IsWaste => operation == "waste";
@@ -560,6 +591,7 @@ public sealed class InventoryViewModel(InventoryService service, CatalogService 
     {
         if (detailId is null) return;
         Detail = await Task.Run(() => service.Detail(detailId.Value));
+        Cost = costs is null ? null : await Task.Run(() => costs.Find(detailId.Value));
         UnitChoices = BuildUnits(Detail); SelectedLink = null;
         await RefreshProductLinks();
         await RefreshHistory();

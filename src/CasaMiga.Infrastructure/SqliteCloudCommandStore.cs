@@ -15,6 +15,15 @@ public sealed partial class SqliteLocalUnitOfWork
             return q.ExecuteNonQuery() == 1;
         }
 
+        public IReadOnlyList<InventoryItemCostRow> InventoryItemCosts()
+        {
+            using var q = Command(@"SELECT i.id,i.name,c.cost_cents,c.per_atomic,c.unit_label FROM inventory_item i LEFT JOIN inventory_item_cost c ON c.item_id=i.id ORDER BY i.name,i.id");
+            using var r = q.ExecuteReader();
+            var rows = new List<InventoryItemCostRow>();
+            while (r.Read()) rows.Add(new(Guid.Parse(r.GetString(0)), r.GetString(1), r.IsDBNull(2) ? null : r.GetInt64(2), r.IsDBNull(3) ? null : r.GetInt64(3), r.IsDBNull(4) ? null : r.GetString(4)));
+            return rows;
+        }
+
         public long LastCloudCommandSequence()
         {
             using var q = Command("SELECT COALESCE(max(seq),0) FROM cloud_command");

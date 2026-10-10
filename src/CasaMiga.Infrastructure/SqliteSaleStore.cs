@@ -97,11 +97,14 @@ public sealed partial class SqliteLocalUnitOfWork
                 if (filter.FromUtc is { } from) { parts.Add("s.confirmed_utc >= $from"); values.Add(("$from", At(from))); }
                 if (filter.UntilUtc is { } until) { parts.Add("s.confirmed_utc < $until"); values.Add(("$until", At(until))); }
                 if (filter.CashSessionId is { } cash) { parts.Add("s.cash_session_id=$cash"); values.Add(("$cash", Id(cash))); }
+                if (filter.Method is { } method) { parts.Add("p.method=$method"); values.Add(("$method", method)); }
+                // Sin distinguir mayúsculas (la misma clave del catálogo); % y _ se buscan tal cual.
+                if (filter.Product is { } product) { parts.Add("EXISTS(SELECT 1 FROM sale_item i WHERE i.sale_id=s.id AND instr(catalog_key_v1(i.product_name),catalog_key_v1($product))>0)"); values.Add(("$product", product)); }
                 predicate = parts.Count == 0 ? "" : " WHERE " + string.Join(" AND ", parts);
                 parameters = values.ToArray();
             }
 
-            using var count = Command("SELECT count(*) FROM sale s" + predicate, parameters);
+            using var count = Command("SELECT count(*) FROM sale s JOIN payment p ON p.sale_id=s.id" + predicate, parameters);
             var total = Convert.ToInt32(count.ExecuteScalar());
             using var page = Command("SELECT s.id,s.terminal_id,s.sequence,s.confirmed_utc,s.total_cents,p.method,s.user_id,u.display_name,t.name,s.cash_session_id,"
                 + (HasRefunds() ? "(SELECT COALESCE(SUM(r.total_cents),0) FROM sale_refund r WHERE r.sale_id=s.id)" : "0")

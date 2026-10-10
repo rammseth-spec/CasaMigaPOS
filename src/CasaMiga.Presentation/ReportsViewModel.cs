@@ -104,9 +104,29 @@ public sealed record DayBarView(string Label, string Value, double Height, strin
 /// <summary>Par de barras del comparativo: periodo anterior y actual, alineados por posición.</summary>
 public sealed record PairBarView(string Label, double Current, double Previous, string Tip);
 
-public enum ReportTab { Summary, Comparison, Heatmap, CashControl, Forecast }
+public enum ReportTab { Summary, Comparison, Heatmap, CashControl, Forecast, Profit }
 
-public sealed class ReportsViewModel(ReportService service, Action<string, string?> log) : INotifyPropertyChanged
+/// <summary>Un pan en «Ganancia»: piezas, ingreso y lo que gana por pieza en mostrador y en charolas.</summary>
+public sealed record ProfitProductView(ProfitProductRow Row)
+{
+    public string Name => Row.Name;
+    public string Cost => Row.UnitCost is { } c ? ReportsViewModel.Format(c) : "Sin costo";
+    public string Counter => $"{Row.CounterPieces} pz · {ReportsViewModel.Format(Row.CounterRevenue)}";
+    public string CounterGain => Row.PerPieceCounter is { } g ? $"{ReportsViewModel.Format(g)}/pz" : "—";
+    public string Trays => $"{Row.TrayPieces} pz · {ReportsViewModel.Format(Row.TrayRevenue)}";
+    public string TrayGain => Row.PerPieceTray is { } g ? $"{ReportsViewModel.Format(g)}/pz" : "—";
+    public long Returned => Row.Returned;
+    public string Total => Row.Total is { } t ? ReportsViewModel.Format(t) : "—";
+    public bool Loses => Row.Total is { Cents: < 0 };
+}
+public sealed record ProductCostView(ProductCostRow Row)
+{
+    public string Name => Row.Name;
+    public string Cost => Row.Cost is { } c ? ReportsViewModel.Format(c) : "—";
+    public string Pending => Row.Pending;
+}
+
+public sealed class ReportsViewModel(ReportService service, Action<string, string?> log, ProfitService? profit = null) : INotifyPropertyChanged
 {
     public bool Busy { get; private set; }
     public bool Ready => !Busy;
@@ -116,7 +136,28 @@ public sealed class ReportsViewModel(ReportService service, Action<string, strin
     public bool IsHeatmap => Tab == ReportTab.Heatmap;
     public bool IsCashControl => Tab == ReportTab.CashControl;
     public bool IsForecast => Tab == ReportTab.Forecast;
+    public bool IsProfit => Tab == ReportTab.Profit;
     public bool IsPeriodTab => !IsForecast;
+
+    // ---------- Ganancia (igual que Reportes → Ganancia en la web) ----------
+    public bool CanViewProfit { get; private set; }
+    public ProfitReport? Profit { get; private set; }
+    public bool HasProfit => Profit is not null;
+    public IReadOnlyList<ProfitProductView> ProfitProducts { get; private set; } = [];
+    public IReadOnlyList<ProductCostView> ProfitCosts { get; private set; } = [];
+    public bool HasProfitProducts => ProfitProducts.Count > 0;
+    public bool NoProfitProducts => Profit is not null && ProfitProducts.Count == 0;
+    private static string Margin(decimal? value) => value is { } m ? (m * 100).ToString("0.0", CultureInfo.InvariantCulture) + " %" : "—";
+    private static string ChannelValue(ProfitChannel c) => c.CoveredRevenue.Cents == 0 ? "—" : Format(c.Profit);
+    private static string ChannelDetail(ProfitChannel c) => c.CoveredRevenue.Cents == 0 ? $"Venta {Format(c.Revenue)} · faltan costos para calcularla"
+        : $"{(c.CoveredRevenue.Cents < c.Revenue.Cents ? $"Venta con costo {Format(c.CoveredRevenue)} de {Format(c.Revenue)}" : $"Venta {Format(c.Revenue)}")} · costo {Format(c.Cost)} · margen {Margin(c.Margin)}";
+    public string CounterProfit => Profit is { } p ? ChannelValue(p.Counter) : "";
+    public string CounterProfitDetail => Profit is { } p ? $"{ChannelDetail(p.Counter)}\n{p.Counter.Pieces} piezas vendidas" : "";
+    public string TrayProfit => Profit is { } p ? ChannelValue(p.Trays) : "";
+    public string TrayProfitDetail => Profit is { } p ? $"{ChannelDetail(p.Trays)}\n{p.Trays.Pieces} vendidas · {p.Returned} regresaron (costo {Format(p.ReturnedCost)})" : "";
+    public string MissingCosts => Profit is { } p && p.Costs.Count(c => c.Cost is null) is var n and > 0
+        ? $"{n} productos sin costo (sin receta o con insumos sin costo); su venta no entra en la ganancia. Captura costos en Inventario → Costo de referencia." : "";
+    public bool HasMissingCosts => MissingCosts.Length > 0;
 
     public DateTime? FromSelected { get; set; } = DateTime.Today;
     public DateTime? ThroughSelected { get; set; } = DateTime.Today;
@@ -250,6 +291,11 @@ public sealed class ReportsViewModel(ReportService service, Action<string, strin
         Payments = report.Data.ByMethod.Select(m => new PaymentReportView(m)).ToArray();
         Sessions = report.Data.Sessions.Select(s => new SessionReportView(s)).ToArray();
         ShowComparison(comparison); ShowHeatmap(heatmap); ShowCashControl(control); ShowCharts(report, comparison, control);
+        CanViewProfit = profit is not null && await Task.Run(profit.CanView);
+        Profit = CanViewProfit ? await Task.Run(() => profit!.Profit(from, through)) : null;
+        ProfitProducts = Profit?.Products.Select(p => new ProfitProductView(p)).ToArray() ?? [];
+        ProfitCosts = Profit?.Costs.Select(c => new ProductCostView(c)).ToArray() ?? [];
+        if (Tab == ReportTab.Profit && !CanViewProfit) Tab = ReportTab.Summary;
         GeneratedLabel = $"Actualizado a las {DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture)}";
     });
 
@@ -364,12 +410,30 @@ public sealed class ReportsViewModel(ReportService service, Action<string, strin
         RefundReasons = report.Reasons.Select(r => new RefundReasonView(r)).ToArray();
     }
 
+    /// <summary>Ganancia en CSV: totales por canal, por pan y el costo por pieza.</summary>
+    private static string ProfitCsv(ProfitReport p)
+    {
+        var text = new System.Text.StringBuilder();
+        string Cell(string v) => v.Contains(',') || v.Contains('"') ? $"\"{v.Replace("\"", "\"\"")}\"" : v;
+        string Amount(Money? m) => m is { } x ? (x.Cents / 100m).ToString("0.00", CultureInfo.InvariantCulture) : "";
+        void Row(params string[] cells) => text.AppendLine(string.Join(",", cells.Select(Cell)));
+        Row("Ganancia", $"{p.From:yyyy-MM-dd}", $"{p.Through:yyyy-MM-dd}");
+        Row("Canal", "Piezas", "Venta", "Venta con costo", "Costo", "Ganancia");
+        Row("Mostrador", p.Counter.Pieces.ToString(CultureInfo.InvariantCulture), Amount(p.Counter.Revenue), Amount(p.Counter.CoveredRevenue), Amount(p.Counter.Cost), Amount(p.Counter.Profit));
+        Row("Charolas", p.Trays.Pieces.ToString(CultureInfo.InvariantCulture), Amount(p.Trays.Revenue), Amount(p.Trays.CoveredRevenue), Amount(p.Trays.Cost), Amount(p.Trays.Profit));
+        text.AppendLine();
+        Row("Pan", "Costo por pieza", "Mostrador piezas", "Mostrador venta", "Charolas piezas", "Charolas venta", "Regresaron", "Ganancia");
+        foreach (var r in p.Products) Row(r.Name, Amount(r.UnitCost), r.CounterPieces.ToString(CultureInfo.InvariantCulture), Amount(r.CounterRevenue),
+            r.TrayPieces.ToString(CultureInfo.InvariantCulture), Amount(r.TrayRevenue), r.Returned.ToString(CultureInfo.InvariantCulture), Amount(r.Total));
+        return text.ToString();
+    }
     public string? Csv() => Tab switch
     {
         ReportTab.Comparison when Comparison is { } c => ReportService.ToCsv(c),
         ReportTab.Heatmap when Heatmap is { } h => ReportService.ToCsv(h),
         ReportTab.CashControl when CashControl is { } c => ReportService.ToCsv(c),
         ReportTab.Forecast when Forecast is { } f => ReportService.ToCsv(f),
+        ReportTab.Profit when Profit is { } p => ProfitCsv(p),
         ReportTab.Summary when Report is { } r => ReportService.ToCsv(r, TimeZoneInfo.Local),
         _ => null,
     };
@@ -377,7 +441,7 @@ public sealed class ReportsViewModel(ReportService service, Action<string, strin
     public string SuggestedFileName => Tab switch
     {
         ReportTab.Forecast when Forecast is { } f => $"CasaMiga-produccion-{f.Target:yyyy-MM-dd}.csv",
-        _ when Report is { } r => $"CasaMiga-{Tab switch { ReportTab.Comparison => "comparativo", ReportTab.Heatmap => "ventas-por-hora", ReportTab.CashControl => "control-de-caja", _ => "ventas" }}-{r.From:yyyy-MM-dd}_{r.Through:yyyy-MM-dd}.csv",
+        _ when Report is { } r => $"CasaMiga-{Tab switch { ReportTab.Comparison => "comparativo", ReportTab.Heatmap => "ventas-por-hora", ReportTab.CashControl => "control-de-caja", ReportTab.Profit => "ganancia", _ => "ventas" }}-{r.From:yyyy-MM-dd}_{r.Through:yyyy-MM-dd}.csv",
         _ => "reporte.csv",
     };
     public void Exported(string path) { Message = $"Reporte guardado en {path}"; log("report.exported", null); Notify(); }

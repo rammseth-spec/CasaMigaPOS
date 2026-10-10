@@ -160,8 +160,10 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
                 SalesHistory = new(new SalesHistoryService(database,user,TimeZoneInfo.Local),receipts,TimeZoneInfo.Local,clock,
                     ()=>opened?.Session.Id,(eventName,errorType)=>runtime.TryLog(eventName,errorType),new RefundService(database,user,clock,terminal.Id));
                 Inventory = new(new InventoryService(new SqliteInventoryStore(sqlite, clock), database, user, clock, terminal.Id),
-                    catalogService, (eventName,errorType)=>runtime.TryLog(eventName,errorType),new ConsumptionViewModel(new SaleConsumptionService(database,database,user,clock,terminal.Id)));
-                Reports = new(new ReportService(database,user,TimeZoneInfo.Local),(eventName,errorType)=>runtime.TryLog(eventName,errorType));
+                    catalogService, (eventName,errorType)=>runtime.TryLog(eventName,errorType),new ConsumptionViewModel(new SaleConsumptionService(database,database,user,clock,terminal.Id)),
+                    new IngredientCostService(database,user,clock,terminal.Id));
+                Reports = new(new ReportService(database,user,TimeZoneInfo.Local),(eventName,errorType)=>runtime.TryLog(eventName,errorType),
+                    new ProfitService(database,new SqliteProductionUnitOfWork(sqlite),user,TimeZoneInfo.Local));
                 Consignment = new(new ConsignmentService(database,user,clock,terminal.Id,TimeZoneInfo.Local),(eventName,errorType)=>runtime.TryLog(eventName,errorType),photoUi);
                 CashMovements = new(new CashMovementService(database,user,clock,terminal.Id),(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 var syncOutbox = new SqliteSyncOutbox(sqlite);

@@ -13,6 +13,12 @@
     <Button Style="{StaticResource SecondaryButton}" Grid.Column="2" Content="Buscar fechas" Click="SearchDatesClick" Margin="8,0"/>
     <Button Style="{StaticResource SecondaryButton}" Grid.Column="3" Content="Limpiar" Click="ClearClick" Margin="8,0,0,0"/>
    </Grid>
+   <TextBlock Text="Forma de pago y producto · se combinan con el periodo" FontSize="15"/>
+   <Grid Margin="0,4,0,12"><Grid.ColumnDefinitions><ColumnDefinition Width="200"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+    <ComboBox ItemsSource="{Binding PaymentMethods}" SelectedItem="{Binding SelectedPaymentMethod}" DisplayMemberPath="Key" AutomationProperties.Name="Forma de pago" Margin="0,0,8,0"/>
+    <TextBox Grid.Column="1" Text="{Binding ProductFilter,UpdateSourceTrigger=PropertyChanged}" MaxLength="80" AutomationProperties.Name="Producto vendido" KeyDown="ProductKeyDown" Margin="8,0"/>
+    <Button Style="{StaticResource SecondaryButton}" Grid.Column="2" Content="Filtrar" Click="FilterClick" Margin="8,0,0,0"/>
+   </Grid>
    <WrapPanel Margin="0,0,0,12">
     <Button Style="{StaticResource SecondaryButton}" Content="Hoy" Click="TodayClick" Margin="0,0,8,0"/>
     <Button Style="{StaticResource SecondaryButton}" Content="Ayer" Click="YesterdayClick" Margin="0,0,8,0"/>

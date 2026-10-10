@@ -45,6 +45,8 @@ public partial class InventoryView : UserControl
     private void CountClick(object sender, RoutedEventArgs e) => Model.BeginOperation("count");
     private async void SubmitOperationClick(object sender, RoutedEventArgs e) => await Model.SubmitOperationAsync();
     private void NewUnitClick(object sender, RoutedEventArgs e) => Model.NewUnit();
+    private void CostClick(object sender, RoutedEventArgs e) => Model.BeginCost();
+    private async void SaveCostClick(object sender, RoutedEventArgs e) => await Model.SaveCostAsync();
     private async void SaveUnitClick(object sender, RoutedEventArgs e) => await Model.SaveUnitAsync();
     private async void ShowLinkClick(object sender, RoutedEventArgs e) => await Model.ShowLinkEditorAsync();
     private async void SearchProductsClick(object sender, RoutedEventArgs e) => await Model.SearchProductsAsync();
