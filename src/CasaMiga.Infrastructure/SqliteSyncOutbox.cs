@@ -170,6 +170,8 @@ public sealed class SqliteSyncOutbox(Database database)
                 {
                     ["batch"] = batch, ["outputs"] = Many("SELECT * FROM production_output_plan WHERE batch_id=$id ORDER BY sequence"),
                     ["inputs"] = Many("SELECT * FROM production_input_snapshot WHERE batch_id=$id ORDER BY sequence"),
+                    // Preparaciones del plan, para el detalle de la producción en la web.
+                    ["formulas"] = Many("SELECT formula_version_id,formula_name,dimension,required_atomic FROM production_formula_snapshot WHERE batch_id=$id ORDER BY formula_name,formula_version_id"),
                 }
                 : null,
             _ => throw new InvalidDataException($"Entidad de sincronización desconocida: {entry.Entity}.")

@@ -7,6 +7,7 @@ import { reportsView, setReportTab } from './reports.js';
 import { catalogo } from './catalog.js';
 import { inventario } from './inventory.js';
 import { recetas } from './recipes.js';
+import { produccion } from './production.js';
 
 const branchName = id => state.branches.find(b => b.id === id)?.name ?? '';
 const multi = () => !state.branch && state.branches.length > 1;
@@ -281,67 +282,6 @@ async function templateDialog(store) {
 
 // ---------- Recetas y producción ----------
 // Inventario vive en inventory.js (copia de la pantalla de la caja).
-async function produccion() {
-  const recording = can('production.create') && can('production.confirm');
-  const [batches, recipes, sent] = await Promise.all([api('production', range()), recording ? api('recipes', { branch: state.branch }) : null,
-    recording && can('sales.view') ? api('commands', { branch: state.branch }) : [], loadPhotos()]);
-  const status = { CONFIRMED: ['Registrada', 'ok'], DRAFT: ['Borrador', ''], PLANNED: ['Planeada', 'info'], CANCELLED: ['Cancelada', 'bad'] };
-  const ready = recipes?.profiles.filter(p => p.activeVersionId) ?? [];
-  const byVersion = new Map(ready.map(p => [p.activeVersionId, p]));
-  const recent = iso => Date.now() - new Date(iso).getTime() < 2 * 86_400_000;
-  const waiting = sent.filter(c => c.kind === 'production.record' && (c.status === 'pending' || (c.status === 'rejected' && recent(c.at))));
-  return h('div', { style: { display: 'grid', gap: '16px' } },
-    recording ? h('div', { class: 'toolbar' }, h('button', { type: 'button', class: 'primary', disabled: !ready.length, onclick: () => productionDialog(ready) }, '+ Registrar producción'),
-      ready.length ? null : h('span', { class: 'muted small', text: 'Ningún pan tiene receta activa; se configuran en la caja (Recetas).' })) : null,
-    waiting.length ? card('Enviado a la caja', h('ul', { class: 'rows' }, waiting.map(c => h('li', {},
-      h('div', {}, h('strong', { text: c.payload.outputs.map(o => `${byVersion.get(o.profileVersionId)?.product ?? 'Pan'}: ${o.actual} pz`).join(' · ') }), h('small', { class: 'muted', text: ` ${c.by} · ${at(c.at)}` })),
-      h('span', { class: 'pill ' + (c.status === 'pending' ? 'warn' : 'bad'), text: c.status === 'pending' ? 'Pendiente' : 'Rechazado' }), h('small', { class: 'muted', text: c.message ?? '' }))))) : null,
-    h('p', { class: 'notice', text: 'Para saber cuánto producir mañana: Reportes → Producción sugerida.' }),
-    card('Producciones del periodo', table([
-      { label: 'Fecha', value: b => at(b.at) }, { label: 'Estado', value: b => h('span', { class: 'pill ' + (status[b.status]?.[1] ?? ''), text: status[b.status]?.[0] ?? b.status }) },
-      { label: 'Productos', value: b => h('div', { class: 'pieces' }, b.outputs.map(o => h('span', { class: 'piece' }, pic({ name: o.product }, 'xs'), `${o.product}: ${o.actual ?? o.planned}${o.actual !== null && o.actual !== o.planned ? ` de ${o.planned}` : ''} pz`))) },
-      { label: 'Quién', value: b => b.by || '—' },
-    ], batches, { empty: 'Sin producciones en el periodo.' })));
-}
-/**
- * Producción ya hecha: panes con receta activa, piezas planeadas y las que salieron. La caja la prepara con esa receta, descuenta
- * los insumos y suma lo que salió; si falta existencia la rechaza y aquí se ve el motivo.
- */
-function productionDialog(profiles) {
-  dialog('Registrar producción', body => {
-    const rows = h('div', { class: 'wide production-rows' });
-    const row = () => {
-      const planned = h('input', { name: 'planned', type: 'number', min: '1', max: '100000', inputmode: 'numeric', required: true });
-      const actual = h('input', { name: 'actual', type: 'number', min: '0', max: '100000', inputmode: 'numeric', required: true });
-      planned.addEventListener('input', () => { if (!actual.dataset.touched) actual.value = planned.value; });
-      actual.addEventListener('input', () => { actual.dataset.touched = '1'; });
-      const line = h('div', { class: 'production-row' },
-        field('Pan', h('select', { name: 'profile', required: true }, h('option', { value: '', text: 'Elige un pan' }),
-          profiles.map(p => h('option', { value: p.activeVersionId, text: p.product + (multi() ? ` (${branchName(p.branchId)})` : '') })))),
-        field('Planeadas', planned), field('Salieron', actual),
-        h('button', { type: 'button', class: 'icon ghost', 'aria-label': 'Quitar pan', onclick: () => { if (rows.children.length > 1) line.remove(); } }, '✕'));
-      return line;
-    };
-    body.append(h('p', { class: 'muted small wide', text: 'La caja descuenta los insumos de la receta y suma al inventario las piezas que salieron.' }),
-      rows, h('div', { class: 'wide' }, h('button', { type: 'button', onclick: () => { if (rows.children.length < 20) rows.append(row()); } }, '+ Otro pan')),
-      field('Notas (opcional)', h('input', { name: 'notes', maxlength: '500' }), true));
-    rows.append(row());
-  }, { submit: 'Registrar', onSubmit: async form => {
-    const whole = (v, min) => /^\d{1,6}$/.test(String(v).trim()) && Number(v) >= min && Number(v) <= 100_000;
-    const outputs = [...form.querySelectorAll('.production-row')].map(r => ({ profileVersionId: r.querySelector('[name=profile]').value,
-      planned: r.querySelector('[name=planned]').value, actual: r.querySelector('[name=actual]').value }));
-    if (outputs.some(o => !o.profileVersionId)) throw new Error('Elige el pan de cada renglón.');
-    if (new Set(outputs.map(o => o.profileVersionId)).size !== outputs.length) throw new Error('No repitas el mismo pan.');
-    if (outputs.some(o => !whole(o.planned, 1) || !whole(o.actual, 0))) throw new Error('Piezas en enteros: planeadas desde 1, salieron desde 0.');
-    const branches = new Set(outputs.map(o => profiles.find(p => p.activeVersionId === o.profileVersionId).branchId));
-    if (branches.size > 1) throw new Error('Registra cada sucursal por separado.');
-    const notes = form.elements.notes.value.trim();
-    await command([...branches][0], 'production.record', { outputs: outputs.map(o => ({ profileVersionId: o.profileVersionId, planned: Number(o.planned), actual: Number(o.actual) })),
-      ...(notes ? { notes } : {}) });
-    render({ silent: true });
-  } });
-}
-
 // ---------- Usuarios ----------
 async function usuarios(ctx) {
   const people = await api('users', { branch: state.branch });
@@ -387,7 +327,8 @@ const KIND = { 'consignment.deliver': 'Entrega de charola', 'consignment.collect
   'inventory.link': 'Asociar producto', 'inventory.unlink': 'Desvincular producto', 'inventory.consumption': 'Consumo automático por ventas',
   'production.record': 'Producción', 'product.photo': 'Foto de producto', 'product.photo.remove': 'Quitar foto de producto',
   'recipe.formula.create': 'Nueva receta', 'recipe.formula.draft': 'Borrador de receta', 'recipe.formula.publish': 'Publicar receta', 'recipe.formula.activate': 'Activar receta',
-  'recipe.profile.create': 'Nuevo perfil productivo', 'recipe.profile.draft': 'Borrador de perfil', 'recipe.profile.publish': 'Publicar perfil', 'recipe.profile.activate': 'Activar perfil' };
+  'recipe.profile.create': 'Nuevo perfil productivo', 'recipe.profile.draft': 'Borrador de perfil', 'recipe.profile.publish': 'Publicar perfil', 'recipe.profile.activate': 'Activar perfil',
+  'production.prepare': 'Preparar producción', 'production.confirm': 'Registrar producción' };
 const STOCK_KINDS = new Set(['inventory.receive', 'inventory.waste', 'inventory.count', 'inventory.opening']);
 const REASON = { Damaged: 'Dañado', Expired: 'Caducado', ProductionError: 'Error de producción', Spill: 'Derrame', Other: 'Otro', PhysicalCountVariance: 'Diferencia de conteo físico', DataCorrection: 'Corrección de datos' };
 const UNIT = { kg: 'kg', g: 'g', L: 'L', ml: 'ml', piece: 'pieza' };
@@ -408,6 +349,8 @@ function describe(c) {
   if (c.kind === 'inventory.item.active') return p.active ? 'Activar' : 'Desactivar';
   if (c.kind === 'inventory.unit.add') return `${p.code} · ${p.name}`;
   if (c.kind === 'inventory.consumption') return { Enable: 'Activar', Pause: 'Pausar', Resume: 'Reanudar' }[p.action] ?? p.action;
+  if (c.kind === 'production.prepare') return `${p.outputs.reduce((a, o) => a + o.planned, 0)} piezas planeadas`;
+  if (c.kind === 'production.confirm') return `${p.actuals.reduce((a, o) => a + o.actual, 0)} piezas reales`;
   if (c.kind === 'production.record') return `${p.outputs.reduce((a, o) => a + o.actual, 0)} piezas de ${p.outputs.length} ${p.outputs.length === 1 ? 'pan' : 'panes'}`;
   if (c.kind === 'product.photo') return `${p.edge} × ${p.edge} px`;
   return p.name ?? p.displayName ?? '';
@@ -515,7 +458,7 @@ export const VIEWS = [
   { id: 'catalogo', title: 'Catálogo', subtitle: 'Categorías y productos · Sin proceso de venta.', hint: 'Ir a Catálogo', icon: ICON.grid, group: 3, permission: 'catalog.view', usesRange: false, manual: true, render: catalogo },
   { id: 'inventario', title: 'Inventario', subtitle: 'Existencias y movimientos del almacén principal · consulta abajo el estado del consumo automático por ventas.', hint: 'Ir a Inventario', icon: ICON.box, group: 3, permission: 'inventory.view', usesRange: false, manual: true, render: inventario },
   { id: 'recetas', title: 'Recetas', subtitle: 'Fórmulas y perfiles productivos versionados.', hint: 'Ir a Recetas', icon: ICON.book, group: 3, permission: 'recipe.view', usesRange: false, manual: true, render: recetas },
-  { id: 'produccion', title: 'Producción', subtitle: 'Registro e historial de producción.', hint: 'Ir a Producción', icon: ICON.chef, group: 3, permission: 'production.view', usesRange: true, render: produccion },
+  { id: 'produccion', title: 'Producción', subtitle: 'Planeación, confirmación e historial de producción.', hint: 'Ir a Producción', icon: ICON.chef, group: 3, permission: 'production.view', usesRange: false, manual: true, render: produccion },
   { id: 'usuarios', title: 'Usuarios', subtitle: 'Crea usuarios y restablece contraseñas olvidadas · Cada acción queda auditada.', hint: 'Ir a Usuarios', icon: ICON.users, group: 3, permission: 'users.manage', usesRange: false, render: usuarios },
   { id: 'nube', title: 'Nube', subtitle: 'Cajas conectadas, cambios hechos en la web y respaldos.', hint: 'Ir a Nube', icon: ICON.cloud, group: 3, permission: 'sales.view', usesRange: false, render: nube, tab: id => { cloudTab = id; } },
 ];

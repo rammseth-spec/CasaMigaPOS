@@ -1,4 +1,4 @@
-# Catálogo, Inventario y Recetas de la web iguales a la caja — 09/10/2026
+# Catálogo, Inventario, Recetas y Producción de la web iguales a la caja — 09/10/2026
 
 **Implementado y probado en local.** Pedido del usuario: «Sigue con Ventas y el resto de pantallas y termina todo… tanto la App de C# como la de Web con todas las pruebas correspondientes». Plan por fases en [PLAN_COMPLETAR.md](PLAN_COMPLETAR.md).
 
@@ -7,6 +7,7 @@
 - Cambios nuevos que aplica la caja (`CloudCommandService`): `inventory.opening`, `inventory.item.save` (la web fija el id), `inventory.item.active`, `inventory.unit.add`, `inventory.link`, `inventory.unlink` e `inventory.consumption` (manda el estado y la versión que vio; si cambió, se rechaza como en la caja; si la verificación falla, el motivo lista los problemas). Reintentar no repite nada.
 - **Migración de la caja 027:** el estado del consumo automático sube dentro de la sucursal (`branch.sale_consumption`). Textos de «Verificar configuración» compartidos (`ConsumptionProblems`).
 - **Recetas (W5):** copia de RecipeView con recetas y perfiles de producto: versiones, borradores, publicar y activar; editores con ingredientes directos, grupos de alternativas, preparaciones publicadas y política de cantidad. Cambios `recipe.formula.*` y `recipe.profile.*`: la caja numera la versión, revisa artículos activos, preparaciones publicadas, código y producto sin perfil antes de escribir, y no repite lo ya aplicado. Textos de error compartidos (`RecipeProblems`). Pruebas: caja `CloudRecipeCommandTests` (3), nube `recipes.test.ts` (2).
+- **Producción (W6):** copia de ProductionView en dos pasos: plan con piezas, Calcular necesidades (la nube porta ProductionPlan/ProductionScaling con fracciones exactas, piezas hacia arriba y alternativas por preferencia), Preparar registro (`production.prepare`) y Registrar producción con lo que salió (`production.confirm`, sólo quien creó el borrador); borradores e historial con detalle. **Migración 028:** cada producción sube también sus preparaciones (y se reenvían las existentes). Pruebas: caja 2 nuevas en `RecipePersistenceTests.WebProduction`, nube `production.test.ts` (2).
 - Pruebas: caja `CloudInventoryCommandTests` (3), nube `inventory.test.ts` (4); probado en el navegador con la base de demostración (saldo inicial, presentación, asociación, artículo nuevo, merma con motivo Otro, conteo con diferencia, activar consumo).
 
 # Web igual a la caja de escritorio y sincronización cada 5 segundos — 09/10/2026

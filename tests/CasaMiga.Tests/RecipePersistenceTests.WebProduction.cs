@@ -45,4 +45,55 @@ public sealed partial class RecipePersistenceTests
         Assert.AreEqual(0L, Sql("SELECT count(*) FROM production_batch"));
         Assert.AreEqual("rejected", WebCommands.Apply(new(Guid.NewGuid(), 2, "production.record", new JsonObject { ["outputs"] = new JsonArray() }, user.Current!.Id, "Encargado web")).Status);
     }
+
+    private long webSequence = 100;
+    private CloudCommand WebStep(string kind, JsonObject payload, Guid? by = null) => new(Guid.NewGuid(), ++webSequence, kind, payload, by ?? user.Current!.Id, "Encargado web");
+
+    [TestMethod]
+    public void ProductionFromTheWebInTwoStepsLikeTheScreen()
+    {
+        ProductionSetup();
+        var batchId = Guid.NewGuid(); var operation = Guid.NewGuid();
+        JsonObject Plan() => new()
+        {
+            ["batchId"] = batchId.ToString(), ["operationId"] = operation.ToString(), ["notes"] = "Turno de la tarde",
+            ["outputs"] = new JsonArray(new JsonObject { ["profileVersionId"] = profileVersion.Id.ToString(), ["planned"] = 2 }), ["selections"] = new JsonArray(),
+        };
+        Assert.IsTrue(WebCommands.Apply(WebStep("production.prepare", Plan())).Applied);
+        Assert.IsTrue(WebCommands.Apply(WebStep("production.prepare", Plan())).Applied, "Sending the same plan again returns the same draft.");
+        var draft = Production().GetProduction(batchId)!;
+        Assert.AreEqual("DRAFT", draft.Status);
+        Assert.AreEqual(1L, Sql("SELECT count(*) FROM production_batch"));
+        Assert.AreEqual(0L, Sql($"SELECT quantity_atomic FROM inventory_balance WHERE item_id='{finished.Id}'"), "Preparing fixes the plan without moving inventory.");
+        var payload = new SqliteSyncOutbox(db).PendingEnvelopes(500, int.MaxValue).Last(e => e.Entry.Entity == "production_batch").Payload;
+        Assert.AreEqual(draft.Formulas.Count, payload["formulas"]!.AsArray().Count, "The preparations of the plan travel with the batch.");
+
+        JsonObject Actual(long count) => new() { ["batchId"] = batchId.ToString(), ["actuals"] = new JsonArray(new JsonObject { ["productId"] = product.Id.ToString(), ["actual"] = count }) };
+        var identity = new IdentityService(work, new LocalPasswords(), clock, user);
+        var temporary = identity.CreateUser("ana", "Ana", "Manager");
+        identity.ChangePassword("ana", temporary, "Ana#2026centro");
+        Assert.IsTrue(identity.Login("admin", password));
+        var ana = work.Run(s => s.FindUser("ANA"))!.Id;
+        Assert.AreEqual("Sólo el usuario y terminal que crearon este borrador pueden registrarlo.", WebCommands.Apply(WebStep("production.confirm", Actual(3), ana)).Message);
+
+        Assert.IsTrue(WebCommands.Apply(WebStep("production.confirm", Actual(3))).Applied);
+        Assert.IsTrue(WebCommands.Apply(WebStep("production.confirm", Actual(3))).Applied, "Registering it again changes nothing.");
+        var done = Production().GetProduction(batchId)!;
+        Assert.AreEqual("CONFIRMED", done.Status);
+        Assert.AreEqual(3L, Sql($"SELECT quantity_atomic FROM inventory_balance WHERE item_id='{finished.Id}'"));
+        Assert.AreEqual("rejected", WebCommands.Apply(WebStep("production.confirm", Actual(1))).Status, "A registered production cannot change.");
+    }
+
+    [TestMethod]
+    public void PreparingWithoutStockIsRejectedWithWhatIsMissing()
+    {
+        ProductionSetup(stock: 1);
+        var result = WebCommands.Apply(WebStep("production.prepare", new()
+        {
+            ["batchId"] = Guid.NewGuid().ToString(), ["operationId"] = Guid.NewGuid().ToString(),
+            ["outputs"] = new JsonArray(new JsonObject { ["profileVersionId"] = profileVersion.Id.ToString(), ["planned"] = 2 }), ["selections"] = new JsonArray(),
+        }));
+        StringAssert.StartsWith(result.Message, "No hay existencia suficiente para registrar esta producción. Falta: ");
+        Assert.AreEqual(0L, Sql("SELECT count(*) FROM production_batch"));
+    }
 }

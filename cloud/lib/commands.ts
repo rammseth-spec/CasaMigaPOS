@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { ProtocolError } from './protocol.js';
 import { identityHash, requirePermission, temporaryPassword, type WebUser } from './auth.js';
 import { isUuid, MAIN_LOCATION } from './web.js';
+import { parsePlan, productionPlan } from './planning.js';
 import type { Query, Row } from './panel.js';
 
 export const KINDS = ['category.save', 'product.save', 'product.active', 'user.create', 'user.update', 'user.active', 'user.reset_password',
@@ -20,7 +21,9 @@ export const KINDS = ['category.save', 'product.save', 'product.active', 'user.c
   'inventory.opening', 'inventory.item.save', 'inventory.item.active', 'inventory.unit.add', 'inventory.link', 'inventory.unlink', 'inventory.consumption',
   // Recetas como la caja (W5): recetas (fórmulas) y perfiles de producto con borradores, publicar y activar.
   'recipe.formula.create', 'recipe.formula.draft', 'recipe.formula.publish', 'recipe.formula.activate',
-  'recipe.profile.create', 'recipe.profile.draft', 'recipe.profile.publish', 'recipe.profile.activate'] as const;
+  'recipe.profile.create', 'recipe.profile.draft', 'recipe.profile.publish', 'recipe.profile.activate',
+  // Producción en dos pasos como la caja (W6): preparar el borrador con el plan y registrarlo con lo que salió.
+  'production.prepare', 'production.confirm'] as const;
 const POLICIES: Record<string, string[]> = { COUNT: ['ExactWholeCount', 'CeilingWholeCount'], MASS: ['NotApplicable'], VOLUME: ['NotApplicable'] };
 const ITEM_KINDS = ['RawMaterial', 'FinishedGood', 'Packaging', 'Supply'];
 const DIMENSIONS: Record<string, string> = { Mass: 'MASS', Volume: 'VOLUME', Count: 'COUNT' };
@@ -312,6 +315,30 @@ export async function createCommand(q: Query, user: WebUser, branchId: unknown, 
       const found = await state(q, branch, 'product', product) as (Row & { inventoryLinks?: Row[] }) | null;
       if (!found || !(found.inventoryLinks ?? []).some(l => Number(l.active) === 1)) throw new ProtocolError('El producto no tiene una asociación activa');
       payload = { productId: product };
+      break;
+    }
+    case 'production.prepare': {
+      requirePermission(user, 'production.create');
+      const plan = parsePlan(JSON.stringify({ outputs: b.outputs, selections: b.selections ?? [] }));
+      const preview = await productionPlan(q, branch, plan);
+      if (!preview.canConfirm) throw new ProtocolError(preview.problem ?? 'El plan tiene datos pendientes de corregir.');
+      payload = { batchId: id(b.batchId, 'Producción'), operationId: id(b.operationId, 'Operación'), outputs: plan.outputs, selections: plan.selections,
+        ...optional(b.notes, 'Notas', 500, 'notes') };
+      break;
+    }
+    case 'production.confirm': {
+      requirePermission(user, 'production.confirm');
+      const batchId = id(b.batchId, 'Producción');
+      const batch = await state(q, branch, 'production_batch', batchId) as (Row & { batch: Row; outputs: Row[] }) | null;
+      if (!batch) throw new ProtocolError('La producción todavía no llega de la caja', 404);
+      if (s(batch.batch.status) !== 'DRAFT') throw new ProtocolError('Esa producción ya está registrada');
+      // Como en la caja: sólo quien creó el borrador lo registra.
+      if (s(batch.batch.created_by) !== user.id) throw new ProtocolError('Sólo el usuario que creó este borrador puede registrarlo', 403);
+      if (await sent(q, branch, 'production.confirm', 'batchId', batchId)) throw new ProtocolError('Ya se mandó el registro de esta producción; espera a que la caja lo aplique');
+      const given = new Map((Array.isArray(b.actuals) ? b.actuals : []).map((a: unknown) => { const x = (a ?? {}) as Record<string, unknown>; return [s(x.productId), x.actual]; }));
+      const actuals = batch.outputs.map(o => ({ productId: s(o.product_id), actual: int(given.get(s(o.product_id)), `Piezas reales de ${s(o.product_name)}`, 0, 100_000) }));
+      if (given.size !== actuals.length) throw new ProtocolError('Captura las piezas reales de cada producto del plan');
+      payload = { batchId, actuals };
       break;
     }
     case 'inventory.consumption': {

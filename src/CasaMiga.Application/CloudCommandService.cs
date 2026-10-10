@@ -199,6 +199,36 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
                 break;
             }
             case "production.record": RecordProduction(command, session); break;
+            // Producción en dos pasos como la pantalla (W6): «Preparar registro de producción» deja el plan fijado como borrador…
+            case "production.prepare":
+            {
+                var production = new ProductionService(Modules.Production, session, clock, terminalId);
+                var batchId = Id(p, "batchId");
+                var outputs = (p["outputs"] as JsonArray ?? throw new InvalidCommandException()).Select(o => o as JsonObject ?? throw new InvalidCommandException())
+                    .Select(o => new RequestedProductionOutput(Id(o, "profileVersionId"), Long(o, "planned"))).ToArray();
+                var selections = (p["selections"] as JsonArray ?? []).Select(o => o as JsonObject ?? throw new InvalidCommandException())
+                    .Select(o => new ProductionAlternativeSelection(Id(o, "formulaVersionId"), Id(o, "groupId"), Id(o, "optionId"))).ToArray();
+                var plan = new PrepareProductionCommand(outputs, selections);
+                if (production.GetProduction(batchId) is null)
+                {
+                    var preview = production.PrepareProduction(plan);
+                    if (!preview.CanConfirm)
+                        throw new ProductionException(!preview.Planning.IsResolved ? ProductionFailure.UnresolvedPlan : preview.InactiveItems.Count > 0 ? ProductionFailure.InactiveItem
+                            : preview.Shortages.Count > 0 ? ProductionFailure.InsufficientStock : ProductionFailure.NotInitialized, preview.Shortages);
+                }
+                production.CreateProduction(new(batchId, Id(p, "operationId"), plan, Optional(p, "notes")));
+                break;
+            }
+            // …y «Registrar producción» lo confirma con las piezas que salieron (sólo quien lo creó, en esta caja).
+            case "production.confirm":
+            {
+                var production = new ProductionService(Modules.Production, session, clock, terminalId);
+                var batch = production.GetProduction(Id(p, "batchId")) ?? throw new ArgumentException("La producción ya no existe.");
+                var actual = (p["actuals"] as JsonArray ?? throw new InvalidCommandException()).Select(o => o as JsonObject ?? throw new InvalidCommandException())
+                    .Select(o => new ActualOutputLine(Id(o, "productId"), Long(o, "actual"))).ToArray();
+                production.ConfirmProduction(new(batch.Id, batch.OperationId, ProductionContract.Revision(batch), actual));
+                break;
+            }
             case "recipe.formula.create": case "recipe.formula.draft": case "recipe.formula.publish": case "recipe.formula.activate":
             case "recipe.profile.create": case "recipe.profile.draft": case "recipe.profile.publish": case "recipe.profile.activate":
                 Recipe(command, new RecipeService(Modules.Production, session, clock, terminalId));
@@ -390,6 +420,9 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
         ProductionException { Code: ProductionFailure.NotInitialized } => "Un insumo o producto terminado todavía no tiene saldo inicial (haz el conteo inicial en Inventario).",
         ProductionException { Code: ProductionFailure.UnresolvedPlan } => "La receta tiene problemas pendientes y no puede registrarse.",
         ProductionException { Code: ProductionFailure.NotFound } => "La receta ya no existe o cambió de versión; actualiza la página.",
+        ProductionException { Code: ProductionFailure.IdempotencyConflict } => "Sólo el usuario y terminal que crearon este borrador pueden registrarlo.",
+        ProductionException { Code: ProductionFailure.RevisionConflict } => "La producción cambió o ya fue registrada desde otra operación. Actualiza la información.",
+        ProductionException { Code: ProductionFailure.InvalidRequest } => "Captura las piezas reales de cada producto del plan.",
         ProductionException => "No se pudo registrar la producción con esos datos.",
         ProductionDomainException e => RecipeProblems.Describe(e),
         RecipeConcurrencyException => "La receta cambió. Actualiza la información antes de continuar.",
