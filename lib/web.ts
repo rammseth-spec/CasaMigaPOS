@@ -267,7 +267,8 @@ export async function route(q: Query, branch: string | null) {
     q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'consignment_store' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
     q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'consignment_delivery' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
     q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'consignment_payment' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
-    q(`SELECT branch_id, entity_id AS id, payload->'product'->>'name' AS name, (payload->'product'->>'active')::int AS active FROM entity_state WHERE entity = 'product' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
+    q(`SELECT branch_id, entity_id AS id, payload->'product'->>'name' AS name, (payload->'product'->>'active')::int AS active, payload->'product'->>'sku' AS sku,
+       payload->'product'->>'category_id' AS category, (payload->'product'->>'price_cents')::bigint AS retail FROM entity_state WHERE entity = 'product' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
     q(`SELECT branch_id, entity_id AS id, (payload->>'price_cents')::bigint AS price FROM entity_state WHERE entity = 'consignment_price' AND NOT deleted AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
     q(`SELECT c.id, c.kind, c.payload, c.requested_at, c.requested_by_name FROM branch_command c
        WHERE c.kind LIKE 'consignment.%' AND ($1::uuid IS NULL OR c.branch_id = $1::uuid)
@@ -292,7 +293,24 @@ export async function route(q: Query, branch: string | null) {
   }
   for (const x of payments) { const p = x.payload as Row; paid.set(s(p.store_id), (paid.get(s(p.store_id)) ?? 0) + n(p.amount_cents)); }
   const pendingSent = sent.map(c => ({ id: s(c.id), kind: s(c.kind), payload: c.payload as Row, at: c.requested_at instanceof Date ? c.requested_at.toISOString() : s(c.requested_at), by: s(c.requested_by_name) }));
+  const [categories, photos] = await Promise.all([
+    q(`SELECT branch_id, entity_id AS id, payload->>'name' AS name FROM entity_state WHERE entity = 'category' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
+    q(`SELECT branch_id, entity_id AS id, payload->'asset'->>'thumbnail_sha256' AS sha FROM entity_state WHERE entity = 'product_photo' AND payload->>'thumbnail' IS NOT NULL AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
+  ]);
+  const categoryName = new Map(categories.map(c => [key(c.branch_id, c.id), s(c.name)]));
+  const photoSha = new Map(photos.map(p => [key(p.branch_id, p.id), s(p.sha)]));
+  const storeRow = (x: Row) => {
+    const p = x.payload as { store: Row; template: Row[] };
+    const id = s(p.store.id);
+    return { id, branchId: s(x.branch_id), name: s(p.store.name), contact: s(p.store.contact), phone: s(p.store.phone), address: s(p.store.address),
+      active: n(p.store.active) === 1, balance: (charged.get(id) ?? 0) - (paid.get(id) ?? 0), lastDelivery: last.get(id) ?? null,
+      template: p.template.map(t => ({ productId: s(t.product_id), name: productName.get(key(x.branch_id, t.product_id)) ?? 'Pan', quantity: n(t.quantity) })),
+      atStore: (open.get(id) ?? []).sort((a: any, b: any) => a.at.localeCompare(b.at)),
+      sent: pendingSent.filter(c => s(c.payload.storeId) === id || (open.get(id) ?? []).some((d: any) => d.id === s(c.payload.deliveryId))) };
+  };
   return {
+    // Todas las tiendas (también desactivadas) para la pestaña Tiendas; la ruta usa sólo las activas.
+    allStores: stores.map(storeRow).sort((a, b) => a.name.localeCompare(b.name)),
     stores: stores.map(x => {
       const p = x.payload as { store: Row; template: Row[] };
       const id = s(p.store.id);
@@ -303,7 +321,9 @@ export async function route(q: Query, branch: string | null) {
         sent: pendingSent.filter(c => s(c.payload.storeId) === id || (open.get(id) ?? []).some((d: any) => d.id === s(c.payload.deliveryId))) };
     }).filter(st => st.active).sort((a, b) => a.name.localeCompare(b.name)),
     products: products.filter(p => n(p.active) === 1 && price.has(key(p.branch_id, p.id)))
-      .map(p => ({ id: s(p.id), branchId: s(p.branch_id), name: s(p.name), price: price.get(key(p.branch_id, p.id))! })).sort((a, b) => a.name.localeCompare(b.name)),
+      .map(p => ({ id: s(p.id), branchId: s(p.branch_id), name: s(p.name), price: price.get(key(p.branch_id, p.id))!, sku: s(p.sku), categoryId: s(p.category),
+        category: categoryName.get(key(p.branch_id, p.category)) ?? '', retail: n(p.retail), photo: photoSha.get(key(p.branch_id, p.id)) ?? null }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
   };
 }
 

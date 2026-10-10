@@ -23,7 +23,9 @@ export const KINDS = ['category.save', 'product.save', 'product.active', 'user.c
   'recipe.formula.create', 'recipe.formula.draft', 'recipe.formula.publish', 'recipe.formula.activate',
   'recipe.profile.create', 'recipe.profile.draft', 'recipe.profile.publish', 'recipe.profile.activate',
   // Producción en dos pasos como la caja (W6): preparar el borrador con el plan y registrarlo con lo que salió.
-  'production.prepare', 'production.confirm'] as const;
+  'production.prepare', 'production.confirm',
+  // Charolas como la caja (W7): «Precios de charola».
+  'consignment.price.save'] as const;
 const POLICIES: Record<string, string[]> = { COUNT: ['ExactWholeCount', 'CeilingWholeCount'], MASS: ['NotApplicable'], VOLUME: ['NotApplicable'] };
 const ITEM_KINDS = ['RawMaterial', 'FinishedGood', 'Packaging', 'Supply'];
 const DIMENSIONS: Record<string, string> = { Mass: 'MASS', Volume: 'VOLUME', Count: 'COUNT' };
@@ -339,6 +341,23 @@ export async function createCommand(q: Query, user: WebUser, branchId: unknown, 
       const actuals = batch.outputs.map(o => ({ productId: s(o.product_id), actual: int(given.get(s(o.product_id)), `Piezas reales de ${s(o.product_name)}`, 0, 100_000) }));
       if (given.size !== actuals.length) throw new ProtocolError('Captura las piezas reales de cada producto del plan');
       payload = { batchId, actuals };
+      break;
+    }
+    case 'consignment.price.save': {
+      // Lo que paga la tienda por cada pieza vendida; sin precio, el pan ya no se puede poner en charolas.
+      requirePermission(user, 'consignment.manage');
+      if (!Array.isArray(b.prices) || b.prices.length === 0 || b.prices.length > 300) throw new ProtocolError('Precios inválidos');
+      const seen = new Set<string>();
+      const prices = [];
+      for (const raw of b.prices as unknown[]) {
+        const x = (raw ?? {}) as Record<string, unknown>;
+        const product = id(x.productId, 'Producto');
+        if (seen.has(product)) throw new ProtocolError('Producto repetido');
+        seen.add(product);
+        if (!(await state(q, branch, 'product', product))) throw new ProtocolError('No se encontró el producto.', 404);
+        prices.push({ productId: product, priceCents: x.priceCents === null ? null : int(x.priceCents, 'Precio de charola', 0, 10_000_000) });
+      }
+      payload = { prices };
       break;
     }
     case 'inventory.consumption': {
