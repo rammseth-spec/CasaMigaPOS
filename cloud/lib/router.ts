@@ -9,6 +9,7 @@ import { profit, trayAnalytics } from './analytics.js';
 import * as pos from './pos.js';
 import * as reports from './reports.js';
 import * as planning from './planning.js';
+import * as trays from './trays.js';
 
 export interface Env { SESSION_SECRET?: string; PANEL_TIME_ZONE?: string; BACKUP_SECRET?: string }
 
@@ -16,7 +17,7 @@ export interface Env { SESSION_SECRET?: string; PANEL_TIME_ZONE?: string; BACKUP
 const VIEW: Record<string, string> = {
   dashboard: 'sales.view', sales: 'sales.view', sale: 'sales.view', compare: 'sales.view', heatmap: 'sales.view', 'cash-control': 'sales.view',
   'production-suggestion': 'sales.view', report: 'sales.view', forecast: 'sales.view', terminals: 'sales.view', cash: 'cash.view', consignment: 'consignment.view', catalog: 'catalog.view',
-  photo: 'catalog.view', pos: 'pos.use', 'pos-tickets': 'pos.use', 'pos-ticket': 'pos.use', 'pos-closures': 'cash.view', route: 'consignment.view', profit: 'recipe.view', 'tray-analytics': 'consignment.view', backups: 'users.manage', backup: 'users.manage', inventory: 'inventory.view', 'inventory-item': 'inventory.view', 'inventory-check': 'inventory.sale_consumption.configure', recipes: 'recipe.view', production: 'production.view', 'production-plan': 'production.create', 'production-batches': 'production.view', users: 'users.manage', commands: 'sales.view',
+  photo: 'catalog.view', pos: 'pos.use', 'pos-tickets': 'pos.use', 'pos-ticket': 'pos.use', 'pos-closures': 'cash.view', route: 'consignment.view', 'tray-account': 'consignment.view', 'tray-report': 'consignment.view', profit: 'recipe.view', 'tray-analytics': 'consignment.view', backups: 'users.manage', backup: 'users.manage', inventory: 'inventory.view', 'inventory-item': 'inventory.view', 'inventory-check': 'inventory.sale_consumption.configure', recipes: 'recipe.view', production: 'production.view', 'production-plan': 'production.create', 'production-batches': 'production.view', users: 'users.manage', commands: 'sales.view',
 };
 
 function me(user: WebUser) {
@@ -116,6 +117,9 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       case 'consignment': return json(200, await web.consignment(q, range()));
       case 'catalog': return json(200, await web.catalog(q, branch));
       case 'route': return json(200, await web.route(q, branch));
+      // Charolas como la caja (lib/trays.ts): estado de cuenta de una tienda y reporte del periodo.
+      case 'tray-account': return json(200, await trays.trayAccount(q, branch, url.searchParams.get('store') ?? '', timeZone));
+      case 'tray-report': return json(200, await trays.trayReport(q, range()));
       case 'pos-tickets': return json(200, await pos.tickets(q, user, url.searchParams.get('till'), (url.searchParams.get('q') ?? '').slice(0, 40)));
       case 'pos-ticket': return json(200, await pos.ticket(q, user, url.searchParams.get('till'), url.searchParams.get('id')));
       case 'pos-closures': return json(200, await pos.closures(q, user, url.searchParams.get('till'), url.searchParams.get('page')));

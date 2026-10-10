@@ -444,6 +444,48 @@ dialog.crop { width: min(900px, calc(100vw - 32px)); }
 .production-table { max-height: 400px; }
 .production-confirm { width: 100%; }
 .production td input { min-height: 40px; padding: 6px 10px; }
+
+/* ---------- Charolas (ConsignmentView) ---------- */
+.trays { display: grid; align-content: start; }
+.trays-summary { font-weight: 600; margin: 0 0 8px; }
+.trays-help { background: var(--surface-2); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; }
+.trays-help summary { cursor: pointer; font-weight: 600; }
+.trays-help ol { margin: 8px 0 4px; padding-left: 20px; display: grid; gap: 4px; }
+.trays-route { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.trays-store { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 8px; align-content: start; }
+.trays-store-head { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.trays-store-head h3 { font: 600 18px/1.25 var(--display); margin: 0; }
+.trays-store-head .caption { display: block; }
+.trays-tray { margin: 0; color: var(--muted); }
+.trays-store .sent { margin: 0; font-size: 13px; color: var(--warn-text); }
+.trays-workspace-head { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.trays-workspace-head .detail-title { margin: 0; }
+.trays-workspace-head .caption { margin: 2px 0 0; }
+.trays-charge { display: grid; gap: 8px; align-content: start; padding: 16px; }
+.trays-charge h2 { margin: 0; }
+.trays-figures { display: grid; gap: 6px; background: var(--surface-2); border-radius: 10px; padding: 12px; }
+.trays-figures div { display: flex; justify-content: space-between; gap: 8px; }
+.trays-figures .total { border-top: 1px solid var(--border); padding-top: 6px; font-size: 18px; }
+.trays-void-link { justify-self: start; color: var(--error); }
+.trays-collect .trays-collect-tile { cursor: default; display: grid; gap: 6px; justify-items: center; text-align: center; padding-bottom: 10px; height: auto; grid-template-rows: none; }
+.trays-collect .trays-collect-tile .tile-photo { border: 0; padding: 0; cursor: pointer; width: 100%; }
+.trays-collect .trays-collect-tile.has-returns { border-color: var(--warn); }
+.trays-collect .trays-collect-tile .tile-photo { aspect-ratio: 4 / 3; display: block; position: relative; overflow: hidden; }
+.trays-collect .trays-collect-tile .tile-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.trays-workspace .ticket-head { flex-direction: column; align-items: stretch; gap: 6px; }
+.trays-workspace .ticket-head .toolbar { gap: 6px; }
+.trays-figures div { padding: 0; margin: 0; min-height: 0; align-items: baseline; }
+.trays-stores { display: grid; grid-template-columns: 260px 1fr; gap: 18px; align-items: start; }
+.trays-store-list { display: grid; gap: 6px; }
+.trays-store-item { display: grid; text-align: left; gap: 2px; padding: 10px 12px; font-weight: 400; }
+.trays-store-item small { color: var(--muted); }
+.trays-store-item.selected { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 8%, var(--surface)); }
+.trays-store-detail { display: grid; align-content: start; }
+.trays-balance { font-size: 18px; font-weight: 600; margin: 0 0 8px; }
+.trays-prices td input { min-height: 40px; padding: 6px 10px; max-width: 140px; }
+.trays .bar { grid-template-columns: 180px 1fr auto; }
+.trays .bar .fill { display: block; }
+.trays .bar .value { font-variant-numeric: tabular-nums; }
 .crop-advanced { display: grid; gap: 8px; }
 .crop-advanced summary { cursor: pointer; font-weight: 600; font-size: 14px; }
 .crop-advanced label { display: grid; gap: 4px; margin-top: 8px; }
@@ -669,6 +711,9 @@ dialog footer { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: 
   .catalog-filters, .catalog-two { grid-template-columns: 1fr; }
   .inv-filters, .inv-preview-grid { grid-template-columns: 1fr; }
   .recipe-box { grid-template-columns: 1fr; }
+  .trays-stores { grid-template-columns: 1fr; }
+  .trays .bar { grid-template-columns: 96px 1fr; }
+  .trays .bar .value { grid-column: 1 / -1; }
   .recipe-table { max-height: none; }
   .inventory .history-table { max-height: none; }
   .catalog-table { height: auto; }

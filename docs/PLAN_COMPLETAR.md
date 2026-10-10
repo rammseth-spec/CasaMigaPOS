@@ -16,7 +16,7 @@ Base: auditoría pantalla por pantalla de la caja contra la web (09/10/2026). Ca
 | W4 | Inventario: consumo automático por ventas, búsqueda y filtros, alta/edición/activar artículos, presentaciones, asociaciones con productos, historial por artículo, vista previa de la operación | Hecho (7 cambios nuevos; migración de la caja 027 sube el estado del consumo) |
 | W5 | Recetas: crear y editar recetas (fórmulas) y perfiles de producto con versiones, borradores, publicar y activar, alternativas | Hecho (8 cambios `recipe.*`; la caja numera las versiones) |
 | W6 | Producción en dos pasos: plan, necesidades y faltantes, alternativas, borrador, registrar con lo que salió, borradores e historial con detalle | Hecho (cálculo de necesidades en la nube igual al de la caja; `production.prepare` / `production.confirm`; migración 028) |
-| W7 | Charolas: resumen de ruta, ayuda, entregar como en la caja, recoger con saldo anterior, estado de cuenta, precios de charola, reporte | Pendiente |
+| W7 | Charolas: resumen de ruta, ayuda, entregar como en la caja, recoger con saldo anterior, estado de cuenta, precios de charola, reporte | Hecho (`consignment.price.save`; reporte y estado de cuenta en la nube con los cálculos de la caja) |
 | W8 | Usuarios con confirmaciones; cambiar contraseña desde la web; «¿Olvidaste tu contraseña?» | Pendiente |
 
 ## Caja igual a la web

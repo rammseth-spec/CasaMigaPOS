@@ -125,6 +125,11 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
             case "consignment.void":
                 onRoute.Void(Id(p, "deliveryId"), Text(p, "reason"));
                 break;
+            // «Precios de charola» desde la web; sin precio, el pan ya no se puede poner en charolas. El mismo precio no cambia nada.
+            case "consignment.price.save":
+                foreach (var price in (p["prices"] as JsonArray ?? throw new InvalidCommandException()).Select(x => x as JsonObject ?? throw new InvalidCommandException()))
+                    trays.SetPrice(Id(price, "productId"), price["priceCents"] is null ? null : new Money(Long(price, "priceCents")));
+                break;
             case "inventory.cost":
                 new IngredientCostService(database, session, clock, terminalId).SetCost(Id(p, "itemId"), new Money(Long(p, "costCents")), Long(p, "perAtomic"), Text(p, "unitLabel"));
                 break;

@@ -199,7 +199,7 @@ public sealed class ConsignmentService(ILocalUnitOfWork database, UserSession id
     {
         var target = store.FindConsignmentStore(storeId) ?? throw new ConsignmentException("No se encontró la tienda.");
         var charges = store.QueryConsignmentDeliveries(null, null, storeId, openOnly: false).Where(d => d.Settlement is not null).Select(d =>
-            new ConsignmentMovement(d.Settlement!.CollectedAt, $"Charola del {Local(d.DeliveredAt):ddd d MMM}: {d.Settlement.Sold} vendidas, {d.Settlement.Returned} regresaron",
+            new ConsignmentMovement(d.Settlement!.CollectedAt, $"Charola del {Local(d.DeliveredAt).ToString("ddd d MMM", Spanish)}: {d.Settlement.Sold} vendidas, {d.Settlement.Returned} regresaron",
                 d.Settlement.SoldTotal, new(0)));
         var payments = store.QueryConsignmentPayments(null, null, storeId).Select(p =>
             new ConsignmentMovement(p.ReceivedAt, $"Pago con {Payment.Label(p.Method).ToLower(Spanish)}" + (p.Note.Length > 0 ? $" · {p.Note}" : ""), new(0), p.Amount));

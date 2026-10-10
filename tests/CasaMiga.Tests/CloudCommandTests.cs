@@ -107,6 +107,19 @@ public sealed class CloudCommandTests : SalesFixture
     }
 
     [TestMethod]
+    public void TrayPricesFromTheWebWorkLikeThePricesTab()
+    {
+        JsonObject Prices(long? cents) => new() { ["prices"] = new JsonArray(new JsonObject { ["productId"] = product.Id.ToString(), ["priceCents"] = cents }) };
+        Ok(Commands.Apply(Command("consignment.price.save", Prices(1500))));
+        Assert.AreEqual(1500L, work.Run(s => s.FindConsignmentPrice(product.Id))!.Value.Cents);
+        Ok(Commands.Apply(Command("consignment.price.save", Prices(1500))));
+        Assert.AreEqual(1L, Convert.ToInt64(Sql($"SELECT count(*) FROM audit_entry WHERE action='consignment.price.changed' AND entity_id='{product.Id}'")), "The same price changes nothing.");
+        Ok(Commands.Apply(Command("consignment.price.save", Prices(null))));
+        Assert.IsNull(work.Run(s => s.FindConsignmentPrice(product.Id)), "Without a price the bread can no longer go on trays.");
+        Assert.AreEqual("rejected", Commands.Apply(Command("consignment.price.save", new() { ["prices"] = new JsonArray(new JsonObject { ["productId"] = Guid.NewGuid().ToString(), ["priceCents"] = 1 }) })).Status);
+    }
+
+    [TestMethod]
     public void RouteFromThePhoneKeepsTheTimeItHappened()
     {
         var trays = new ConsignmentService(work, user, clock, terminal.Id, TimeZoneInfo.Utc);
