@@ -100,7 +100,7 @@ test('sell from the web: catalog price and name, folio, change, card reference, 
 });
 
 test('blind count and close: only who may close; no sales after counting; expected matches the desktop rule', async () => {
-  const { q, admin, ana, luis } = await seeded();
+  const { q, admin, ana, luis, rosa } = await seeded();
   const till = await pos.createTill(q, admin, centro);
   const { sessionId } = await pos.openSession(q, luis, { tillId: till.id, openingCents: 50000 });
   await pos.checkout(q, luis, { tillId: till.id, sessionId, operationId: op(), lines: [{ productId: concha, quantity: 2 }], method: 'CASH', receivedCents: 5000 });
@@ -121,6 +121,14 @@ test('blind count and close: only who may close; no sales after counting; expect
   assert.deepEqual([closed.terminal, closed.open, closed.expected, closed.counted, closed.difference, closed.note], ['CAJA-WEB-02', false, 52600, 52500, -100, 'Faltó un peso de cambio']);
   assert.equal((await pos.tills(q, centro))[0].open, false, 'The till can open a new shift.');
   await pos.openSession(q, luis, { tillId: till.id, openingCents: 0 });
+
+  // Cierres anteriores de esta caja (como CashHistoryView): sólo los cerrados, con quién abrió, cerró y contó.
+  const history = await pos.closures(q, luis, till.id, 0);
+  assert.deepEqual([history.total, history.pageSize], [1, 25]);
+  const [row] = history.items;
+  assert.deepEqual([row.terminal, row.openedBy, row.closedBy, row.countedBy, row.opening, row.expected, row.counted, row.difference, row.note],
+    ['CAJA-WEB-02', 'luis (Cashier)', 'ana (Manager)', 'ana (Manager)', 50000, 52600, 52500, -100, 'Faltó un peso de cambio']);
+  await assert.rejects(pos.closures(q, rosa, till.id, 0), status(403), 'Another branch cannot read them.');
 });
 
 test('the cashier signs in to the web but only reaches the point of sale', async () => {

@@ -6,7 +6,7 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { ProtocolError } from './protocol.js';
 import { requirePermission, type WebUser } from './auth.js';
-import { displayFolio, isUuid, terminalCode } from './web.js';
+import { displayFolio, isUuid, names, terminalCode } from './web.js';
 import type { Query, Row } from './panel.js';
 
 const n = (v: unknown) => (v === null || v === undefined ? 0 : Number(v));
@@ -40,6 +40,33 @@ async function till(q: Query, user: WebUser, value: unknown): Promise<Till> {
   if (!row || row.revoked_at) throw new ProtocolError('Caja web inexistente', 404);
   if (!user.admin && s(row.branch_id) !== user.branchId) throw new ProtocolError('Sin acceso a esa sucursal', 403);
   return { id: s(row.id), branchId: s(row.branch_id), name: s(row.name), openSessionId: row.open_session_id ? s(row.open_session_id) : null, counted: row.session_counted === true };
+}
+
+/**
+ * Cierres anteriores de una caja web (CashHistoryView de la caja): sólo turnos cerrados, el más reciente primero,
+ * 25 por página, con quién abrió, cerró y contó, y la nota de discrepancia. Sólo lectura (permiso cash.view).
+ */
+export async function closures(q: Query, user: WebUser, tillValue: unknown, pageValue: unknown) {
+  requirePermission(user, 'cash.view');
+  const t = await till(q, user, tillValue);
+  const page = Number.isSafeInteger(Number(pageValue)) && Number(pageValue) >= 0 && Number(pageValue) < 10_000 ? Number(pageValue) : 0;
+  const size = 25;
+  const rows = await q(`SELECT c.payload AS p, n.payload AS n, count(*) OVER () AS total
+    FROM entity_state c LEFT JOIN entity_state n ON n.entity = 'cash_count' AND NOT n.deleted AND n.payload->>'session_id' = c.entity_id
+    WHERE c.entity = 'cash_session' AND NOT c.deleted AND c.terminal_id = $1 AND c.payload->>'state' = 'CLOSED'
+    ORDER BY (c.payload->>'closed_utc')::timestamptz DESC, c.entity_id DESC LIMIT ${size} OFFSET $2`, [t.id, page * size]);
+  const k = await names(q);
+  const who = (v: unknown) => k.user.get(s(v)) ?? 'No disponible';
+  const amount = (v: unknown) => (v === null || v === undefined ? null : n(v));
+  return {
+    page, pageSize: size, total: n(rows[0]?.total),
+    items: rows.map(r => {
+      const p = r.p as Row, c = (r.n ?? {}) as Row;
+      return { id: s(p.id), terminal: t.name, openedAt: s(p.opened_utc), openedBy: who(p.opened_by), opening: n(p.opening_cents), closedAt: s(p.closed_utc),
+        closedBy: who(p.closed_by), countedBy: who(c.counted_by), expected: amount(p.expected_cents), counted: amount(p.counted_cents ?? c.counted_cents),
+        difference: amount(p.difference_cents), note: p.discrepancy_note ? s(p.discrepancy_note) : null };
+    }),
+  };
 }
 
 export async function tills(q: Query, branch: string | null) {
