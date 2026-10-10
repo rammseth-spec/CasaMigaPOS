@@ -19,7 +19,7 @@ export function terminalCode(name: string): string {
 export const displayFolio = (terminal: string, sequence: number) => `${terminalCode(terminal)}-${String(sequence).padStart(6, '0')}`;
 
 /** Nombres para mostrar: usuarios, cajas y sucursales. */
-async function names(q: Query) {
+export async function names(q: Query) {
   const [users, terminals, branches] = await Promise.all([
     q(`SELECT entity_id AS id, payload->>'display_name' AS name FROM entity_state WHERE entity = 'app_user'`, []),
     q('SELECT id, name FROM terminal', []),

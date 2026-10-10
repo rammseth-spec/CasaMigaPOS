@@ -1,8 +1,9 @@
 // Pantallas de Casa Miga en línea. Cada una pide sus datos a /api/web/<op> y dibuja con h() (sin HTML en texto).
-import { api, at, bars, can, card, command, dateLong, dayLabel, dialog, field, fmt, h, METHOD, pesos, quantity, range, render, ROLE, state, table, time, toast } from './app.js';
+import { api, at, can, card, command, dialog, field, fmt, h, METHOD, pesos, quantity, range, render, ROLE, state, table, time, toast } from './app.js';
 import { ICON } from './icons.js';
 import { tuCaja, vender } from './pos.js';
 import { ventas } from './sales.js';
+import { reportsView, setReportTab } from './reports.js';
 
 const branchName = id => state.branches.find(b => b.id === id)?.name ?? '';
 const multi = () => !state.branch && state.branches.length > 1;
@@ -31,34 +32,7 @@ function pic({ id, name, branchId } = {}, size = 'sm') {
 const withPic = (item, ...content) => h('span', { class: 'with-pic' }, pic(item), h('span', { class: 'with-pic-text' }, ...content));
 const diffCell = d => d === null ? h('span', { class: 'pill info', text: 'Abierta' }) : h('span', { class: d < 0 ? 'short' : d > 0 ? 'over' : 'even', text: d === 0 ? 'Cuadra' : fmt(d) });
 
-// ---------- Resumen ----------
-async function resumen() {
-  const [data] = await Promise.all([api('dashboard', range()), loadPhotos()]);
-  const t = data.totals;
-  const byDay = new Map();
-  for (const d of data.days) { const r = byDay.get(d.day) ?? { day: d.day, net: 0, tickets: 0 }; r.net += d.gross - d.refunds; r.tickets += d.tickets; byDay.set(d.day, r); }
-  const days = [...byDay.values()].sort((a, b) => b.day.localeCompare(a.day));
-  const methods = [['Efectivo', t.byMethod.cash], ['Tarjeta', t.byMethod.card], ['Transferencia', t.byMethod.transfer]];
-  const top = Math.max(1, ...methods.map(m => m[1]));
-  const diff = t.shortages + t.overages;
-  return h('div', { style: { display: 'grid', gap: '16px' } },
-    h('section', { class: 'kpis' },
-      kpi('Ventas netas', fmt(t.net), `Vendido ${fmt(t.gross)}`), kpi('Tickets', String(t.tickets), t.tickets ? `Promedio ${fmt(Math.round(t.gross / t.tickets))}` : 'Sin ventas'),
-      kpi('Devoluciones', fmt(t.refunds), 'Cancelaciones y devoluciones'), kpi('Diferencias de caja', fmt(diff), `Faltantes ${fmt(-t.shortages)} · Sobrantes ${fmt(t.overages)}`, diff < 0 ? 'short' : diff > 0 ? 'over' : '')),
-    h('section', { class: 'grid-2' },
-      card('Ventas por día', days.length ? bars(days, { value: d => d.net, label: d => dayLabel(d.day), title: d => `${d.tickets} tickets` }) : h('p', { class: 'empty', text: 'Sin ventas en el periodo.' })),
-      card('Formas de pago',
-        h('div', { style: { display: 'grid', gap: '10px' } }, methods.map(([name, cents]) => {
-          const fill = h('div', { class: 'fill' }); fill.style.width = `${Math.max(0, cents) / top * 100}%`;
-          return h('div', { class: 'meter' }, h('span', { text: name }), h('b', { class: 'num', text: fmt(cents) }), h('div', { class: 'track' }, fill));
-        })),
-        h('h2', { text: 'Más vendidos', style: { marginTop: '20px' } }),
-        data.products.length ? h('ul', { class: 'rows' }, data.products.map(p => h('li', {}, withPic({ name: p.name }, h('strong', { text: p.name })), h('span', { class: 'muted num', text: `${p.quantity} pz` }), h('b', { class: 'num', text: fmt(p.total) }))))
-          : h('p', { class: 'empty', text: 'Sin ventas en el periodo.' }))),
-    card(h('div', { class: 'toolbar', style: { justifyContent: 'space-between', width: '100%' } }, h('h2', { text: 'Cortes recientes' }), h('a', { href: '#/caja', class: 'button ghost' }, 'Ver caja')),
-      sessionsTable(data.sessions.slice(0, 6))),
-    card('Cajas', terminalsList(data.terminals)));
-}
+// ---------- Cortes ----------
 function sessionsTable(sessions) {
   return table([
     { label: 'Caja', value: s => [s.terminal, multi() ? h('small', { text: branchName(s.branchId) }) : null] },
@@ -81,78 +55,11 @@ function terminalsList(terminals) {
 
 // ---------- Ventas ----------
 // ---------- Reportes ----------
-let reportTab = 'summary';
+// Reportes como la caja (reports.js); Ganancia es propia de la web y usa las fechas de esa pantalla.
 async function reportes() {
   await loadPhotos();
-  const pick = id => { reportTab = id; render(); };
-  const tabs = tabsBar([['summary', 'Resumen'], ['compare', 'Comparativo'], ['heatmap', 'Ventas por hora'], ['profit', 'Ganancia'], ['cash-control', 'Control de caja'], ['production', 'Producción sugerida']]
-    .filter(([id]) => id !== 'profit' || can('recipe.view')), reportTab, pick);
-  let body;
-  if (reportTab === 'summary') {
-    body = [await resumen()];
-  } else if (reportTab === 'compare') {
-    const c = await api('compare', range());
-    const delta = (a, b) => b ? `${a >= b ? '+' : ''}${Math.round((a - b) / b * 100)} %` : '—';
-    body = [h('section', { class: 'kpis' },
-      kpi('Ventas netas', fmt(c.current.net), `Antes ${fmt(c.previous.net)} (${delta(c.current.net, c.previous.net)})`),
-      kpi('Tickets', String(c.current.tickets), `Antes ${c.previous.tickets} (${delta(c.current.tickets, c.previous.tickets)})`),
-      kpi('Ticket promedio', fmt(c.current.tickets ? Math.round(c.current.gross / c.current.tickets) : 0), `Antes ${fmt(c.previous.tickets ? Math.round(c.previous.gross / c.previous.tickets) : 0)}`),
-      kpi('Devoluciones', fmt(c.current.refunds), `Antes ${fmt(c.previous.refunds)}`)),
-      card(`Día por día contra ${dayLabel(c.previousRange.from)} – ${dayLabel(c.previousRange.to)}`,
-        h('div', { class: 'bars' }, c.daily.map(d => {
-          const top = Math.max(1, ...c.daily.flatMap(x => [x.current, x.previous]));
-          const now = h('div', { class: 'fill' }); now.style.width = `${d.current / top * 100}%`;
-          const before = h('div', { class: 'fill prev' }); before.style.width = `${d.previous / top * 100}%`;
-          return h('div', { style: { display: 'grid', gap: '3px', marginBottom: '6px' } },
-            h('div', { class: 'bar' }, h('span', { class: 'label', text: dayLabel(d.day) }), h('div', { class: 'track' }, now), h('b', { text: fmt(d.current) })),
-            h('div', { class: 'bar' }, h('span', { class: 'label muted small', text: dayLabel(d.previousDay) }), h('div', { class: 'track' }, before), h('b', { class: 'muted', text: fmt(d.previous) })));
-        })))];
-  } else if (reportTab === 'heatmap') {
-    const cells = await api('heatmap', range());
-    const hours = cells.length ? [Math.min(...cells.map(c => c.hour)), Math.max(...cells.map(c => c.hour))] : [7, 21];
-    const span = Array.from({ length: hours[1] - hours[0] + 1 }, (_, i) => hours[0] + i);
-    const max = Math.max(1, ...cells.map(c => c.tickets));
-    const peak = cells.reduce((a, c) => (c.tickets > (a?.tickets ?? 0) ? c : a), null);
-    const names = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
-    const grid = h('div', { class: 'heat', role: 'table', 'aria-label': 'Tickets por día y hora' });
-    grid.style.setProperty('--hours', String(span.length));
-    grid.append(h('span'), ...span.map(x => h('span', { class: 'h', text: String(x) })));
-    for (const wd of [1, 2, 3, 4, 5, 6, 0]) {
-      grid.append(h('span', { class: 'd', text: names[wd] }));
-      for (const hour of span) {
-        const c = cells.find(x => x.weekday === wd && x.hour === hour);
-        const cell = h('span', { class: 'c', title: c ? `${names[wd]} ${hour}:00 · ${c.tickets} tickets · ${fmt(c.gross)}` : `${names[wd]} ${hour}:00 · sin ventas` });
-        if (c) cell.style.background = `color-mix(in srgb, var(--primary) ${Math.round(12 + c.tickets / max * 88)}%, var(--surface-2))`;
-        grid.append(cell);
-      }
-    }
-    body = [card(peak ? `Hora pico: ${names[peak.weekday]} ${peak.hour}:00 (${peak.tickets} tickets)` : 'Ventas por hora', cells.length ? grid : h('p', { class: 'empty', text: 'Sin ventas en el periodo.' }))];
-  } else if (reportTab === 'profit') {
-    body = await ganancia();
-  } else if (reportTab === 'cash-control') {
-    const c = await api('cash-control', range());
-    body = [h('section', { class: 'grid-2' },
-      card('Faltantes y sobrantes por quien abrió', table([
-        { label: 'Abrió', value: x => x.user }, { label: 'Cortes', num: true, value: x => String(x.sessions) }, { label: 'Con diferencia', num: true, value: x => String(x.uneven) },
-        { label: 'Faltantes', num: true, value: x => h('span', { class: x.shortages ? 'short' : '', text: fmt(x.shortages) }) }, { label: 'Sobrantes', num: true, value: x => fmt(x.overages) },
-      ], c.cuts, { empty: 'Sin cortes cerrados.' })),
-      card('Motivos de devolución', c.reasons.length ? h('ul', { class: 'rows' }, c.reasons.map(r => h('li', {}, h('span', { text: r.reason }), h('span'), h('b', { text: String(r.count) })))) : h('p', { class: 'empty', text: 'Sin devoluciones.' }))),
-      card('Devoluciones por quien las hizo', table([
-        { label: 'Usuario', value: x => x.name }, { label: 'Devoluciones', num: true, value: x => String(x.count) }, { label: 'Cancelaciones', num: true, value: x => String(x.cancellations) }, { label: 'Importe', num: true, value: x => fmt(x.total) },
-      ], c.refunds, { empty: 'Sin devoluciones.' }))];
-  } else {
-    const input = h('input', { type: 'date', 'aria-label': 'Día a producir', value: productionDay ?? '', onchange: e => { productionDay = e.target.value; render(); } });
-    const p = await api('production-suggestion', { branch: state.branch, day: productionDay ?? '' });
-    input.value = p.day;
-    body = [card(h('div', { class: 'toolbar', style: { width: '100%' } }, h('h2', { text: 'Piezas sugeridas para' }), input),
-      h('p', { class: 'muted small', text: `Promedio del mismo día de la semana en las 4 semanas anteriores (${p.weeks.map(dayLabel).join(', ')}) + 10 %.` }),
-      table([{ label: 'Producto', value: x => withPic({ name: x.name }, h('strong', { text: x.name })) }, { label: 'Promedio', num: true, value: x => String(x.average) },
-        { label: 'Semanas con venta', num: true, value: x => `${x.weeksWithSales} de 4` }, { label: 'Sugeridas', num: true, value: x => h('b', { text: String(x.suggested) }) }],
-      p.products, { empty: 'Sin ventas esos días.' }))];
-  }
-  return h('div', { style: { display: 'grid', gap: '16px' } }, tabs, ...body);
+  return reportsView({ profit: ganancia, canProfit: can('recipe.view') });
 }
-let productionDay = null;
 
 // ---------- Caja ----------
 async function caja(ctx) {
@@ -762,8 +669,8 @@ async function nube() {
 
 // ---------- Ganancia y análisis de charolas ----------
 const pct = v => v === null || v === undefined ? '—' : `${Math.round(v * 100)} %`;
-async function ganancia() {
-  const p = await api('profit', range());
+async function ganancia(period) {
+  const p = await api('profit', period ? { from: period.from, to: period.to, branch: state.branch } : range());
   const missing = p.costs.filter(c => c.cost === null);
   const channel = (title, c, extra) => h('article', { class: 'card kpi' }, h('span', { text: title }), h('strong', { text: c.coveredRevenue ? fmt(c.profit) : '—' }),
     h('small', { text: !c.coveredRevenue ? `Venta ${fmt(c.revenue)} · faltan costos para calcularla`
@@ -838,7 +745,7 @@ export const VIEWS = [
   { id: 'charolas', title: 'Charolas', subtitle: 'Charolas en tiendas: entregar, recoger y cobrar · Aparte de la caja del mostrador.', hint: 'Ir a Charolas', icon: ICON.tray, group: 1, permission: 'consignment.view', usesRange: true, render: charolas },
   // Fechas propias (como la caja): no usa el periodo de arriba; tampoco se redibuja sola mientras se arma una devolución.
   { id: 'ventas', label: 'Ventas', title: 'Historial de ventas', subtitle: 'Ventas confirmadas · Reimpresión, cancelaciones y devoluciones.', hint: 'Ir a Historial de ventas', icon: ICON.receipt, group: 2, permission: 'sales.view', usesRange: false, manual: true, render: ventas },
-  { id: 'reportes', title: 'Reportes', subtitle: 'Ventas, devoluciones y cortes de caja por periodo · Sólo lectura.', hint: 'Ir a Reportes', icon: ICON.chart, group: 2, permission: 'sales.view', usesRange: true, render: reportes, tab: id => { reportTab = id; } },
+  { id: 'reportes', title: 'Reportes', subtitle: 'Ventas, devoluciones y cortes de caja por periodo · Sólo lectura.', hint: 'Ir a Reportes', icon: ICON.chart, group: 2, permission: 'sales.view', usesRange: false, manual: true, render: reportes, tab: setReportTab },
   { id: 'catalogo', title: 'Catálogo', subtitle: 'Categorías y productos · Sin proceso de venta.', hint: 'Ir a Catálogo', icon: ICON.grid, group: 3, permission: 'catalog.view', usesRange: false, render: catalogo },
   { id: 'inventario', title: 'Inventario', subtitle: 'Existencias y movimientos del almacén principal · Entradas, mermas y conteos.', hint: 'Ir a Inventario', icon: ICON.box, group: 3, permission: 'inventory.view', usesRange: false, render: inventario },
   { id: 'recetas', title: 'Recetas', subtitle: 'Fórmulas y perfiles productivos versionados.', hint: 'Ir a Recetas', icon: ICON.book, group: 3, permission: 'recipe.view', usesRange: false, render: recetas },
