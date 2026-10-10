@@ -1,3 +1,11 @@
+# FASE 1K.4H-A TÉCNICAMENTE COMPLETADA — SMOKE HUMANO PENDIENTE, 09/10/2026
+
+Casa Miga incorpora **Reporte diario** de sólo lectura con fecha local, cuatro KPIs, top 5 por snapshots históricos, resumen consolidado de caja y detalle de múltiples sesiones. Usa `payment.applied_cents`, límites `[inicio local, día siguiente)` convertidos a UTC, `sales.view` + `cash.view` y consultas SQL agregadas sin N+1. Categorías se omiten porque no están snapshotteadas. Producción, materias primas, preparación de mañana y merma distinguen dato no disponible de cero real.
+
+Fixture aislada `work/phase1k4h-a-smoke-20261009`, schema 17, escenarios A–G y credencial verificada. Focales de datos 4/4, regresión ventas/caja/ticket 79/79, focales WPF 4/4 y regresión WPF 27/27. Suite final **791/791** (581 general + 210 WPF), 0 fallidas/omitidas; Release 0 errores/advertencias. El build identificado, hashes y commit local se registran en [PHASE_1K4H_A_REPORT.md](PHASE_1K4H_A_REPORT.md). No migración 018, no push, ticket/impresión/operations hub y recetas comerciales intactos.
+
+## Registro anterior — 1K.4G-A
+
 # FASE 1K.4G-A — AUDITORÍA MAESTRA COMPLETADA, 09/10/2026
 
 El checkpoint aprobado previo se publicó mediante avance normal en `origin/QA`: `30887e85de0c3c1505c67c7c4169092e5e9b2b54` → `5f5da76f2885ce9deaa2e74f3f3f33519eced5ec`, sin commits remotos exclusivos, force, merge, rebase, reset ni rama nueva. La auditoría posterior permanece local y exclusivamente documental.

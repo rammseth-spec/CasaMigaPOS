@@ -1,0 +1,69 @@
+<UserControl x:Class="CasaMiga.Presentation.DailyReportView"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:local="clr-namespace:CasaMiga.Presentation"
+ xmlns:automation="clr-namespace:System.Windows.Automation;assembly=PresentationCore">
+ <StackPanel MaxWidth="1500" HorizontalAlignment="Stretch" IsEnabled="{Binding IsReady}">
+  <Grid Margin="0,0,0,16">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="280"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <StackPanel><TextBlock Text="Fecha del reporte" FontWeight="SemiBold"/><local:DateEntryControl Text="{Binding DateText,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" HasError="{Binding HasDateError}" AutomationName="Fecha del reporte" EntryCommitted="DateCommitted" Margin="0,5,0,0"/></StackPanel>
+   <Button Grid.Column="1" Content="Consultar" Click="RefreshClick" VerticalAlignment="Bottom" Margin="10,0,0,0"/>
+   <StackPanel Grid.Column="2" Margin="22,0,0,0" VerticalAlignment="Center"><TextBlock Text="{Binding DayLabel}" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock Text="{Binding HumanSummary}" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,3,0,0"/></StackPanel>
+   <Border Grid.Column="3" Style="{StaticResource StatusPill}" VerticalAlignment="Center" Margin="12,0,0,0"><TextBlock Text="{Binding Status}" FontWeight="Bold" Foreground="{DynamicResource AvocadoLeafBrush}"/></Border>
+  </Grid>
+  <TextBlock Text="{Binding DateError}" Foreground="{DynamicResource ErrorBrush}" Margin="0,-10,0,12" AutomationProperties.LiveSetting="Polite"/>
+  <UniformGrid Columns="4" Margin="-5,0,-5,18">
+   <Border Style="{StaticResource CardStyle}" Background="{DynamicResource SurfaceSecondaryBrush}" Padding="15" Margin="5"><StackPanel><TextBlock Text="VENTAS" Style="{StaticResource CaptionText}"/><TextBlock Text="{Binding Sales}" FontSize="25" FontWeight="SemiBold" Margin="0,5,0,0"/></StackPanel></Border>
+   <Border Style="{StaticResource CardStyle}" Background="{DynamicResource SurfaceSecondaryBrush}" Padding="15" Margin="5"><StackPanel><TextBlock Text="TICKETS" Style="{StaticResource CaptionText}"/><TextBlock Text="{Binding Tickets}" FontSize="25" FontWeight="SemiBold" Margin="0,5,0,0"/></StackPanel></Border>
+   <Border Style="{StaticResource CardStyle}" Background="{DynamicResource SurfaceSecondaryBrush}" Padding="15" Margin="5"><StackPanel><TextBlock Text="PIEZAS" Style="{StaticResource CaptionText}"/><TextBlock Text="{Binding Pieces}" FontSize="25" FontWeight="SemiBold" Margin="0,5,0,0"/></StackPanel></Border>
+   <Border Style="{StaticResource CardStyle}" Background="{DynamicResource SurfaceSecondaryBrush}" Padding="15" Margin="5"><StackPanel><TextBlock Text="TICKET PROMEDIO" Style="{StaticResource CaptionText}"/><TextBlock Text="{Binding AverageTicket}" FontSize="25" FontWeight="SemiBold" Margin="0,5,0,0"/></StackPanel></Border>
+  </UniformGrid>
+
+  <Border Style="{StaticResource CardStyle}" Padding="16" Margin="0,0,0,16" BorderBrush="{DynamicResource AvocadoLeafBrush}">
+   <StackPanel>
+    <DockPanel Margin="0,0,0,12"><TextBlock DockPanel.Dock="Right" Text="{Binding CashSessionCount}" Foreground="{DynamicResource TextSecondaryBrush}"/><TextBlock Text="Resumen de caja" Style="{StaticResource SectionTitleText}"/></DockPanel>
+    <UniformGrid Columns="5" Margin="-4,0,-4,12">
+     <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="8" Padding="11" Margin="4"><StackPanel><TextBlock Text="Fondo inicial" Style="{StaticResource CaptionText}"/><TextBlock Text="{Binding OpeningFund}" FontWeight="SemiBold" Margin="0,3,0,0"/></StackPanel></Border>
+     <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="8" Padding="11" Margin="4"><StackPanel><TextBlock Text="Efectivo vendido" Style="{StaticResource CaptionText}"/><TextBlock Text="{Binding CashSales}" FontWeight="SemiBold" Margin="0,3,0,0"/></StackPanel></Border>
+     <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="8" Padding="11" Margin="4"><StackPanel><TextBlock Text="Esperado" Style="{StaticResource CaptionText}"/><TextBlock Text="{Binding Expected}" FontWeight="SemiBold" Margin="0,3,0,0"/></StackPanel></Border>
+     <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="8" Padding="11" Margin="4"><StackPanel><TextBlock Text="Contado" Style="{StaticResource CaptionText}"/><TextBlock Text="{Binding Counted}" FontWeight="SemiBold" Margin="0,3,0,0"/></StackPanel></Border>
+     <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="8" Padding="11" Margin="4"><StackPanel><TextBlock Text="Diferencia" Style="{StaticResource CaptionText}"/><TextBlock Text="{Binding CashDifference}" FontWeight="SemiBold" Margin="0,3,0,0" TextWrapping="Wrap"/></StackPanel></Border>
+    </UniformGrid>
+    <TextBlock Text="No hubo sesión de caja relacionada con este día." Foreground="{DynamicResource TextSecondaryBrush}" Visibility="{Binding HasNoCashSessions,Converter={StaticResource VisibleWhen}}"/>
+    <ItemsControl ItemsSource="{Binding CashSessions}" Visibility="{Binding HasCashSessions,Converter={StaticResource VisibleWhen}}">
+     <ItemsControl.ItemTemplate><DataTemplate>
+      <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="110"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+        <StackPanel><TextBlock Text="{Binding State}" FontWeight="Bold" Foreground="{DynamicResource AvocadoLeafBrush}"/><TextBlock Text="{Binding StateDetail}" Style="{StaticResource CaptionText}" TextWrapping="Wrap"/></StackPanel>
+        <StackPanel Grid.Column="1" Margin="10,0"><TextBlock Text="{Binding Identity}" FontWeight="SemiBold"/><TextBlock Text="{Binding Times}" Style="{StaticResource CaptionText}"/><TextBlock Text="{Binding Financial}" TextWrapping="Wrap" Margin="0,3,0,0"/></StackPanel>
+        <StackPanel Grid.Column="2" MaxWidth="340"><TextBlock Text="{Binding Count}" TextWrapping="Wrap" HorizontalAlignment="Right"/><TextBlock Text="{Binding Note}" Style="{StaticResource CaptionText}" TextWrapping="Wrap" Visibility="{Binding HasNote,Converter={StaticResource VisibleWhen}}" HorizontalAlignment="Right"/></StackPanel>
+       </Grid>
+      </Border>
+     </DataTemplate></ItemsControl.ItemTemplate>
+    </ItemsControl>
+   </StackPanel>
+  </Border>
+
+  <Grid Margin="0,0,0,16">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="3*"/><ColumnDefinition Width="2*"/></Grid.ColumnDefinitions>
+   <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="16" Margin="0,0,8,0">
+    <StackPanel><TextBlock Text="Productos más vendidos" Style="{StaticResource SectionTitleText}" Margin="0,0,0,10"/>
+     <TextBlock Text="No hubo ventas registradas este día." Foreground="{DynamicResource TextSecondaryBrush}" Visibility="{Binding HasNoSales,Converter={StaticResource VisibleWhen}}"/>
+     <DataGrid ItemsSource="{Binding TopProducts}" Height="220" Visibility="{Binding HasSales,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Productos más vendidos">
+      <DataGrid.Columns><DataGridTextColumn Header="#" Binding="{Binding Position}" Width="45"/><DataGridTextColumn Header="Producto histórico" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="Piezas" Binding="{Binding Pieces}" Width="100"/><DataGridTextColumn Header="Importe" Binding="{Binding Revenue}" Width="130"/></DataGrid.Columns>
+     </DataGrid>
+    </StackPanel>
+   </Border>
+   <Border Grid.Column="1" Style="{StaticResource CardStyle}" Padding="16" Margin="8,0,0,0">
+    <StackPanel><TextBlock Text="Lectura del día" Style="{StaticResource SectionTitleText}"/><TextBlock Text="{Binding HumanSummary}" FontSize="17" TextWrapping="Wrap" Margin="0,10,0,10"/><TextBlock Text="Los importes usan pagos aplicados y los productos conservan el nombre registrado en cada venta." Style="{StaticResource CaptionText}" TextWrapping="Wrap"/></StackPanel>
+   </Border>
+  </Grid>
+
+  <UniformGrid Columns="3" Margin="-5,0,-5,0">
+   <Border Style="{StaticResource CardStyle}" Padding="15" Margin="5"><StackPanel><TextBlock Text="Producción" Style="{StaticResource SectionTitleText}"/><TextBlock Text="No disponible" FontWeight="SemiBold" Foreground="{DynamicResource AvocadoLeafBrush}" Margin="0,7,0,2"/><TextBlock Text="Completa recetas y perfiles de producción para habilitar este resumen." Style="{StaticResource CaptionText}" TextWrapping="Wrap"/></StackPanel></Border>
+   <Border Style="{StaticResource CardStyle}" Padding="15" Margin="5"><StackPanel><TextBlock Text="Materias primas" Style="{StaticResource SectionTitleText}"/><TextBlock Text="Pendiente de configuración" FontWeight="SemiBold" Foreground="{DynamicResource AvocadoLeafBrush}" Margin="0,7,0,2"/><TextBlock Text="Aún no hay datos suficientes para calcular consumo o merma." Style="{StaticResource CaptionText}" TextWrapping="Wrap"/></StackPanel></Border>
+   <Border Style="{StaticResource CardStyle}" Padding="15" Margin="5"><StackPanel><TextBlock Text="Preparación para mañana" Style="{StaticResource SectionTitleText}"/><TextBlock Text="No disponible" FontWeight="SemiBold" Foreground="{DynamicResource AvocadoLeafBrush}" Margin="0,7,0,2"/><TextBlock Text="Se habilitará al completar recetas, inventario y reservas." Style="{StaticResource CaptionText}" TextWrapping="Wrap"/></StackPanel></Border>
+  </UniformGrid>
+  <TextBlock Text="{Binding Message}" Foreground="{DynamicResource ErrorBrush}" Margin="0,12,0,0" AutomationProperties.LiveSetting="Polite"/>
+ </StackPanel>
+</UserControl>
