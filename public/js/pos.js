@@ -30,7 +30,10 @@ const BREAD = 'M4,5 L16,5 18,8 18,17 2,17 2,8 Z M7,5 L8.5,2 11.5,2 13,5 M10,9 A3
 
 /** Lee la caja web de este dispositivo y avisa a la barra superior si está abierta o cerrada. */
 async function loadTill(ctx) {
-  const branchId = ctx.branchId();
+  return tillOf(ctx.branchId());
+}
+/** Caja web elegida en este dispositivo para la sucursal (con su turno), o sin caja. La usan Venta, Caja y el historial de ventas. */
+export async function tillOf(branchId) {
   const chosen = saved.get(tillKey(branchId), null);
   const data = await api('pos', { branch: branchId, till: chosen ?? '' });
   if (!data.till && chosen) saved.set(tillKey(branchId), null);
@@ -250,9 +253,9 @@ const MOVE_ACTION = { EXPENSE: 'Registrar gasto', DEPOSIT: 'Registrar entrada', 
 const CATEGORY = { SUPPLIES: 'Insumos', GAS: 'Gas', CLEANING: 'Limpieza', TRANSPORT: 'Transporte', MAINTENANCE: 'Mantenimiento', OTHER: 'Otro' };
 const move = { kind: 'EXPENSE', category: null, amount: '', note: '', message: '', ok: false };
 // Operación pendiente por contenido: reintentar lo mismo (por ejemplo, tras una falla de red) nunca lo registra dos veces.
-const pendingOps = new Map();
-const opFor = key => { if (!pendingOps.has(key)) pendingOps.set(key, crypto.randomUUID()); return pendingOps.get(key); };
-const stamp = iso => {
+export const pendingOps = new Map();
+export const opFor = key => { if (!pendingOps.has(key)) pendingOps.set(key, crypto.randomUUID()); return pendingOps.get(key); };
+export const stamp = iso => {
   // dd/MM/yyyy HH:mm:ss -06:00, como «Hora de apertura» en la caja.
   const d = new Date(iso); const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: state.timeZone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23', timeZoneName: 'longOffset' }).formatToParts(d).map(p => [p.type, p.value]));
   return `${parts.day}/${parts.month}/${parts.year} ${parts.hour}:${parts.minute}:${parts.second} ${(parts.timeZoneName || '').replace('GMT', '') || '+00:00'}`;

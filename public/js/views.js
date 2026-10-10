@@ -2,6 +2,7 @@
 import { api, at, bars, can, card, command, dateLong, dayLabel, dialog, field, fmt, h, METHOD, pesos, quantity, range, render, ROLE, state, table, time, toast } from './app.js';
 import { ICON } from './icons.js';
 import { tuCaja, vender } from './pos.js';
+import { ventas } from './sales.js';
 
 const branchName = id => state.branches.find(b => b.id === id)?.name ?? '';
 const multi = () => !state.branch && state.branches.length > 1;
@@ -79,43 +80,6 @@ function terminalsList(terminals) {
 }
 
 // ---------- Ventas ----------
-const salesState = { q: '', method: '', page: 0 };
-async function ventas() {
-  const data = await api('sales', range({ q: salesState.q, method: salesState.method, page: salesState.page }));
-  let timer = 0;
-  const search = h('input', { type: 'search', placeholder: 'Folio (C01-001061) o producto', value: salesState.q, 'aria-label': 'Buscar venta',
-    oninput: e => { clearTimeout(timer); timer = setTimeout(() => { salesState.q = e.target.value; salesState.page = 0; render(); }, 400); } });
-  const method = h('select', { 'aria-label': 'Forma de pago', onchange: e => { salesState.method = e.target.value; salesState.page = 0; render(); } },
-    h('option', { value: '', text: 'Todas las formas de pago' }), Object.entries(METHOD).map(([v, l]) => h('option', { value: v, text: l, selected: salesState.method === v })));
-  const pages = Math.max(1, Math.ceil(data.total / data.pageSize));
-  return card(h('div', { class: 'toolbar', style: { width: '100%' } }, search, method, h('span', { class: 'muted small', text: `${data.total} ventas` })),
-    table([
-      { label: 'Folio', value: s => [h('strong', { text: s.folio }), multi() ? h('small', { text: s.branch }) : null] },
-      { label: 'Fecha', value: s => at(s.at) },
-      { label: 'Cajero', value: s => s.cashier || '—' },
-      { label: 'Pago', value: s => METHOD[s.method] ?? s.method },
-      { label: 'Piezas', num: true, value: s => String(s.pieces) },
-      { label: 'Total', num: true, value: s => [fmt(s.total), s.cancelled ? h('small', { class: 'short', text: 'Cancelada' }) : s.refunded ? h('small', { class: 'over', text: `Dev. −${fmt(s.refunded)}` }) : null] },
-    ], data.items, { onclick: s => saleDialog(s.id), empty: 'Sin ventas con ese filtro.' }),
-    pages > 1 ? h('div', { class: 'toolbar', style: { justifyContent: 'center', marginTop: '12px' } },
-      h('button', { type: 'button', disabled: salesState.page === 0, onclick: () => { salesState.page--; render(); } }, 'Anteriores'),
-      h('span', { class: 'muted small', text: `Página ${salesState.page + 1} de ${pages}` }),
-      h('button', { type: 'button', disabled: salesState.page + 1 >= pages, onclick: () => { salesState.page++; render(); } }, 'Siguientes')) : null);
-}
-async function saleDialog(id) {
-  const [s] = await Promise.all([api('sale', { id, branch: state.branch }), loadPhotos()]);
-  dialog(`Venta ${s.folio}`, body => {
-    body.append(h('div', { class: 'wide ticket' },
-      h('p', { class: 'muted', text: `${dateLong(s.at)} · ${time(s.at)} · ${s.terminal}${s.branch ? ' · ' + s.branch : ''}` }),
-      h('p', { class: 'muted', text: `Cobró: ${s.cashier || '—'}` }),
-      s.items.map(i => h('div', { class: 'line' }, withPic({ id: i.productId, name: i.name }, h('span', { text: `${i.quantity} × ${i.name} (${fmt(i.unitPrice)})` })), h('b', { text: fmt(i.total) }))),
-      h('div', { class: 'line total' }, h('span', { text: 'Total' }), h('span', { text: fmt(s.total) })),
-      s.payment ? h('p', { class: 'muted', text: `${METHOD[s.payment.method] ?? s.payment.method}${s.payment.method === 'CASH' ? ` · recibido ${fmt(s.payment.received)} · cambio ${fmt(s.payment.change)}` : s.payment.reference ? ` · ref. ${s.payment.reference}` : ''}` }) : null,
-      s.refunds.length ? h('div', { style: { marginTop: '14px' } }, h('h3', { text: 'Devoluciones' }), s.refunds.map(r =>
-        h('div', { class: 'line' }, h('span', { text: `${r.kind === 'CANCELLATION' ? 'Cancelación' : 'Devolución'} · ${at(r.at)} · ${r.by} · «${r.reason}»` }), h('b', { class: 'short', text: `−${fmt(r.total)}` })))) : null));
-  });
-}
-
 // ---------- Reportes ----------
 let reportTab = 'summary';
 async function reportes() {
@@ -872,7 +836,8 @@ export const VIEWS = [
   // Tu caja (cajero y encargado) y, para encargados, los cortes del periodo. El esperado del turno abierto nunca se muestra antes del conteo ciego.
   { id: 'caja', label: 'Caja', title: 'Tu caja', subtitle: 'Caja web · lo que registras se guarda en la nube al momento.', hint: 'Ir a Caja', icon: ICON.cash, group: 1, permission: ['pos.use', 'sales.view'], usesRange: () => can('sales.view'), manual: true, render: caja },
   { id: 'charolas', title: 'Charolas', subtitle: 'Charolas en tiendas: entregar, recoger y cobrar · Aparte de la caja del mostrador.', hint: 'Ir a Charolas', icon: ICON.tray, group: 1, permission: 'consignment.view', usesRange: true, render: charolas },
-  { id: 'ventas', label: 'Ventas', title: 'Historial de ventas', subtitle: 'Ventas confirmadas · Toca una venta para ver su ticket.', hint: 'Ir a Historial de ventas', icon: ICON.receipt, group: 2, permission: 'sales.view', usesRange: true, render: ventas },
+  // Fechas propias (como la caja): no usa el periodo de arriba; tampoco se redibuja sola mientras se arma una devolución.
+  { id: 'ventas', label: 'Ventas', title: 'Historial de ventas', subtitle: 'Ventas confirmadas · Reimpresión, cancelaciones y devoluciones.', hint: 'Ir a Historial de ventas', icon: ICON.receipt, group: 2, permission: 'sales.view', usesRange: false, manual: true, render: ventas },
   { id: 'reportes', title: 'Reportes', subtitle: 'Ventas, devoluciones y cortes de caja por periodo · Sólo lectura.', hint: 'Ir a Reportes', icon: ICON.chart, group: 2, permission: 'sales.view', usesRange: true, render: reportes, tab: id => { reportTab = id; } },
   { id: 'catalogo', title: 'Catálogo', subtitle: 'Categorías y productos · Sin proceso de venta.', hint: 'Ir a Catálogo', icon: ICON.grid, group: 3, permission: 'catalog.view', usesRange: false, render: catalogo },
   { id: 'inventario', title: 'Inventario', subtitle: 'Existencias y movimientos del almacén principal · Entradas, mermas y conteos.', hint: 'Ir a Inventario', icon: ICON.box, group: 3, permission: 'inventory.view', usesRange: false, render: inventario },

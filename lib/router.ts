@@ -89,7 +89,11 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       case 'sales': {
         const page = Number(url.searchParams.get('page') ?? '0');
         const method = url.searchParams.get('method');
-        return json(200, await web.salesList(q, { ...range(), search: (url.searchParams.get('q') ?? '').slice(0, 80),
+        // Sin fechas = «Todos» (como la caja); con `session` = sólo ese turno.
+        const dates = url.searchParams.get('from') || url.searchParams.get('to') ? range() : { from: null, to: null, branchId: branch, timeZone };
+        const session = url.searchParams.get('session');
+        if (session && !web.isUuid(session)) throw new ProtocolError('Turno inválido');
+        return json(200, await web.salesList(q, { ...dates, search: (url.searchParams.get('q') ?? '').slice(0, 80), session: session ? session.toLowerCase() : null,
           method: method === 'CASH' || method === 'CARD' || method === 'TRANSFER' ? method : null, page: Number.isSafeInteger(page) && page >= 0 && page < 1000 ? page : 0 }));
       }
       case 'sale': return json(200, await web.saleDetail(q, branch, url.searchParams.get('id') ?? ''));

@@ -351,6 +351,28 @@ dialog.checkout { width: min(660px, calc(100vw - 32px)); border-radius: 20px; }
 .move-kind { background: var(--warn-soft); border-radius: 10px; padding: 2px 8px; font-size: 12.5px; font-weight: 600; }
 .move-kind.income { background: var(--primary-soft); }
 .move-detail { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* ---------- Historial de ventas (SalesHistoryView) ---------- */
+.history { display: grid; align-content: start; }
+.history-label { font-size: 15px; margin: 0 0 4px; }
+.history-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; margin-bottom: 12px; }
+.history-row.dates { grid-template-columns: 1fr 1fr auto auto; gap: 8px 16px; }
+.history-quick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+.history-quick .caption { margin-left: 8px; }
+button.secondary.active { border-color: var(--primary); color: var(--accent-text); background: var(--primary-soft); }
+.history-table { max-height: 520px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; }
+.history-table th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.history-table td { white-space: nowrap; }
+tr.selected td { background: var(--primary-soft) !important; }
+.mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 12.5px; color: var(--muted); }
+.history-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-top: 12px; }
+.history-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.detail-title { font: 600 24px/1.25 var(--display); margin: 0 0 12px; }
+.detail-text { font-size: 16px; white-space: pre-line; line-height: 1.5; margin: 0 0 14px; }
+.detail-text.small-text { font-size: 15px; margin: 8px 0 12px; }
+.detail-payment { font-size: 18px; white-space: pre-line; line-height: 1.5; margin: 14px 0; }
+.refunds { margin-top: 20px; display: grid; }
+.warning { color: var(--warn); margin: 0 0 8px; }
+.qty-input { width: 90px; min-height: 38px; padding: 6px 8px; text-align: right; }
 .till-list { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
 .till { display: grid; justify-items: start; gap: 4px; padding: 14px 16px; min-height: 0; text-align: left; font-weight: 400; }
 .ticket-list { display: grid; gap: 6px; max-height: 55dvh; overflow-y: auto; }
@@ -456,6 +478,9 @@ dialog footer { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: 
   .checkout-actions { grid-template-columns: 1fr; }
   .checkout-actions button.secondary { order: 3; }
   .move-fields { grid-template-columns: 1fr; }
+  .history-row, .history-row.dates { grid-template-columns: 1fr; }
+  .history-table { max-height: none; border: 0; }
+  .history-table td { white-space: normal; }
   .cash-state { font-size: 26px; }
   dialog { width: 100vw; max-width: 100vw; margin: auto 0 0; border-radius: 20px 20px 0 0; max-height: 92dvh; }
   dialog.checkout { width: 100vw; }
