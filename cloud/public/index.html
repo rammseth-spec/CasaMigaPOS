@@ -25,25 +25,33 @@
   </form>
 </main>
 
+<!-- Marco igual al de la caja de escritorio (rediseño A de QAv1): riel blanco con íconos y etiqueta abajo, barra superior con estado. -->
 <div id="app" class="shell" hidden>
   <nav class="nav" id="nav" aria-label="Secciones">
     <div class="brand"><img src="logo.png" alt="Casa Miga"></div>
-    <div id="nav-links"></div>
-    <div class="spacer"></div>
-    <div class="who"><strong id="who-name"></strong><span id="who-role" class="muted"></span>
-      <button id="logout" class="ghost" type="button">Salir</button></div>
+    <div id="nav-links" class="nav-links"></div>
+    <div class="nav-bottom">
+      <div class="who"><strong id="who-name"></strong><span id="who-role" class="muted"></span></div>
+      <hr class="nav-sep">
+      <button id="logout" class="nav-item" type="button" aria-label="Salir de mi usuario"><span>Salir</span></button>
+    </div>
   </nav>
   <div class="main">
     <header class="topbar">
       <button class="icon ghost menu" id="menu" type="button" aria-label="Menú" aria-controls="nav">☰</button>
       <div class="title"><h1 id="view-title"></h1><span id="view-subtitle"></span></div>
-      <button class="ghost refresh" id="refresh" type="button" aria-label="Actualizar ahora"><span id="updated">Actualizar</span></button>
-      <div class="filters" id="filters">
-        <div class="chips" role="group" aria-label="Periodo" id="periods"></div>
-        <div class="dates" id="dates"><input id="from" type="date" aria-label="Desde"><span>a</span><input id="to" type="date" aria-label="Hasta"></div>
-        <select id="branch" aria-label="Sucursal"></select>
+      <div class="status">
+        <span class="status-pill" id="cash-pill" hidden><i class="dot"></i><span id="cash-label"></span></span>
+        <button class="status-pill" id="refresh" type="button" aria-label="Actualizar ahora"><i class="dot ok"></i><span id="updated">Nube: en línea</span></button>
+        <span class="status-pill user" id="user-pill"><span class="avatar" id="user-initials"></span><span class="user-text"><strong id="user-name"></strong><small id="user-detail"></small></span></span>
+        <button class="icon ghost" id="fullscreen" type="button" aria-label="Pantalla completa" title="Pantalla completa"></button>
       </div>
     </header>
+    <div class="filters" id="filters">
+      <div class="chips" role="group" aria-label="Periodo" id="periods"></div>
+      <div class="dates" id="dates"><input id="from" type="date" aria-label="Desde"><span>a</span><input id="to" type="date" aria-label="Hasta"></div>
+      <select id="branch" aria-label="Sucursal"></select>
+    </div>
     <p id="error" class="banner" role="alert" hidden></p>
     <section class="content" id="view" aria-live="polite"></section>
   </div>

@@ -1,3 +1,12 @@
+# Web igual a la caja de escritorio y sincronización cada 5 segundos — 09/10/2026
+
+**Implementado y probado en local.** Pedidos del usuario: «Haz una copia tal cual de POS en Web» (primero el diseño, después la web independiente; se siguen usando HTML/CSS/JavaScript y TypeScript) y «actualízala para que sea la subida de datos cada 5 seg y la base de datos esté actualizada siempre».
+
+- **Diseño:** marco, Punto de venta, Cobro y Tu caja copiados de la caja (rediseño A de QAv1): riel con los mismos íconos y grupos, barra superior con estado de caja, nube y usuario, tarjetas de 236 px y 50 por página, ticket con Cobrar / Cobrar + imprimir ticket, cobro segmentado, Abrir caja, Conteo y Resultado de caja con nota de discrepancia. Resumen pasó a Reportes y Cajas/Respaldos a Nube (las direcciones viejas redirigen). Detalle en [POS_WEB.md](POS_WEB.md).
+- Comparado con capturas de la caja a 1280×820 (Edge sin ventana): mismas medidas (4 columnas de ~181 px con barra de desplazamiento, ticket de ~334 px). Probado en el navegador: venta C02-000001 en efectivo ($54, cambio $46), gasto de gas $50, conteo $510 → esperado $504, «SOBRANTE $6.00», cierre con nota, Venta manda a Caja con la caja cerrada, reabrir. Celular sin desbordes.
+- **Sincronización cada 5 s** (antes 60 s): la caja sube lo pendiente y baja los cambios de la web; sin nada pendiente sólo hace una consulta. La vuelta automática no muestra «sincronizando…» para que la barra no parpadee; tocar la nube sí. La web se actualiza sola cada 15 s (antes 60 s).
+- Pendiente: Historial de ventas con las acciones de la caja y la web independiente de la caja (decisión de quién manda sobre los datos).
+
 # Punto de venta en la web, fase 3: inventario, producción y fotos — 09/10/2026
 
 **Implementado y probado.** Pedido del usuario: «Termina todo el POS a WEB». Ver [POS_WEB.md](POS_WEB.md).

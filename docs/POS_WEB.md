@@ -2,14 +2,28 @@
 
 Decisión del usuario (08/10/2026): **POS web completo**, para vender y cobrar desde Mac, iPad o celular, no sólo consultar. Se construye por fases.
 
+## Copia de la caja de escritorio (09/10/2026)
+
+Pedido del usuario: «una copia tal cual de POS en Web» — primero **el mismo diseño** de la caja (rediseño A de QAv1) y después una web **independiente** de la caja. Se mantienen HTML/CSS/JavaScript y TypeScript (React o React Native sólo si hace falta). Lo que cambió:
+
+| Caja de escritorio | Web |
+|---|---|
+| Riel blanco de 96 px: Venta, Caja, Charolas · Ventas, Reportes · Catálogo, Inventario, Recetas, Producción, Usuarios, Nube · Salir | Igual (mismos íconos, nombres, grupos y orden). En celular, menú desplegable. **Resumen** pasó a ser la primera pestaña de Reportes y **Cajas/Respaldos** viven en **Nube**; las direcciones viejas (`#/resumen`, `#/cajas`, `#/respaldos`) redirigen. |
+| Barra superior: título y subtítulo, «● Caja abierta», «● Nube: …», ficha del usuario (iniciales, rol · terminal) y pantalla completa | Igual; «Nube» indica si la web leyó la nube y al tocarla actualiza. |
+| **Punto de venta** (PosView): buscador con lupa + «Buscar», píldoras de categoría, tarjetas de 236 px con foto y contador, 50 por página con Anterior/Siguiente, «Usuario · Terminal»; a la derecha el **Ticket** con «Limpiar», renglones con foto, − cantidad + y quitar, Subtotal, Total grande, **Cobrar $…** y **Cobrar + imprimir ticket** | Igual. Con la caja cerrada (o ya contada) Venta manda a Caja, como en escritorio. En tableta vertical y celular el ticket se abre desde la barra de abajo. |
+| **Cobro** (CheckoutDialog): total grande, forma de pago segmentada, efectivo recibido y cambio, referencia, instrucciones; Volver al POS · Cobrar · Cobrar + imprimir ticket; resultado «Venta confirmada / Folio / Total / Recibido / Cambio» | Igual (sin los atajos de billetes de antes). La impresión es la del navegador. |
+| **Tu caja**: CAJA ABIERTA/CERRADA, punto de color, «Abierta por / Hora de apertura» con importes ocultos hasta el conteo ciego, Abrir caja / Cerrar caja (rojo); **Movimientos de efectivo** (Gasto/Entrada/Retiro segmentado, categorías, importe, nota, «En este turno»); **Abrir caja**, **Conteo de caja** y **Resultado de caja** (Fondo, Gastos, Esperado, Contado, «SOBRANTE/FALTANTE», nota de discrepancia obligatoria, Confirmar cierre) | Igual. Sólo en la web: elegir o crear la caja web del dispositivo, «Cambiar de caja» y «Ventas de este turno» (tickets, reimpresión, cancelaciones y devoluciones). Para encargados, debajo: totales del periodo, **Cierres anteriores** de todas las cajas y gastos/retiros/entradas. |
+
+Pendiente de esta copia: Historial de ventas con las acciones de la caja (reimprimir, cancelar, devolver desde Ventas) y luego la web independiente (decisión de quién manda sobre los datos: se propone antes de hacerla).
+
 ## Fase 1 (lista)
 
 | Qué | Cómo |
 |---|---|
-| **Caja web** | El administrador la crea en **Vender → + Nueva caja web**. Cada una tiene su turno, fondo y folios; su número sigue al mayor de la sucursal (`CAJA-WEB-02` → folios `C02-000001…`), así no se confunde con la caja de escritorio (`C01`). Cada dispositivo elige su caja y la recuerda. |
+| **Caja web** | El administrador la crea en **Caja → + Nueva caja web** (antes en Vender). Cada una tiene su turno, fondo y folios; su número sigue al mayor de la sucursal (`CAJA-WEB-02` → folios `C02-000001…`), así no se confunde con la caja de escritorio (`C01`). Cada dispositivo elige su caja y la recuerda. |
 | **Abrir turno** | Fondo inicial (permiso `cash.open`: cajero, encargado, administrador). Un turno abierto por caja. |
 | **Vender** | Igual que en la app: buscador, categorías, cuadrícula con fotos, contador por pan, ticket con − / + y quitar, total. En celular y tableta vertical el ticket se abre desde la barra de abajo. |
-| **Cobrar** | Efectivo con atajos (exacto, $50, $100, $200, $500) y cambio; tarjeta o transferencia por el total exacto con referencia opcional (máx. 40). |
+| **Cobrar** | Efectivo recibido y cambio (los atajos de billetes se quitaron al copiar la caja, 09/10/2026); tarjeta o transferencia por el total exacto con referencia opcional (máx. 40). |
 | **Ticket** | En pantalla y **Imprimir ticket** (impresión del navegador, 72 mm): folio, fecha, cajero, caja, partidas, total, pago y cambio. |
 | **Corte** | **Corte de caja** (permiso `cash.close`; ajena con `cash.close.other`): conteo ciego, luego esperado / contado / diferencia y **Cerrar turno**. Con faltante o sobrante pide una **nota** (1–500), igual que la caja de escritorio. Después del conteo ya no entran ventas. |
 | **Tickets** | Botón **Tickets**: ventas del turno abierto; con un folio (`C02-000015`, o sólo `15` para esta caja) se busca cualquier venta de la sucursal. Cada ticket muestra sus devoluciones. |

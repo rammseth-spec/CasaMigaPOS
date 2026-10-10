@@ -23,16 +23,16 @@ Decisiones del usuario (07/10/2026): consultar todo lo que se ve en la caja; edi
 
 ## Pantallas
 
-**Vender** (punto de venta con fotos, cobro, ticket y corte; ver [POS_WEB.md](POS_WEB.md)), Resumen, Ventas (búsqueda por folio C01-001061 o producto, forma de pago, detalle del ticket con devoluciones), Reportes (comparativo contra el periodo anterior, ventas por hora, ganancia, control de caja, producción sugerida), Caja (cortes con su resultado o el esperado del turno abierto; gastos, retiros y entradas), Charolas (ruta, análisis por tienda, tiendas con saldo, entregas, cobros), Catálogo (fotos, precios, precio de charola), Inventario (con costo de referencia por insumo), Recetas, Producción, Usuarios (sólo administrador) y Cajas (última conexión y cambios enviados con su estado por caja).
+Mismo menú que la caja de escritorio (09/10/2026, ver [POS_WEB.md](POS_WEB.md)): **Venta** (punto de venta con fotos y cobro), **Caja** («Tu caja»: abrir, gastos/entradas/retiros, conteo ciego y cierre; para encargados, cierres anteriores de todas las cajas), **Charolas** (ruta, análisis por tienda, tiendas con saldo, entregas, cobros) · **Ventas** (búsqueda por folio C01-001061 o producto, forma de pago, detalle del ticket con devoluciones), **Reportes** (Resumen, comparativo contra el periodo anterior, ventas por hora, ganancia, control de caja, producción sugerida) · **Catálogo** (fotos, precios, precio de charola), **Inventario** (entradas, mermas, conteos y costo de referencia), **Recetas**, **Producción**, **Usuarios** (sólo administrador) y **Nube** (cajas conectadas, cambios hechos en la web con su estado y respaldos).
 
 Las fotos de los panes salen en todo el panel, como en la app: más vendidos, ticket de la venta, charolas (ruta, entregar, recoger, entregas, análisis), ganancia, producción sugerida y recetas. Se buscan por producto y, en ventas viejas, por nombre.
 
-Responsiva: menú lateral en computadora, riel de íconos en tablet (≤1100 px) y menú desplegable en celular (≤720 px), donde las tablas se vuelven tarjetas y los diálogos hojas inferiores.
+Responsiva: riel de íconos de 96 px como la caja en computadora y tablet, y menú desplegable en celular (≤720 px), donde las tablas se vuelven tarjetas y los diálogos hojas inferiores.
 
 ## Tiempo real
 
-- La caja sube lo pendiente y baja los cambios de la web **cada 60 segundos**; tocar la píldora «Nube» de la barra superior sincroniza al momento (cualquier usuario).
-- La web se actualiza sola cada 60 s con la página visible (sin parpadear ni perder la posición; se pausa mientras escribes o con un formulario abierto) y tiene el botón «Actualizado hh:mm ↻» para hacerlo al momento.
+- La caja sube lo pendiente y baja los cambios de la web **cada 5 segundos** (decisión del usuario, 09/10/2026; antes 60 s) para que la base de la nube esté siempre al día; sin nada pendiente sólo pregunta por cambios de la web (una llamada). Tocar la píldora «Nube» de la barra superior sincroniza al momento (cualquier usuario).
+- La web se actualiza sola cada 15 s con la página visible (sin parpadear ni perder la posición; se pausa mientras escribes o con un formulario abierto) y tiene el botón «Actualizado hh:mm ↻» para hacerlo al momento.
 
 ## Respaldos
 

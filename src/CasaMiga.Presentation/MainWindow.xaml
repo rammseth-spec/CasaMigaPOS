@@ -129,7 +129,7 @@
         <TextBlock Text="{Binding CashStatusLabel}" FontSize="13" FontWeight="SemiBold" TextWrapping="NoWrap" VerticalAlignment="Center"/>
        </StackPanel>
       </Border>
-      <!-- Tocar la nube sincroniza al momento (además del envío automático cada 60 s). -->
+      <!-- Tocar la nube sincroniza al momento (además del envío automático cada 5 s). -->
       <Button DataContext="{Binding Sync}" Click="SyncNowClick" ToolTip="{Binding StatusDetail}" Cursor="Hand" Foreground="{DynamicResource TextPrimaryBrush}" AutomationProperties.Name="Sincronizar ahora con la nube">
        <Button.Template><ControlTemplate TargetType="Button"><Border x:Name="Pill" Style="{StaticResource StatusPill}"><ContentPresenter/></Border>
         <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Pill" Property="Background" Value="{DynamicResource FillHoverBrush}"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Button.Template>

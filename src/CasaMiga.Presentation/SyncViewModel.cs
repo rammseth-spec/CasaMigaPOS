@@ -15,8 +15,11 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
     private readonly Action<string, string?> log;
     private readonly SemaphoreSlim gate = new(1, 1);
     private readonly CancellationTokenSource stop = new();
-    /// <summary>Cada cuánto sube lo pendiente y baja los cambios de la web (decisión del usuario, 08/10/2026). «Sincronizar ahora» no espera.</summary>
-    public static readonly TimeSpan Interval = TimeSpan.FromSeconds(60);
+    /// <summary>
+    /// Cada cuánto sube lo pendiente y baja los cambios de la web: 5 s para que la base de la nube esté siempre al día (decisión del usuario,
+    /// 09/10/2026; antes 60 s). Sin nada pendiente no sube nada: sólo pregunta por cambios de la web. «Sincronizar ahora» no espera.
+    /// </summary>
+    public static readonly TimeSpan Interval = TimeSpan.FromSeconds(5);
     private TimeSpan delay = Interval;
 
     public SyncViewModel(SyncEngine engine, SqliteSyncOutbox outbox, Guid terminalId, string terminalName, Action<string, string?> log)
@@ -52,7 +55,7 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
     public bool IsUpToDate => Status.State == SyncState.UpToDate;
     public bool NeedsCheck => Status.State is SyncState.Offline or SyncState.NeedsAttention;
     public string StatusDetail => Status.Detail +(Status.LastSuccess is { } at ? $"\nÚltimo envío confirmado: {at.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss", CultureInfo.InvariantCulture)}" : "")
-        + "\nSe sincroniza sola cada minuto; toca la nube para hacerlo ahora.";
+        + "\nSe sincroniza sola cada 5 segundos; toca la nube para hacerlo ahora.";
     public event PropertyChangedEventHandler? PropertyChanged;
     private void Notify()
     {
@@ -69,7 +72,7 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
         {
             while (!stop.IsCancellationRequested)
             {
-                await RunAsync();
+                await RunAsync(shown: false);
                 // Con todo subido, el respaldo cada hora; si falló, se reintenta a los 15 minutos.
                 if (Status.State == SyncState.UpToDate && (lastBackupAttempt is not { } last
                     || DateTimeOffset.UtcNow - last >= (lastBackupFailed ? TimeSpan.FromMinutes(15) : BackupInterval)))
@@ -87,11 +90,14 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
         catch (Exception error) { log("sync.loop.failed", error.GetType().Name); }
     }
 
-    /// <summary>Ejecuta un envío fuera del hilo de la interfaz. Nunca lanza excepciones.</summary>
-    public async Task RunAsync()
+    /// <summary>
+    /// Ejecuta un envío fuera del hilo de la interfaz. Nunca lanza excepciones. El envío automático (cada 5 s) no muestra
+    /// «sincronizando…» para que la barra superior no parpadee; «Sincronizar ahora» sí.
+    /// </summary>
+    public async Task RunAsync(bool shown = true)
     {
         if (!await gate.WaitAsync(0)) return;
-        Syncing = true; Notify();
+        Syncing = shown; if (shown) Notify();
         try
         {
             var token = stop.Token;
