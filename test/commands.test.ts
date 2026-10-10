@@ -197,7 +197,7 @@ test('production and photos from the web reach the terminal; photos never reach 
 
   const pulled = await pendingFor(q, { id: caja1, branchId: centro }, 0);
   assert.deepEqual(pulled[0].payload, { outputs: [{ profileVersionId: active, planned: 24, actual: 22 }], notes: 'Mañana' });
-  assert.deepEqual(pulled[1].payload, { productId: product, image: jpeg(512, 512), edge: 512, name: 'foto-web.jpg' });
+  assert.deepEqual(pulled[1].payload, { productId: product, image: jpeg(512, 512), edge: 512, name: 'foto-web.jpg', provenance: 'REAL' });
   assert.equal((pulled[3].payload as { edge: number }).edge, 1024);
   const listed = await listCommands(q, centro);
   assert.ok(listed.every(c => !('image' in c.payload)), 'The photo bytes stay out of the web list.');
@@ -219,4 +219,24 @@ test('a terminal never downloads more than about 3 MB of changes at once', async
   const first = await pendingFor(q, { id: caja1, branchId: centro }, 0);
   assert.equal(first.length, 3);
   assert.equal((await pendingFor(q, { id: caja1, branchId: centro }, first[2].seq)).length, 1);
+});
+
+test('catalog like the till: a category created from the product form, photo origin and removing the photo', async () => {
+  const q = await seeded();
+  const ana = await login(q, 'ana', 'Ana#2026centro');
+  const luis = await login(q, 'luis', 'Luis#2026centro');
+  // «+ Nueva categoría» sin salir del producto: la categoría todavía no llega de la caja, pero va antes en la fila.
+  const salado = randomUUID();
+  await assert.rejects(createCommand(q, ana, centro, 'product.save', { id: randomUUID(), categoryId: salado, name: 'Cuernito de jamón', priceCents: 3500 }), /categoría/);
+  await createCommand(q, ana, centro, 'category.save', { id: salado, name: 'Salado' });
+  await createCommand(q, ana, centro, 'product.save', { id: randomUUID(), categoryId: salado, name: 'Cuernito de jamón', priceCents: 3500 });
+
+  await createCommand(q, ana, centro, 'product.photo', { productId: product, image: jpeg(512, 512), provenance: 'PROVISIONAL' });
+  await assert.rejects(createCommand(q, ana, centro, 'product.photo', { productId: product, image: jpeg(512, 512), provenance: 'IA' }), /Origen/);
+  await createCommand(q, ana, centro, 'product.photo.remove', { productId: product });
+  await assert.rejects(createCommand(q, luis, centro, 'product.photo.remove', { productId: product }), status(403));
+  await assert.rejects(createCommand(q, ana, centro, 'product.photo.remove', { productId: randomUUID() }), status(404));
+  const pulled = await pendingFor(q, { id: caja1, branchId: centro }, 0);
+  assert.deepEqual(pulled.map(c => c.kind), ['category.save', 'product.save', 'product.photo', 'product.photo.remove']);
+  assert.equal((pulled[2].payload as { provenance: string }).provenance, 'PROVISIONAL');
 });

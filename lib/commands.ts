@@ -13,7 +13,9 @@ export const KINDS = ['category.save', 'product.save', 'product.active', 'user.c
   // Costo de referencia de un insumo, para calcular la ganancia desde las recetas.
   'inventory.cost',
   // Fase 3 del POS web (docs/POS_WEB.md): entradas, mermas y conteos de inventario, producción hecha y foto del producto.
-  'inventory.receive', 'inventory.waste', 'inventory.count', 'production.record', 'product.photo'] as const;
+  'inventory.receive', 'inventory.waste', 'inventory.count', 'production.record', 'product.photo',
+  // Catálogo como la caja: quitar la foto de un producto.
+  'product.photo.remove'] as const;
 const METHODS = ['CASH', 'CARD', 'TRANSFER'];
 /** Unidades del sistema (InventoryUnits de la caja): dimensión y cuántas unidades mínimas tiene cada una. */
 const UNITS: Record<string, [string, number]> = { mg: ['MASS', 1], g: ['MASS', 1_000], kg: ['MASS', 1_000_000], uL: ['VOLUME', 1], ml: ['VOLUME', 1_000], L: ['VOLUME', 1_000_000], piece: ['COUNT', 1] };
@@ -40,6 +42,12 @@ function int(v: unknown, field: string, min: number, max: number): number {
 function bool(v: unknown, field: string): boolean {
   if (typeof v !== 'boolean') throw new ProtocolError(`${field} inválido`);
   return v;
+}
+
+/** Alta pedida desde la web que la caja todavía no aplica (y no ha rechazado): cuenta como existente para lo que sigue en la fila. */
+async function queued(q: Query, branch: string, kind: string, entityId: string): Promise<boolean> {
+  return (await q(`SELECT 1 FROM branch_command c WHERE c.branch_id = $1 AND c.kind = $2 AND c.payload->>'id' = $3
+    AND NOT EXISTS (SELECT 1 FROM command_result r WHERE r.command_id = c.id AND r.status = 'rejected')`, [branch, kind, entityId])).length > 0;
 }
 
 async function state(q: Query, branch: string, entity: string, entityId: string): Promise<Row | null> {
@@ -72,7 +80,8 @@ export async function createCommand(q: Query, user: WebUser, branchId: unknown, 
       const target = id(b.id, 'Producto');
       requirePermission(user, (await state(q, branch, 'product', target)) ? 'products.edit' : 'products.create');
       const category = id(b.categoryId, 'Categoría');
-      if (!(await state(q, branch, 'category', category))) throw new ProtocolError('La categoría no existe en esa sucursal');
+      // Como en la caja, la categoría puede crearse sin salir del producto: su alta va antes en la fila.
+      if (!(await state(q, branch, 'category', category)) && !(await queued(q, branch, 'category.save', category))) throw new ProtocolError('La categoría no existe en esa sucursal');
       const sku = b.sku === null || s(b.sku).trim() === '' ? null : text(b.sku, 'SKU', 1, 40);
       payload = { id: target, categoryId: category, sku, name: text(b.name, 'Nombre', 1, 160), description: text(b.description ?? '', 'Descripción', 0, 500),
         priceCents: int(b.priceCents, 'Precio', 0, 10_000_000), trackInventory: b.trackInventory === undefined ? true : bool(b.trackInventory, 'Inventario') };
@@ -176,15 +185,23 @@ export async function createCommand(q: Query, user: WebUser, branchId: unknown, 
       requirePermission(user, 'products.edit');
       const product = id(b.productId, 'Producto');
       // Un producto recién creado en la web todavía no llega de la caja: basta con que su alta vaya en la fila (se aplica antes).
-      const known = (await state(q, branch, 'product', product)) !== null || (await q(`SELECT 1 FROM branch_command c WHERE c.branch_id = $1 AND c.kind = 'product.save' AND c.payload->>'id' = $2
-        AND NOT EXISTS (SELECT 1 FROM command_result r WHERE r.command_id = c.id AND r.status = 'rejected')`, [branch, product])).length > 0;
-      if (!known) throw new ProtocolError('Producto inexistente', 404);
+      if (!(await state(q, branch, 'product', product)) && !(await queued(q, branch, 'product.save', product))) throw new ProtocolError('Producto inexistente', 404);
       const image = s(b.image);
       if (image.length === 0 || image.length > MAX_PHOTO_BASE64 || !/^[A-Za-z0-9+/]+={0,2}$/.test(image)) throw new ProtocolError('Foto inválida o muy grande (máximo 1 MB)');
       const size = jpegSize(Buffer.from(image, 'base64'));
       if (!size) throw new ProtocolError('La foto debe ser JPEG');
       if (size.width !== size.height || size.width < 256 || size.width > 2048) throw new ProtocolError('La foto debe ser cuadrada, de 256 a 2048 píxeles');
-      payload = { productId: product, image, edge: size.width, name: 'foto-web.jpg' };
+      // Origen como en la caja: «Foto real» o «Foto provisional» (referencia de trabajo).
+      const provenance = b.provenance === undefined ? 'REAL' : b.provenance === 'REAL' || b.provenance === 'PROVISIONAL' ? b.provenance : null;
+      if (!provenance) throw new ProtocolError('Origen de la foto inválido');
+      payload = { productId: product, image, edge: size.width, name: 'foto-web.jpg', provenance };
+      break;
+    }
+    case 'product.photo.remove': {
+      requirePermission(user, 'products.edit');
+      const product = id(b.productId, 'Producto');
+      if (!(await state(q, branch, 'product', product))) throw new ProtocolError('Producto inexistente', 404);
+      payload = { productId: product };
       break;
     }
   }

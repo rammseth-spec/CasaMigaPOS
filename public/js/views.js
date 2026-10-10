@@ -4,6 +4,7 @@ import { ICON } from './icons.js';
 import { tuCaja, vender } from './pos.js';
 import { ventas } from './sales.js';
 import { reportsView, setReportTab } from './reports.js';
+import { catalogo } from './catalog.js';
 
 const branchName = id => state.branches.find(b => b.id === id)?.name ?? '';
 const multi = () => !state.branch && state.branches.length > 1;
@@ -53,7 +54,6 @@ function terminalsList(terminals) {
   }));
 }
 
-// ---------- Ventas ----------
 // ---------- Reportes ----------
 // Reportes como la caja (reports.js); Ganancia es propia de la web y usa las fechas de esa pantalla.
 async function reportes() {
@@ -275,118 +275,6 @@ async function templateDialog(store) {
     if (lines.some(l => !Number.isInteger(l.quantity) || l.quantity > 999)) throw new Error('Cantidades de 0 a 999 piezas.');
     await command(store.branchId, 'consignment.template.save', { storeId: store.id, lines });
   } });
-}
-
-// ---------- Catálogo ----------
-const catalogState = { q: '', category: '', inactive: false };
-async function catalogo(ctx) {
-  const data = await api('catalog', { branch: state.branch });
-  indexPhotos(data.products);
-  const categories = new Map(data.categories.map(c => [c.id, c]));
-  const text = catalogState.q.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
-  const list = data.products.filter(p => (catalogState.inactive || p.active) && (!catalogState.category || p.categoryId === catalogState.category)
-    && (!text || `${p.name} ${p.sku ?? ''}`.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().includes(text)));
-  let timer = 0;
-  const grid = h('div', { class: 'products' }, list.map(p => h('button', { type: 'button', class: 'product' + (p.active ? '' : ' off'), onclick: () => productDialog(p, data.categories) },
-    h('div', { class: 'photo' }, p.photo ? h('img', { src: `/api/web/photo?product=${p.id}&branch=${p.branchId}&v=${p.photo.sha}`, alt: '', loading: 'lazy' }) : 'Sin foto'),
-    h('div', { class: 'info' }, h('strong', { text: p.name }), h('span', { class: 'muted small', text: [categories.get(p.categoryId)?.name, p.sku].filter(Boolean).join(' · ') }),
-      h('span', { class: 'price', text: fmt(p.price) }), multi() ? h('span', { class: 'muted small', text: branchName(p.branchId) }) : null, p.active ? null : h('span', { class: 'pill', text: 'Inactivo' })))));
-  return h('div', { style: { display: 'grid', gap: '16px' } },
-    h('div', { class: 'toolbar' },
-      h('input', { type: 'search', placeholder: 'Buscar por nombre o SKU', value: catalogState.q, 'aria-label': 'Buscar producto',
-        oninput: e => { clearTimeout(timer); timer = setTimeout(() => { catalogState.q = e.target.value; render(); }, 300); } }),
-      h('select', { 'aria-label': 'Categoría', onchange: e => { catalogState.category = e.target.value; render(); } }, h('option', { value: '', text: 'Todas las categorías' }),
-        data.categories.map(c => h('option', { value: c.id, text: c.name + (multi() ? ` (${branchName(c.branchId)})` : ''), selected: catalogState.category === c.id }))),
-      h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: catalogState.inactive, onchange: e => { catalogState.inactive = e.target.checked; render(); } }), 'Mostrar inactivos'),
-      can('products.create') ? h('button', { type: 'button', class: 'primary', onclick: () => productDialog(null, data.categories, ctx.branchId()) }, '+ Nuevo producto') : null,
-      can('categories.edit') || can('categories.create') ? h('button', { type: 'button', onclick: () => categoriesDialog(data.categories, ctx.branchId()) }, 'Categorías') : null),
-    h('p', { class: 'muted small', text: `${list.length} productos` }),
-    list.length ? grid : h('p', { class: 'empty', text: 'Sin productos con ese filtro.' }));
-}
-/**
- * Foto elegida en el celular o la computadora: se endereza, se recorta al centro en cuadro y se reduce (máx. 1024 px, JPEG < 0.9 MB).
- * Se dibuja en un lienzo, así no hace falta abrir permisos de imágenes externas.
- */
-async function squarePhoto(file) {
-  if (!window.createImageBitmap) throw new Error('Este navegador no puede preparar la foto; usa uno más reciente.');
-  if (file.size > 25 * 1024 * 1024) throw new Error('La foto pesa más de 25 MB.');
-  let bitmap;
-  try { bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' }); } catch { throw new Error('No se pudo leer esa imagen; usa JPEG o PNG.'); }
-  const side = Math.min(bitmap.width, bitmap.height);
-  if (side < 256) throw new Error('La foto es muy chica (mínimo 256 × 256 píxeles).');
-  const edge = Math.min(1024, side);
-  const canvas = h('canvas', { class: 'photo-preview', width: String(edge), height: String(edge), 'aria-label': 'Foto nueva' });
-  canvas.getContext('2d').drawImage(bitmap, (bitmap.width - side) / 2, (bitmap.height - side) / 2, side, side, 0, 0, edge, edge);
-  bitmap.close?.();
-  let blob = null;
-  for (let quality = 0.86; quality > 0.4; quality -= 0.12) { blob = await new Promise(done => canvas.toBlob(done, 'image/jpeg', quality)); if (blob && blob.size <= 900_000) break; }
-  if (!blob || blob.size > 1_000_000) throw new Error('No se pudo reducir la foto; prueba con otra.');
-  const image = await new Promise((done, fail) => { const reader = new FileReader(); reader.onload = () => done(String(reader.result).split(',')[1]); reader.onerror = fail; reader.readAsDataURL(blob); });
-  return { image, canvas };
-}
-function productDialog(product, categories, branchId) {
-  const editable = product ? can('products.edit') : can('products.create');
-  const branch = product?.branchId ?? branchId;
-  let photo = null;
-  const options = branchId => categories.filter(c => c.branchId === branchId && (c.active || c.id === product?.categoryId));
-  dialog(product ? product.name : 'Nuevo producto', body => {
-    const categorySelect = h('select', { name: 'category', required: true, disabled: !editable }, options(branch).map(c => h('option', { value: c.id, text: c.name, selected: c.id === product?.categoryId })));
-    const picker = product ? null : branchPicker(branch);
-    picker?.querySelector('select').addEventListener('change', e => categorySelect.replaceChildren(...options(e.target.value).map(c => h('option', { value: c.id, text: c.name }))));
-    const current = product?.photo ? h('img', { src: `/api/web/photo?product=${product.id}&branch=${product.branchId}&v=${product.photo.sha}`, alt: '', class: 'photo-preview' }) : h('span', { class: 'photo-preview empty', text: 'Sin foto' });
-    const frame = h('div', { class: 'photo-frame' }, current);
-    const choose = h('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp,image/heic', hidden: true, onchange: async e => {
-      const file = e.target.files[0]; e.target.value = '';
-      if (!file) return;
-      try { photo = await squarePhoto(file); frame.replaceChildren(photo.canvas); status.textContent = 'Foto nueva: se guarda con el producto y la caja la aplica al conectarse.'; }
-      catch (error) { toast(error.message); }
-    } });
-    const status = h('small', { class: 'muted', text: product?.photo?.provisional ? 'Foto provisional.' : '' });
-    body.append(h('div', { class: 'wide photo-field' }, frame, h('div', { class: 'photo-actions' },
-        editable && can('products.edit') ? h('button', { type: 'button', onclick: () => choose.click() }, product?.photo ? 'Cambiar foto' : 'Agregar foto') : null, choose, status)),
-      picker ?? '',
-      field('Nombre', h('input', { name: 'name', required: true, maxlength: '160', value: product?.name ?? '', disabled: !editable }), true),
-      field('Categoría', categorySelect), field('SKU', h('input', { name: 'sku', maxlength: '40', value: product?.sku ?? '', disabled: !editable })),
-      field('Precio (MXN)', h('input', { name: 'price', required: true, inputmode: 'decimal', value: product ? pesos(product.price) : '', disabled: !editable })),
-      h('label', { class: 'check' }, h('input', { type: 'checkbox', name: 'track', checked: product?.trackInventory ?? true, disabled: !editable }), 'Descuenta inventario al vender'),
-      field('Descripción', h('textarea', { name: 'description', maxlength: '500', disabled: !editable }, product?.description ?? ''), true),
-      product?.consignmentPrice !== null && product ? h('p', { class: 'muted small wide', text: `Precio de charola: ${fmt(product.consignmentPrice)}` }) : '',
-      product && can('products.deactivate') ? h('div', { class: 'wide toolbar' }, h('button', { type: 'button', class: product.active ? 'danger' : '', onclick: async e => {
-        e.target.disabled = true;
-        try { await command(product.branchId, 'product.active', { id: product.id, active: !product.active }); e.target.closest('dialog').close(); e.target.closest('dialog').remove(); }
-        catch (error) { toast(error.message); e.target.disabled = false; }
-      } }, product.active ? 'Desactivar producto' : 'Reactivar producto')) : '');
-  }, editable ? { onSubmit: async form => {
-    const f = form.elements;
-    const text = String(f.price.value).trim().replace(',', '.');
-    if (!/^\d{1,6}(\.\d{1,2})?$/.test(text)) throw new Error('Escribe el precio, por ejemplo 19.50.');
-    const price = Math.round(Number(text) * 100);
-    const target = product?.branchId ?? f.branch?.value ?? branch, id = product?.id ?? uuid();
-    await command(target, 'product.save', { id, categoryId: f.category.value, sku: f.sku.value.trim() || null, name: f.name.value,
-      description: f.description.value, priceCents: price, trackInventory: f.track.checked });
-    if (photo) await command(target, 'product.photo', { productId: id, image: photo.image });
-  } } : {});
-}
-function categoriesDialog(categories, branchId) {
-  const list = categories.filter(c => !branchId || c.branchId === branchId || state.me.admin);
-  const edit = category => dialog(category ? `Categoría ${category.name}` : 'Nueva categoría', body => {
-    body.append(category ? '' : branchPicker(branchId) ?? '',
-      field('Nombre', h('input', { name: 'name', required: true, maxlength: '80', value: category?.name ?? '' }), true),
-      field('Orden', h('input', { name: 'order', type: 'number', min: '0', max: '9999', value: String(category?.sortOrder ?? 0) })),
-      category && can('categories.deactivate') ? h('label', { class: 'check' }, h('input', { type: 'checkbox', name: 'active', checked: category.active }), 'Activa') : '',
-      field('Descripción', h('textarea', { name: 'description', maxlength: '500' }, category?.description ?? ''), true));
-  }, { onSubmit: async form => {
-    const f = form.elements;
-    await command(category?.branchId ?? f.branch?.value ?? branchId, 'category.save', { id: category?.id ?? uuid(), name: f.name.value, description: f.description.value,
-      sortOrder: Number(f.order.value) || 0, ...(category && f.active ? { active: f.active.checked } : {}) });
-  } });
-  dialog('Categorías', body => {
-    body.append(h('div', { class: 'wide' }, table([
-      { label: 'Categoría', value: c => [h('strong', { text: c.name }), multi() ? h('small', { text: branchName(c.branchId) }) : null] },
-      { label: 'Estado', value: c => h('span', { class: 'pill ' + (c.active ? 'ok' : ''), text: c.active ? 'Activa' : 'Inactiva' }) },
-    ], list, { onclick: can('categories.edit') ? c => edit(c) : null, empty: 'Sin categorías.' })),
-      can('categories.create') ? h('button', { type: 'button', class: 'primary wide', onclick: () => edit(null) }, '+ Nueva categoría') : '');
-  });
 }
 
 // ---------- Inventario, recetas y producción ----------
@@ -628,7 +516,7 @@ const KIND = { 'consignment.deliver': 'Entrega de charola', 'consignment.collect
   'category.save': 'Categoría', 'product.save': 'Producto', 'product.active': 'Activar/desactivar producto', 'user.create': 'Alta de usuario', 'user.update': 'Usuario',
   'user.active': 'Activar/desactivar usuario', 'user.reset_password': 'Restablecer contraseña', 'consignment.store.save': 'Tienda de charolas', 'consignment.template.save': 'Charola habitual',
   'inventory.cost': 'Costo de insumo', 'inventory.receive': 'Entrada de inventario', 'inventory.waste': 'Merma', 'inventory.count': 'Conteo de inventario',
-  'production.record': 'Producción', 'product.photo': 'Foto de producto' };
+  'production.record': 'Producción', 'product.photo': 'Foto de producto', 'product.photo.remove': 'Quitar foto de producto' };
 function describe(c) {
   const p = c.payload;
   if (c.kind === 'product.save') return `${p.name} · ${fmt(p.priceCents)}`;
@@ -746,7 +634,7 @@ export const VIEWS = [
   // Fechas propias (como la caja): no usa el periodo de arriba; tampoco se redibuja sola mientras se arma una devolución.
   { id: 'ventas', label: 'Ventas', title: 'Historial de ventas', subtitle: 'Ventas confirmadas · Reimpresión, cancelaciones y devoluciones.', hint: 'Ir a Historial de ventas', icon: ICON.receipt, group: 2, permission: 'sales.view', usesRange: false, manual: true, render: ventas },
   { id: 'reportes', title: 'Reportes', subtitle: 'Ventas, devoluciones y cortes de caja por periodo · Sólo lectura.', hint: 'Ir a Reportes', icon: ICON.chart, group: 2, permission: 'sales.view', usesRange: false, manual: true, render: reportes, tab: setReportTab },
-  { id: 'catalogo', title: 'Catálogo', subtitle: 'Categorías y productos · Sin proceso de venta.', hint: 'Ir a Catálogo', icon: ICON.grid, group: 3, permission: 'catalog.view', usesRange: false, render: catalogo },
+  { id: 'catalogo', title: 'Catálogo', subtitle: 'Categorías y productos · Sin proceso de venta.', hint: 'Ir a Catálogo', icon: ICON.grid, group: 3, permission: 'catalog.view', usesRange: false, manual: true, render: catalogo },
   { id: 'inventario', title: 'Inventario', subtitle: 'Existencias y movimientos del almacén principal · Entradas, mermas y conteos.', hint: 'Ir a Inventario', icon: ICON.box, group: 3, permission: 'inventory.view', usesRange: false, render: inventario },
   { id: 'recetas', title: 'Recetas', subtitle: 'Fórmulas y perfiles productivos versionados.', hint: 'Ir a Recetas', icon: ICON.book, group: 3, permission: 'recipe.view', usesRange: false, render: recetas },
   { id: 'produccion', title: 'Producción', subtitle: 'Registro e historial de producción.', hint: 'Ir a Producción', icon: ICON.chef, group: 3, permission: 'production.view', usesRange: true, render: produccion },
