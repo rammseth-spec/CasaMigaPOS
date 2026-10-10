@@ -2,8 +2,10 @@ using System.IO;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using CasaMiga.Application;
+using CasaMiga.Domain;
 using CasaMiga.Infrastructure;
 using CasaMiga.Presentation;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -53,7 +55,7 @@ public sealed class DailyReportUsabilityTests
     [DataRow(3440, 1440)]
     public Task FullShellKeepsDailyReportReadableWithoutGlobalHorizontalScroll(int width, int height) => WpfTestHost.OnUi(async () =>
     {
-        using var fixture = new Fixture();
+        using var fixture = new Fixture(seedSales: true);
         var model = new MainViewModel();
         await model.InitializeAsync(new(fixture.Root, true));
         await model.LoginAsync("report-review", fixture.Password);
@@ -68,17 +70,79 @@ public sealed class DailyReportUsabilityTests
             Assert.AreEqual(0d, global.ScrollableWidth, 0.5);
             var products = Descendants<DataGrid>(view).Single(x => AutomationProperties.GetName(x) == "Productos más vendidos");
             Assert.HasCount(4, products.Columns);
+            Assert.AreEqual("Producto", products.Columns[1].Header);
+            Assert.IsTrue(VisibleText(view, "Ventas por hora"));
+            Assert.IsTrue(model.DailyReport!.HasHourlySales);
+            Assert.IsTrue(Descendants<Border>(view).Any(x => AutomationProperties.GetName(x).Contains("ticket", StringComparison.Ordinal)));
             Assert.IsTrue(Descendants<Button>(window).Any(x => Equals(x.Content, "Reporte diario")));
             var navigation = Descendants<Button>(window).Single(x => Equals(x.Content, "Reporte diario"));
             Assert.IsTrue(navigation.Tag is string geometry && geometry.StartsWith("M", StringComparison.Ordinal));
             Assert.IsTrue(Descendants<System.Windows.Shapes.Path>(navigation).Any(), "The navigation entry must render its vector icon.");
-            Assert.IsTrue(Descendants<Button>(window).Any(x => Equals(x.Content, "F11") && x.IsVisible));
+            var fullScreen = (Button)window.FindName("FullScreenButton");
+            Assert.IsTrue(fullScreen.IsVisible);
+            Assert.AreEqual("Pantalla completa · F11", ((TextBlock)window.FindName("FullScreenLabel")).Text);
+            Assert.IsGreaterThanOrEqualTo(180d, fullScreen.ActualWidth);
         }
         finally { window.Close(); model.Logout(); }
     });
 
+    [TestMethod]
+    public Task FullScreenControlExplainsClickF11AndEscapeStates() => WpfTestHost.OnUi(async () =>
+    {
+        using var fixture = new Fixture();
+        var model = new MainViewModel();
+        await model.InitializeAsync(new(fixture.Root, true));
+        await model.LoginAsync("report-review", fixture.Password);
+        var window = new MainWindow { DataContext = model, Width = 1280, Height = 820, ShowInTaskbar = false };
+        try
+        {
+            window.Show(); WpfTestHost.Layout(window, 1280, 820);
+            var button = (Button)window.FindName("FullScreenButton");
+            var label = (TextBlock)window.FindName("FullScreenLabel");
+            Assert.AreEqual("Pantalla completa · F11", label.Text);
+            Assert.AreEqual("Entrar en pantalla completa (F11)", AutomationProperties.GetName(button));
+
+            button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            WpfTestHost.Layout(window, 1280, 820);
+            Assert.AreEqual(WindowStyle.None, window.WindowStyle);
+            Assert.AreEqual("Salir de pantalla completa · F11", label.Text);
+            Assert.AreEqual("Salir de pantalla completa (F11)", AutomationProperties.GetName(button));
+
+            Send(window, Key.F11);
+            Assert.AreEqual(WindowStyle.SingleBorderWindow, window.WindowStyle);
+            Assert.AreEqual("Pantalla completa · F11", label.Text);
+            Send(window, Key.F11);
+            Send(window, Key.Escape);
+            Assert.AreEqual(WindowStyle.SingleBorderWindow, window.WindowStyle);
+            Assert.AreEqual("Pantalla completa · F11", label.Text);
+        }
+        finally { window.Close(); model.Logout(); }
+    });
+
+    [TestMethod]
+    public void CashSessionCopyShowsOpeningClosingDurationAndHumanResponsibility()
+    {
+        var zone = TimeZoneInfo.CreateCustomTimeZone("DailyReportView", TimeSpan.FromHours(-6), "DailyReportView", "DailyReportView");
+        var opened = new DateTimeOffset(2026, 10, 9, 14, 0, 0, TimeSpan.Zero);
+        var closed = opened.AddHours(12).AddMinutes(15);
+        var row = new DailyCashSessionSummaryView(new(
+            Guid.NewGuid(), "CAJA PRINCIPAL", "Administradora", null, opened, closed, false,
+            new Money(50000), new Money(20000), new Money(70000), new Money(70000), new Money(0), null), zone);
+
+        Assert.AreEqual("08:00 → 20:15", row.Journey);
+        Assert.AreEqual("Apertura: 08:00", row.Opening);
+        Assert.AreEqual("Cierre: 20:15", row.Closing);
+        Assert.AreEqual("Duración: 12 h 15 min", row.Duration);
+        Assert.AreEqual("Responsable: Administradora", row.Responsible);
+    }
+
     private static bool VisibleText(DependencyObject root, string text) =>
         Descendants<TextBlock>(root).Any(x => x.IsVisible && x.Text == text);
+    private static void Send(Window window, Key key)
+    {
+        var source = PresentationSource.FromVisual(window)!;
+        window.RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, source, 0, key) { RoutedEvent = Keyboard.PreviewKeyDownEvent });
+    }
     private static IEnumerable<T> Descendants<T>(DependencyObject root) where T : DependencyObject
     {
         for (var index = 0; index < VisualTreeHelper.GetChildrenCount(root); index++)
@@ -93,14 +157,38 @@ public sealed class DailyReportUsabilityTests
     {
         public string Root { get; } = Path.Combine(Path.GetTempPath(), "CasaMigaDailyReportWpf", Guid.NewGuid().ToString("N"));
         public string Password { get; } = "DailyReport-Review!2026";
-        public Fixture()
+        public Fixture(bool seedSales = false)
         {
             Directory.CreateDirectory(Root);
             var database = new Database(Path.Combine(Root, "casamiga.db")); database.Initialize();
             var work = new SqliteLocalUnitOfWork(database); var clock = new SystemClock(); var session = new UserSession();
             var identity = new IdentityService(work, new LocalPasswords(), clock, session);
             identity.Bootstrap("report-review", "Revisión reporte", Password);
+            if (!seedSales) return;
+            Assert.IsTrue(identity.Login("report-review", Password));
+            var terminal = TerminalConfiguration.LoadOrCreate(Root);
+            work.Run(store => { store.EnsureTerminal(terminal, clock.UtcNow); return true; });
+            var catalog = new CatalogService(work, session, clock, terminal.Id);
+            var category = catalog.CreateCategory("Reporte");
+            var product = catalog.CreateProduct(category.Id, "REPORT-WPF", "Concha de prueba", "", new Money(1300));
+            var localDay = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(clock.UtcNow, TimeZoneInfo.Local).DateTime);
+            var localOpening = localDay.ToDateTime(new TimeOnly(8, 0), DateTimeKind.Unspecified);
+            var openedAt = new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(localOpening, TimeZoneInfo.Local), TimeSpan.Zero);
+            var cash = CashSession.Open(Guid.NewGuid(), terminal.Id, session.Current!.Id, openedAt, new Money(50000));
+            work.Run(store => { store.AddCashSession(cash); return true; });
+            AddSale(work, session.Current.Id, terminal.Id, cash.Id, product, openedAt.AddHours(1).AddMinutes(10), 2);
+            AddSale(work, session.Current.Id, terminal.Id, cash.Id, product, openedAt.AddHours(2).AddMinutes(20), 1);
+            session.SignOut();
         }
+        private static void AddSale(SqliteLocalUnitOfWork work, Guid user, Guid terminal, Guid cash, Product product, DateTimeOffset at, int quantity) => work.Run(store =>
+        {
+            var total = checked(product.SalePrice.Cents * quantity);
+            store.AddSale(new Sale(Guid.NewGuid(), Guid.NewGuid(), user, terminal, cash,
+                store.NextSaleSequence(terminal), at,
+                [new SaleItem(product.Id, product.Name, product.SalePrice, quantity)],
+                Guid.NewGuid(), new Money(total)));
+            return true;
+        });
         public void Dispose() => Directory.Delete(Root, true);
     }
 }

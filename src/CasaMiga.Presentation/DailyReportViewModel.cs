@@ -12,15 +12,33 @@ public sealed record DailyProductSummaryView(int Position, DailyProductSummary S
     public string Revenue => DailyReportViewModel.Format(Summary.Revenue);
 }
 
+public sealed record DailyHourlySalesView(DailyHourlySales Bucket, double BarHeight, bool ShowHourLabel)
+{
+    public string HourLabel => $"{Bucket.Hour:00}:00";
+    public string Sales => DailyReportViewModel.Format(Bucket.Sales);
+    public string Tickets => $"{Bucket.Tickets:N0} {(Bucket.Tickets == 1 ? "ticket" : "tickets")}";
+    public string AccessibleSummary => $"{Bucket.Hour:00}:00 a {Bucket.Hour:00}:59 · {Sales} · {Tickets}";
+}
+
 public sealed record DailyCashSessionSummaryView(DailyCashSessionSummary Session, TimeZoneInfo TimeZone)
 {
     public string State => Session.IsOpen ? "ABIERTA" : "CERRADA";
     public string StateDetail => Session.IsOpen ? "Conteo pendiente" : DailyReportViewModel.Difference(Session.Difference);
-    public string Identity => $"{Session.TerminalName} · Responsable: {Session.OpenedByName}" +
-        (Session.ClosedByName is { } closer && !string.Equals(closer, Session.OpenedByName, StringComparison.Ordinal)
-            ? $" · Cerró: {closer}" : "");
-    public string Times => $"Apertura {Local(Session.OpenedAt):HH:mm}" +
-        (Session.ClosedAt is { } closed ? $" · Cierre {Local(closed):HH:mm}" : " · En curso");
+    public string Journey => Session.ClosedAt is { } closed
+        ? $"{Local(Session.OpenedAt):HH:mm} → {Local(closed):HH:mm}"
+        : $"{Local(Session.OpenedAt):HH:mm} → En curso";
+    public string Opening => $"Apertura: {Local(Session.OpenedAt):HH:mm}";
+    public string Closing => Session.ClosedAt is { } closed ? $"Cierre: {Local(closed):HH:mm}" : "Cierre: En curso";
+    public string Duration => Session.ClosedAt is { } closed
+        ? $"Duración: {HumanDuration(closed - Session.OpenedAt)}"
+        : $"Abierta desde {Local(Session.OpenedAt):HH:mm} · En curso";
+    public string Responsible => $"Responsable: {Session.OpenedByName}";
+    public string ClosingResponsible => Session.ClosedByName is { } closer
+        && !string.Equals(closer, Session.OpenedByName, StringComparison.Ordinal)
+            ? $"Cerró: {closer}"
+            : "";
+    public bool HasDifferentCloser => ClosingResponsible.Length > 0;
+    public string Terminal => Session.TerminalName;
     public string Financial => $"Fondo {DailyReportViewModel.Format(Session.OpeningFund)} · " +
         $"Efectivo vendido {DailyReportViewModel.Format(Session.CashSales)} · " +
         $"Esperado {DailyReportViewModel.Optional(Session.Expected)}";
@@ -32,6 +50,11 @@ public sealed record DailyCashSessionSummaryView(DailyCashSessionSummary Session
         ? $"Nota: {Session.DiscrepancyNote}"
         : "Sin nota registrada";
     private DateTime Local(DateTimeOffset value) => TimeZoneInfo.ConvertTime(value, TimeZone).DateTime;
+    private static string HumanDuration(TimeSpan duration)
+    {
+        var totalMinutes = Math.Max(0L, checked((long)duration.TotalMinutes));
+        return $"{totalMinutes / 60:N0} h {totalMinutes % 60:00} min";
+    }
 }
 
 public sealed class DailyReportViewModel(
@@ -64,6 +87,12 @@ public sealed class DailyReportViewModel(
         $"{report.Pieces:N0} {(report.Pieces == 1 ? "pieza" : "piezas")} · {Format(report.Sales)} vendidos" +
         CashSummary(report.CashSessions);
     public IReadOnlyList<DailyProductSummaryView> TopProducts { get; private set; } = [];
+    public IReadOnlyList<DailyHourlySalesView> HourlySales { get; private set; } = [];
+    public bool HasHourlySales => HourlySales.Count > 0;
+    public string FirstSale => report?.FirstSaleAt is { } first ? first.ToString("HH:mm", Spanish) : "No disponible";
+    public string LastSale => report?.LastSaleAt is { } last ? last.ToString("HH:mm", Spanish) : "No disponible";
+    public string PeakHour => report?.PeakHour is { } peak ? $"{peak.Hour:00}:00–{peak.Hour:00}:59" : "No disponible";
+    public string PeakSales => report?.PeakHour is { } peak ? $"{Format(peak.Sales)} · {peak.Tickets:N0} {(peak.Tickets == 1 ? "ticket" : "tickets")}" : "";
     public IReadOnlyList<DailyCashSessionSummaryView> CashSessions { get; private set; } = [];
     public bool HasCashSessions => CashSessions.Count > 0;
     public bool HasNoCashSessions => report is not null && CashSessions.Count == 0;
@@ -105,7 +134,7 @@ public sealed class DailyReportViewModel(
     }
     public void Forget()
     {
-        report = null; TopProducts = []; CashSessions = []; Message = ""; DateError = "";
+        report = null; TopProducts = []; HourlySales = []; CashSessions = []; Message = ""; DateError = "";
         DateText = service.Today.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture); Notify();
     }
 
@@ -118,6 +147,11 @@ public sealed class DailyReportViewModel(
             report = await Task.Run(() => service.Read(day));
             DateText = day.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
             TopProducts = report.TopProducts.Select((x, index) => new DailyProductSummaryView(index + 1, x)).ToArray();
+            var peak = Math.Max(1L, report.HourlySales.Select(x => x.Sales.Cents).DefaultIfEmpty(0).Max());
+            HourlySales = report.HourlySales.Select((x, index) => new DailyHourlySalesView(
+                x,
+                x.Tickets == 0 ? 2d : Math.Max(10d, 112d * x.Sales.Cents / peak),
+                report.HourlySales.Count <= 12 || index == 0 || index == report.HourlySales.Count - 1 || index % 2 == 0)).ToArray();
             CashSessions = report.CashSessions.Select(x => new DailyCashSessionSummaryView(x, timeZone)).ToArray();
         }
         catch (DailyReportException error) { DateError = error.Message; }

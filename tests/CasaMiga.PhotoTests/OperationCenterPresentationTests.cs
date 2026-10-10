@@ -154,7 +154,7 @@ public sealed class OperationCenterPresentationTests
         }
 
         var fullScreen=Offscreen(new MainWindow{DataContext=fixture.Model});
-        try{fullScreen.Show();WpfTestHost.Layout(fullScreen,1280,820);Send(fullScreen,Key.F11);Assert.AreEqual(WindowStyle.None,fullScreen.WindowStyle);Assert.AreEqual("F11",((Button)fullScreen.FindName("FullScreenButton")).Content);}
+        try{fullScreen.Show();WpfTestHost.Layout(fullScreen,1280,820);Send(fullScreen,Key.F11);Assert.AreEqual(WindowStyle.None,fullScreen.WindowStyle);Assert.AreEqual("Salir de pantalla completa · F11",((TextBlock)fullScreen.FindName("FullScreenLabel")).Text);}
         finally{fullScreen.Close();}
     });
 

@@ -34,6 +34,14 @@ public sealed class DailyReportTests
         Assert.AreEqual(4, report.Tickets);
         Assert.AreEqual(7L, report.Pieces);
         Assert.AreEqual(2000L, report.AverageTicket.Cents);
+        Assert.HasCount(24, report.HourlySales);
+        Assert.AreEqual(0, report.HourlySales[0].Hour);
+        Assert.AreEqual(23, report.HourlySales[^1].Hour);
+        Assert.AreEqual(0, report.HourlySales[1].Tickets);
+        Assert.AreEqual(fixture.FromUtc, report.FirstSaleAt);
+        Assert.AreEqual(fixture.UntilUtc.AddTicks(-1), report.LastSaleAt);
+        Assert.AreEqual(5, report.PeakHour!.Hour);
+        Assert.AreEqual(3000L, report.PeakHour.Sales.Cents);
         CollectionAssert.AreEqual(
             new[] { "Alpha histórico", "Beta histórico", "Zeta histórico" },
             report.TopProducts.Select(x => x.ProductName).ToArray());
@@ -52,6 +60,10 @@ public sealed class DailyReportTests
         Assert.AreEqual(0L, empty.Pieces);
         Assert.AreEqual(0L, empty.AverageTicket.Cents);
         Assert.HasCount(0, empty.TopProducts);
+        Assert.HasCount(0, empty.HourlySales);
+        Assert.IsNull(empty.FirstSaleAt);
+        Assert.IsNull(empty.LastSaleAt);
+        Assert.IsNull(empty.PeakHour);
 
         var session = fixture.Open(fixture.Terminal, fixture.FromUtc, new Money(0));
         var product = fixture.Product("ROUND", "Redondeo", 100);
@@ -60,6 +72,28 @@ public sealed class DailyReportTests
         var report = fixture.Service.Read(fixture.Day);
         Assert.AreEqual(201L, report.Sales.Cents);
         Assert.AreEqual(101L, report.AverageTicket.Cents, "$2.01 / 2 rounds to the nearest cent without double.");
+    }
+
+    [TestMethod]
+    public void HourlySalesUseLocalTimeAndPeakUsesAmountTicketsThenEarlierHour()
+    {
+        using var fixture = new Fixture();
+        var session = fixture.Open(fixture.Terminal, fixture.FromUtc, new Money(0));
+        var product = fixture.Product("HOUR", "Venta por hora", 100);
+        fixture.Sale(session, fixture.FromUtc.AddHours(8).AddMinutes(14), [(product, "Venta por hora", 1, 1000)]);
+        fixture.Sale(session, fixture.FromUtc.AddHours(9).AddMinutes(5), [(product, "Venta por hora", 1, 400)]);
+        fixture.Sale(session, fixture.FromUtc.AddHours(9).AddMinutes(55), [(product, "Venta por hora", 1, 600)]);
+        fixture.Sale(session, fixture.FromUtc.AddHours(10).AddMinutes(10), [(product, "Venta por hora", 1, 500)]);
+        fixture.Sale(session, fixture.FromUtc.AddHours(10).AddMinutes(40), [(product, "Venta por hora", 1, 500)]);
+
+        var report = fixture.Service.Read(fixture.Day);
+
+        CollectionAssert.AreEqual(new[] { 8, 9, 10 }, report.HourlySales.Select(x => x.Hour).ToArray());
+        Assert.AreEqual(2, report.HourlySales.Single(x => x.Hour == 9).Tickets);
+        Assert.AreEqual(1000L, report.HourlySales.Single(x => x.Hour == 9).Sales.Cents);
+        Assert.AreEqual(8, report.FirstSaleAt!.Value.Hour);
+        Assert.AreEqual(10, report.LastSaleAt!.Value.Hour);
+        Assert.AreEqual(9, report.PeakHour!.Hour, "Amount ties, then ticket count ties, then the earliest hour wins.");
     }
 
     [TestMethod]
@@ -76,18 +110,24 @@ public sealed class DailyReportTests
         fixture.Sale(shortage, fixture.FromUtc.AddHours(3.5), [(product, "Producto caja", 1, 1900)]);
         fixture.Close(shortage, fixture.FromUtc.AddHours(4), new Money(1800), "Faltante verificado");
 
+        var surplus = fixture.Open(fixture.Terminal, fixture.FromUtc.AddHours(4.25), new Money(0));
+        fixture.Sale(surplus, fixture.FromUtc.AddHours(4.5), [(product, "Producto caja", 1, 1900)]);
+        fixture.Close(surplus, fixture.FromUtc.AddHours(4.75), new Money(2000), "Sobrante verificado");
+
         var secondTerminal = fixture.TerminalNamed("CAJA DOS");
         var open = fixture.Open(secondTerminal, fixture.FromUtc.AddHours(5), new Money(10000));
         fixture.Sale(open, fixture.FromUtc.AddHours(5.5), [(product, "Producto caja", 1, 1900)], secondTerminal);
 
         var sessions = fixture.Service.Read(fixture.Day).CashSessions;
-        Assert.HasCount(3, sessions);
+        Assert.HasCount(4, sessions);
         var exactRow = sessions.Single(x => x.Id == exact.Id);
         Assert.IsFalse(exactRow.IsOpen); Assert.AreEqual(50000L, exactRow.OpeningFund.Cents);
         Assert.AreEqual(1900L, exactRow.CashSales.Cents); Assert.AreEqual(51900L, exactRow.Expected!.Value.Cents);
         Assert.AreEqual(51900L, exactRow.Counted!.Value.Cents); Assert.AreEqual(0L, exactRow.Difference!.Value.Cents);
         var shortageRow = sessions.Single(x => x.Id == shortage.Id);
         Assert.AreEqual(-100L, shortageRow.Difference!.Value.Cents); Assert.AreEqual("Faltante verificado", shortageRow.DiscrepancyNote);
+        var surplusRow = sessions.Single(x => x.Id == surplus.Id);
+        Assert.AreEqual(100L, surplusRow.Difference!.Value.Cents); Assert.AreEqual("Sobrante verificado", surplusRow.DiscrepancyNote);
         var openRow = sessions.Single(x => x.Id == open.Id);
         Assert.IsTrue(openRow.IsOpen); Assert.AreEqual(11900L, openRow.Expected!.Value.Cents);
         Assert.IsNull(openRow.Counted); Assert.IsNull(openRow.Difference); Assert.IsNull(openRow.ClosedAt);
@@ -111,6 +151,7 @@ public sealed class DailyReportTests
         Assert.AreEqual(first.Sales, second.Sales);
         Assert.AreEqual(first.Tickets, second.Tickets);
         Assert.AreEqual(first.Pieces, second.Pieces);
+        CollectionAssert.AreEqual(first.HourlySales.ToArray(), second.HourlySales.ToArray());
         Assert.AreEqual(before.Sales, after.Sales); Assert.AreEqual(before.Payments, after.Payments);
         Assert.AreEqual(before.CashSessions, after.CashSessions); Assert.AreEqual(before.Audits, after.Audits);
         Assert.AreEqual(before.PrintRequests + 1, after.PrintRequests);

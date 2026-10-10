@@ -1,4 +1,12 @@
-# FASE 1K.4H-A TÉCNICAMENTE COMPLETADA — SMOKE HUMANO PENDIENTE, 09/10/2026
+# FASE 1K.4H-A-R1 TÉCNICAMENTE COMPLETADA — SMOKE HUMANO PENDIENTE, 10/10/2026
+
+R1 refina el Reporte Diario sin cambiar su naturaleza read-only. Ventas por hora usa una timeline acotada con `payment.applied_cents`, convierte timestamps mediante la zona horaria inyectada y agrupa en memoria; muestra primera/última venta y hora pico con desempate por importe, tickets y hora temprana. Caja comunica apertura, cierre, duración, responsable y múltiples sesiones sin alterar métricas. La UI conserva cuatro KPI, una sola frase resumen, tabla histórica con encabezado humano y estados futuros deliberados.
+
+El botón global ahora dice `Pantalla completa · F11` o `Salir de pantalla completa · F11`, cambia icono/ayuda accesible inmediatamente y conserva clic, F11 y Escape. Revisión explícita: 1280×820, 1920×1080, 3440×1440 y F11, sin clipping ni scroll horizontal global; el reporte limita su ancho a 1480 DIP.
+
+Focales generales 7/7; focales WPF 6/6 y regresión WPF ampliada 23/23. Suite oficial final **794/794** (582 general + 212 WPF), 0 fallidas/omitidas; Release 0 errores/advertencias. Base protegida intacta con SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`; schema 17 sólo en fixture, sin migración 018. Build `src/CasaMiga.Presentation/bin/Phase1K4H-A-R1/`, launcher `work/Abrir-Casa-Miga-1K4H-A-R1.cmd`, DataDirectory `work/phase1k4h-a-r1-smoke-20261010`. Ver [PHASE_1K4H_A_R1_REPORT.md](PHASE_1K4H_A_R1_REPORT.md). No push; smoke humano pendiente.
+
+## Registro anterior — 1K.4H-A
 
 Casa Miga incorpora **Reporte diario** de sólo lectura con fecha local, cuatro KPIs, top 5 por snapshots históricos, resumen consolidado de caja y detalle de múltiples sesiones. Usa `payment.applied_cents`, límites `[inicio local, día siguiente)` convertidos a UTC, `sales.view` + `cash.view` y consultas SQL agregadas sin N+1. Categorías se omiten porque no están snapshotteadas. Producción, materias primas, preparación de mañana y merma distinguen dato no disponible de cero real.
 

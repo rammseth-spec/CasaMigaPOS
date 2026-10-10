@@ -15,36 +15,42 @@ public sealed partial class SqliteLocalUnitOfWork
                 ("$until", (object)At(untilUtc))
             };
 
-            long sales;
-            int tickets;
+            long sales = 0;
+            int tickets = 0;
             long pieces;
+            var moments = new List<DailySaleMoment>();
+            using (var timeline = Command(
+                "SELECT s.confirmed_utc,SUM(p.applied_cents) FROM sale s " +
+                "JOIN payment p ON p.sale_id=s.id AND p.method='CASH' " +
+                "WHERE s.confirmed_utc >= $from AND s.confirmed_utc < $until " +
+                "GROUP BY s.id,s.confirmed_utc ORDER BY s.confirmed_utc ASC,s.id ASC", bounds))
+            using (var reader = timeline.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    var amount = new Money(reader.GetInt64(1));
+                    moments.Add(new(Date(reader, 0)!.Value, amount));
+                    sales = checked(sales + amount.Cents);
+                    tickets = checked(tickets + 1);
+                }
+            }
             using (var totals = Command(
-                "SELECT COUNT(DISTINCT s.id),COALESCE(SUM(i.quantity),0) " +
-                "FROM sale s JOIN payment p ON p.sale_id=s.id AND p.method='CASH' " +
-                "LEFT JOIN sale_item i ON i.sale_id=s.id " +
-                "WHERE s.confirmed_utc >= $from AND s.confirmed_utc < $until", bounds))
+                "SELECT COALESCE(SUM(i.quantity),0) FROM sale s " +
+                "JOIN sale_item i ON i.sale_id=s.id " +
+                "WHERE s.confirmed_utc >= $from AND s.confirmed_utc < $until " +
+                "AND EXISTS(SELECT 1 FROM payment p WHERE p.sale_id=s.id AND p.method='CASH')", bounds))
             using (var reader = totals.ExecuteReader())
             {
                 if (!reader.Read()) throw new InvalidDataException("No se pudo calcular el reporte diario.");
-                tickets = reader.GetInt32(0);
-                pieces = reader.GetInt64(1);
-            }
-            using (var financial = Command(
-                "SELECT COALESCE(SUM(p.applied_cents),0),COUNT(*) FROM sale s " +
-                "JOIN payment p ON p.sale_id=s.id AND p.method='CASH' " +
-                "WHERE s.confirmed_utc >= $from AND s.confirmed_utc < $until", bounds))
-            using (var reader = financial.ExecuteReader())
-            {
-                if (!reader.Read()) throw new InvalidDataException("No se pudo calcular el total diario.");
-                sales = reader.GetInt64(0);
-                if (reader.GetInt32(1) != tickets) throw new InvalidDataException("El conteo financiero no es coherente.");
+                pieces = reader.GetInt64(0);
             }
 
             var products = new List<DailyProductSummary>();
             using (var top = Command(
                 "SELECT i.product_name,SUM(i.quantity),SUM(i.line_total_cents) FROM sale s " +
-                "JOIN payment p ON p.sale_id=s.id AND p.method='CASH' JOIN sale_item i ON i.sale_id=s.id " +
+                "JOIN sale_item i ON i.sale_id=s.id " +
                 "WHERE s.confirmed_utc >= $from AND s.confirmed_utc < $until " +
+                "AND EXISTS(SELECT 1 FROM payment p WHERE p.sale_id=s.id AND p.method='CASH') " +
                 "GROUP BY i.product_id,i.product_name ORDER BY SUM(i.quantity) DESC,SUM(i.line_total_cents) DESC,i.product_name COLLATE NOCASE ASC,i.product_id ASC LIMIT 5", bounds))
             using (var reader = top.ExecuteReader())
                 while (reader.Read()) products.Add(new(reader.GetString(0), reader.GetInt64(1), new(reader.GetInt64(2))));
@@ -77,7 +83,7 @@ public sealed partial class SqliteLocalUnitOfWork
                 }
             }
 
-            return new(new Money(sales), tickets, pieces, products.AsReadOnly(), sessions.AsReadOnly());
+            return new(new Money(sales), tickets, pieces, moments.AsReadOnly(), products.AsReadOnly(), sessions.AsReadOnly());
         }
 
         private static Money? OptionalMoney(Microsoft.Data.Sqlite.SqliteDataReader reader, int ordinal) => reader.IsDBNull(ordinal)

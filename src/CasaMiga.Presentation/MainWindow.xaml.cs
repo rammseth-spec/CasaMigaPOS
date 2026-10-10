@@ -1,6 +1,7 @@
 using System.Media;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
@@ -176,8 +177,7 @@ public partial class MainWindow : Window
         ResizeMode = ResizeMode.NoResize;
         WindowState = WindowState.Maximized;
         isFullScreen = true;
-        FullScreenButton.Content = "F11";
-        FullScreenButton.ToolTip = "Salir de pantalla completa · F11";
+        UpdateFullScreenButton();
     }
     private void ExitFullScreen()
     {
@@ -187,8 +187,17 @@ public partial class MainWindow : Window
         ResizeMode = resizeModeBeforeFullScreen;
         WindowState = windowStateBeforeFullScreen;
         isFullScreen = false;
-        FullScreenButton.Content = "F11";
-        FullScreenButton.ToolTip = "Pantalla completa · F11";
+        UpdateFullScreenButton();
+    }
+    private void UpdateFullScreenButton()
+    {
+        FullScreenLabel.Text = isFullScreen ? "Salir de pantalla completa · F11" : "Pantalla completa · F11";
+        var help = isFullScreen ? "Salir de pantalla completa (F11)" : "Entrar en pantalla completa (F11)";
+        FullScreenButton.ToolTip = help;
+        AutomationProperties.SetName(FullScreenButton, help);
+        FullScreenIcon.Data = Geometry.Parse(isFullScreen
+            ? "M9,3 L9,9 3,9 M15,3 L15,9 21,9 M21,15 L15,15 15,21 M3,15 L9,15 9,21"
+            : "M3,9 L3,3 9,3 M15,3 L21,3 21,9 M21,15 L21,21 15,21 M9,21 L3,21 3,15");
     }
     private bool DiscardBefore(string action)
     {

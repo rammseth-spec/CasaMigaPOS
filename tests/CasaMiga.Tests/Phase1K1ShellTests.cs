@@ -43,7 +43,7 @@ public sealed class Phase1K1ShellTests
         StringAssert.Contains(theme, "AvocadoLeafBrush");
         Assert.IsFalse(shell.Contains("Opcion07", StringComparison.Ordinal));
         Assert.AreEqual(2, Count(shell, "CasaMigaLogo.png"));
-        Assert.AreEqual(2, Count(shell, "Stretch=\"Uniform\""));
+        Assert.AreEqual(3, Count(shell, "Stretch=\"Uniform\""));
         Assert.AreEqual(2, Count(shell, "RenderOptions.BitmapScalingMode=\"HighQuality\""));
         StringAssert.Contains(shell, "Assets/CasaMiga.ico");
         StringAssert.Contains(shell, "FullScreenButton");

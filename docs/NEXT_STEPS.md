@@ -1,19 +1,23 @@
-# Próximo paso — smoke manual de FASE 1K.4H-A
+# Próximo paso — smoke manual de FASE 1K.4H-A-R1
 
-Usar exclusivamente `work/Abrir-Casa-Miga-1K4H-A.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4H-A`, DataDirectory `work/phase1k4h-a-smoke-20261009` y las credenciales verificadas entregadas en la conversación.
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4H-A-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4H-A-R1`, DataDirectory `work/phase1k4h-a-r1-smoke-20261010` y las credenciales verificadas entregadas en la conversación.
 
-1. Iniciar sesión y abrir **Reporte diario**.
-2. Confirmar que 09/10/2026 aparece por defecto con EN CURSO, ventas $70.00, 2 tickets, 5 piezas y ticket promedio $35.00.
-3. Revisar top de productos y caja abierta; contado y diferencia deben decir Pendiente.
-4. Consultar 05/10/2026 y confirmar ceros reales con «No hubo ventas registradas este día» y caja No disponible.
-5. Consultar 06/10/2026 y revisar cierre exacto sin diferencia.
-6. Consultar 07/10/2026 y revisar faltante de $2.00 con nota.
-7. Consultar 08/10/2026 y confirmar consolidado más lista de dos sesiones.
-8. Confirmar Producción No disponible, Materias primas Pendiente y Preparación para mañana No disponible.
-9. Revisar 1280×820, 1920×1080, 3440×1440, F11, Escape y Alt+Tab sin scroll horizontal global ni parpadeos.
-10. No imprimir, vender, cerrar caja, usar cajón ni modificar inventario/recetas/producción.
+1. Iniciar sesión y comprobar `Pantalla completa · F11`; entrar con clic, confirmar `Salir de pantalla completa · F11` y salir con F11.
+2. Abrir **Reporte diario** y confirmar 10/10/2026 con EN CURSO, $70.00, 2 tickets, 5 piezas y ticket promedio $35.00.
+3. Revisar Ventas por hora: primera 09:00, última 17:00 y pico 09:00–09:59; comprobar tooltips/lectura accesible.
+4. Revisar caja abierta: Apertura 08:00, Cierre En curso, responsable humano, Contado Pendiente y Diferencia Pendiente.
+5. Consultar 06/10/2026 y confirmar «No hubo ventas registradas este día» sin gráfico vacío.
+6. Consultar 07/10/2026 y revisar cierre exacto, hora de cierre y duración.
+7. Consultar 08/10/2026 y revisar faltante de $2.00 con nota.
+8. Consultar 09/10/2026 y confirmar «2 sesiones en el día» con apertura, cierre, responsables y métricas por sesión.
+9. Revisar Productos más vendidos y el encabezado `Producto`.
+10. Confirmar los textos deliberados de Producción, Materias primas y Preparación para mañana.
+11. Revisar 1280×820, 1920×1080, 3440×1440, F11 y Escape; comprobar scroll vertical y ausencia de clipping/scroll horizontal global.
+12. No imprimir, vender, cerrar caja, usar cajón ni modificar inventario/recetas/producción.
 
 Esperar aprobación humana. No push, no PR, no 1K.4H-B, no 1K.4G-B/C y no 1K.5. Si se autoriza el siguiente desarrollo, 1K.4H-B debe comenzar con auditoría de confiabilidad de merma/producción; modelo recomendado GPT-6 Sol, esfuerzo alto.
+
+## Registro anterior — smoke de 1K.4H-A
 
 ## Registro anterior — auditoría 1K.4G-A
 
