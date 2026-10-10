@@ -6,6 +6,7 @@ import { ventas } from './sales.js';
 import { reportsView, setReportTab } from './reports.js';
 import { catalogo } from './catalog.js';
 import { inventario } from './inventory.js';
+import { recetas } from './recipes.js';
 
 const branchName = id => state.branches.find(b => b.id === id)?.name ?? '';
 const multi = () => !state.branch && state.branches.length > 1;
@@ -280,18 +281,6 @@ async function templateDialog(store) {
 
 // ---------- Recetas y producción ----------
 // Inventario vive en inventory.js (copia de la pantalla de la caja).
-async function recetas() {
-  const [data] = await Promise.all([api('recipes', { branch: state.branch }), loadPhotos()]);
-  const lines = list => list.length ? h('ul', { class: 'rows' }, list.map(l => h('li', {}, h('span', { text: l.item ?? l.formula }), h('span'), h('b', { class: 'num', text: quantity(l.atomic, l.dimension, data.measures) })))) : h('p', { class: 'empty', text: 'Sin ingredientes.' });
-  return h('div', { style: { display: 'grid', gap: '16px' } },
-    card('Preparaciones (fórmulas)', data.formulas.length ? h('section', { class: 'grid-3' }, data.formulas.map(f => h('div', { class: 'card' },
-      h('h3', { text: f.name }), h('p', { class: 'muted small', text: f.active ? `${f.code} · versión ${f.active.version} · rinde ${quantity(f.active.yieldAtomic, f.active.yieldDimension, data.measures)}` : f.code }),
-      f.active ? lines(f.active.ingredients) : null,
-      f.active?.alternatives.map(g => h('p', { class: 'small', text: `${g.name}: ${g.options.map(o => `${o.item} ${quantity(o.atomic, o.dimension, data.measures)}`).join(' o ')}` }))))) : h('p', { class: 'empty', text: 'Sin preparaciones.' })),
-    card('Recetas por producto', data.profiles.length ? h('section', { class: 'grid-3' }, data.profiles.map(p => h('div', { class: 'card' },
-      withPic({ name: p.product }, h('h3', { text: p.product, style: { margin: 0 } })), h('p', { class: 'muted small', text: p.active ? `Versión ${p.active.version} · por pieza` : '' }),
-      p.active ? [lines(p.active.ingredients), p.active.formulas.length ? lines(p.active.formulas) : null] : null))) : h('p', { class: 'empty', text: 'Sin recetas de producto.' })));
-}
 async function produccion() {
   const recording = can('production.create') && can('production.confirm');
   const [batches, recipes, sent] = await Promise.all([api('production', range()), recording ? api('recipes', { branch: state.branch }) : null,
@@ -396,7 +385,9 @@ const KIND = { 'consignment.deliver': 'Entrega de charola', 'consignment.collect
   'inventory.cost': 'Costo de insumo', 'inventory.receive': 'Entrada de inventario', 'inventory.waste': 'Merma', 'inventory.count': 'Conteo de inventario',
   'inventory.opening': 'Saldo inicial', 'inventory.item.save': 'Artículo de inventario', 'inventory.item.active': 'Activar/desactivar artículo', 'inventory.unit.add': 'Presentación',
   'inventory.link': 'Asociar producto', 'inventory.unlink': 'Desvincular producto', 'inventory.consumption': 'Consumo automático por ventas',
-  'production.record': 'Producción', 'product.photo': 'Foto de producto', 'product.photo.remove': 'Quitar foto de producto' };
+  'production.record': 'Producción', 'product.photo': 'Foto de producto', 'product.photo.remove': 'Quitar foto de producto',
+  'recipe.formula.create': 'Nueva receta', 'recipe.formula.draft': 'Borrador de receta', 'recipe.formula.publish': 'Publicar receta', 'recipe.formula.activate': 'Activar receta',
+  'recipe.profile.create': 'Nuevo perfil productivo', 'recipe.profile.draft': 'Borrador de perfil', 'recipe.profile.publish': 'Publicar perfil', 'recipe.profile.activate': 'Activar perfil' };
 const STOCK_KINDS = new Set(['inventory.receive', 'inventory.waste', 'inventory.count', 'inventory.opening']);
 const REASON = { Damaged: 'Dañado', Expired: 'Caducado', ProductionError: 'Error de producción', Spill: 'Derrame', Other: 'Otro', PhysicalCountVariance: 'Diferencia de conteo físico', DataCorrection: 'Corrección de datos' };
 const UNIT = { kg: 'kg', g: 'g', L: 'L', ml: 'ml', piece: 'pieza' };
@@ -523,7 +514,7 @@ export const VIEWS = [
   { id: 'reportes', title: 'Reportes', subtitle: 'Ventas, devoluciones y cortes de caja por periodo · Sólo lectura.', hint: 'Ir a Reportes', icon: ICON.chart, group: 2, permission: 'sales.view', usesRange: false, manual: true, render: reportes, tab: setReportTab },
   { id: 'catalogo', title: 'Catálogo', subtitle: 'Categorías y productos · Sin proceso de venta.', hint: 'Ir a Catálogo', icon: ICON.grid, group: 3, permission: 'catalog.view', usesRange: false, manual: true, render: catalogo },
   { id: 'inventario', title: 'Inventario', subtitle: 'Existencias y movimientos del almacén principal · consulta abajo el estado del consumo automático por ventas.', hint: 'Ir a Inventario', icon: ICON.box, group: 3, permission: 'inventory.view', usesRange: false, manual: true, render: inventario },
-  { id: 'recetas', title: 'Recetas', subtitle: 'Fórmulas y perfiles productivos versionados.', hint: 'Ir a Recetas', icon: ICON.book, group: 3, permission: 'recipe.view', usesRange: false, render: recetas },
+  { id: 'recetas', title: 'Recetas', subtitle: 'Fórmulas y perfiles productivos versionados.', hint: 'Ir a Recetas', icon: ICON.book, group: 3, permission: 'recipe.view', usesRange: false, manual: true, render: recetas },
   { id: 'produccion', title: 'Producción', subtitle: 'Registro e historial de producción.', hint: 'Ir a Producción', icon: ICON.chef, group: 3, permission: 'production.view', usesRange: true, render: produccion },
   { id: 'usuarios', title: 'Usuarios', subtitle: 'Crea usuarios y restablece contraseñas olvidadas · Cada acción queda auditada.', hint: 'Ir a Usuarios', icon: ICON.users, group: 3, permission: 'users.manage', usesRange: false, render: usuarios },
   { id: 'nube', title: 'Nube', subtitle: 'Cajas conectadas, cambios hechos en la web y respaldos.', hint: 'Ir a Nube', icon: ICON.cloud, group: 3, permission: 'sales.view', usesRange: false, render: nube, tab: id => { cloudTab = id; } },

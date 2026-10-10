@@ -420,6 +420,18 @@ dialog.crop { width: min(900px, calc(100vw - 32px)); }
 .inv-operation textarea { min-height: 90px; }
 .inv-help { margin: 0 0 12px; }
 .inventory .catalog-empty { min-height: 72px; font-size: 15px; }
+
+/* ---------- Recetas (RecipeView) ---------- */
+.recipes { display: grid; align-content: start; }
+.recipe-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+.recipe-head .report-tabs { margin: 0; }
+.recipe-table { max-height: 380px; }
+.recipe-table td select, .recipe-table td input { min-height: 40px; padding: 6px 10px; }
+.recipe-help { margin: 0 0 10px; }
+.recipe-view { background: var(--surface-2); border-radius: 10px; padding: 12px 14px; margin-top: 10px; }
+.recipe-view p { margin: 0 0 6px; }
+.recipe-box { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+.recipe-editor { max-width: none; }
 .crop-advanced { display: grid; gap: 8px; }
 .crop-advanced summary { cursor: pointer; font-weight: 600; font-size: 14px; }
 .crop-advanced label { display: grid; gap: 4px; margin-top: 8px; }
@@ -644,6 +656,8 @@ dialog footer { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: 
   .closure-boxes { grid-template-columns: 1fr; }
   .catalog-filters, .catalog-two { grid-template-columns: 1fr; }
   .inv-filters, .inv-preview-grid { grid-template-columns: 1fr; }
+  .recipe-box { grid-template-columns: 1fr; }
+  .recipe-table { max-height: none; }
   .inventory .history-table { max-height: none; }
   .catalog-table { height: auto; }
   .photo-section { grid-template-columns: 1fr; }

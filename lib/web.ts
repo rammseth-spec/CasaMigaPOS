@@ -456,38 +456,64 @@ export async function consumptionCheck(q: Query, branch: string) {
   return { problems };
 }
 
+/**
+ * Recetas (fórmulas) y perfiles de producto con todas sus versiones, como la pantalla Recetas de la caja: lo necesario para ver,
+ * editar borradores, publicar y activar. También los artículos activos y los productos para elegir en los editores.
+ */
 export async function recipes(q: Query, branch: string | null) {
   const [formulas, profiles, items, products, measures] = await Promise.all([
-    q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'formula' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
-    q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'production_profile' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
-    q(`SELECT entity_id AS id, payload->'item'->>'name' AS name FROM entity_state WHERE entity = 'inventory_item'`, []),
-    q(`SELECT entity_id AS id, payload->'product'->>'name' AS name FROM entity_state WHERE entity = 'product'`, []),
+    q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'formula' AND NOT deleted AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
+    q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'production_profile' AND NOT deleted AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
+    q(`SELECT branch_id, entity_id AS id, payload->'item' AS item FROM entity_state WHERE entity = 'inventory_item' AND NOT deleted`, []),
+    q(`SELECT branch_id, entity_id AS id, payload->'product' AS product FROM entity_state WHERE entity = 'product' AND NOT deleted`, []),
     units(q),
   ]);
-  const item = new Map(items.map(i => [s(i.id), s(i.name)]));
-  const product = new Map(products.map(p => [s(p.id), s(p.name)]));
+  const item = new Map(items.map(i => [s(i.id), s((i.item as Row).name)]));
+  const product = new Map(products.map(p => [s(p.id), s((p.product as Row).name)]));
   const formulaName = new Map<string, string>();
-  const line = (l: Row) => ({ item: item.get(s(l.item_id)) ?? 'Insumo', dimension: s(l.dimension), atomic: n(l.quantity_atomic) });
+  const formulaVersionLabel = new Map<string, { label: string; dimension: string }>();
+  const policy = (v: unknown) => ({ EXACT_WHOLE_COUNT: 'ExactWholeCount', CEILING_WHOLE_COUNT: 'CeilingWholeCount', UNSPECIFIED: 'Unspecified' } as Record<string, string>)[s(v)] ?? 'NotApplicable';
+  const line = (l: Row) => ({ itemId: s(l.item_id), item: item.get(s(l.item_id)) ?? 'Insumo', dimension: s(l.dimension), atomic: n(l.quantity_atomic), policy: policy(l.count_policy) });
   const formulaList = formulas.map(x => {
     const p = x.payload as { formula: Row; versions: Row[]; ingredients: Row[]; groups: Row[]; options: Row[] };
-    const active = p.versions.find(v => s(v.id) === s(p.formula.active_version_id)) ?? p.versions[p.versions.length - 1];
-    for (const v of p.versions) formulaName.set(s(v.id), s(p.formula.name));
-    return { id: s(p.formula.id), code: s(p.formula.code), name: s(p.formula.name), versions: p.versions.length,
-      active: active ? { version: n(active.version), name: s(active.name), state: s(active.state), yieldDimension: s(active.yield_dimension), yieldAtomic: n(active.yield_atomic), notes: s(active.notes),
-        ingredients: p.ingredients.filter(i => s(i.version_id) === s(active.id)).map(line),
-        alternatives: p.groups.filter(g => s(g.version_id) === s(active.id)).map(g => ({ name: s(g.name),
-          options: p.options.filter(o => s(o.version_id) === s(active.id) && s(o.group_id) === s(g.id)).map(line) })) } : null };
+    const detail = (v: Row) => ({ id: s(v.id), version: n(v.version), name: s(v.name), state: s(v.state), revision: n(v.revision), notes: s(v.notes),
+      yieldDimension: s(v.yield_dimension), yieldAtomic: n(v.yield_atomic),
+      ingredients: p.ingredients.filter(i => s(i.version_id) === s(v.id)).map(line),
+      groups: p.groups.filter(g => s(g.version_id) === s(v.id)).map(g => ({ id: s(g.id),
+        options: p.options.filter(o => s(o.version_id) === s(v.id) && s(o.group_id) === s(g.id))
+          .sort((a, b) => (n(a.preference_rank) || 999) - (n(b.preference_rank) || 999) || n(a.sequence) - n(b.sequence))
+          .map(o => ({ id: s(o.id), rank: o.preference_rank === null ? null : n(o.preference_rank), ...line(o) })) })) });
+    const list = p.versions.map(detail).sort((a, b) => a.version - b.version);
+    const active = list.find(v => v.id === s(p.formula.active_version_id)) ?? list[list.length - 1];
+    for (const v of list) {
+      formulaName.set(v.id, s(p.formula.name));
+      if (v.state === 'PUBLISHED') formulaVersionLabel.set(v.id, { label: `${s(p.formula.name)} · versión ${v.version}`, dimension: v.yieldDimension });
+    }
+    return { id: s(p.formula.id), branchId: s(x.branch_id), code: s(p.formula.code), name: s(p.formula.name), revision: n(p.formula.revision),
+      activeVersionId: s(p.formula.active_version_id) || null, versions: list.length, list,
+      // Resumen de la versión activa (o la última) para las vistas de consulta.
+      active: active ? { ...active, alternatives: active.groups.map((g, i) => ({ name: `Grupo ${i + 1}`, options: g.options })) } : null };
   });
   return {
     measures, formulas: formulaList.sort((a, b) => a.name.localeCompare(b.name)),
+    publishedFormulas: [...formulaVersionLabel.entries()].map(([id, f]) => ({ id, ...f })),
+    items: items.filter(i => n((i.item as Row).active) === 1 && (!branch || s(i.branch_id) === branch))
+      .map(i => { const it = i.item as Row; return { id: s(it.id), branchId: s(i.branch_id), code: s(it.code), name: s(it.name), kind: s(it.kind), dimension: s(it.dimension) }; })
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    products: products.filter(p => n((p.product as Row).active) === 1 && (!branch || s(p.branch_id) === branch))
+      .map(p => ({ id: s(p.id), branchId: s(p.branch_id), name: s((p.product as Row).name) })).sort((a, b) => a.name.localeCompare(b.name)),
     profiles: profiles.map(x => {
       const p = x.payload as { profile: Row; versions: Row[]; directIngredients: Row[]; formulaRequirements: Row[] };
-      const active = p.versions.find(v => s(v.id) === s(p.profile.active_version_id)) ?? p.versions[p.versions.length - 1];
+      const list = p.versions.map(v => ({ id: s(v.id), version: n(v.version), name: s(v.name), state: s(v.state), revision: n(v.revision),
+        direct: p.directIngredients.filter(i => s(i.profile_version_id) === s(v.id)).map(line),
+        formulas: p.formulaRequirements.filter(f => s(f.profile_version_id) === s(v.id)).map(f => ({ formulaVersionId: s(f.formula_version_id),
+          formula: formulaVersionLabel.get(s(f.formula_version_id))?.label ?? formulaName.get(s(f.formula_version_id)) ?? 'Preparación', dimension: s(f.dimension), atomic: n(f.quantity_atomic) })) }))
+        .sort((a, b) => a.version - b.version);
+      const active = list.find(v => v.id === s(p.profile.active_version_id)) ?? list[list.length - 1];
       return { id: s(p.profile.id), branchId: s(x.branch_id), productId: s(p.profile.product_id), product: product.get(s(p.profile.product_id)) ?? 'Producto',
-        finishedItem: item.get(s(p.profile.finished_item_id)) ?? '', activeVersionId: s(p.profile.active_version_id) || null,
-        active: active ? { version: n(active.version), name: s(active.name), state: s(active.state),
-          ingredients: p.directIngredients.filter(i => s(i.profile_version_id) === s(active.id)).map(line),
-          formulas: p.formulaRequirements.filter(f => s(f.profile_version_id) === s(active.id)).map(f => ({ formula: formulaName.get(s(f.formula_version_id)) ?? 'Preparación', dimension: s(f.dimension), atomic: n(f.quantity_atomic) })) } : null };
+        finishedItemId: s(p.profile.finished_item_id), finishedItem: item.get(s(p.profile.finished_item_id)) ?? '', revision: n(p.profile.revision),
+        activeVersionId: s(p.profile.active_version_id) || null, list,
+        active: active ? { version: active.version, name: active.name, state: active.state, ingredients: active.direct, formulas: active.formulas } : null };
     }).sort((a, b) => a.product.localeCompare(b.product)),
   };
 }
