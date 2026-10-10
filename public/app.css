@@ -91,6 +91,12 @@ label.check { display: flex; gap: 10px; align-items: center; font-size: 14px; }
 .login-card h1, .login-card > p { text-align: center; }
 .login-card h1 { font-size: 22px; margin-top: 4px; }
 .error { color: var(--error); font-size: 14px; }
+.login-links { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+button.link { border: 0; background: none; padding: 4px 0; min-height: 0; color: var(--primary); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+button.link:hover { background: none; color: var(--text); }
+.pw-checklist { list-style: none; margin: -4px 0 0; padding: 0; display: grid; gap: 2px; font-size: 13px; color: var(--muted); }
+.pw-checklist li.ok { color: var(--success); }
+.login-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .error:empty { display: none; }
 .dev-users { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
 .dev-users button { justify-content: space-between; }
@@ -486,6 +492,15 @@ dialog.crop { width: min(900px, calc(100vw - 32px)); }
 .trays .bar { grid-template-columns: 180px 1fr auto; }
 .trays .bar .fill { display: block; }
 .trays .bar .value { font-variant-numeric: tabular-nums; }
+
+/* ---------- Usuarios ---------- */
+.users { display: grid; align-content: start; }
+.users .history-table { max-height: 360px; }
+.users-edit { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-top: 12px; display: grid; }
+.users-notice { background: var(--warn-soft); color: var(--warn-text); border-radius: 10px; padding: 12px 14px; margin-top: 12px; display: grid; gap: 4px; }
+.users-notice p { white-space: pre-line; margin: 0; font-weight: 600; }
+.users-notice button { justify-self: start; }
+.users-new { margin-top: 8px; display: grid; }
 .crop-advanced { display: grid; gap: 8px; }
 .crop-advanced summary { cursor: pointer; font-weight: 600; font-size: 14px; }
 .crop-advanced label { display: grid; gap: 4px; margin-top: 8px; }

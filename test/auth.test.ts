@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ProtocolError } from '../lib/protocol.js';
-import { identityHash, issueSession, login, readSession, requireUser, scopeBranch, temporaryPassword, verifyIdentityHash, MAX_FAILURES } from '../lib/auth.js';
+import { changePassword, identityHash, issueSession, login, passwordProblems, readSession, requireUser, scopeBranch, temporaryPassword, verifyIdentityHash, MAX_FAILURES } from '../lib/auth.js';
+import { listCommands, pendingFor } from '../lib/commands.js';
 import { caja1, caja2, centro, database, norte, permissions, user } from './helpers.js';
 
 const SECRET = 'x'.repeat(40);
@@ -108,4 +109,23 @@ test('managers only reach their branch; the administrator reaches all', async ()
   assert.equal(scopeBranch(boss, norte), norte);
   assert.equal(scopeBranch(boss, norte.toUpperCase()), norte);
   assert.throws(() => scopeBranch(boss, "x' OR 1=1"), status(400));
+});
+
+test('change password like the till: the temporary one leads to it, the policy applies, it works on the web at once and reaches the till', async () => {
+  const q = await seeded();
+  await user(q, caja1, centro, 'a0000000-0000-4000-8000-000000000005', 'nuevo', 'Manager', 'Temporal#2026', { must_change_password: 1 });
+  await assert.rejects(login(q, 'nuevo', 'Temporal#2026'), (e: unknown) => e instanceof ProtocolError && e.status === 428, 'A temporary password opens «Cambiar contraseña».');
+  assert.deepEqual(passwordProblems('corta'), ['de 8 a 16 caracteres', 'una mayúscula', 'un número', 'un carácter especial (# $ % & * ! …)']);
+  await assert.rejects(changePassword(q, 'nuevo', 'Temporal#2026', 'sinsimbolos2026'), /mayúscula, un carácter especial/);
+  await assert.rejects(changePassword(q, 'nuevo', 'Temporal#2026', 'Temporal#2026'), /distinta/);
+  await assert.rejects(changePassword(q, 'nuevo', 'Otra#2026x', 'Nueva#2026ok'), (e: unknown) => e instanceof ProtocolError && e.status === 401);
+  await changePassword(q, 'nuevo', 'Temporal#2026', 'Nueva#2026ok');
+  const signed = await login(q, 'nuevo', 'Nueva#2026ok');
+  assert.equal(signed.username, 'NUEVO', 'The new password works on the web right away.');
+  await assert.rejects(login(q, 'nuevo', 'Temporal#2026'), (e: unknown) => e instanceof ProtocolError && e.status === 401);
+  const [pulled] = await pendingFor(q, { id: caja1, branchId: centro }, 0);
+  assert.equal(pulled.kind, 'user.password');
+  assert.equal(pulled.requestedBy.id, 'a0000000-0000-4000-8000-000000000005', 'The till applies it as the user themself.');
+  assert.ok(await verifyIdentityHash(String((pulled.payload as Record<string, unknown>).passwordHash), 'Nueva#2026ok'));
+  assert.equal((await listCommands(q, centro))[0].payload.passwordHash, undefined, 'The hash never reaches the list of changes.');
 });

@@ -9,6 +9,7 @@ import { inventario } from './inventory.js';
 import { recetas } from './recipes.js';
 import { produccion } from './production.js';
 import { charolas, usesRange as traysUseRange } from './trays.js';
+import { usuarios } from './users.js';
 
 const branchName = id => state.branches.find(b => b.id === id)?.name ?? '';
 const multi = () => !state.branch && state.branches.length > 1;
@@ -93,52 +94,13 @@ async function cajaPanel() {
 }
 
 // ---------- Charolas ----------
-function branchPicker(current) {
-  if (!state.me.admin || state.branches.length < 2) return null;
-  return field('Sucursal', h('select', { name: 'branch' }, state.branches.map(b => h('option', { value: b.id, text: b.name, selected: b.id === current }))), true);
-}
 // ---------- Recetas y producción ----------
 // Inventario vive en inventory.js (copia de la pantalla de la caja).
 // ---------- Usuarios ----------
-async function usuarios(ctx) {
-  const people = await api('users', { branch: state.branch });
-  return card(h('div', { class: 'toolbar', style: { justifyContent: 'space-between', width: '100%' } }, h('h2', { text: 'Usuarios de las cajas' }),
-    h('button', { type: 'button', class: 'primary', onclick: () => userDialog(null, ctx.branchId()) }, '+ Nuevo usuario')),
-    h('p', { class: 'muted small', text: 'Los cambios bajan a todas las cajas de la sucursal. Las contraseñas nunca se ven aquí; al restablecer se muestra una temporal una sola vez.', style: { marginBottom: '10px' } }),
-    table([
-      { label: 'Usuario', value: u => [h('strong', { text: u.username }), multi() ? h('small', { text: u.branch }) : null] },
-      { label: 'Nombre', value: u => u.name }, { label: 'Rol', value: u => ROLE[u.role] ?? u.role },
-      { label: 'Estado', value: u => h('span', { class: 'pill ' + (!u.active ? 'bad' : u.mustChangePassword ? 'warn' : 'ok'), text: !u.active ? 'Desactivado' : u.mustChangePassword ? 'Contraseña temporal' : 'Activo' }) },
-    ], people, { onclick: u => u.role === 'Administrator' ? toast('El administrador se administra en la caja.') : userDialog(u, u.branchId), empty: 'Sin usuarios.' }));
-}
-function showTemporary(name, password) {
-  dialog('Contraseña temporal', body => body.append(h('p', { class: 'wide', text: `Entrégala a ${name}. Al entrar a la caja deberá crear su contraseña; no se vuelve a mostrar.` }),
-    h('p', { class: 'secret wide', text: password }), h('p', { class: 'muted small wide', text: 'Funciona en cuanto la caja reciba el cambio (cuando tenga Internet).' })));
-}
-function userDialog(user, branchId) {
-  const roles = h('select', { name: 'role' }, ['Cashier', 'Manager'].map(r => h('option', { value: r, text: ROLE[r], selected: user?.role === r })));
-  dialog(user ? user.name : 'Nuevo usuario', body => {
-    body.append(user ? '' : branchPicker(branchId) ?? '',
-      user ? h('p', { class: 'muted wide', text: `Usuario ${user.username}` }) : field('Usuario', h('input', { name: 'username', required: true, maxlength: '80', autocapitalize: 'none', pattern: '[A-Za-z0-9._-]+' })),
-      field('Nombre para mostrar', h('input', { name: 'name', required: true, maxlength: '100', value: user?.name ?? '' }), !user ? false : true), field('Rol', roles),
-      user ? h('div', { class: 'wide toolbar' },
-        h('button', { type: 'button', class: user.active ? 'danger' : '', onclick: async e => {
-          try { await command(user.branchId, 'user.active', { id: user.id, active: !user.active }); e.target.closest('dialog').close(); e.target.closest('dialog').remove(); } catch (error) { toast(error.message); }
-        } }, user.active ? 'Desactivar' : 'Reactivar'),
-        h('button', { type: 'button', onclick: async e => {
-          try { const r = await command(user.branchId, 'user.reset_password', { id: user.id }); e.target.closest('dialog').close(); e.target.closest('dialog').remove(); showTemporary(user.name, r.temporaryPassword); } catch (error) { toast(error.message); }
-        } }, 'Restablecer contraseña')) : '');
-  }, { onSubmit: async form => {
-    const f = form.elements;
-    if (user) await command(user.branchId, 'user.update', { id: user.id, displayName: f.name.value, role: f.role.value });
-    else { const r = await command(f.branch?.value ?? branchId, 'user.create', { username: f.username.value, displayName: f.name.value, role: f.role.value }); setTimeout(() => showTemporary(f.name.value, r.temporaryPassword)); }
-  } });
-}
-
 // ---------- Cajas y cambios ----------
 const KIND = { 'consignment.deliver': 'Entrega de charola', 'consignment.collect': 'Recolección de charola', 'consignment.payment': 'Cobro de charola', 'consignment.void': 'Anulación de charola',
   'category.save': 'Categoría', 'product.save': 'Producto', 'product.active': 'Activar/desactivar producto', 'user.create': 'Alta de usuario', 'user.update': 'Usuario',
-  'user.active': 'Activar/desactivar usuario', 'user.reset_password': 'Restablecer contraseña', 'consignment.store.save': 'Tienda de charolas', 'consignment.template.save': 'Charola habitual',
+  'user.active': 'Activar/desactivar usuario', 'user.reset_password': 'Restablecer contraseña', 'user.password': 'Cambio de contraseña', 'consignment.store.save': 'Tienda de charolas', 'consignment.template.save': 'Charola habitual',
   'inventory.cost': 'Costo de insumo', 'inventory.receive': 'Entrada de inventario', 'inventory.waste': 'Merma', 'inventory.count': 'Conteo de inventario',
   'inventory.opening': 'Saldo inicial', 'inventory.item.save': 'Artículo de inventario', 'inventory.item.active': 'Activar/desactivar artículo', 'inventory.unit.add': 'Presentación',
   'inventory.link': 'Asociar producto', 'inventory.unlink': 'Desvincular producto', 'inventory.consumption': 'Consumo automático por ventas',
@@ -259,6 +221,6 @@ export const VIEWS = [
   { id: 'inventario', title: 'Inventario', subtitle: 'Existencias y movimientos del almacén principal · consulta abajo el estado del consumo automático por ventas.', hint: 'Ir a Inventario', icon: ICON.box, group: 3, permission: 'inventory.view', usesRange: false, manual: true, render: inventario },
   { id: 'recetas', title: 'Recetas', subtitle: 'Fórmulas y perfiles productivos versionados.', hint: 'Ir a Recetas', icon: ICON.book, group: 3, permission: 'recipe.view', usesRange: false, manual: true, render: recetas },
   { id: 'produccion', title: 'Producción', subtitle: 'Planeación, confirmación e historial de producción.', hint: 'Ir a Producción', icon: ICON.chef, group: 3, permission: 'production.view', usesRange: false, manual: true, render: produccion },
-  { id: 'usuarios', title: 'Usuarios', subtitle: 'Crea usuarios y restablece contraseñas olvidadas · Cada acción queda auditada.', hint: 'Ir a Usuarios', icon: ICON.users, group: 3, permission: 'users.manage', usesRange: false, render: usuarios },
+  { id: 'usuarios', title: 'Usuarios', subtitle: 'Crea usuarios y restablece contraseñas olvidadas · Cada acción queda auditada.', hint: 'Ir a Usuarios', icon: ICON.users, group: 3, permission: 'users.manage', usesRange: false, manual: true, render: usuarios },
   { id: 'nube', title: 'Nube', subtitle: 'Cajas conectadas, cambios hechos en la web y respaldos.', hint: 'Ir a Nube', icon: ICON.cloud, group: 3, permission: 'sales.view', usesRange: false, render: nube, tab: id => { cloudTab = id; } },
 ];

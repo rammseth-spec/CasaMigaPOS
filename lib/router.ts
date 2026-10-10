@@ -1,6 +1,6 @@
 // Todas las rutas de la versión web en una sola función (/api/web/<op>), con la base inyectable para pruebas y revisión local.
 import { failure, json, ProtocolError, readJson } from './protocol.js';
-import { clearedCookie, issueSession, login, requirePermission, requireUser, scopeBranch, sessionCookie, sessionSecret, type WebUser } from './auth.js';
+import { changePassword, clearedCookie, issueSession, login, requirePermission, requireUser, scopeBranch, sessionCookie, sessionSecret, type WebUser } from './auth.js';
 import { dashboard, DEFAULT_TIME_ZONE, MAX_DAYS, parseRange, terminals, branches, type Query, type Range } from './panel.js';
 import * as web from './web.js';
 import { createCommand, listCommands } from './commands.js';
@@ -54,6 +54,15 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       const response = json(200, me(user));
       response.headers.append('set-cookie', sessionCookie(issueSession(user, secret)));
       return response;
+    }
+    // «Cambiar contraseña» de la pantalla de inicio (también para la contraseña temporal): no requiere sesión, sí la contraseña actual.
+    if (op === 'password' && request.method === 'POST') {
+      const body = (await readJson(request, 2_000)) as { username?: unknown; current?: unknown; next?: unknown } | null;
+      await changePassword(q, body?.username, body?.current, body?.next).catch(async error => {
+        if (error instanceof ProtocolError && error.status === 401) await new Promise(r => setTimeout(r, 400));
+        throw error;
+      });
+      return json(200, { ok: true });
     }
     if (op === 'logout' && request.method === 'POST') {
       const response = json(200, { ok: true });
