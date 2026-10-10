@@ -51,7 +51,7 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
             Execute(command, session);
         }
         catch (Exception error) when (error is AccessDeniedException or ArgumentException or CatalogException or ConsignmentException or InvalidCommandException or KeyNotFoundException
-            or ProductPhotoException or ProductionDomainException or ConsumptionException
+            or ProductPhotoException or ProductionDomainException or ConsumptionException or RecipeConcurrencyException
             or InventoryApplicationException { Error: not (InventoryError.ConcurrencyConflict or InventoryError.InconsistentBalance) }
             or ProductionException { Code: not (ProductionFailure.ConcurrencyConflict or ProductionFailure.RecoveryInconsistent) })
         {
@@ -199,6 +199,10 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
                 break;
             }
             case "production.record": RecordProduction(command, session); break;
+            case "recipe.formula.create": case "recipe.formula.draft": case "recipe.formula.publish": case "recipe.formula.activate":
+            case "recipe.profile.create": case "recipe.profile.draft": case "recipe.profile.publish": case "recipe.profile.activate":
+                Recipe(command, new RecipeService(Modules.Production, session, clock, terminalId));
+                break;
             case "product.photo":
             {
                 var product = Id(p, "productId");
@@ -257,6 +261,126 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
         production.ConfirmProduction(new(batch.Id, batch.OperationId, ProductionContract.Revision(batch), actual));
     }
 
+    /// <summary>
+    /// Recetas y perfiles de producto como en la pantalla Recetas (docs/PLAN_COMPLETAR.md, W5): crear, guardar borradores, publicar y activar.
+    /// La caja pone el número de versión y lee la dimensión de cada artículo o preparación; lo que ya quedó (reintento) no se repite.
+    /// Lo que la base rechazaría (código repetido, artículo inexistente) se revisa antes, para que el cambio se rechace con su motivo.
+    /// </summary>
+    private void Recipe(CloudCommand command, RecipeService recipes)
+    {
+        var p = command.Payload;
+        long? Revision() => p["revision"] is null ? null : Long(p, "revision");
+        FormulaIngredient Line(JsonObject line)
+        {
+            var item = Modules.Inventory.FindItem(Id(line, "itemId"));
+            if (item is not { IsActive: true }) throw new ArgumentException("Un ingrediente ya no existe o está inactivo en Inventario.");
+            return new(item.Id, new(item.Dimension, Long(line, "atomic")), Choice<IngredientCountPolicy>(line, "policy"));
+        }
+        IEnumerable<JsonObject> Rows(JsonObject source, string name) => (source[name] as JsonArray ?? throw new InvalidCommandException())
+            .Select(x => x as JsonObject ?? throw new InvalidCommandException());
+        switch (command.Kind)
+        {
+            case "recipe.formula.create":
+            {
+                var id = Id(p, "id");
+                if (recipes.GetFormula(id) is not null) break;
+                var code = Text(p, "code");
+                if (All(recipes.ListFormulas).Any(f => CatalogText.Key(f.Code) == CatalogText.Key(code))) throw new ArgumentException("Ya existe una receta con ese código.");
+                recipes.CreateFormula(new Formula(id, code), Text(p, "name"));
+                break;
+            }
+            case "recipe.formula.draft":
+            {
+                var formula = recipes.GetFormula(Id(p, "formulaId")) ?? throw new ArgumentException("La receta ya no existe.");
+                var id = Id(p, "versionId"); var revision = Revision();
+                var stored = recipes.GetFormulaVersion(id);
+                if (revision is null && stored is not null) break;
+                if (revision is not null && (stored is null || stored.Value.FormulaId != formula.Id || stored.Value.State != ProductionVersionState.Draft))
+                    throw new RecipeConcurrencyException();
+                var number = stored?.Value.Version ?? recipes.ListFormulaVersions(formula.Id).Select(v => v.Value.Version).DefaultIfEmpty(0).Max() + 1;
+                var yield = p["yield"] as JsonObject ?? throw new InvalidCommandException();
+                var groups = (p["groups"] as JsonArray ?? throw new InvalidCommandException()).Select(g => g as JsonArray ?? throw new InvalidCommandException())
+                    .Select(options => options.Select(o => o as JsonObject ?? throw new InvalidCommandException()).Select(o => new IngredientAlternativeOption(Id(o, "id"), Line(o))).ToArray())
+                    .Select(options => new IngredientAlternativeGroup(Guid.NewGuid(), options, options.Select(o => o.Id))).ToArray();
+                recipes.SaveFormulaDraft(new FormulaVersion(id, formula.Id, number, Text(p, "name"), new(Choice<InventoryDimension>(yield, "dimension"), Long(yield, "atomic")),
+                    Rows(p, "ingredients").Select(Line).ToArray(), groups, stored?.Value.CreatedAt ?? clock.UtcNow, Optional(p, "notes")), revision);
+                break;
+            }
+            case "recipe.formula.publish":
+            {
+                var stored = recipes.GetFormulaVersion(Id(p, "versionId")) ?? throw new ArgumentException("La versión ya no existe.");
+                if (stored.Value.State == ProductionVersionState.Published) break;
+                recipes.PublishFormula(stored.Value.Id, Long(p, "revision"));
+                break;
+            }
+            case "recipe.formula.activate":
+            {
+                var formula = recipes.GetFormula(Id(p, "formulaId")) ?? throw new ArgumentException("La receta ya no existe.");
+                var version = Id(p, "versionId");
+                if (formula.ActiveVersionId == version) break;
+                if (recipes.GetFormulaVersion(version) is not { Value.State: ProductionVersionState.Published } stored || stored.Value.FormulaId != formula.Id)
+                    throw new ArgumentException("Publica la versión antes de activarla.");
+                recipes.ActivateFormula(formula.Id, version, Long(p, "revision"));
+                break;
+            }
+            case "recipe.profile.create":
+            {
+                var id = Id(p, "id");
+                if (recipes.GetProfile(id) is not null) break;
+                var product = Id(p, "productId"); var item = Modules.Inventory.FindItem(Id(p, "finishedItemId"));
+                if (database.Run(store => store.FindProduct(product)) is not { IsActive: true }) throw new ArgumentException("El producto ya no existe o está inactivo.");
+                if (item is not { IsActive: true, Kind: InventoryItemKind.FinishedGood, Dimension: InventoryDimension.Count })
+                    throw new ArgumentException("El artículo terminado debe ser un Producto terminado activo que se cuenta en piezas.");
+                if (All(recipes.ListProfiles).Any(x => x.ProductId == product)) throw new ArgumentException("Ese producto ya tiene un perfil productivo.");
+                recipes.CreateProfile(new ProductProductionProfile(id, product, item.Id));
+                break;
+            }
+            case "recipe.profile.draft":
+            {
+                var profile = recipes.GetProfile(Id(p, "profileId")) ?? throw new ArgumentException("El perfil ya no existe.");
+                var id = Id(p, "versionId"); var revision = Revision();
+                var stored = recipes.GetProfileVersion(id);
+                if (revision is null && stored is not null) break;
+                if (revision is not null && (stored is null || stored.Value.ProfileId != profile.Id || stored.Value.State != ProductionVersionState.Draft))
+                    throw new RecipeConcurrencyException();
+                var number = stored?.Value.Version ?? recipes.ListProfileVersions(profile.Id).Select(v => v.Value.Version).DefaultIfEmpty(0).Max() + 1;
+                var formulas = Rows(p, "formulas").Select(f =>
+                {
+                    var version = recipes.GetFormulaVersion(Id(f, "formulaVersionId"));
+                    if (version is not { Value.State: ProductionVersionState.Published }) throw new ArgumentException("Una preparación ya no está publicada.");
+                    return new FormulaRequirement(version.Value.Id, new(version.Value.BaseYield.Dimension, Long(f, "atomic")));
+                }).ToArray();
+                recipes.SaveProfileDraft(new ProductProductionProfileVersion(id, profile.Id, number, profile.ProductId, profile.FinishedItemId, Text(p, "name"), formulas,
+                    Rows(p, "direct").Select(d => new DirectIngredientRequirement(Line(d))).ToArray(), stored?.Value.CreatedAt ?? clock.UtcNow), revision);
+                break;
+            }
+            case "recipe.profile.publish":
+            {
+                var stored = recipes.GetProfileVersion(Id(p, "versionId")) ?? throw new ArgumentException("La versión ya no existe.");
+                if (stored.Value.State == ProductionVersionState.Published) break;
+                recipes.PublishProfile(stored.Value.Id, Long(p, "revision"));
+                break;
+            }
+            case "recipe.profile.activate":
+            {
+                var profile = recipes.GetProfile(Id(p, "profileId")) ?? throw new ArgumentException("El perfil ya no existe.");
+                var version = Id(p, "versionId");
+                if (profile.ActiveVersionId == version) break;
+                if (recipes.GetProfileVersion(version) is not { Value.State: ProductionVersionState.Published } stored || stored.Value.ProfileId != profile.Id)
+                    throw new ArgumentException("Publica la versión antes de activarla.");
+                recipes.ActivateProfile(profile.Id, version, Long(p, "revision"));
+                break;
+            }
+        }
+    }
+
+    /// <summary>Todas las recetas o perfiles, de 200 en 200 (el máximo por consulta).</summary>
+    private static List<T> All<T>(Func<int, int, IReadOnlyList<T>> page)
+    {
+        var all = new List<T>();
+        for (var offset = 0; ; offset += 200) { var rows = page(200, offset); all.AddRange(rows); if (rows.Count < 200) return all; }
+    }
+
     /// <summary>El motivo que ve la web cuando la caja rechaza un cambio.</summary>
     private string Describe(Exception error) => error switch
     {
@@ -267,7 +391,8 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
         ProductionException { Code: ProductionFailure.UnresolvedPlan } => "La receta tiene problemas pendientes y no puede registrarse.",
         ProductionException { Code: ProductionFailure.NotFound } => "La receta ya no existe o cambió de versión; actualiza la página.",
         ProductionException => "No se pudo registrar la producción con esos datos.",
-        ProductionDomainException => "Revisa las cantidades y la configuración de la receta.",
+        ProductionDomainException e => RecipeProblems.Describe(e),
+        RecipeConcurrencyException => "La receta cambió. Actualiza la información antes de continuar.",
         ConsumptionException { Preflight: { } check } => "Corrige antes de activar o reanudar: " + string.Join(" ", check.Problems.Take(5).Select(ConsumptionProblems.Describe)) +
             (check.Problems.Count > 5 ? $" Y {check.Problems.Count - 5} más." : ""),
         ConsumptionException { Error: ConsumptionError.ConcurrencyConflict } => "Otro administrador cambió el estado del consumo automático. Actualiza y revisa antes de intentar nuevamente.",

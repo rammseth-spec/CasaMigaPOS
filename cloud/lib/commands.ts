@@ -17,7 +17,11 @@ export const KINDS = ['category.save', 'product.save', 'product.active', 'user.c
   // Catálogo como la caja: quitar la foto de un producto.
   'product.photo.remove',
   // Inventario como la caja (W4): saldo inicial, artículos, presentaciones, asociaciones con productos y consumo automático por ventas.
-  'inventory.opening', 'inventory.item.save', 'inventory.item.active', 'inventory.unit.add', 'inventory.link', 'inventory.unlink', 'inventory.consumption'] as const;
+  'inventory.opening', 'inventory.item.save', 'inventory.item.active', 'inventory.unit.add', 'inventory.link', 'inventory.unlink', 'inventory.consumption',
+  // Recetas como la caja (W5): recetas (fórmulas) y perfiles de producto con borradores, publicar y activar.
+  'recipe.formula.create', 'recipe.formula.draft', 'recipe.formula.publish', 'recipe.formula.activate',
+  'recipe.profile.create', 'recipe.profile.draft', 'recipe.profile.publish', 'recipe.profile.activate'] as const;
+const POLICIES: Record<string, string[]> = { COUNT: ['ExactWholeCount', 'CeilingWholeCount'], MASS: ['NotApplicable'], VOLUME: ['NotApplicable'] };
 const ITEM_KINDS = ['RawMaterial', 'FinishedGood', 'Packaging', 'Supply'];
 const DIMENSIONS: Record<string, string> = { Mass: 'MASS', Volume: 'VOLUME', Count: 'COUNT' };
 const CONSUMPTION: Record<string, [string, string]> = { Enable: ['Disabled', 'ENABLED'], Pause: ['Enabled', 'PAUSED'], Resume: ['Paused', 'ENABLED'] };
@@ -327,6 +331,7 @@ export async function createCommand(q: Query, user: WebUser, branchId: unknown, 
   }
   if ((kind as string).startsWith('consignment.') && ['consignment.deliver', 'consignment.collect', 'consignment.payment', 'consignment.void'].includes(kind as string))
     payload = await route(q, branch, kind as Kind, b);
+  if ((kind as string).startsWith('recipe.')) { requirePermission(user, 'recipe.configure'); payload = await recipe(q, branch, kind as Kind, b); }
   const commandId = randomUUID();
   await q(`INSERT INTO branch_command(id, branch_id, kind, payload, requested_by_id, requested_by_name) VALUES ($1, $2, $3, $4::jsonb, $5, $6)`,
     [commandId, branch, kind, JSON.stringify(payload!), user.id, user.name]);
@@ -391,6 +396,130 @@ async function route(q: Query, branch: string, kind: Kind, b: Record<string, unk
       const deliveryId = id(b.deliveryId, 'Charola');
       await pending(deliveryId);
       return { deliveryId, reason: text(b.reason, 'Motivo', 3, 200) };
+    }
+  }
+  throw new ProtocolError('Cambio desconocido');
+}
+
+/**
+ * Recetas y perfiles: se revisan contra lo último que subió la caja (y lo que ya va en la fila) para que la caja sólo reciba cambios
+ * que puede aplicar. Las cantidades viajan en unidades mínimas (mg, µL o piezas); la caja pone el número de versión.
+ */
+async function recipe(q: Query, branch: string, kind: Kind, b: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const formulas = (await q(`SELECT payload FROM entity_state WHERE branch_id = $1 AND entity = 'formula' AND NOT deleted`, [branch])).map(r => r.payload as Row & { formula: Row; versions: Row[] });
+  const profiles = (await q(`SELECT payload FROM entity_state WHERE branch_id = $1 AND entity = 'production_profile' AND NOT deleted`, [branch])).map(r => r.payload as Row & { profile: Row; versions: Row[] });
+  const revision = (v: unknown) => int(v, 'Revisión', 1, Number.MAX_SAFE_INTEGER);
+  const formulaVersion = (versionId: string) => {
+    for (const f of formulas) { const v = f.versions.find(x => s(x.id) === versionId); if (v) return { formula: f.formula, version: v }; }
+    return null;
+  };
+  const profileVersion = (versionId: string) => {
+    for (const p of profiles) { const v = p.versions.find(x => s(x.id) === versionId); if (v) return { profile: p.profile, version: v }; }
+    return null;
+  };
+  const items = new Map<string, Row>();
+  const line = async (raw: unknown, field: string) => {
+    const x = (raw ?? {}) as Record<string, unknown>;
+    const itemId = id(x.itemId, 'Ingrediente');
+    if (!items.has(itemId)) items.set(itemId, ((await state(q, branch, 'inventory_item', itemId)) as (Row & { item: Row }) | null)?.item ?? {});
+    const item = items.get(itemId)!;
+    if (Number(item.active) !== 1) throw new ProtocolError(`${field}: el artículo no existe o está inactivo`);
+    const policy = s(x.policy);
+    if (!POLICIES[s(item.dimension)]?.includes(policy)) throw new ProtocolError(`${field}: política de cantidad inválida para ese artículo`);
+    return { itemId, atomic: int(x.atomic, `${field}: cantidad`, 1, 1_000_000_000_000), policy };
+  };
+  const list = (v: unknown, field: string, max: number) => { if (!Array.isArray(v) || v.length > max) throw new ProtocolError(`${field} inválidos`); return v as unknown[]; };
+  const unique = (ids: string[]) => { if (new Set(ids).size !== ids.length) throw new ProtocolError('Un mismo artículo no puede repetirse en la receta'); };
+  const draftTarget = (found: { version: Row } | null, rev: number | null, owner: string, ownerKey: string) => {
+    if (rev === null) { if (found) throw new ProtocolError('Esa versión ya existe; actualiza la página'); return; }
+    if (!found || s(found.version[ownerKey]) !== owner || s(found.version.state) !== 'DRAFT' || Number(found.version.revision) !== rev)
+      throw new ProtocolError('La receta cambió. Actualiza la información antes de continuar', 409);
+  };
+  switch (kind) {
+    case 'recipe.formula.create': {
+      const target = id(b.id, 'Receta');
+      const code = text(b.code, 'Código', 1, 60);
+      if (formulas.some(f => s(f.formula.code).toUpperCase() === code.toUpperCase())) throw new ProtocolError('Ya existe una receta con ese código');
+      const pending = await q(`SELECT 1 FROM branch_command c WHERE c.branch_id = $1 AND c.kind = 'recipe.formula.create' AND upper(c.payload->>'code') = upper($2)
+        AND NOT EXISTS (SELECT 1 FROM command_result r WHERE r.command_id = c.id AND r.status = 'rejected')`, [branch, code]);
+      if (pending.length) throw new ProtocolError('Ya se mandó una receta con ese código');
+      return { id: target, code, name: text(b.name, 'Nombre', 1, 160) };
+    }
+    case 'recipe.formula.draft': {
+      const formulaId = id(b.formulaId, 'Receta');
+      if (!formulas.some(f => s(f.formula.id) === formulaId) && !(await queued(q, branch, 'recipe.formula.create', formulaId))) throw new ProtocolError('La receta no existe', 404);
+      const versionId = id(b.versionId, 'Versión');
+      const rev = b.revision === null || b.revision === undefined ? null : revision(b.revision);
+      draftTarget(formulaVersion(versionId), rev, formulaId, 'formula_id');
+      const y = (b.yield ?? {}) as Record<string, unknown>;
+      if (!DIMENSIONS[s(y.dimension)]) throw new ProtocolError('Dimensión del rendimiento inválida');
+      const ingredients = [];
+      for (const [n, raw] of list(b.ingredients, 'Ingredientes', 60).entries()) ingredients.push(await line(raw, `Ingrediente ${n + 1}`));
+      const groups = [];
+      for (const [g, rawGroup] of list(b.groups, 'Grupos de alternativas', 20).entries()) {
+        const options = list(rawGroup, `Grupo ${g + 1}`, 10);
+        if (options.length < 2) throw new ProtocolError('Cada grupo de alternativas requiere al menos dos opciones');
+        const group = [];
+        for (const [o, raw] of options.entries()) group.push({ id: id((raw as Record<string, unknown>)?.id, 'Opción'), ...(await line(raw, `Grupo ${g + 1}, opción ${o + 1}`)) });
+        groups.push(group);
+      }
+      if (ingredients.length + groups.length === 0) throw new ProtocolError('Agrega al menos un ingrediente o grupo de alternativas');
+      unique([...ingredients.map(i => i.itemId), ...groups.flat().map(o => o.itemId)]);
+      return { formulaId, versionId, revision: rev, name: text(b.name, 'Nombre de la versión', 1, 160), notes: text(b.notes ?? '', 'Notas', 0, 500),
+        yield: { dimension: s(y.dimension), atomic: int(y.atomic, 'Rendimiento', 1, 1_000_000_000_000) }, ingredients, groups };
+    }
+    case 'recipe.formula.publish': case 'recipe.profile.publish': {
+      const versionId = id(b.versionId, 'Versión');
+      const found = kind === 'recipe.formula.publish' ? formulaVersion(versionId) : profileVersion(versionId);
+      if (!found) throw new ProtocolError('La versión no existe', 404);
+      if (s(found.version.state) !== 'DRAFT') throw new ProtocolError('Esa versión ya está publicada');
+      if (Number(found.version.revision) !== revision(b.revision)) throw new ProtocolError('La receta cambió. Actualiza la información antes de continuar', 409);
+      return { versionId, revision: Number(found.version.revision) };
+    }
+    case 'recipe.formula.activate': case 'recipe.profile.activate': {
+      const formula = kind === 'recipe.formula.activate';
+      const ownerId = id(formula ? b.formulaId : b.profileId, formula ? 'Receta' : 'Perfil');
+      const versionId = id(b.versionId, 'Versión');
+      const found = formula ? formulaVersion(versionId) : profileVersion(versionId);
+      const owner = formula ? (found as { formula: Row } | null)?.formula : (found as { profile: Row } | null)?.profile;
+      if (!found || !owner || s(owner.id) !== ownerId) throw new ProtocolError('La versión no existe', 404);
+      if (s(found.version.state) !== 'PUBLISHED') throw new ProtocolError('Publica la versión antes de activarla');
+      if (s(owner.active_version_id) === versionId) throw new ProtocolError('Esa versión ya está activa');
+      if (Number(owner.revision) !== revision(b.revision)) throw new ProtocolError('La receta cambió. Actualiza la información antes de continuar', 409);
+      return { [formula ? 'formulaId' : 'profileId']: ownerId, versionId, revision: Number(owner.revision) };
+    }
+    case 'recipe.profile.create': {
+      const target = id(b.id, 'Perfil');
+      const productId = id(b.productId, 'Producto');
+      const product = (await state(q, branch, 'product', productId)) as (Row & { product: Row }) | null;
+      if (!product || Number(product.product.active) !== 1) throw new ProtocolError('El producto no existe o está inactivo');
+      const itemId = id(b.finishedItemId, 'Artículo terminado');
+      const item = ((await state(q, branch, 'inventory_item', itemId)) as (Row & { item: Row }) | null)?.item;
+      if (!item || Number(item.active) !== 1 || s(item.kind) !== 'FINISHED_GOOD' || s(item.dimension) !== 'COUNT')
+        throw new ProtocolError('El artículo terminado debe ser un Producto terminado activo que se cuenta en piezas');
+      const pending = await q(`SELECT 1 FROM branch_command c WHERE c.branch_id = $1 AND c.kind = 'recipe.profile.create' AND c.payload->>'productId' = $2
+        AND NOT EXISTS (SELECT 1 FROM command_result r WHERE r.command_id = c.id AND r.status = 'rejected')`, [branch, productId]);
+      if (profiles.some(p => s(p.profile.product_id) === productId) || pending.length) throw new ProtocolError('Ese producto ya tiene un perfil productivo');
+      return { id: target, productId, finishedItemId: itemId };
+    }
+    case 'recipe.profile.draft': {
+      const profileId = id(b.profileId, 'Perfil');
+      if (!profiles.some(p => s(p.profile.id) === profileId) && !(await queued(q, branch, 'recipe.profile.create', profileId))) throw new ProtocolError('El perfil no existe', 404);
+      const versionId = id(b.versionId, 'Versión');
+      const rev = b.revision === null || b.revision === undefined ? null : revision(b.revision);
+      draftTarget(profileVersion(versionId), rev, profileId, 'profile_id');
+      const requirements = list(b.formulas, 'Preparaciones', 30).map((raw, n) => {
+        const x = (raw ?? {}) as Record<string, unknown>;
+        const formulaVersionId = id(x.formulaVersionId, `Preparación ${n + 1}`);
+        if (s(formulaVersion(formulaVersionId)?.version.state) !== 'PUBLISHED') throw new ProtocolError(`Preparación ${n + 1}: debe estar publicada`);
+        return { formulaVersionId, atomic: int(x.atomic, `Preparación ${n + 1}: cantidad`, 1, 1_000_000_000_000) };
+      });
+      if (new Set(requirements.map(r => r.formulaVersionId)).size !== requirements.length) throw new ProtocolError('Una preparación no puede repetirse');
+      const direct = [];
+      for (const [n, raw] of list(b.direct, 'Ingredientes directos', 60).entries()) direct.push(await line(raw, `Ingrediente ${n + 1}`));
+      unique(direct.map(d => d.itemId));
+      if (requirements.length + direct.length === 0) throw new ProtocolError('Agrega al menos una preparación o ingrediente directo');
+      return { profileId, versionId, revision: rev, name: text(b.name, 'Nombre de la versión', 1, 160), formulas: requirements, direct };
     }
   }
   throw new ProtocolError('Cambio desconocido');

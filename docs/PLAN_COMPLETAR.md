@@ -14,7 +14,7 @@ Base: auditoría pantalla por pantalla de la caja contra la web (09/10/2026). Ca
 | W2 | Reportes con los mismos cálculos de la caja (Resumen, Comparativo, Ventas por hora, Control de caja, Producción) + Exportar CSV; Ganancia se queda como pestaña extra | Hecho (cifras iguales a la base de la caja: 1061 ventas, $71,583.00, $278.00) |
 | W3 | Catálogo: pestañas Productos/Categorías, tabla con páginas, categoría nueva sin salir del producto, origen de foto (real/provisional), Quitar foto, recorte manual | Hecho (cambios `product.photo` con origen y `product.photo.remove`; migración 007 valida el formato del tipo de cambio en vez de una lista fija) |
 | W4 | Inventario: consumo automático por ventas, búsqueda y filtros, alta/edición/activar artículos, presentaciones, asociaciones con productos, historial por artículo, vista previa de la operación | Hecho (7 cambios nuevos; migración de la caja 027 sube el estado del consumo) |
-| W5 | Recetas: crear y editar recetas (fórmulas) y perfiles de producto con versiones, borradores, publicar y activar, alternativas | Pendiente |
+| W5 | Recetas: crear y editar recetas (fórmulas) y perfiles de producto con versiones, borradores, publicar y activar, alternativas | Hecho (8 cambios `recipe.*`; la caja numera las versiones) |
 | W6 | Producción en dos pasos: plan, necesidades y faltantes, alternativas, borrador, registrar con lo que salió, borradores e historial con detalle | Pendiente |
 | W7 | Charolas: resumen de ruta, ayuda, entregar como en la caja, recoger con saldo anterior, estado de cuenta, precios de charola, reporte | Pendiente |
 | W8 | Usuarios con confirmaciones; cambiar contraseña desde la web; «¿Olvidaste tu contraseña?» | Pendiente |

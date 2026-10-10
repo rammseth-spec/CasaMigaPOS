@@ -225,17 +225,7 @@ public sealed class RecipeViewModel(RecipeService service,InventoryService inven
     public Task ActivateProfileAsync()=>Run(async()=>{var row=selectedVersion??throw new ArgumentException("Selecciona una versión publicada.");if(row.State!="Publicada")throw new ArgumentException("Publica la versión antes de activarla.");var p=service.GetProfile(profileId!.Value)!;await Task.Run(()=>service.ActivateProfile(profileId.Value,row.Id,p.Revision));await LoadProfile(profileId.Value);MessageIsSuccess=true;Message="Versión de perfil activada.";});
     public void Back(){if(screen=="formulaEditor"&&formulaId.HasValue)screen="formula";else if(screen=="profileEditor"&&profileId.HasValue)screen="profile";else screen=screen.StartsWith("profile",StringComparison.Ordinal)?"profiles":"list";Message="";Notify();}
     public static string PolicyLabel(IngredientCountPolicy value)=>value switch{IngredientCountPolicy.CeilingWholeCount=>"Redondear hacia arriba a pieza completa",IngredientCountPolicy.ExactWholeCount=>"Sólo piezas completas",_=>"Cantidad exacta"};
-    public static string ErrorMessage(ProductionDomainException error)=>error.Code switch
-    {
-        ProductionError.InvalidVersion=>"Revisa el nombre y número de la versión.",
-        ProductionError.InvalidFormulaYield=>"El rendimiento debe ser mayor que cero y usar una unidad compatible.",
-        ProductionError.InvalidRecipeQuantity=>"Revisa que todas las cantidades sean mayores que cero.",
-        ProductionError.DimensionMismatch=>"Una unidad o política no corresponde al tipo de artículo seleccionado.",
-        ProductionError.DuplicateIngredient=>"Un mismo artículo no puede repetirse en la receta.",
-        ProductionError.InvalidAlternative=>"Cada grupo de alternativas requiere al menos dos opciones válidas y un orden de preferencia.",
-        ProductionError.Overflow=>"Una cantidad excede el límite permitido.",
-        _=>"Revisa cantidades, unidades, duplicados y alternativas de la receta."
-    };
+    public static string ErrorMessage(ProductionDomainException error)=>RecipeProblems.Describe(error);
     public void ClearIngredientSearch(){IngredientSearch="";}
     private async void ScheduleIngredientFilter()
     {

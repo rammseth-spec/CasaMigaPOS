@@ -17,8 +17,9 @@ Pedido del usuario: «una copia tal cual de POS en Web» — primero **el mismo 
 | **Reportes** (ReportsView): Resumen, Comparativo, Ventas por hora, Control de caja, Producción sugerida, Exportar CSV | Igual, con los mismos cálculos (redondeo bancario, canceladas fuera, pronóstico +10 %). Ganancia es pestaña extra. |
 | **Catálogo** (CatalogView + PhotoCropDialog): pestañas Productos/Categorías, tabla con búsqueda, filtro, inactivos y 50 por página; Nuevo producto, Administrar foto, Editar, Activar/desactivar; editor con «IMAGEN DEL PRODUCTO» (origen real/provisional, Agregar/Cambiar con recorte, Quitar foto) y «+ Nueva categoría» sin salir del producto | Igual. La foto se recorta en el navegador (JPEG ≤1024 px) y la caja la procesa como una importada; la categoría nueva se puede usar antes de que la caja la aplique (va antes en la fila). |
 | **Inventario** (InventoryView): consumo automático por ventas, búsqueda con Tipo/Estado, tabla de 50, detalle con presentaciones, asociaciones e historial; editores de artículo, operación con vista previa, presentación y asociación | Igual. Todo se manda a la caja como cambio (`inventory.*`) y la existencia cambia cuando la caja lo sube. Extra de la web: Costo de referencia y «Enviado a la caja». |
+| **Recetas** (RecipeView): pestañas Recetas / Perfiles de producto, versiones (Borrador, Publicada, Activa) con Crear nueva versión, Editar borrador, Publicar y Activar; editor con rendimiento, ingredientes directos, grupos de alternativas por preferencia, preparaciones publicadas y política de cantidad | Igual. Se manda a la caja (`recipe.*`): la caja numera la versión, revisa artículos y preparaciones y rechaza una revisión vieja como en la pantalla. Una receta o perfil recién mandado ya acepta su primer borrador. |
 
-Pendiente de esta copia: Recetas, Producción, Charolas y Usuarios con todas sus acciones (ver [PLAN_COMPLETAR.md](PLAN_COMPLETAR.md)) y luego la web independiente.
+Pendiente de esta copia: Producción, Charolas y Usuarios con todas sus acciones (ver [PLAN_COMPLETAR.md](PLAN_COMPLETAR.md)) y luego la web independiente.
 
 ## Fase 1 (lista)
 

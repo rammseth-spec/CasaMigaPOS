@@ -1,4 +1,4 @@
-# Catálogo e Inventario de la web iguales a la caja — 09/10/2026
+# Catálogo, Inventario y Recetas de la web iguales a la caja — 09/10/2026
 
 **Implementado y probado en local.** Pedido del usuario: «Sigue con Ventas y el resto de pantallas y termina todo… tanto la App de C# como la de Web con todas las pruebas correspondientes». Plan por fases en [PLAN_COMPLETAR.md](PLAN_COMPLETAR.md).
 
@@ -6,6 +6,7 @@
 - **Inventario (W4):** copia de InventoryView: consumo automático por ventas (estado, Verificar configuración, Activar/Pausar/Reanudar con confirmación), búsqueda en vivo con Tipo y Estado, lista para elegir, tabla de 50; detalle con existencia, «Inventario consistente» o advertencia, Editar, Activar/Desactivar, Saldo inicial, Entrada, Merma, Conteo físico (con la misma vista previa), presentaciones, asociaciones con productos e historial de 25 por página. Costo de referencia sigue como extra de la web.
 - Cambios nuevos que aplica la caja (`CloudCommandService`): `inventory.opening`, `inventory.item.save` (la web fija el id), `inventory.item.active`, `inventory.unit.add`, `inventory.link`, `inventory.unlink` e `inventory.consumption` (manda el estado y la versión que vio; si cambió, se rechaza como en la caja; si la verificación falla, el motivo lista los problemas). Reintentar no repite nada.
 - **Migración de la caja 027:** el estado del consumo automático sube dentro de la sucursal (`branch.sale_consumption`). Textos de «Verificar configuración» compartidos (`ConsumptionProblems`).
+- **Recetas (W5):** copia de RecipeView con recetas y perfiles de producto: versiones, borradores, publicar y activar; editores con ingredientes directos, grupos de alternativas, preparaciones publicadas y política de cantidad. Cambios `recipe.formula.*` y `recipe.profile.*`: la caja numera la versión, revisa artículos activos, preparaciones publicadas, código y producto sin perfil antes de escribir, y no repite lo ya aplicado. Textos de error compartidos (`RecipeProblems`). Pruebas: caja `CloudRecipeCommandTests` (3), nube `recipes.test.ts` (2).
 - Pruebas: caja `CloudInventoryCommandTests` (3), nube `inventory.test.ts` (4); probado en el navegador con la base de demostración (saldo inicial, presentación, asociación, artículo nuevo, merma con motivo Otro, conteo con diferencia, activar consumo).
 
 # Web igual a la caja de escritorio y sincronización cada 5 segundos — 09/10/2026
