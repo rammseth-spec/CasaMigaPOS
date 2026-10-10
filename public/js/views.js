@@ -1,17 +1,8 @@
 // Pantallas de Casa Miga en línea. Cada una pide sus datos a /api/web/<op> y dibuja con h() (sin HTML en texto).
 import { api, at, bars, can, card, command, dateLong, dayLabel, dialog, field, fmt, h, METHOD, pesos, quantity, range, render, ROLE, state, table, time, toast } from './app.js';
-import { vender } from './pos.js';
+import { ICON } from './icons.js';
+import { tuCaja, vender } from './pos.js';
 
-const I = {
-  pos: ['M6 8h12l-1 12H7z', 'M9 8V6a3 3 0 0 1 6 0v2'],
-  home: ['M3 11.5 12 4l9 7.5', 'M5.5 10v10h13V10'], sales: ['M6 3h12v18l-3-2-3 2-3-2-3 2z', 'M9 8h6', 'M9 12h6'],
-  reports: ['M4 20V11', 'M10 20V5', 'M16 20v-7', 'M21 20H3'], cash: ['M3 7h18v12H3z', 'M16 13h2', 'M3 7l2-3h12l2 3'],
-  trays: ['M3 14h18', 'M5 14l2 5h10l2-5', 'M8 10c0-3.5 8-3.5 8 0'], catalog: ['M4 4h7v7H4z', 'M13 4h7v7h-7z', 'M4 13h7v7H4z', 'M13 13h7v7h-7z'],
-  inventory: ['M3 7l9-4 9 4v10l-9 4-9-4z', 'M3 7l9 4 9-4', 'M12 11v10'], recipes: ['M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z', 'M5 17a3 3 0 0 1 3-3h11'],
-  production: ['M7 14a4 4 0 1 1 2.5-7.2A4 4 0 0 1 17 7a4 4 0 1 1 0 7v5H7z', 'M7 17h10'], users: ['M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', 'M2 21a7 7 0 0 1 14 0', 'M17 11a3 3 0 1 0 0-6', 'M22 21a6 6 0 0 0-5-6'],
-  terminals: ['M3 5h18v11H3z', 'M8 21h8', 'M12 16v5'],
-  backups: ['M4 7c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3z', 'M4 7v10c0 1.7 3.6 3 8 3s8-1.3 8-3V7', 'M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3'],
-};
 const branchName = id => state.branches.find(b => b.id === id)?.name ?? '';
 const multi = () => !state.branch && state.branches.length > 1;
 const uuid = () => crypto.randomUUID();
@@ -126,14 +117,16 @@ async function saleDialog(id) {
 }
 
 // ---------- Reportes ----------
-let reportTab = 'compare';
+let reportTab = 'summary';
 async function reportes() {
   await loadPhotos();
   const pick = id => { reportTab = id; render(); };
-  const tabs = tabsBar([['compare', 'Comparativo'], ['heatmap', 'Ventas por hora'], ['profit', 'Ganancia'], ['cash-control', 'Control de caja'], ['production', 'Producción sugerida']]
+  const tabs = tabsBar([['summary', 'Resumen'], ['compare', 'Comparativo'], ['heatmap', 'Ventas por hora'], ['profit', 'Ganancia'], ['cash-control', 'Control de caja'], ['production', 'Producción sugerida']]
     .filter(([id]) => id !== 'profit' || can('recipe.view')), reportTab, pick);
   let body;
-  if (reportTab === 'compare') {
+  if (reportTab === 'summary') {
+    body = [await resumen()];
+  } else if (reportTab === 'compare') {
     const c = await api('compare', range());
     const delta = (a, b) => b ? `${a >= b ? '+' : ''}${Math.round((a - b) / b * 100)} %` : '—';
     body = [h('section', { class: 'kpis' },
@@ -198,7 +191,13 @@ async function reportes() {
 let productionDay = null;
 
 // ---------- Caja ----------
-async function caja() {
+async function caja(ctx) {
+  const parts = [];
+  if (can('pos.use')) parts.push(await tuCaja(ctx));
+  if (can('sales.view')) parts.push(await cajaPanel());
+  return h('div', { style: { display: 'grid', gap: '16px' } }, parts);
+}
+async function cajaPanel() {
   const data = await api('cash', range());
   const kinds = { EXPENSE: ['Gasto', 'warn'], WITHDRAWAL: ['Retiro', 'warn'], DEPOSIT: ['Entrada', 'info'] };
   const categories = { SUPPLIES: 'Insumos', GAS: 'Gas', CLEANING: 'Limpieza', TRANSPORT: 'Transporte', MAINTENANCE: 'Mantenimiento', OTHER: 'Otro' };
@@ -208,7 +207,7 @@ async function caja() {
       kpi('Cortes', String(c.sessions), `${c.open} abiertos`),
       kpi('Gastos', fmt(c.expenses.amount), `${c.expenses.count} movimientos`),
       kpi('Retiros', fmt(c.withdrawals.amount), `${c.withdrawals.count} · efectivo a resguardo`), kpi('Entradas', fmt(c.deposits.amount), `${c.deposits.count} · cambio o fondo extra`)),
-    card('Cortes de caja', sessionsTable(data.sessions)),
+    card(h('div', {}, h('h2', { text: 'Cierres anteriores', style: { margin: 0 } }), h('span', { class: 'caption', text: 'Sólo lectura · Cortes de todas las cajas en el periodo elegido' })), sessionsTable(data.sessions)),
     card('Gastos, retiros y entradas', table([
       { label: 'Fecha', value: m => [at(m.at), multi() ? h('small', { text: m.branch }) : null] },
       { label: 'Tipo', value: m => h('span', { class: 'pill ' + kinds[m.kind][1], text: kinds[m.kind][0] }) },
@@ -270,7 +269,7 @@ async function ruta() {
   const manage = can('consignment.manage');
   if (!data.stores.length) return h('p', { class: 'empty', text: 'Sin tiendas activas.' });
   return h('div', { style: { display: 'grid', gap: '10px' } },
-    h('p', { class: 'muted small', text: 'Lo que registres aquí se manda a la caja; aparece como hecho cuando la caja lo aplica (se sincroniza cada minuto).' }),
+    h('p', { class: 'muted small', text: 'Lo que registres aquí se manda a la caja; aparece como hecho cuando la caja lo aplica (se sincroniza cada 5 segundos).' }),
     h('section', { class: 'route' }, data.stores.map(store => h('article', { class: 'card' },
       h('div', { class: 'head' },
         h('div', {}, h('h2', { text: store.name }), h('span', { class: 'muted small', text: [store.contact, store.address].filter(Boolean).join(' · ') || 'Sin datos de contacto' }),
@@ -790,6 +789,13 @@ async function cajas() {
       ], commands, { empty: 'Todavía no hay cambios hechos en la web.' })));
 }
 
+let cloudTab = 'terminals';
+async function nube() {
+  const tabs = tabsBar([['terminals', 'Cajas y cambios'], ['backups', 'Respaldos']].filter(([id]) => id !== 'backups' || can('users.manage')), cloudTab, id => { cloudTab = id; render(); });
+  if (cloudTab === 'backups' && !can('users.manage')) cloudTab = 'terminals';
+  return h('div', { style: { display: 'grid', gap: '16px' } }, tabs, cloudTab === 'backups' ? await respaldos() : await cajas());
+}
+
 // ---------- Ganancia y análisis de charolas ----------
 const pct = v => v === null || v === undefined ? '—' : `${Math.round(v * 100)} %`;
 async function ganancia() {
@@ -859,20 +865,19 @@ async function respaldos() {
     card('Restaurar una caja', h('p', { class: 'small', text: 'En la computadora nueva, con Casa Miga instalado y cerrado: CasaMiga.Maintenance restore-cloud <dirección de la nube> <usuario administrador> <carpeta nueva> [identificador]. Pide la contraseña, baja el respaldo más reciente de esa caja (o el indicado), lo descifra, lo verifica y deja una instalación completa en la carpeta nueva.' })));
 }
 
+// Mismo orden, grupos, nombres y subtítulos que el riel de la caja de escritorio (MainWindow, rediseño A de QAv1).
 export const VIEWS = [
   // Sin actualización automática: no debe redibujarse mientras se arma una venta.
-  { id: 'vender', title: 'Vender', subtitle: 'Punto de venta: selecciona productos, revisa el ticket y cobra', icon: I.pos, permission: 'pos.use', usesRange: false, manual: true, render: vender },
-  { id: 'resumen', title: 'Resumen', icon: I.home, permission: 'sales.view', usesRange: true, render: resumen },
-  { id: 'ventas', title: 'Ventas', subtitle: 'Toca una venta para ver su ticket', icon: I.sales, permission: 'sales.view', usesRange: true, render: ventas },
-  { id: 'reportes', title: 'Reportes', icon: I.reports, permission: 'sales.view', usesRange: true, render: reportes },
-  // Muestra el esperado del turno abierto: no para el cajero (conteo ciego).
-  { id: 'caja', title: 'Caja', subtitle: 'Cortes, gastos, retiros y entradas', icon: I.cash, permission: 'sales.view', usesRange: true, render: caja },
-  { id: 'charolas', title: 'Charolas', icon: I.trays, permission: 'consignment.view', usesRange: true, render: charolas },
-  { id: 'catalogo', title: 'Catálogo', icon: I.catalog, permission: 'catalog.view', usesRange: false, render: catalogo },
-  { id: 'inventario', title: 'Inventario', icon: I.inventory, permission: 'inventory.view', usesRange: false, render: inventario },
-  { id: 'recetas', title: 'Recetas', icon: I.recipes, permission: 'recipe.view', usesRange: false, render: recetas },
-  { id: 'produccion', title: 'Producción', icon: I.production, permission: 'production.view', usesRange: true, render: produccion },
-  { id: 'usuarios', title: 'Usuarios', icon: I.users, permission: 'users.manage', usesRange: false, render: usuarios },
-  { id: 'cajas', title: 'Cajas', subtitle: 'Conexión y cambios enviados', icon: I.terminals, permission: 'sales.view', usesRange: false, render: cajas },
-  { id: 'respaldos', title: 'Respaldos', subtitle: 'Copias cifradas en la nube', icon: I.backups, permission: 'users.manage', usesRange: false, render: respaldos },
+  { id: 'vender', label: 'Venta', title: 'Punto de venta', subtitle: 'Selecciona productos, revisa el carrito y cobra.', hint: 'Ir a Punto de venta', icon: ICON.sale, group: 1, permission: 'pos.use', usesRange: false, manual: true, render: vender },
+  // Tu caja (cajero y encargado) y, para encargados, los cortes del periodo. El esperado del turno abierto nunca se muestra antes del conteo ciego.
+  { id: 'caja', label: 'Caja', title: 'Tu caja', subtitle: 'Caja web · lo que registras se guarda en la nube al momento.', hint: 'Ir a Caja', icon: ICON.cash, group: 1, permission: ['pos.use', 'sales.view'], usesRange: () => can('sales.view'), manual: true, render: caja },
+  { id: 'charolas', title: 'Charolas', subtitle: 'Charolas en tiendas: entregar, recoger y cobrar · Aparte de la caja del mostrador.', hint: 'Ir a Charolas', icon: ICON.tray, group: 1, permission: 'consignment.view', usesRange: true, render: charolas },
+  { id: 'ventas', label: 'Ventas', title: 'Historial de ventas', subtitle: 'Ventas confirmadas · Toca una venta para ver su ticket.', hint: 'Ir a Historial de ventas', icon: ICON.receipt, group: 2, permission: 'sales.view', usesRange: true, render: ventas },
+  { id: 'reportes', title: 'Reportes', subtitle: 'Ventas, devoluciones y cortes de caja por periodo · Sólo lectura.', hint: 'Ir a Reportes', icon: ICON.chart, group: 2, permission: 'sales.view', usesRange: true, render: reportes, tab: id => { reportTab = id; } },
+  { id: 'catalogo', title: 'Catálogo', subtitle: 'Categorías y productos · Sin proceso de venta.', hint: 'Ir a Catálogo', icon: ICON.grid, group: 3, permission: 'catalog.view', usesRange: false, render: catalogo },
+  { id: 'inventario', title: 'Inventario', subtitle: 'Existencias y movimientos del almacén principal · Entradas, mermas y conteos.', hint: 'Ir a Inventario', icon: ICON.box, group: 3, permission: 'inventory.view', usesRange: false, render: inventario },
+  { id: 'recetas', title: 'Recetas', subtitle: 'Fórmulas y perfiles productivos versionados.', hint: 'Ir a Recetas', icon: ICON.book, group: 3, permission: 'recipe.view', usesRange: false, render: recetas },
+  { id: 'produccion', title: 'Producción', subtitle: 'Registro e historial de producción.', hint: 'Ir a Producción', icon: ICON.chef, group: 3, permission: 'production.view', usesRange: true, render: produccion },
+  { id: 'usuarios', title: 'Usuarios', subtitle: 'Crea usuarios y restablece contraseñas olvidadas · Cada acción queda auditada.', hint: 'Ir a Usuarios', icon: ICON.users, group: 3, permission: 'users.manage', usesRange: false, render: usuarios },
+  { id: 'nube', title: 'Nube', subtitle: 'Cajas conectadas, cambios hechos en la web y respaldos.', hint: 'Ir a Nube', icon: ICON.cloud, group: 3, permission: 'sales.view', usesRange: false, render: nube, tab: id => { cloudTab = id; } },
 ];

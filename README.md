@@ -1,6 +1,6 @@
 # Casa Miga en línea (CasaMigaPOS_Web)
 
-Versión web de Casa Miga POS: consulta y algunos cambios desde la computadora, el celular o la tablet. Las cajas (app de escritorio CasaMigaPOS) siguen vendiendo sin Internet y sincronizan con esta nube cada 60 segundos.
+Versión web de Casa Miga POS: consulta y algunos cambios desde la computadora, el celular o la tablet. Las cajas (app de escritorio CasaMigaPOS) siguen vendiendo sin Internet y sincronizan con esta nube cada 5 segundos.
 
 - **Web responsiva**: menú lateral en computadora, riel de íconos en tablet, menú desplegable y tarjetas en celular.
 - **Vender**: punto de venta en el navegador (Mac, iPad, celular) con cajas web, fotos, cobro, ticket y corte; el cajero entra sólo aquí. Ver `docs/POS_WEB.md` del repositorio principal.

@@ -1,5 +1,8 @@
 // Casa Miga en línea: sesión, rutas, filtros y piezas comunes. Todo texto entra con textContent (nunca HTML).
+import { ICON } from './icons.js';
 import { VIEWS } from './views.js';
+
+export { ICON };
 
 const $ = id => document.getElementById(id);
 export const state = { me: null, branches: [], period: 'today', from: '', to: '', branch: '', timeZone: 'America/Mexico_City', view: null };
@@ -152,22 +155,65 @@ function choose(period, reload = true) {
 }
 
 // ---------- Rutas y marco ----------
-function allowed() { return VIEWS.filter(v => !v.permission || can(v.permission)); }
+const allows = v => [].concat(v.permission ?? []).some(p => can(p)) || !v.permission;
+function allowed() { return VIEWS.filter(allows); }
+// Direcciones de antes del marco de escritorio: Resumen vive en Reportes; Cajas y Respaldos, en Nube.
+const MOVED = { resumen: ['reportes', 'summary'], cajas: ['nube', 'terminals'], respaldos: ['nube', 'backups'] };
 function current() {
-  const id = location.hash.replace(/^#\/?/, '').split('?')[0] || (can('sales.view') ? 'resumen' : 'vender');
+  let id = location.hash.replace(/^#\/?/, '').split('?')[0];
+  if (MOVED[id]) { const [view, tab] = MOVED[id]; VIEWS.find(v => v.id === view)?.tab?.(tab); history.replaceState(null, '', `#/${view}`); id = view; }
+  id ||= can('pos.use') ? 'vender' : 'reportes';
   return allowed().find(v => v.id === id) ?? allowed()[0];
+}
+const usesRange = view => typeof view.usesRange === 'function' ? view.usesRange() : view.usesRange;
+export const initials = name => String(name ?? '').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toLocaleUpperCase('es-MX')).join('');
+
+/**
+ * Estado de la caja web de este dispositivo en la barra superior («Caja abierta» / «Caja cerrada», como en la caja de escritorio)
+ * y su nombre en la ficha del usuario. Lo actualizan Venta y Caja cada vez que leen la caja; null lo oculta.
+ */
+export function setCashStatus(cash) {
+  state.cash = cash;
+  $('cash-pill').hidden = !cash;
+  if (cash) { $('cash-label').textContent = cash.open ? 'Caja abierta' : 'Caja cerrada'; $('cash-pill').querySelector('.dot').className = 'dot' + (cash.open ? ' ok' : ''); }
+  $('user-detail').textContent = `${ROLE[state.me.role] ?? state.me.role} · ${cash?.till ?? (state.me.admin && !state.branch ? 'todas las sucursales' : state.branches.find(b => b.id === (state.branch || state.me.branchId))?.name ?? '')}`;
+}
+/** Título y subtítulo de la barra superior cuando una pantalla cambia de paso (como «Abrir caja» o «Conteo de caja» en la caja). */
+export function setHeading(title, subtitle = '') { $('view-title').textContent = title; $('view-subtitle').textContent = subtitle; }
+function setCloud(ok) {
+  const pill = $('refresh');
+  pill.querySelector('.dot').className = 'dot ' + (ok ? 'ok' : 'warn');
+  $('updated').textContent = ok ? 'Nube: al día' : 'Nube: sin conexión';
+  pill.title = ok ? `Actualizado ${new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} · se actualiza sola; toca para hacerlo ahora.`
+    : 'No se pudo leer la nube; se reintenta sola. Toca para intentarlo ahora.';
 }
 
 function layout() {
-  $('nav-links').replaceChildren(...allowed().map(v => h('a', { href: `#/${v.id}`, 'data-view': v.id, onclick: () => document.body.classList.remove('menu-open') }, icon(v.icon), h('span', { text: v.title }))));
+  // Mismo orden y grupos que el riel de la caja: Venta, Caja, Charolas | Ventas, Reportes | Catálogo … Nube.
+  const links = [];
+  let group = null;
+  for (const v of allowed().filter(v => !v.hidden)) {
+    if (group !== null && v.group !== group) links.push(h('hr', { class: 'nav-sep' }));
+    group = v.group;
+    links.push(h('a', { href: `#/${v.id}`, class: 'nav-item', 'data-view': v.id, title: v.hint ?? v.title, onclick: () => document.body.classList.remove('menu-open') }, icon(v.icon), h('span', { text: v.label ?? v.title })));
+  }
+  $('nav-links').replaceChildren(...links);
+  $('logout').replaceChildren(icon(ICON.logout), h('span', { text: 'Salir' }));
   $('who-name').textContent = state.me.name;
   $('who-role').textContent = `${ROLE[state.me.role] ?? state.me.role}${state.me.admin ? ' · todas las sucursales' : ' · ' + (state.branches[0]?.name ?? '')}`;
+  $('user-initials').textContent = initials(state.me.name);
+  $('user-name').textContent = state.me.name;
+  const full = $('fullscreen');
+  full.hidden = !document.fullscreenEnabled;
+  const drawFull = () => full.replaceChildren(icon(document.fullscreenElement ? ICON.collapse : ICON.expand));
+  drawFull(); document.onfullscreenchange = drawFull;
   $('periods').replaceChildren(...PERIODS.map(([id, label]) => h('button', { type: 'button', class: 'chip', 'data-period': id, onclick: () => choose(id) }, label)));
   const select = $('branch');
   select.replaceChildren(...(state.me.admin ? [h('option', { value: '', text: 'Todas las sucursales' })] : []), ...state.branches.map(b => h('option', { value: b.id, text: b.name })));
   if (!state.me.admin || !state.branches.some(b => b.id === state.branch)) state.branch = state.me.admin ? '' : state.me.branchId;
   select.value = state.branch;
-  select.hidden = state.branches.length < 2 && !state.me.admin;
+  select.hidden = state.branches.length < 2;
+  setCashStatus(state.cash ?? null);
 }
 
 let renderToken = 0;
@@ -178,10 +224,11 @@ let renderToken = 0;
 export async function render({ silent = false } = {}) {
   const view = current(); state.view = view;
   if (!view) return;
-  for (const a of $('nav-links').children) a.setAttribute('aria-current', a.dataset.view === view.id ? 'page' : 'false');
+  for (const a of $('nav-links').querySelectorAll('a')) a.setAttribute('aria-current', a.dataset.view === view.id ? 'page' : 'false');
   $('view-title').textContent = view.title;
-  $('view-subtitle').textContent = view.subtitle ?? '';
-  $('periods').hidden = $('dates').hidden = !view.usesRange;
+  $('view-subtitle').textContent = (typeof view.subtitle === 'function' ? view.subtitle() : view.subtitle) ?? '';
+  $('periods').hidden = $('dates').hidden = !usesRange(view);
+  $('filters').hidden = !usesRange(view) && $('branch').hidden;
   $('error').hidden = true;
   const token = ++renderToken;
   const container = $('view');
@@ -193,18 +240,22 @@ export async function render({ silent = false } = {}) {
     if (token !== renderToken) return;
     container.replaceChildren(node);
     if (silent) window.scrollTo(0, scroll);
-    $('updated').textContent = `Actualizado ${new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })} ↻`;
+    setCloud(true);
   } catch (error) {
     if (token !== renderToken || error.status === 401) return;
     if (!silent) container.replaceChildren();
+    if (error.status === 0) setCloud(false);
     $('error').textContent = error.message; $('error').hidden = false;
   } finally {
     if (token === renderToken) $('refresh').classList.remove('busy');
   }
 }
 
-/** Cada 60 s con la página visible y sin un formulario abierto; también al volver a la pestaña. */
-const REFRESH_MS = 60_000;
+/**
+ * Cada 15 s con la página visible y sin un formulario abierto; también al volver a la pestaña. Las cajas suben cada 5 s,
+ * así que lo vendido en la caja aparece aquí en menos de 20 s.
+ */
+const REFRESH_MS = 15_000;
 let lastRefresh = Date.now();
 function autoRefresh() {
   const typing = document.activeElement?.matches?.('#view input, #view select, #view textarea');
@@ -273,6 +324,8 @@ document.addEventListener('DOMContentLoaded', () => {
     showLogin(''); showDevUsers();
   });
   $('menu').addEventListener('click', () => document.body.classList.toggle('menu-open'));
+  // Pantalla completa, como el botón de la caja (F11); en iPhone no existe y el botón no aparece.
+  $('fullscreen').addEventListener('click', () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()).catch(() => {}));
   document.addEventListener('click', e => { if (document.body.classList.contains('menu-open') && !e.target.closest('#nav') && !e.target.closest('#menu')) document.body.classList.remove('menu-open'); });
   const custom = () => { if ($('from').value && $('to').value) { state.from = $('from').value; state.to = $('to').value; choose('custom'); } };
   $('from').addEventListener('change', custom); $('to').addEventListener('change', custom);
