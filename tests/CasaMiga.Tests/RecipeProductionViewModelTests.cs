@@ -97,6 +97,34 @@ public sealed partial class RecipePersistenceTests
         Assert.AreEqual(1L,Sql("SELECT count(*) FROM production_batch WHERE status='DRAFT'"));Assert.AreEqual(0L,Sql("SELECT count(*) FROM inventory_operation WHERE kind LIKE 'PRODUCTION_%'"));
     }
 
+    [TestMethod] public async Task ProductionUiShowsEveryProductAndExplainsReadiness()
+    {
+        ProductionSetup();
+        var without=catalog.CreateProduct(product.CategoryId,"NO-RECIPE","Producto sin receta","",new Money(100));
+        var incompleteProduct=catalog.CreateProduct(product.CategoryId,"INCOMPLETE","Producto incompleto","",new Money(100));
+        var incompleteItem=inventory.CreateInventoryItem("INCOMPLETE-OUT","Salida incompleta",InventoryItemKind.FinishedGood,InventoryDimension.Count);
+        RecipeApplication().CreateProfile(new(Guid.NewGuid(),incompleteProduct.Id,incompleteItem.Id));
+        var vm=ProductionVm();await vm.LoadAsync();
+        Assert.AreEqual("LISTO PARA PRODUCIR",vm.Profiles.Single(x=>x.ProductId==product.Id).Status);
+        Assert.AreEqual("SIN RECETA",vm.Profiles.Single(x=>x.ProductId==without.Id).Status);
+        Assert.AreEqual("RECETA INCOMPLETA",vm.Profiles.Single(x=>x.ProductId==incompleteProduct.Id).Status);
+        vm.ProductSearch="sin receta";Assert.HasCount(1,vm.FilteredProfiles);Assert.AreEqual(without.Id,vm.FilteredProfiles.Single().ProductId);
+        vm.NewProduction();vm.SelectedProductChoice=vm.Profiles.Single(x=>x.ProductId==without.Id);vm.AddOutput();
+        Assert.IsFalse(vm.CanCalculate);StringAssert.Contains(vm.PlanBlockingMessage,"no tiene perfil productivo");
+        var blocked=vm.Plan.Single();vm.SelectedProductChoice=vm.Profiles.Single(x=>x.ProductId==product.Id);vm.AddOutput();vm.SelectedPlan=blocked;vm.RemoveOutput();vm.Plan.Single().Planned="2";
+        Assert.IsTrue(vm.CanCalculate,vm.PlanBlockingMessage);await vm.PreviewAsync();Assert.IsTrue(vm.PreviewConfirmable,vm.PreviewState);
+    }
+
+    [TestMethod] public async Task ProductionUiRecordsFinishedGoodWasteWithReasonAndRejectsOverdraw()
+    {
+        ProductionSetup();inventory.ReceiveInventory(new(Guid.NewGuid(),finished.Id,ProductionContract.Main,3,InventoryUnits.Piece.Code));
+        var vm=ProductionVm();await vm.LoadAsync();vm.OpenWaste();Assert.IsTrue(vm.IsWaste);Assert.IsTrue(vm.CanRecordWaste);
+        vm.SelectedWasteProduct=vm.WasteProducts.Single(x=>x.ProductId==product.Id);vm.SelectedWasteReason=vm.WasteReasons.Single(x=>x.Value==WasteReason.ProductionError);vm.WasteQuantity="2";vm.WasteNote="Lote sintético";
+        Assert.IsTrue(vm.CanSaveWaste);await vm.SaveWasteAsync();Assert.IsTrue(vm.MessageIsSuccess,vm.Message);
+        var row=inventory.MovementHistory(new(finished.Id)).Items.Single(x=>x.Kind==InventoryMovementKind.Waste);Assert.AreEqual(-2,row.DeltaAtomic);Assert.AreEqual("PRODUCTION_ERROR",row.ReasonCode);Assert.AreEqual("Lote sintético",row.Note);
+        vm.WasteQuantity="2";await vm.SaveWasteAsync();Assert.IsFalse(vm.MessageIsSuccess);StringAssert.Contains(vm.Message,"suficientes");Assert.AreEqual(1L,Sql($"SELECT quantity_atomic FROM inventory_balance WHERE item_id='{finished.Id}'"));
+    }
+
     [TestMethod] public void ProductionDetailAggregatesRepeatedInputSnapshots()
     {
         var item=Guid.NewGuid();var rows=new[]{

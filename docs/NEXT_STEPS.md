@@ -1,4 +1,21 @@
-# Próximo paso — smoke manual de FASE 1K.4H-A-R1
+# Próximo paso — smoke manual de FASE 1K.4G-B
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4G-B.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-B`, DataDirectory `work/phase1k4g-b-smoke-20261010` y las credenciales verificadas entregadas en la conversación.
+
+1. Iniciar sesión, abrir **Producción** y confirmar que la búsqueda muestra cinco productos sintéticos.
+2. Revisar `LISTO PARA PRODUCIR` en A, B y C; `SIN RECETA` e `RECETA INCOMPLETA` en los otros escenarios.
+3. Agregar A=3 y B=2; calcular y confirmar que aparece una sola preparación compartida consolidada.
+4. Confirmar que el preview no cambia saldos ni crea movimientos.
+5. Agregar C y verificar el faltante visible y el bloqueo de registro.
+6. Agregar el producto sin receta y el incompleto por separado; revisar la explicación humana y retirar la fila.
+7. Abrir **Producciones en borrador**, seleccionar el borrador A+B y capturar un resultado real menor al planeado sin confirmarlo si sólo se revisa UI.
+8. Revisar **Registrar merma terminada** con producto, piezas, motivo y observación; no confirmar salvo autorización explícita del usuario.
+9. Revisar 1280×820, 1920×1080, 3440×1440, F11 y Escape; comprobar scroll vertical y ausencia de scroll horizontal global.
+10. No imprimir, vender, cerrar caja, abrir cajón ni introducir recetas comerciales.
+
+Esperar aprobación humana. No push del checkpoint 1K.4G-B, no PR y no iniciar 1K.4G-C, 1K.4H-B, Premium UI ni 1K.5.
+
+## Registro anterior — smoke manual de FASE 1K.4H-A-R1
 
 Usar exclusivamente `work/Abrir-Casa-Miga-1K4H-A-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4H-A-R1`, DataDirectory `work/phase1k4h-a-r1-smoke-20261010` y las credenciales verificadas entregadas en la conversación.
 

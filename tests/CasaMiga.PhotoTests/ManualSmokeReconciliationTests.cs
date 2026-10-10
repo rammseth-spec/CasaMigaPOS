@@ -103,8 +103,9 @@ public sealed class ManualSmokeReconciliationTests
         Assert.IsTrue(model.IsBuilder);
         Assert.IsTrue(model.Ready);
         Assert.IsTrue(model.CanCreate, "A permission restriction must not mask the invalid-plan assertions.");
-        AssertRenderedText(view, "No hay perfiles productivos activos.");
-        Assert.IsFalse(VisibleButton(view, "Agregar producto").IsEnabled);
+        AssertRenderedText(view, "No hay productos activos con esta búsqueda.");
+        AssertRenderedText(view, "Selecciona un producto para cada fila.");
+        Assert.IsFalse(VisibleButton(view, "Agregar producto seleccionado").IsEnabled);
         Assert.IsFalse(VisibleButton(view, "Quitar seleccionado").IsEnabled);
         Assert.IsFalse(VisibleButton(view, "Calcular necesidades").IsEnabled);
         Assert.IsFalse(VisibleButton(view, "Preparar registro de producción").IsEnabled);

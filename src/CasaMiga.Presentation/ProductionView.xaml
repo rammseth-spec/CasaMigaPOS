@@ -7,7 +7,7 @@
  <StackPanel IsEnabled="{Binding Ready}">
   <StackPanel Visibility="{Binding IsHome,Converter={StaticResource VisibleWhen}}">
    <TextBlock Text="¿Qué deseas hacer?" Style="{StaticResource SectionTitleText}" Margin="0,0,0,12"/>
-   <WrapPanel><Button Content="Nueva producción" Click="NewClick" Visibility="{Binding CanCreate,Converter={StaticResource VisibleWhen}}" Margin="0,0,10,8"/><Button Content="Producciones en borrador" Style="{StaticResource SecondaryButton}" Click="DraftsClick" Margin="0,0,10,8"/><Button Content="Historial" Style="{StaticResource SecondaryButton}" Click="HistoryClick" Margin="0,0,0,8"/></WrapPanel>
+   <WrapPanel><Button Content="Nueva producción" Click="NewClick" Visibility="{Binding CanCreate,Converter={StaticResource VisibleWhen}}" Margin="0,0,10,8"/><Button Content="Producciones en borrador" Style="{StaticResource SecondaryButton}" Click="DraftsClick" Margin="0,0,10,8"/><Button Content="Historial" Style="{StaticResource SecondaryButton}" Click="HistoryClick" Margin="0,0,10,8"/><Button Content="Registrar merma terminada" Style="{StaticResource SecondaryButton}" Click="WasteClick" Visibility="{Binding CanRecordWaste,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,8"/></WrapPanel>
   </StackPanel>
 
   <StackPanel Visibility="{Binding IsBuilder,Converter={StaticResource VisibleWhen}}">
@@ -15,16 +15,31 @@
    <TextBlock Text="Elige qué vas a elaborar y revisa las necesidades antes de preparar el registro." Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,5,0,14"/>
    <Border Style="{StaticResource CardStyle}" Padding="18" Margin="0,0,0,14">
     <StackPanel>
-     <WrapPanel Margin="0,0,0,8"><TextBlock Text="1. Productos y piezas planeadas" Style="{StaticResource SectionTitleText}"/><local:ContextHelp Label="Ayuda de cantidad planeada" HelpText="{Binding PlannedHelpText}" Margin="8,-2,0,0"/></WrapPanel>
-     <TextBlock Text="Selecciona el producto, el perfil publicado y su versión activa. Escribe piezas enteras mayores que cero." Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,10"/>
-     <TextBlock Style="{StaticResource EmptyStateText}" Tag="{Binding Profiles.Count}" Text="No hay perfiles productivos activos."/>
-     <DataGrid ItemsSource="{Binding Plan}" SelectedItem="{Binding SelectedPlan}" IsReadOnly="False" Height="205" automation:AutomationProperties.Name="Productos planeados para producción">
+     <WrapPanel Margin="0,0,0,8"><TextBlock Text="1. Busca y agrega productos" Style="{StaticResource SectionTitleText}"/><local:ContextHelp Label="Ayuda de cantidad planeada" HelpText="{Binding PlannedHelpText}" Margin="8,-2,0,0"/></WrapPanel>
+     <TextBlock Text="Puedes consultar todos los productos activos. El estado indica si su receta está lista o qué configuración falta." Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+     <TextBox Text="{Binding ProductSearch,UpdateSourceTrigger=PropertyChanged}" automation:AutomationProperties.Name="Buscar producto para producción" ToolTip="Buscar por nombre, receta o estado" Margin="0,0,0,8"/>
+     <TextBlock Style="{StaticResource EmptyStateText}" Tag="{Binding FilteredProfiles.Count}" Text="No hay productos activos con esta búsqueda."/>
+     <DataGrid ItemsSource="{Binding FilteredProfiles}" SelectedItem="{Binding SelectedProductChoice}" Height="180" automation:AutomationProperties.Name="Productos disponibles para producción">
       <DataGrid.Columns>
-       <DataGridTemplateColumn Header="Producto · perfil · versión activa" Width="*"><DataGridTemplateColumn.CellTemplate><DataTemplate><ComboBox ItemsSource="{Binding DataContext.Profiles,RelativeSource={RelativeSource AncestorType=UserControl}}" SelectedItem="{Binding Profile}" automation:AutomationProperties.Name="Seleccionar perfil productivo activo"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+       <DataGridTextColumn Header="Producto" Binding="{Binding ProductName}" Width="220"/>
+       <DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="180"/>
+       <DataGridTextColumn Header="Receta activa" Binding="{Binding ProfileName}" Width="190"/>
+       <DataGridTextColumn Header="Versión" Binding="{Binding VersionLabel}" Width="95"/>
+       <DataGridTemplateColumn Header="Detalle" Width="*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Detail}" TextWrapping="Wrap" VerticalAlignment="Center"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+      </DataGrid.Columns>
+     </DataGrid>
+     <Button Content="Agregar producto seleccionado" Click="AddOutputClick" IsEnabled="{Binding CanAddSelectedProduct}" HorizontalAlignment="Left" Margin="0,8,0,14"/>
+     <TextBlock Text="2. Plan actual" Style="{StaticResource SectionTitleText}" Margin="0,0,0,8"/>
+     <DataGrid ItemsSource="{Binding Plan}" SelectedItem="{Binding SelectedPlan}" IsReadOnly="False" Height="175" automation:AutomationProperties.Name="Productos planeados para producción">
+      <DataGrid.Columns>
+       <DataGridTextColumn Header="Producto" Binding="{Binding Profile.ProductName}" IsReadOnly="True" Width="220"/>
+       <DataGridTextColumn Header="Estado" Binding="{Binding Profile.Status}" IsReadOnly="True" Width="180"/>
+       <DataGridTemplateColumn Header="Detalle" Width="*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Profile.Detail}" TextWrapping="Wrap" VerticalAlignment="Center"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
        <DataGridTextColumn Header="Piezas planeadas" Binding="{Binding Planned,UpdateSourceTrigger=PropertyChanged}" Width="175"/>
       </DataGrid.Columns>
      </DataGrid>
-     <WrapPanel Margin="0,10,0,0"><Button Content="Agregar producto" Click="AddOutputClick" IsEnabled="{Binding HasProfiles}" Margin="0,0,8,0"/><Button Content="Quitar seleccionado" Style="{StaticResource SecondaryButton}" Click="RemoveOutputClick" IsEnabled="{Binding CanRemoveOutput}" Margin="0,0,8,0"/><Button Content="Calcular necesidades" Click="PreviewClick" IsEnabled="{Binding CanCalculate}"/></WrapPanel>
+     <TextBlock Text="{Binding PlanBlockingMessage}" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0" automation:AutomationProperties.LiveSetting="Polite"/>
+     <WrapPanel Margin="0,10,0,0"><Button Content="Quitar seleccionado" Style="{StaticResource SecondaryButton}" Click="RemoveOutputClick" IsEnabled="{Binding CanRemoveOutput}" Margin="0,0,8,0"/><Button Content="Calcular necesidades" Click="PreviewClick" IsEnabled="{Binding CanCalculate}"/></WrapPanel>
     </StackPanel>
    </Border>
    <ItemsControl ItemsSource="{Binding Alternatives}"><ItemsControl.ItemTemplate><DataTemplate><Border Background="{DynamicResource SurfaceSecondaryBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,10"><StackPanel><TextBlock Text="{Binding Label}" FontWeight="SemiBold"/><TextBlock Text="Elige el ingrediente alternativo que se usará en este plan." Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,3,0,7"/><ComboBox ItemsSource="{Binding Options}" SelectedItem="{Binding Selected}"/></StackPanel></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
@@ -39,6 +54,22 @@
    </Border>
    <Border Background="{DynamicResource SurfaceSecondaryBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,12" Visibility="{Binding PreviewReady,Converter={StaticResource VisibleWhen}}"><TextBlock Text="{Binding PreviewState}" FontWeight="SemiBold" TextWrapping="Wrap" automation:AutomationProperties.LiveSetting="Polite"/></Border>
    <WrapPanel><Button Content="Cancelar" Style="{StaticResource SecondaryButton}" Click="BackClick" Margin="0,0,8,0"/><Button Content="Preparar registro de producción" Click="CreateClick" IsEnabled="{Binding CanCreateDraft}"/></WrapPanel>
+  </StackPanel>
+
+  <StackPanel Visibility="{Binding IsWaste,Converter={StaticResource VisibleWhen}}">
+   <TextBlock Text="Merma de producto terminado" FontSize="24" FontWeight="SemiBold"/>
+   <TextBlock Text="Registra piezas terminadas que ya no pueden venderse. La operación queda trazada en inventario y nunca permite existencia negativa." Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,6,0,14"/>
+   <Border Style="{StaticResource CardStyle}" Padding="18" MaxWidth="760" HorizontalAlignment="Left">
+    <Grid>
+     <Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+     <TextBlock Text="Producto terminado" VerticalAlignment="Center" Margin="0,0,12,10"/><ComboBox Grid.Column="1" ItemsSource="{Binding WasteProducts}" SelectedItem="{Binding SelectedWasteProduct}" Margin="0,0,0,10" automation:AutomationProperties.Name="Producto terminado para merma"/>
+     <TextBlock Grid.Row="1" Text="Piezas" VerticalAlignment="Center" Margin="0,0,12,10"/><TextBox Grid.Row="1" Grid.Column="1" Text="{Binding WasteQuantity,UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10" automation:AutomationProperties.Name="Cantidad de merma en piezas"/>
+     <TextBlock Grid.Row="2" Text="Motivo" VerticalAlignment="Center" Margin="0,0,12,10"/><ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding WasteReasons}" SelectedItem="{Binding SelectedWasteReason}" Margin="0,0,0,10" automation:AutomationProperties.Name="Motivo de merma"/>
+     <TextBlock Grid.Row="3" Text="Observación" VerticalAlignment="Top" Margin="0,5,12,10"/><TextBox Grid.Row="3" Grid.Column="1" Text="{Binding WasteNote,UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" MinHeight="70" MaxLength="500" TextWrapping="Wrap" Margin="0,0,0,10" automation:AutomationProperties.Name="Observación de merma"/>
+     <WrapPanel Grid.Row="4" Grid.ColumnSpan="2"><Button Content="Volver" Style="{StaticResource SecondaryButton}" Click="BackClick" Margin="0,0,8,0"/><Button Content="Registrar merma" Click="SaveWasteClick" IsEnabled="{Binding CanSaveWaste}"/></WrapPanel>
+    </Grid>
+   </Border>
   </StackPanel>
 
   <StackPanel Visibility="{Binding IsDrafts,Converter={StaticResource VisibleWhen}}">

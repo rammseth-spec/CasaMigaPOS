@@ -1,3 +1,11 @@
+# FASE 1K.4G-B TÉCNICAMENTE COMPLETADA — SMOKE HUMANO PENDIENTE, 10/10/2026
+
+Producción ahora permite buscar todos los productos activos, agregarlos a un plan multiproducto y comprender su preparación mediante estados derivados `LISTO PARA PRODUCIR`, `RECETA INCOMPLETA` y `SIN RECETA`. Los productos bloqueantes permanecen visibles y explican la configuración faltante. El flujo reutiliza la consolidación exacta de fórmulas compartidas, preview sin escritura, borrador inmutable, resultado real por producto y confirmación atómica de consumo más salida terminada. Se añadió merma mínima de producto terminado sobre el ledger `WASTE` existente, con motivo, nota y protección contra saldo negativo.
+
+Fixture aislada `work/phase1k4g-b-smoke-20261010`, schema 17, con A+B compartiendo preparación, C con faltante, producto sin receta, perfil incompleto, MASS/VOLUME/COUNT, salidas vinculadas y borrador para resultado real menor. Focales de producción 78/78, focales WPF 3/3 y suite oficial **796/796** (584 general + 212 WPF), 0 fallidas/omitidas. Release `src/CasaMiga.Presentation/bin/Phase1K4G-B/`: 0 errores/advertencias. No migración 018, no datos comerciales, no impresión y Reporte Diario intacto. Ver [PHASE_1K4G_B_REPORT.md](PHASE_1K4G_B_REPORT.md).
+
+## Registro anterior — 1K.4H-A-R1
+
 # FASE 1K.4H-A-R1 TÉCNICAMENTE COMPLETADA — SMOKE HUMANO PENDIENTE, 10/10/2026
 
 R1 refina el Reporte Diario sin cambiar su naturaleza read-only. Ventas por hora usa una timeline acotada con `payment.applied_cents`, convierte timestamps mediante la zona horaria inyectada y agrupa en memoria; muestra primera/última venta y hora pico con desempate por importe, tickets y hora temprana. Caja comunica apertura, cierre, duración, responsable y múltiples sesiones sin alterar métricas. La UI conserva cuatro KPI, una sola frase resumen, tabla histórica con encabezado humano y estados futuros deliberados.

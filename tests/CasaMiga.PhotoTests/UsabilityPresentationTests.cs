@@ -103,7 +103,7 @@ public sealed class UsabilityPresentationTests
         recipes.NewProfile();WpfTestHost.Layout(recipeView);AssertVisible(recipeView,"No hay artículos terminados disponibles. Crea primero un artículo de tipo Producto terminado en Inventario.");Assert.IsFalse(Button(recipeView,"Crear perfil").IsEnabled);
         Assert.IsFalse(Button(recipeView,"Crear perfil").IsEnabled);
         var production=fixture.Production();await production.LoadAsync();var productionView=new ProductionView{DataContext=production};production.NewProduction();WpfTestHost.Layout(productionView);
-        AssertVisible(productionView,"No hay perfiles productivos activos.");Assert.IsFalse(Button(productionView,"Calcular necesidades").IsEnabled);Assert.IsFalse(Button(productionView,"Preparar registro de producción").IsEnabled);Assert.IsFalse(Button(productionView,"Quitar seleccionado").IsEnabled);
+        AssertVisible(productionView,"No hay productos activos con esta búsqueda.");AssertVisible(productionView,"Selecciona un producto para cada fila.");Assert.IsFalse(Button(productionView,"Calcular necesidades").IsEnabled);Assert.IsFalse(Button(productionView,"Preparar registro de producción").IsEnabled);Assert.IsFalse(Button(productionView,"Quitar seleccionado").IsEnabled);
         await production.ShowDraftsAsync();WpfTestHost.Layout(productionView);AssertVisible(productionView,"No hay producciones en borrador.");Assert.IsFalse(Button(productionView,"Ver detalle").IsEnabled);
         await production.ShowHistoryAsync();WpfTestHost.Layout(productionView);AssertVisible(productionView,"Aún no hay producciones confirmadas.");
         fixture.AssertNoOperations();
@@ -155,13 +155,15 @@ public sealed class UsabilityPresentationTests
     {
         using var fixture=new Fixture();var vm=fixture.Production();await vm.LoadAsync();vm.NewProduction();
         var view=new ProductionView{DataContext=vm};
-        foreach(var size in new[]{new Size(1280,820),new Size(1920,1080)})
+        foreach(var size in new[]{new Size(1280,820),new Size(1920,1080),new Size(3440,1440)})
         {
             WpfTestHost.Layout(view,size.Width,size.Height);
-            AssertVisible(view,"1. Productos y piezas planeadas");
+            AssertVisible(view,"1. Busca y agrega productos");AssertVisible(view,"2. Plan actual");
             Assert.IsTrue(Descendants<ContextHelp>(view).Any(x=>x.HelpText==vm.PlannedHelpText));
             Assert.IsTrue(Visible(Button(view,"Calcular necesidades")));
             Assert.IsTrue(Visible(Button(view,"Preparar registro de producción")));
+            var chooser=Descendants<DataGrid>(view).Single(x=>AutomationProperties.GetName(x)=="Productos disponibles para producción");
+            CollectionAssert.Contains(chooser.Columns.Select(x=>x.Header?.ToString()).ToArray(),"Estado");
         }
         StringAssert.Contains(vm.PreviewHelpText,"Necesario");StringAssert.Contains(vm.PreviewHelpText,"Disponible");StringAssert.Contains(vm.PreviewHelpText,"Faltante");StringAssert.Contains(vm.PreviewHelpText,"Estado");StringAssert.Contains(vm.PreviewHelpText,"no reserva ni descuenta");StringAssert.Contains(vm.PreviewHelpText,"no registra movimientos ni modifica el ledger");
         StringAssert.Contains(vm.ActualHelpText,"5 planeadas y 4 reales");StringAssert.Contains(vm.ActualHelpText,"insumos de 5");StringAssert.Contains(vm.ActualHelpText,"Registrar cero");
