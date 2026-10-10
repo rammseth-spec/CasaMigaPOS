@@ -34,6 +34,8 @@ export function icon(path) {
 // ---------- Formato ----------
 const money = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
 export const fmt = cents => money.format((cents || 0) / 100);
+// I1: lo cambiado en la web se ve al momento; mientras la caja no lo confirma, se marca.
+export const pendingPill = x => x?.pending ? h('span', { class: 'pill warn pending-pill', title: 'Ya se ve en la web; la caja lo confirmará al conectarse', text: 'Por confirmar' }) : null;
 export const pesos = cents => ((cents || 0) / 100).toFixed(2);
 export const at = (iso, options = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) =>
   iso ? new Date(iso).toLocaleString('es-MX', { timeZone: state.timeZone, ...options }) : '';
@@ -105,10 +107,13 @@ export function dialog(title, build, { submit = 'Guardar', onSubmit, wide = fals
 }
 export function field(label, input, wide = false) { return h('label', { class: 'field' + (wide ? ' wide' : '') }, label, input); }
 
-/** Envía un cambio a las cajas de la sucursal; avisa que se aplicará cuando la caja se conecte. */
+// I1: estos cambios se ven en la web desde ya; los demás (inventario, producción, recetas, ruta) esperan a que la caja los aplique.
+const AT_ONCE = /^(category\.save|product\.(save|active)|user\.(create|update|active|reset_password)|consignment\.(store|template)\.save)$/;
+/** Envía un cambio a las cajas de la sucursal y avisa cuándo se verá. */
 export async function command(branchId, kind, payload) {
   const result = await post('command', { branchId, kind, payload });
-  toast('Enviado. La caja lo aplica en cuanto se conecta (ver Nube → Cajas y cambios).');
+  toast(AT_ONCE.test(kind) ? 'Guardado: ya se ve en la web. La caja lo confirma al conectarse (si lo rechaza, se regresa).'
+    : 'Enviado. La caja lo aplica en cuanto se conecta (ver Nube → Cajas y cambios).');
   return result;
 }
 

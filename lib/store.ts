@@ -1,5 +1,6 @@
 // Recepción de lotes: registro inmutable (sync_event) y estado más reciente (entity_state) en una sola sentencia.
 import { reconcile, type SyncBatch } from './protocol.js';
+import { reproject } from './optimistic.js';
 import type { Query } from './panel.js';
 
 export async function storeBatch(q: Query, terminal: { id: string; branchId: string }, batch: SyncBatch) {
@@ -18,11 +19,13 @@ export async function storeBatch(q: Query, terminal: { id: string; branchId: str
     INSERT INTO entity_state(branch_id, entity, entity_id, terminal_id, seq, enqueued_at, deleted, payload)
     SELECT branch_id, entity, entity_id, terminal_id, seq, enqueued_at, change = 'delete', payload FROM latest
     ON CONFLICT (branch_id, entity, entity_id) DO UPDATE SET terminal_id = EXCLUDED.terminal_id, seq = EXCLUDED.seq,
-      enqueued_at = EXCLUDED.enqueued_at, deleted = EXCLUDED.deleted, payload = EXCLUDED.payload, received_at = now()
+      enqueued_at = EXCLUDED.enqueued_at, deleted = EXCLUDED.deleted, payload = EXCLUDED.payload, received_at = now(), pending_command = NULL
     -- Misma caja: manda el orden de su cola (seq), aunque su reloj se haya atrasado. Entre cajas distintas: la hora de encolado.
     WHERE (EXCLUDED.terminal_id = entity_state.terminal_id AND EXCLUDED.seq > entity_state.seq)
        OR (EXCLUDED.terminal_id <> entity_state.terminal_id AND (EXCLUDED.enqueued_at, EXCLUDED.seq) >= (entity_state.enqueued_at, entity_state.seq))`,
     [terminal.id, terminal.branchId, rows]);
+  // I1: si la caja subió su versión de algo que la web cambió y aún espera respuesta, el cambio se vuelve a adelantar encima.
+  await reproject(q, terminal.branchId, batch.entries.map(e => ({ entity: e.entity, entityId: e.entityId })));
   await q('UPDATE terminal SET last_seen_at = now() WHERE id = $1', [terminal.id]);
   const seqs = batch.entries.map(e => e.seq);
   const stored = await q('SELECT seq, entity, entity_id, change FROM sync_event WHERE terminal_id = $1 AND seq = ANY($2::bigint[])', [terminal.id, seqs]);

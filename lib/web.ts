@@ -1,5 +1,6 @@
 // Consultas de cada pantalla de la versión web (docs/WEB.md). Sólo lectura sobre entity_state.
 // `branch` ya viene acotado por el rol (auth.scopeBranch): null = todas las sucursales (sólo administrador).
+import { pendingOf } from './optimistic.js';
 import { ProtocolError } from './protocol.js';
 import { REFUNDS, SALES, type Query, type Range, type Row } from './panel.js';
 
@@ -264,7 +265,7 @@ export async function consignment(q: Query, r: Range) {
 /** Ruta del repartidor: tiendas activas con su charola habitual, charolas por recoger (con partidas), saldo y lo enviado desde la web. */
 export async function route(q: Query, branch: string | null) {
   const [stores, deliveries, payments, products, prices, sent] = await Promise.all([
-    q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'consignment_store' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
+    q(`SELECT branch_id, payload, pending_command FROM entity_state WHERE entity = 'consignment_store' AND NOT deleted AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
     q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'consignment_delivery' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
     q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'consignment_payment' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
     q(`SELECT branch_id, entity_id AS id, payload->'product'->>'name' AS name, (payload->'product'->>'active')::int AS active, payload->'product'->>'sku' AS sku,
@@ -306,20 +307,12 @@ export async function route(q: Query, branch: string | null) {
       active: n(p.store.active) === 1, balance: (charged.get(id) ?? 0) - (paid.get(id) ?? 0), lastDelivery: last.get(id) ?? null,
       template: p.template.map(t => ({ productId: s(t.product_id), name: productName.get(key(x.branch_id, t.product_id)) ?? 'Pan', quantity: n(t.quantity) })),
       atStore: (open.get(id) ?? []).sort((a: any, b: any) => a.at.localeCompare(b.at)),
-      sent: pendingSent.filter(c => s(c.payload.storeId) === id || (open.get(id) ?? []).some((d: any) => d.id === s(c.payload.deliveryId))) };
+      sent: pendingSent.filter(c => s(c.payload.storeId) === id || (open.get(id) ?? []).some((d: any) => d.id === s(c.payload.deliveryId))), pending: pendingOf(x) };
   };
   return {
     // Todas las tiendas (también desactivadas) para la pestaña Tiendas; la ruta usa sólo las activas.
     allStores: stores.map(storeRow).sort((a, b) => a.name.localeCompare(b.name)),
-    stores: stores.map(x => {
-      const p = x.payload as { store: Row; template: Row[] };
-      const id = s(p.store.id);
-      return { id, branchId: s(x.branch_id), name: s(p.store.name), contact: s(p.store.contact), phone: s(p.store.phone), address: s(p.store.address),
-        active: n(p.store.active) === 1, balance: (charged.get(id) ?? 0) - (paid.get(id) ?? 0), lastDelivery: last.get(id) ?? null,
-        template: p.template.map(t => ({ productId: s(t.product_id), name: productName.get(key(x.branch_id, t.product_id)) ?? 'Pan', quantity: n(t.quantity) })),
-        atStore: (open.get(id) ?? []).sort((a: any, b: any) => a.at.localeCompare(b.at)),
-        sent: pendingSent.filter(c => s(c.payload.storeId) === id || (open.get(id) ?? []).some((d: any) => d.id === s(c.payload.deliveryId))) };
-    }).filter(st => st.active).sort((a, b) => a.name.localeCompare(b.name)),
+    stores: stores.map(storeRow).filter(st => st.active).sort((a, b) => a.name.localeCompare(b.name)),
     products: products.filter(p => n(p.active) === 1 && price.has(key(p.branch_id, p.id)))
       .map(p => ({ id: s(p.id), branchId: s(p.branch_id), name: s(p.name), price: price.get(key(p.branch_id, p.id))!, sku: s(p.sku), categoryId: s(p.category),
         category: categoryName.get(key(p.branch_id, p.category)) ?? '', retail: n(p.retail), photo: photoSha.get(key(p.branch_id, p.id)) ?? null }))
@@ -331,8 +324,8 @@ export async function route(q: Query, branch: string | null) {
 
 export async function catalog(q: Query, branch: string | null) {
   const [categories, products, photos, prices] = await Promise.all([
-    q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'category' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
-    q(`SELECT branch_id, payload->'product' AS p FROM entity_state WHERE entity = 'product' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
+    q(`SELECT branch_id, payload, pending_command FROM entity_state WHERE entity = 'category' AND NOT deleted AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
+    q(`SELECT branch_id, payload->'product' AS p, pending_command FROM entity_state WHERE entity = 'product' AND NOT deleted AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
     q(`SELECT branch_id, entity_id, payload->'asset'->>'thumbnail_sha256' AS sha, payload->'asset'->>'provenance' AS provenance, payload->>'thumbnail' IS NOT NULL AS has
        FROM entity_state WHERE entity = 'product_photo' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
     q(`SELECT branch_id, entity_id, (payload->>'price_cents')::bigint AS price FROM entity_state WHERE entity = 'consignment_price' AND NOT deleted AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
@@ -341,13 +334,13 @@ export async function catalog(q: Query, branch: string | null) {
   const photo = new Map(photos.filter(p => p.has === true).map(p => [key(p.branch_id, p.entity_id), { sha: s(p.sha), provisional: p.provenance === 'PROVISIONAL' }]));
   const price = new Map(prices.map(p => [key(p.branch_id, p.entity_id), n(p.price)]));
   return {
-    categories: categories.map(c => { const p = c.payload as Row; return { id: s(p.id), branchId: s(c.branch_id), name: s(p.name), description: s(p.description), sortOrder: n(p.sort_order), active: n(p.active) === 1 }; })
+    categories: categories.map(c => { const p = c.payload as Row; return { id: s(p.id), branchId: s(c.branch_id), name: s(p.name), description: s(p.description), sortOrder: n(p.sort_order), active: n(p.active) === 1, pending: pendingOf(c) }; })
       .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)),
     products: products.map(x => {
       const p = x.p as Row;
       return { id: s(p.id), branchId: s(x.branch_id), sku: p.sku === null ? null : s(p.sku), name: s(p.name), description: s(p.description), categoryId: s(p.category_id),
         price: n(p.price_cents), active: n(p.active) === 1, trackInventory: n(p.track_inventory) === 1, photo: photo.get(key(x.branch_id, p.id)) ?? null,
-        consignmentPrice: price.get(key(x.branch_id, p.id)) ?? null, modifiedAt: s(p.modified_utc) };
+        consignmentPrice: price.get(key(x.branch_id, p.id)) ?? null, modifiedAt: s(p.modified_utc), pending: pendingOf(x) };
     }).sort((a, b) => a.name.localeCompare(b.name)),
   };
 }
@@ -555,9 +548,9 @@ export async function production(q: Query, r: Range) {
 
 export async function users(q: Query, branch: string | null) {
   const k = await names(q);
-  const rows = await q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'app_user' AND NOT deleted AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]);
+  const rows = await q(`SELECT branch_id, payload, pending_command FROM entity_state WHERE entity = 'app_user' AND NOT deleted AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]);
   // Nunca el hash: sólo lo que se ve en la pantalla Usuarios de la caja.
   return rows.map(x => { const p = x.payload as Row; return { id: s(p.id), branchId: s(x.branch_id), branch: k.branch.get(s(x.branch_id)) ?? '', username: s(p.username),
-    name: s(p.display_name), role: s(p.role_name), active: n(p.active) === 1, mustChangePassword: n(p.must_change_password) === 1, createdAt: s(p.created_utc) }; })
+    name: s(p.display_name), role: s(p.role_name), active: n(p.active) === 1, mustChangePassword: n(p.must_change_password) === 1, createdAt: s(p.created_utc), pending: pendingOf(x) }; })
     .sort((a, b) => a.branch.localeCompare(b.branch) || a.name.localeCompare(b.name));
 }

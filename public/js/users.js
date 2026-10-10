@@ -1,6 +1,6 @@
 // Usuarios como la caja de escritorio (panel Usuarios de QAv1): «Usuarios registrados», editar el seleccionado (nombre, rol, desactivar,
 // restablecer contraseña con confirmación), aviso de la contraseña temporal y «Nuevo usuario». Los cambios bajan a las cajas de la sucursal.
-import { api, command, dialog, h, render, ROLE, state } from './app.js';
+import { api, command, dialog, h, pendingPill, render, ROLE, state } from './app.js';
 
 const u = { selected: null, edit: null, notice: '', message: '', ok: false, form: { username: '', name: '', role: 'Cashier', branchId: '' } };
 const say = (message, ok = false) => { u.message = message; u.ok = ok; };
@@ -18,7 +18,7 @@ export async function usuarios() {
   const rows = people.map(p => { const tr = h('tr', { class: 'click' + (p.id === u.selected ? ' selected' : '') + (p.active ? '' : ' off'), tabindex: '0',
     onclick: () => { u.selected = p.id; u.edit = null; say(''); redraw(); }, onkeydown: e => { if (e.key === 'Enter') tr.click(); } },
     h('td', { 'data-label': 'Usuario', text: p.username }), h('td', { 'data-label': 'Nombre', text: p.name + (multi() ? ` · ${p.branch}` : '') }),
-    h('td', { 'data-label': 'Rol', text: ROLE[p.role] ?? p.role }), h('td', { 'data-label': 'Estado', text: status(p) }));
+    h('td', { 'data-label': 'Rol', text: ROLE[p.role] ?? p.role }), h('td', { 'data-label': 'Estado' }, status(p), pendingPill(p)));
     return tr; });
   const f = u.form;
   f.branchId ||= state.branch || state.me.branchId || state.branches[0]?.id;
@@ -35,13 +35,13 @@ export async function usuarios() {
       h('div', { class: 'toolbar' },
         h('button', { type: 'button', class: 'primary', disabled: !selected || admin, onclick: async () => {
           if (!u.edit.name.trim()) { say('Escribe el nombre para mostrar.'); return redraw(); }
-          try { await command(selected.branchId, 'user.update', { id: selected.id, displayName: u.edit.name.trim(), role: u.edit.role }); say('Cambios enviados a la caja.', true); }
+          try { await command(selected.branchId, 'user.update', { id: selected.id, displayName: u.edit.name.trim(), role: u.edit.role }); say('Cambios guardados; la caja los confirma al conectarse.', true); }
           catch (error) { say(error.message); }
           redraw();
         } }, 'Guardar cambios'),
         h('button', { type: 'button', class: 'secondary', disabled: !selected || admin, onclick: async () => {
           try { await command(selected.branchId, 'user.active', { id: selected.id, active: !selected.active });
-            say(selected.active ? 'Desactivación enviada: al aplicarse ya no podrá iniciar sesión.' : 'Reactivación enviada a la caja.', true); }
+            say(selected.active ? 'Usuario desactivado: ya no puede entrar a la web; la caja lo confirma al conectarse.' : 'Usuario reactivado; la caja lo confirma al conectarse.', true); }
           catch (error) { say(error.message); }
           redraw();
         } }, selected && !selected.active ? 'Reactivar usuario' : 'Desactivar usuario'),
@@ -49,7 +49,7 @@ export async function usuarios() {
           h('p', { class: 'wide', text: `Se asignará una contraseña temporal a ${selected.username} y deberá cambiarla al entrar. ¿Continuar?` })), {
           submit: 'Sí', cancel: 'No', onSubmit: async () => {
             const result = await command(selected.branchId, 'user.reset_password', { id: selected.id });
-            u.notice = notice(selected.username, result.temporaryPassword); say('Contraseña restablecida (funciona en cuanto la caja reciba el cambio).', true); redraw();
+            u.notice = notice(selected.username, result.temporaryPassword); say('Contraseña restablecida: ya funciona en la web; en la caja, en cuanto reciba el cambio.', true); redraw();
           } }) }, 'Restablecer contraseña')),
       h('p', { class: 'caption', text: 'El administrador no se edita aquí. Si olvida su contraseña, se recupera en el equipo de la caja con: CasaMiga.Maintenance reset-admin <carpeta de datos>' })),
     u.notice ? h('div', { class: 'users-notice', role: 'status' }, h('p', { text: u.notice }),
@@ -69,7 +69,7 @@ export async function usuarios() {
         try {
           const result = await command(f.branchId, 'user.create', { username: f.username.trim(), displayName: f.name.trim(), role: f.role });
           u.notice = notice(f.username.trim(), result.temporaryPassword);
-          u.form = { username: '', name: '', role: 'Cashier', branchId: f.branchId }; say('Usuario enviado a la caja.', true);
+          u.form = { username: '', name: '', role: 'Cashier', branchId: f.branchId }; say('Usuario creado: ya puede entrar a la web; la caja lo confirma al conectarse.', true);
         } catch (error) { say(error.message); }
         redraw();
       } }, 'Crear usuario'))),

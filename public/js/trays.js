@@ -1,7 +1,7 @@
 // Charolas como la caja de escritorio (ConsignmentView de QAv1): Ruta del día (entregar, recoger con saldo anterior, cobrar, anular),
 // Tiendas (datos, charola habitual y estado de cuenta), Precios de charola y Reporte del periodo. Extras de la web: Entregas y Cobros del periodo.
 // Lo que se registra se manda a la caja (consignment.*) y aparece como hecho cuando la caja lo aplica.
-import { api, at, can, command, dialog, fmt, h, icon, ICON, METHOD, pesos, range, render, state, table, time } from './app.js';
+import { api, at, can, command, dialog, fmt, h, icon, ICON, METHOD, pendingPill, pesos, range, render, state, table, time } from './app.js';
 
 const BREAD = 'M4,5 L16,5 18,8 18,17 2,17 2,8 Z M7,5 L8.5,2 11.5,2 13,5 M10,9 A3,3 0 1 1 9.99,9';
 const t = { tab: 'route', action: null, storeId: null, deliver: null, collect: null, selectedStore: undefined, form: null, template: null, prices: null,
@@ -294,7 +294,7 @@ async function storesTab() {
     h('div', { class: 'trays-store-list' },
       manage() ? h('button', { type: 'button', class: 'primary', onclick: () => pick(null) }, 'Nueva tienda') : null,
       stores.map(s => h('button', { type: 'button', class: 'trays-store-item' + (s.id === selected?.id ? ' selected' : ''), onclick: () => pick(s.id) },
-        h('strong', { text: s.name }), h('small', { text: (s.active ? (s.balance > 0 ? `Debe ${fmt(s.balance)}` : 'Al corriente') : 'Desactivada') + (multi() ? ` · ${branchName(s.branchId)}` : '') })))),
+        h('strong', { text: s.name }), h('small', { text: (s.active ? (s.balance > 0 ? `Debe ${fmt(s.balance)}` : 'Al corriente') : 'Desactivada') + (multi() ? ` · ${branchName(s.branchId)}` : '') }), pendingPill(s)))),
     h('div', { class: 'trays-store-detail' },
       h('h2', { class: 'detail-title', text: selected ? `Editar ${selected.name}` : 'Nueva tienda' }),
       !selected && state.me.admin && state.branches.length > 1 ? h('label', { class: 'label' }, 'Sucursal', h('select', { onchange: bind('branchId') }, state.branches.map(b => h('option', { value: b.id, text: b.name, selected: b.id === f.branchId })))) : null,
@@ -315,7 +315,7 @@ async function storesTab() {
         } }, 'Guardar tienda'),
         selected ? h('button', { type: 'button', class: 'secondary', onclick: async () => {
           try { await command(selected.branchId, 'consignment.store.save', { id: selected.id, name: selected.name, contact: selected.contact, phone: selected.phone, address: selected.address, active: !selected.active });
-            say(selected.active ? 'Desactivación enviada: la tienda dejará de aparecer en la ruta.' : 'Reactivación enviada a la caja.', true); }
+            say(selected.active ? 'Tienda desactivada: ya no aparece en la ruta; la caja lo confirma al conectarse.' : 'Tienda reactivada; la caja lo confirma al conectarse.', true); }
           catch (error) { say(error.message); }
           redraw();
         } }, selected.active ? 'Desactivar tienda' : 'Reactivar tienda') : null) : null,
