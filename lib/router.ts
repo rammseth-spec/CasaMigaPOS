@@ -8,6 +8,7 @@ import * as backups from './backup.js';
 import { profit, trayAnalytics } from './analytics.js';
 import * as pos from './pos.js';
 import * as reports from './reports.js';
+import * as planning from './planning.js';
 
 export interface Env { SESSION_SECRET?: string; PANEL_TIME_ZONE?: string; BACKUP_SECRET?: string }
 
@@ -15,7 +16,7 @@ export interface Env { SESSION_SECRET?: string; PANEL_TIME_ZONE?: string; BACKUP
 const VIEW: Record<string, string> = {
   dashboard: 'sales.view', sales: 'sales.view', sale: 'sales.view', compare: 'sales.view', heatmap: 'sales.view', 'cash-control': 'sales.view',
   'production-suggestion': 'sales.view', report: 'sales.view', forecast: 'sales.view', terminals: 'sales.view', cash: 'cash.view', consignment: 'consignment.view', catalog: 'catalog.view',
-  photo: 'catalog.view', pos: 'pos.use', 'pos-tickets': 'pos.use', 'pos-ticket': 'pos.use', 'pos-closures': 'cash.view', route: 'consignment.view', profit: 'recipe.view', 'tray-analytics': 'consignment.view', backups: 'users.manage', backup: 'users.manage', inventory: 'inventory.view', 'inventory-item': 'inventory.view', 'inventory-check': 'inventory.sale_consumption.configure', recipes: 'recipe.view', production: 'production.view', users: 'users.manage', commands: 'sales.view',
+  photo: 'catalog.view', pos: 'pos.use', 'pos-tickets': 'pos.use', 'pos-ticket': 'pos.use', 'pos-closures': 'cash.view', route: 'consignment.view', profit: 'recipe.view', 'tray-analytics': 'consignment.view', backups: 'users.manage', backup: 'users.manage', inventory: 'inventory.view', 'inventory-item': 'inventory.view', 'inventory-check': 'inventory.sale_consumption.configure', recipes: 'recipe.view', production: 'production.view', 'production-plan': 'production.create', 'production-batches': 'production.view', users: 'users.manage', commands: 'sales.view',
 };
 
 function me(user: WebUser) {
@@ -141,6 +142,13 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       }
       case 'recipes': return json(200, await web.recipes(q, branch));
       case 'production': return json(200, await web.production(q, range()));
+      // Producción en dos pasos como la caja (lib/planning.ts): calcular necesidades y listas de borradores e historial.
+      case 'production-plan': {
+        const where = branch ?? (user.admin ? null : user.branchId);
+        if (!where) throw new ProtocolError('Elige la sucursal', 400);
+        return json(200, await planning.productionPlan(q, where, planning.parsePlan(url.searchParams.get('plan'))));
+      }
+      case 'production-batches': return json(200, await planning.productionBatches(q, branch, url.searchParams.get('status') === 'DRAFT' ? 'DRAFT' : 'CONFIRMED'));
       case 'users': return json(200, await web.users(q, branch));
       case 'commands': return json(200, await listCommands(q, branch));
       // Las cajas web no tienen base propia: lo suyo va en la copia nocturna de la nube.
