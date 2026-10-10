@@ -351,6 +351,82 @@ dialog.checkout { width: min(660px, calc(100vw - 32px)); border-radius: 20px; }
 .move-kind { background: var(--warn-soft); border-radius: 10px; padding: 2px 8px; font-size: 12.5px; font-weight: 600; }
 .move-kind.income { background: var(--primary-soft); }
 .move-detail { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* ---------- Reportes (ReportsView) ---------- */
+.reports { display: grid; align-content: start; }
+.report-tabs { display: flex; flex-wrap: wrap; gap: 0 8px; margin-bottom: 10px; }
+.report-tabs .tab { margin-bottom: 8px; }
+.kpi-label { font-size: 13px; color: var(--muted); font-weight: 400; }
+label.kpi-label { display: grid; gap: 4px; }
+label.kpi-label input { width: 200px; }
+.report-dates { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.report-dates .primary { min-width: 120px; }
+.report-dates .generated { padding-bottom: 14px; }
+.spacer { flex: 1; }
+.report-quick { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; margin-top: 12px; }
+.report-quick .kpi-label { margin: 0 2px 8px 0; }
+button.chip-button { min-height: 36px; padding: 6px 14px; font-size: 14px; margin-bottom: 8px; }
+.report-period-label { font-size: 15px; color: var(--muted); margin: 10px 0; }
+.report-kpis { display: grid; gap: 12px; margin-bottom: 12px; }
+.report-kpis.five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.report-kpis.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.report-kpis.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.report-kpis.one { grid-template-columns: minmax(0, 220px); }
+.report-kpi { background: var(--surface-2); border-radius: 14px; padding: 12px 16px; display: grid; }
+.report-kpi.peak { justify-self: start; margin: 6px 0 12px; }
+.report-kpi.peak strong { font-size: 18px; color: var(--primary); }
+.kpi-value { font: 700 26px/1.25 var(--display); font-variant-numeric: tabular-nums; margin-top: 4px; }
+.kpi-value.short { color: var(--error); } .kpi-value.over { color: var(--warn); }
+.kpi-change { margin-top: 4px; font-size: 15px; }
+.up { color: #2E7D32; font-weight: 600; } .down { color: var(--error); font-weight: 600; }
+td.up, td.down { font-weight: 600; } td.over { color: var(--warn); font-weight: 600; } td.short { color: var(--error); font-weight: 600; }
+.chart-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 18px; margin: 4px 0 8px; }
+.chart-title { font-size: 17px; font-weight: 600; margin: 0; }
+.chart-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.legend { display: flex; align-items: center; gap: 6px; }
+.legend .kpi-label { margin-right: 10px; }
+.swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; background: var(--primary); }
+.swatch.soft { background: rgba(74, 93, 78, .4); }
+.swatch.track { background: rgba(74, 93, 78, .1); }
+.vbars { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: end; }
+.vbar { display: grid; grid-template-rows: 170px auto; min-width: 0; }
+.vbar-area { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; border-bottom: 1px solid var(--border); padding: 0 3px; }
+.vbar-fill { display: block; width: 100%; max-width: 56px; background: var(--primary); border-radius: 4px 4px 0 0; }
+.vbar-area.pair { flex-direction: row; align-items: flex-end; justify-content: center; gap: 2px; }
+.vbar-area.pair .vbar-fill { max-width: 40px; }
+.vbar-fill.soft { background: rgba(74, 93, 78, .4); }
+.vbars.pairs .vbar { grid-template-rows: 160px auto; }
+.axis { font-size: 11px; color: var(--muted); text-align: center; white-space: nowrap; overflow: hidden; margin: 2px 0; }
+.vbar > .axis { height: 15px; line-height: 15px; margin: 5px 0 0; }
+.hbars { display: grid; grid-template-columns: max-content minmax(60px, 1fr) max-content; gap: 10px 12px; align-items: center; }
+.hbar { display: contents; }
+.hbar-label { font-size: 15px; max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hbar-track { display: block; height: 20px; background: rgba(74, 93, 78, .1); border-radius: 5px; overflow: hidden; }
+.hbar-track.small { height: 10px; flex: 1; }
+.hbar-fill { display: block; height: 100%; background: var(--primary); border-radius: 5px; }
+.hbar b { font-size: 14px; font-weight: 600; text-align: right; white-space: nowrap; }
+.report-section { font: 600 20px/1.25 var(--display); margin: 18px 0 8px; }
+.report-caption { margin: -4px 0 8px; }
+.report-empty { color: var(--muted); font-size: 15px; margin: 4px 0; }
+.report-table { max-height: 460px; overflow: auto; border: 1px solid var(--line); border-radius: 12px; }
+.report-table th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.report-two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.heat-scroll { overflow-x: auto; display: grid; gap: 0; }
+.heat-row { display: grid; align-items: center; gap: 0; min-width: 760px; }
+.heat-day { font-size: 15px; font-weight: 600; }
+.heat-cell { position: relative; height: 38px; margin: 2px; border-radius: 6px; background: rgba(74, 93, 78, .1); display: grid; place-items: center; overflow: hidden; }
+.heat-fill { position: absolute; inset: 0; background: var(--primary); }
+.heat-text { position: relative; font-size: 13px; font-weight: 600; color: var(--text); }
+.heat-cell.hot .heat-text { color: #fff; }
+.heat-total { display: grid; text-align: right; }
+.heat-total b { font-size: 15px; }
+.center { text-align: center; } .right { text-align: right; }
+.heat-legend { display: flex; align-items: center; gap: 2px; margin: 12px 0 0 58px; }
+.heat-legend .swatch { width: 26px; height: 16px; border-radius: 4px; }
+.heat-legend .kpi-label { margin: 0 8px; }
+.forecast-title { font-size: 21px; font-weight: 600; margin: 12px 0 2px; }
+.suggested { display: flex; align-items: center; gap: 10px; min-width: 200px; }
+.suggested b { font-size: 18px; color: var(--primary); min-width: 34px; text-align: right; }
+
 /* ---------- Historial de ventas (SalesHistoryView) ---------- */
 .history { display: grid; align-content: start; }
 .history-label { font-size: 15px; margin: 0 0 4px; }
@@ -479,6 +555,12 @@ dialog footer { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: 
   .checkout-actions button.secondary { order: 3; }
   .move-fields { grid-template-columns: 1fr; }
   .history-row, .history-row.dates { grid-template-columns: 1fr; }
+  .report-kpis.five, .report-kpis.four, .report-kpis.three { grid-template-columns: 1fr 1fr; }
+  .report-two { grid-template-columns: 1fr; }
+  label.kpi-label input { width: 100%; }
+  .report-dates > * { flex: 1 1 140px; }
+  .hbars { grid-template-columns: minmax(0, 120px) minmax(40px, 1fr) max-content; }
+  .report-table { max-height: none; border: 0; }
   .history-table { max-height: none; border: 0; }
   .history-table td { white-space: normal; }
   .cash-state { font-size: 26px; }

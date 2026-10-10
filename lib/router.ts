@@ -7,13 +7,14 @@ import { createCommand, listCommands } from './commands.js';
 import * as backups from './backup.js';
 import { profit, trayAnalytics } from './analytics.js';
 import * as pos from './pos.js';
+import * as reports from './reports.js';
 
 export interface Env { SESSION_SECRET?: string; PANEL_TIME_ZONE?: string; BACKUP_SECRET?: string }
 
 /** Permiso que pide cada pantalla (el mismo de la caja). */
 const VIEW: Record<string, string> = {
   dashboard: 'sales.view', sales: 'sales.view', sale: 'sales.view', compare: 'sales.view', heatmap: 'sales.view', 'cash-control': 'sales.view',
-  'production-suggestion': 'sales.view', terminals: 'sales.view', cash: 'cash.view', consignment: 'consignment.view', catalog: 'catalog.view',
+  'production-suggestion': 'sales.view', report: 'sales.view', forecast: 'sales.view', terminals: 'sales.view', cash: 'cash.view', consignment: 'consignment.view', catalog: 'catalog.view',
   photo: 'catalog.view', pos: 'pos.use', 'pos-tickets': 'pos.use', 'pos-ticket': 'pos.use', route: 'consignment.view', profit: 'recipe.view', 'tray-analytics': 'consignment.view', backups: 'users.manage', backup: 'users.manage', inventory: 'inventory.view', recipes: 'recipe.view', production: 'production.view', users: 'users.manage', commands: 'sales.view',
 };
 
@@ -100,6 +101,9 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       case 'compare': return json(200, await web.comparison(q, range()));
       case 'heatmap': return json(200, await web.heatmap(q, range()));
       case 'cash-control': return json(200, await web.cashControl(q, range()));
+      // Reportes con las mismas cifras de la caja (lib/reports.ts).
+      case 'report': return json(200, await reports.report(q, range()));
+      case 'forecast': return json(200, await reports.forecast(q, branch, timeZone, day(url.searchParams.get('day'), timeZone)));
       case 'production-suggestion': return json(200, await web.productionSuggestion(q, branch, timeZone, day(url.searchParams.get('day'), timeZone)));
       case 'terminals': return json(200, await terminals(q, branch));
       case 'cash': {
