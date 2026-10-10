@@ -5,6 +5,7 @@ import { tuCaja, vender } from './pos.js';
 import { ventas } from './sales.js';
 import { reportsView, setReportTab } from './reports.js';
 import { catalogo } from './catalog.js';
+import { inventario } from './inventory.js';
 
 const branchName = id => state.branches.find(b => b.id === id)?.name ?? '';
 const multi = () => !state.branch && state.branches.length > 1;
@@ -277,131 +278,8 @@ async function templateDialog(store) {
   } });
 }
 
-// ---------- Inventario, recetas y producción ----------
-// Lo que se pide desde aquí lo aplica la caja con sus reglas (docs/POS_WEB.md, fase 3); las existencias cambian cuando la caja lo sube.
-const WASTE_REASONS = { Damaged: 'Dañado', Expired: 'Caducado', ProductionError: 'Error de producción', Spill: 'Derrame', Other: 'Otro' };
-const COUNT_REASONS = { PhysicalCountVariance: 'Diferencia en el conteo físico', DataCorrection: 'Corrección de captura', Other: 'Otro' };
-const STOCK_OPS = {
-  receive: { title: 'Entrada de inventario', label: 'Entrada', permission: 'inventory.receive', kind: 'inventory.receive', submit: 'Registrar entrada' },
-  waste: { title: 'Merma', label: 'Merma', permission: 'inventory.waste', kind: 'inventory.waste', submit: 'Registrar merma' },
-  count: { title: 'Conteo físico', label: 'Conteo', permission: 'inventory.adjust', kind: 'inventory.count', submit: 'Guardar conteo' },
-};
-// Unidades para capturar (sin mg ni µL); si la caja no subió su catálogo de unidades se usan las del sistema.
-const BASE_UNITS = [{ code: 'kg', symbol: 'kg', dimension: 'MASS', atomic: 1_000_000 }, { code: 'g', symbol: 'g', dimension: 'MASS', atomic: 1_000 },
-  { code: 'L', symbol: 'L', dimension: 'VOLUME', atomic: 1_000_000 }, { code: 'ml', symbol: 'ml', dimension: 'VOLUME', atomic: 1_000 }, { code: 'piece', symbol: 'pieza', dimension: 'COUNT', atomic: 1 }];
-const captureUnits = (item, measures) => [
-  ...(measures?.length ? measures : BASE_UNITS).filter(u => u.dimension === item.dimension && (u.dimension === 'COUNT' || u.atomic >= 1_000)).sort((a, b) => b.atomic - a.atomic).map(u => ({ code: u.code, label: u.symbol })),
-  ...item.units.map(u => ({ code: u.code, label: u.name }))];
-const stockOps = () => Object.entries(STOCK_OPS).filter(([, o]) => can(o.permission));
-
-async function inventario() {
-  const [data, sent] = await Promise.all([api('inventory', { branch: state.branch }), can('sales.view') ? api('commands', { branch: state.branch }) : []]);
-  const kinds = { RAW_MATERIAL: 'Materia prima', FINISHED_GOOD: 'Producto terminado', PACKAGING: 'Empaque', SUPPLY: 'Insumo' };
-  const names = new Map(data.items.map(i => [i.id, i]));
-  const recent = iso => Date.now() - new Date(iso).getTime() < 2 * 86_400_000;
-  const waiting = sent.filter(c => STOCK_KINDS.has(c.kind) && (c.status === 'pending' || (c.status === 'rejected' && recent(c.at))));
-  const actionable = stockOps().length > 0 || can('inventory.configure');
-  return h('div', { style: { display: 'grid', gap: '16px' } },
-    stockOps().length ? h('div', { class: 'toolbar' }, stockOps().map(([op, o]) => h('button', { type: 'button', class: op === 'receive' ? 'primary' : '', onclick: () => stockDialog(op, data) }, o.label))) : null,
-    waiting.length ? card('Enviado a la caja', h('p', { class: 'muted small', text: 'La caja lo aplica en cuanto se conecta; entonces cambia la existencia de abajo.', style: { marginBottom: '8px' } }),
-      h('ul', { class: 'rows' }, waiting.map(c => { const item = names.get(c.payload.itemId);
-        return h('li', {}, h('div', {}, h('strong', { text: `${KIND[c.kind]} · ${item?.name ?? 'Insumo'}` }), h('small', { class: 'muted', text: ` ${stockAmount(c.payload, item, data.measures)} · ${c.by} · ${at(c.at)}` })),
-          h('span', { class: 'pill ' + (c.status === 'pending' ? 'warn' : 'bad'), text: c.status === 'pending' ? 'Pendiente' : 'Rechazado' }), h('small', { class: 'muted', text: c.message ?? '' })); }))) : null,
-    card('Existencias', table([
-      { label: 'Insumo', value: i => [h('strong', { text: i.name }), h('small', { text: i.code })] },
-      { label: 'Tipo', value: i => kinds[i.kind] ?? i.kind },
-      { label: 'Existencia', num: true, value: i => i.balances.length ? h('b', { text: quantity(i.balances.reduce((a, b) => a + b.atomic, 0), i.dimension, data.measures) }) : h('span', { class: 'muted', text: 'Sin conteo inicial' }) },
-      { label: 'Ubicación', value: i => i.balances.map(b => b.location).join(', ') || '—' },
-      { label: 'Costo', num: true, value: i => i.cost ? [fmt(i.cost.cents), h('small', { text: `por ${i.cost.unit}` })] : h('span', { class: 'muted', text: 'Sin costo' }) },
-      { label: 'Estado', value: i => h('span', { class: 'pill ' + (i.active ? 'ok' : ''), text: i.active ? 'Activo' : 'Inactivo' }) },
-    ], data.items, { empty: 'Sin insumos registrados.', onclick: actionable ? i => itemActions(i, data) : null })),
-    actionable ? h('p', { class: 'muted small', text: 'Toca un insumo para registrar una entrada, una merma o un conteo' + (can('inventory.configure') ? ', o para capturar su costo (con las recetas se calcula el costo de cada pan en Reportes → Ganancia).' : '.') }) : null,
-    card('Movimientos recientes', table([
-      { label: 'Fecha', value: o => at(o.at) }, { label: 'Operación', value: o => [o.kind, o.reason ? h('small', { text: o.reason }) : null] },
-      { label: 'Estado', value: o => o.state }, { label: 'Quién', value: o => o.user || '—' },
-      { label: 'Renglones', span: true, value: o => h('small', { text: o.lines.map(l => `${l.item} ${l.delta > 0 ? '+' : ''}${quantity(l.delta, l.dimension, data.measures)}`).join(' · ') }) },
-    ], data.operations, { empty: 'Sin movimientos de inventario.' })));
-}
-const STOCK_KINDS = new Set(['inventory.receive', 'inventory.waste', 'inventory.count']);
-function stockAmount(payload, item, measures) {
-  const unit = item ? captureUnits(item, measures).find(u => u.code === payload.unitCode)?.label : null;
-  return `${Number(payload.quantity).toLocaleString('es-MX', { maximumFractionDigits: 3 })} ${unit ?? payload.unitCode}`;
-}
-/** Lo que se puede hacer con un insumo: entrada, merma, conteo o costo, según el rol. */
-function itemActions(item, data) {
-  const ops = item.active ? stockOps() : [];
-  dialog(item.name, (body, close) => {
-    body.append(
-      h('ul', { class: 'rows wide' }, item.balances.length ? item.balances.map(b => h('li', {}, h('span', { text: b.location }), h('span'), h('b', { class: 'num', text: quantity(b.atomic, item.dimension, data.measures) })))
-        : h('li', {}, h('span', { class: 'muted', text: 'Todavía sin conteo inicial.' }), h('span'), h('span'))),
-      item.active ? '' : h('p', { class: 'notice wide', text: 'Insumo inactivo: se reactiva en la caja.' }),
-      h('div', { class: 'wide toolbar' },
-        ops.map(([op, o]) => h('button', { type: 'button', class: op === 'receive' ? 'primary' : '', onclick: () => { close(); stockDialog(op, data, item); } }, o.label)),
-        can('inventory.configure') ? h('button', { type: 'button', onclick: () => { close(); costDialog(item, data.measures); } }, 'Costo') : null));
-  });
-}
-/** Entrada, merma o conteo de un insumo. La cantidad va como texto decimal; la caja la convierte y revisa existencia y permisos. */
-function stockDialog(op, data, item = null) {
-  const o = STOCK_OPS[op];
-  const items = data.items.filter(i => i.active);
-  if (!items.length) return toast('No hay insumos activos.');
-  dialog(o.title, body => {
-    const itemSelect = h('select', { name: 'supply', required: true }, items.map(i => h('option', { value: i.id, text: i.name + (multi() ? ` (${branchName(i.branchId)})` : ''), selected: i.id === item?.id })));
-    const locationSelect = h('select', { name: 'location' });
-    const unitSelect = h('select', { name: 'unit' });
-    const hint = h('p', { class: 'muted small wide' });
-    const current = () => items.find(i => i.id === itemSelect.value);
-    const showStock = () => {
-      const it = current(); const balance = it.balances.find(b => b.locationId === locationSelect.value);
-      hint.textContent = balance ? `Existencia: ${quantity(balance.atomic, it.dimension, data.measures)}`
-        : op === 'count' ? 'Sin saldo todavía: este conteo será el saldo inicial.' : 'Sin saldo todavía: primero el administrador registra el conteo inicial.';
-      // El saldo inicial no lleva motivo: sólo se pide cuando ya hay existencia que corregir.
-      if (op === 'count') body.querySelector('[name=reason]').closest('label').hidden = !balance;
-    };
-    const sync = () => {
-      const it = current();
-      const places = data.locations.filter(l => l.branchId === it.branchId);
-      locationSelect.replaceChildren(...places.map(l => h('option', { value: l.id, text: l.name })));
-      locationSelect.closest('label').hidden = places.length < 2;
-      const preferred = { MASS: 'kg', VOLUME: 'L', COUNT: 'piece' }[it.dimension];
-      unitSelect.replaceChildren(...captureUnits(it, data.measures).map(u => h('option', { value: u.code, text: u.label, selected: u.code === preferred })));
-      showStock();
-    };
-    itemSelect.addEventListener('change', sync); locationSelect.addEventListener('change', showStock);
-    body.append(field('Insumo', itemSelect, true), field('Ubicación', locationSelect, true),
-      field(op === 'count' ? 'Cantidad contada' : 'Cantidad', h('input', { name: 'quantity', required: true, inputmode: 'decimal', autocomplete: 'off', placeholder: op === 'count' ? 'Lo que hay físicamente' : 'Ej. 2.5' })),
-      field('Unidad', unitSelect), hint,
-      op === 'receive' ? field('Referencia (factura, nota)', h('input', { name: 'reference', maxlength: '200' })) : '',
-      op === 'waste' ? field('Motivo', h('select', { name: 'reason' }, Object.entries(WASTE_REASONS).map(([v, l]) => h('option', { value: v, text: l })))) : '',
-      op === 'count' ? field('Motivo de la diferencia', h('select', { name: 'reason' }, Object.entries(COUNT_REASONS).map(([v, l]) => h('option', { value: v, text: l })))) : '',
-      field(op === 'receive' ? 'Observación (opcional)' : 'Observación (obligatoria con «Otro»)', h('input', { name: 'note', maxlength: '500' }), op !== 'receive'));
-    sync();
-  }, { submit: o.submit, onSubmit: async form => {
-    const f = form.elements;
-    const amount = String(f.quantity.value).trim().replace(',', '.');
-    if (!/^\d{1,6}(\.\d{1,3})?$/.test(amount) || (op !== 'count' && Number(amount) === 0)) throw new Error(op === 'count' ? 'Escribe lo que contaste, por ejemplo 12.5 (0 si no hay).' : 'Escribe una cantidad mayor que cero, por ejemplo 2.5.');
-    if (f.reason?.value === 'Other' && !f.note.value.trim()) throw new Error('Con motivo «Otro» escribe una observación.');
-    const it = items.find(i => i.id === f.supply.value);
-    await command(it.branchId, o.kind, { itemId: it.id, locationId: f.location.value, quantity: amount, unitCode: f.unit.value,
-      ...(f.reference?.value.trim() ? { reference: f.reference.value.trim() } : {}), ...(f.reason ? { reason: f.reason.value } : {}), ...(f.note.value.trim() ? { note: f.note.value.trim() } : {}) });
-    render({ silent: true });
-  } });
-}
-function costDialog(item, measures) {
-  const units = [...measures.filter(u => u.dimension === item.dimension).map(u => ({ label: u.symbol, atomic: u.atomic })),
-    ...item.units.map(u => ({ label: u.name, atomic: u.atomic }))].filter(u => u.atomic > 0);
-  dialog(`Costo de ${item.name}`, body => {
-    body.append(h('p', { class: 'muted small wide', text: 'Precio de compra de referencia. Sólo se usa para estimar el costo de cada pan; no cambia el inventario.' }),
-      field('Precio (MXN)', h('input', { name: 'price', inputmode: 'decimal', value: item.cost ? pesos(item.cost.cents) : '' })),
-      field('Por', h('select', { name: 'unit' }, units.map((u, i) => h('option', { value: String(i), text: u.label, selected: item.cost ? u.label === item.cost.unit : u.label === 'kg' || u.label === 'L' || u.label === 'pieza' })))));
-  }, { onSubmit: async form => {
-    const text = String(form.elements.price.value).trim().replace(',', '.');
-    if (!/^\d{1,7}(\.\d{1,2})?$/.test(text)) throw new Error('Escribe el precio, por ejemplo 28.50.');
-    const unit = units[Number(form.elements.unit.value)];
-    await command(item.branchId, 'inventory.cost', { itemId: item.id, costCents: Math.round(Number(text) * 100), perAtomic: unit.atomic, unitLabel: unit.label });
-  } });
-}
-
+// ---------- Recetas y producción ----------
+// Inventario vive en inventory.js (copia de la pantalla de la caja).
 async function recetas() {
   const [data] = await Promise.all([api('recipes', { branch: state.branch }), loadPhotos()]);
   const lines = list => list.length ? h('ul', { class: 'rows' }, list.map(l => h('li', {}, h('span', { text: l.item ?? l.formula }), h('span'), h('b', { class: 'num', text: quantity(l.atomic, l.dimension, data.measures) })))) : h('p', { class: 'empty', text: 'Sin ingredientes.' });
@@ -516,7 +394,12 @@ const KIND = { 'consignment.deliver': 'Entrega de charola', 'consignment.collect
   'category.save': 'Categoría', 'product.save': 'Producto', 'product.active': 'Activar/desactivar producto', 'user.create': 'Alta de usuario', 'user.update': 'Usuario',
   'user.active': 'Activar/desactivar usuario', 'user.reset_password': 'Restablecer contraseña', 'consignment.store.save': 'Tienda de charolas', 'consignment.template.save': 'Charola habitual',
   'inventory.cost': 'Costo de insumo', 'inventory.receive': 'Entrada de inventario', 'inventory.waste': 'Merma', 'inventory.count': 'Conteo de inventario',
+  'inventory.opening': 'Saldo inicial', 'inventory.item.save': 'Artículo de inventario', 'inventory.item.active': 'Activar/desactivar artículo', 'inventory.unit.add': 'Presentación',
+  'inventory.link': 'Asociar producto', 'inventory.unlink': 'Desvincular producto', 'inventory.consumption': 'Consumo automático por ventas',
   'production.record': 'Producción', 'product.photo': 'Foto de producto', 'product.photo.remove': 'Quitar foto de producto' };
+const STOCK_KINDS = new Set(['inventory.receive', 'inventory.waste', 'inventory.count', 'inventory.opening']);
+const REASON = { Damaged: 'Dañado', Expired: 'Caducado', ProductionError: 'Error de producción', Spill: 'Derrame', Other: 'Otro', PhysicalCountVariance: 'Diferencia de conteo físico', DataCorrection: 'Corrección de datos' };
+const UNIT = { kg: 'kg', g: 'g', L: 'L', ml: 'ml', piece: 'pieza' };
 function describe(c) {
   const p = c.payload;
   if (c.kind === 'product.save') return `${p.name} · ${fmt(p.priceCents)}`;
@@ -529,7 +412,11 @@ function describe(c) {
   if (c.kind === 'consignment.payment') return fmt(p.amountCents);
   if (c.kind === 'consignment.void') return p.reason;
   if (c.kind === 'inventory.cost') return `${fmt(p.costCents)} por ${p.unitLabel}`;
-  if (STOCK_KINDS.has(c.kind)) return `${stockAmount(p, null)}${p.reason ? ` · ${WASTE_REASONS[p.reason] ?? COUNT_REASONS[p.reason] ?? p.reason}` : ''}`;
+  if (STOCK_KINDS.has(c.kind)) return `${Number(p.quantity).toLocaleString('es-MX', { maximumFractionDigits: 3 })} ${UNIT[p.unitCode] ?? p.unitCode}${p.reason ? ` · ${REASON[p.reason] ?? p.reason}` : ''}`;
+  if (c.kind === 'inventory.item.save') return `${p.code ? `${p.code} · ` : ''}${p.name}`;
+  if (c.kind === 'inventory.item.active') return p.active ? 'Activar' : 'Desactivar';
+  if (c.kind === 'inventory.unit.add') return `${p.code} · ${p.name}`;
+  if (c.kind === 'inventory.consumption') return { Enable: 'Activar', Pause: 'Pausar', Resume: 'Reanudar' }[p.action] ?? p.action;
   if (c.kind === 'production.record') return `${p.outputs.reduce((a, o) => a + o.actual, 0)} piezas de ${p.outputs.length} ${p.outputs.length === 1 ? 'pan' : 'panes'}`;
   if (c.kind === 'product.photo') return `${p.edge} × ${p.edge} px`;
   return p.name ?? p.displayName ?? '';
@@ -635,7 +522,7 @@ export const VIEWS = [
   { id: 'ventas', label: 'Ventas', title: 'Historial de ventas', subtitle: 'Ventas confirmadas · Reimpresión, cancelaciones y devoluciones.', hint: 'Ir a Historial de ventas', icon: ICON.receipt, group: 2, permission: 'sales.view', usesRange: false, manual: true, render: ventas },
   { id: 'reportes', title: 'Reportes', subtitle: 'Ventas, devoluciones y cortes de caja por periodo · Sólo lectura.', hint: 'Ir a Reportes', icon: ICON.chart, group: 2, permission: 'sales.view', usesRange: false, manual: true, render: reportes, tab: setReportTab },
   { id: 'catalogo', title: 'Catálogo', subtitle: 'Categorías y productos · Sin proceso de venta.', hint: 'Ir a Catálogo', icon: ICON.grid, group: 3, permission: 'catalog.view', usesRange: false, manual: true, render: catalogo },
-  { id: 'inventario', title: 'Inventario', subtitle: 'Existencias y movimientos del almacén principal · Entradas, mermas y conteos.', hint: 'Ir a Inventario', icon: ICON.box, group: 3, permission: 'inventory.view', usesRange: false, render: inventario },
+  { id: 'inventario', title: 'Inventario', subtitle: 'Existencias y movimientos del almacén principal · consulta abajo el estado del consumo automático por ventas.', hint: 'Ir a Inventario', icon: ICON.box, group: 3, permission: 'inventory.view', usesRange: false, manual: true, render: inventario },
   { id: 'recetas', title: 'Recetas', subtitle: 'Fórmulas y perfiles productivos versionados.', hint: 'Ir a Recetas', icon: ICON.book, group: 3, permission: 'recipe.view', usesRange: false, render: recetas },
   { id: 'produccion', title: 'Producción', subtitle: 'Registro e historial de producción.', hint: 'Ir a Producción', icon: ICON.chef, group: 3, permission: 'production.view', usesRange: true, render: produccion },
   { id: 'usuarios', title: 'Usuarios', subtitle: 'Crea usuarios y restablece contraseñas olvidadas · Cada acción queda auditada.', hint: 'Ir a Usuarios', icon: ICON.users, group: 3, permission: 'users.manage', usesRange: false, render: usuarios },

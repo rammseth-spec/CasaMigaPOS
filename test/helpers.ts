@@ -52,7 +52,7 @@ const STOCK = ['inventory.receive', 'inventory.waste', 'production.create', 'pro
 export const PERMISSIONS: Record<string, string[]> = {
   Administrator: ['sales.view', 'cash.view', 'catalog.view', 'consignment.view', 'consignment.manage', 'inventory.view', 'recipe.view', 'production.view', 'users.manage',
     'products.create', 'products.edit', 'products.deactivate', 'categories.create', 'categories.edit', 'categories.deactivate', ...SELL, ...CLOSE, ...STOCK,
-    'inventory.adjust', 'inventory.configure', 'recipe.configure'],
+    'inventory.adjust', 'inventory.configure', 'inventory.sale_consumption.configure', 'recipe.configure'],
   Manager: ['sales.view', 'cash.view', 'catalog.view', 'consignment.view', 'consignment.manage', 'inventory.view', 'recipe.view', 'production.view',
     'products.create', 'products.edit', 'products.deactivate', 'categories.create', 'categories.edit', 'categories.deactivate', ...SELL, ...CLOSE, ...STOCK],
   Cashier: ['cash.view', 'catalog.view', 'cash.movement', ...SELL],

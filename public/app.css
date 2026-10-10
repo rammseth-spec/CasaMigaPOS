@@ -383,6 +383,43 @@ dialog.crop { width: min(900px, calc(100vw - 32px)); }
 .crop-handle { position: absolute; right: -11px; bottom: -11px; width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 2px solid var(--primary); cursor: nwse-resize; }
 .crop-side { display: grid; gap: 8px; width: 220px; }
 .crop-preview { width: 140px; height: 140px; border-radius: 12px; background: var(--surface-2); }
+
+/* ---------- Inventario (InventoryView) ---------- */
+.inventory { display: grid; align-content: start; }
+.inv-consumption { background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 14px; display: grid; gap: 4px; }
+.inv-consumption h2 { font: 600 20px/1.25 var(--display); margin: 0; }
+.inv-consumption p { margin: 0; }
+.inv-consumption .toolbar { margin-top: 8px; }
+.inv-state { font-weight: 700; margin: 6px 0 !important; letter-spacing: .02em; }
+.inv-check { margin-top: 8px; max-height: 180px; overflow-y: auto; }
+.inv-check ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+.inv-sent { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; }
+.inv-search { display: flex; gap: 8px; margin-bottom: 8px; }
+.inv-search input { flex: 1; }
+.inv-filters { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; margin-bottom: 12px; }
+.inv-filters .history-label, .inventory > div > .history-label { display: grid; gap: 4px; font-size: 16px; }
+.inventory .history-table { max-height: 330px; }
+.inv-pager { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-top: 12px; }
+.inv-pager .catalog-page { margin: 0; }
+.inv-title { font: 600 25px/1.25 var(--display); margin: 0; }
+.inv-meta { white-space: pre-line; margin: 8px 0; }
+.inv-balance { font-size: 22px; font-weight: 600; margin: 0 0 8px; }
+.inv-reconcile { border: 1px solid var(--success); color: var(--success); border-radius: 6px; padding: 12px; margin-bottom: 12px; }
+.inv-reconcile.bad { border-color: var(--error); color: var(--error); font-weight: 600; }
+.inv-actions { margin-bottom: 12px; }
+.inv-section { font: 600 21px/1.25 var(--display); margin: 14px 0 6px; }
+.inv-current { font-weight: 600; margin: 6px 0; }
+.inv-preview { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; display: grid; gap: 12px; }
+.inv-preview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.inv-preview-grid div, .inv-difference { display: grid; gap: 4px; }
+.inv-preview small, .inv-difference small { font-size: 14px; color: var(--text); }
+.inv-preview b { font-size: 23px; font-weight: 600; }
+.inv-preview b.strong { font-weight: 700; }
+.inv-difference b { font-size: 21px; }
+.inv-preview .caption { margin: 0; }
+.inv-operation textarea { min-height: 90px; }
+.inv-help { margin: 0 0 12px; }
+.inventory .catalog-empty { min-height: 72px; font-size: 15px; }
 .crop-advanced { display: grid; gap: 8px; }
 .crop-advanced summary { cursor: pointer; font-weight: 600; font-size: 14px; }
 .crop-advanced label { display: grid; gap: 4px; margin-top: 8px; }
@@ -606,6 +643,8 @@ dialog footer { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: 
   .report-two { grid-template-columns: 1fr; }
   .closure-boxes { grid-template-columns: 1fr; }
   .catalog-filters, .catalog-two { grid-template-columns: 1fr; }
+  .inv-filters, .inv-preview-grid { grid-template-columns: 1fr; }
+  .inventory .history-table { max-height: none; }
   .catalog-table { height: auto; }
   .photo-section { grid-template-columns: 1fr; }
   .photo-large { width: 100%; height: auto; aspect-ratio: 1; }

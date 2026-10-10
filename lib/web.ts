@@ -361,14 +361,34 @@ export async function inventory(q: Query, branch: string | null, timeZone: strin
   for (const i of items) if (!places.has(`${s(i.branch_id)}/${MAIN_LOCATION}`)) places.set(`${s(i.branch_id)}/${MAIN_LOCATION}`, { id: MAIN_LOCATION, branchId: s(i.branch_id), name: 'Almacén principal' });
   const itemName = new Map(items.map(i => [s((i.payload as { item: Row }).item.id), s((i.payload as { item: Row }).item.name)]));
   const k = await names(q);
+  const [products, branches] = await Promise.all([
+    q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'product' AND NOT deleted AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
+    q(`SELECT branch_id, payload->'sale_consumption' AS c FROM entity_state WHERE entity = 'branch' AND NOT deleted AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
+  ]);
+  // Asociaciones activas producto → artículo (viajan dentro del producto), como «Asociaciones con productos» en la caja.
+  const links = new Map<string, { productId: string; product: string; sku: string; atomic: number }[]>();
+  const productList = products.map(x => {
+    const p = x.payload as { product: Row; inventoryLinks?: Row[] };
+    const link = (p.inventoryLinks ?? []).find(l => n(l.active) === 1);
+    if (link) links.set(s(link.inventory_item_id), [...(links.get(s(link.inventory_item_id)) ?? []),
+      { productId: s(p.product.id), product: s(p.product.name), sku: s(p.product.sku), atomic: n(link.quantity_per_product_unit_atomic) }]);
+    return { id: s(p.product.id), branchId: s(x.branch_id), name: s(p.product.name), sku: s(p.product.sku), categoryId: s(p.product.category_id),
+      active: n(p.product.active) === 1, trackInventory: n(p.product.track_inventory) === 1, linkedItemId: link ? s(link.inventory_item_id) : null };
+  }).sort((a, b) => a.name.localeCompare(b.name));
   return {
-    measures, timeZone, locations: [...places.values()],
+    measures, timeZone, locations: [...places.values()], products: productList,
+    // Consumo automático por ventas de cada caja (DISABLED / ENABLED / PAUSED); null si su versión todavía no lo sube.
+    consumption: branches.map(b => { const c = b.c as Row | null;
+      return { branchId: s(b.branch_id), state: c ? s(c.state) : null, version: c ? n(c.version) : null, updatedAt: c ? s(c.updated_utc) : null,
+        updatedBy: c?.updated_by ? k.user.get(s(c.updated_by)) ?? '' : null }; }),
     items: items.map(x => {
       const p = x.payload as { item: Row; units: Row[]; balances: Row[] };
       const cost = (p as { cost?: Row | null }).cost;
+      const main = p.balances.find(b => s(b.location_id) === MAIN_LOCATION);
       return { id: s(p.item.id), branchId: s(x.branch_id), code: s(p.item.code), name: s(p.item.name), kind: s(p.item.kind), dimension: s(p.item.dimension), active: n(p.item.active) === 1,
         cost: cost ? { cents: n(cost.cost_cents), perAtomic: n(cost.per_atomic), unit: s(cost.unit_label), updatedAt: s(cost.updated_utc) } : null,
-        units: p.units.filter(u => n(u.active) === 1).map(u => ({ code: s(u.code), name: s(u.name), atomic: n(u.atomic_units_per_whole_unit) })),
+        units: p.units.map(u => ({ code: s(u.code), name: s(u.name), atomic: n(u.atomic_units_per_whole_unit), active: n(u.active) === 1 })),
+        main: main ? n(main.quantity_atomic) : null, links: links.get(s(p.item.id)) ?? [],
         balances: p.balances.map(b => ({ locationId: s(b.location_id), location: location.get(s(b.location_id)) ?? 'Almacén', atomic: n(b.quantity_atomic), updatedAt: s(b.updated_utc) })) };
     }).sort((a, b) => a.name.localeCompare(b.name)),
     operations: operations.map(x => {
@@ -378,6 +398,62 @@ export async function inventory(q: Query, branch: string | null, timeZone: strin
         lines: p.movements.map(m => ({ item: itemName.get(s(m.item_id)) ?? 'Insumo', dimension: s(m.dimension), delta: n(m.delta_atomic) })) };
     }),
   };
+}
+
+/**
+ * Detalle de un artículo como en la caja: historial de movimientos confirmados (25 por página, más recientes primero) con existencia
+ * anterior y resultante, quién, motivo y referencia; y si la existencia del almacén principal coincide con la suma de sus movimientos.
+ */
+export async function inventoryItem(q: Query, branch: string | null, itemId: string, page: number) {
+  if (!isUuid(itemId)) throw new ProtocolError('Artículo inválido');
+  const [found] = await q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'inventory_item' AND entity_id = $1 AND NOT deleted AND ($2::uuid IS NULL OR branch_id = $2::uuid)`, [itemId.toLowerCase(), branch]);
+  if (!found) throw new ProtocolError('Artículo inexistente', 404);
+  const where = `FROM entity_state o CROSS JOIN LATERAL jsonb_array_elements(o.payload->'movements') AS m(v)
+    WHERE o.entity = 'inventory_operation' AND o.branch_id = $1 AND m.v->>'item_id' = $2 AND o.payload->'operation'->>'state' = 'CONFIRMED'`;
+  const args = [s(found.branch_id), itemId.toLowerCase()];
+  const at = Math.max(0, Math.min(100_000, Math.trunc(page) || 0));
+  const [[total], rows, [ledger], k] = await Promise.all([
+    q(`SELECT count(*) AS total ${where}`, args),
+    q(`SELECT o.payload->'operation' AS op, m.v AS mv ${where}
+       ORDER BY o.payload->'operation'->>'confirmed_utc' DESC, o.entity_id DESC, (m.v->>'sequence')::int LIMIT 25 OFFSET ${at * 25}`, args),
+    q(`SELECT count(*) AS movements, coalesce(sum((m.v->>'delta_atomic')::bigint), 0) AS sum ${where} AND m.v->>'location_id' = '${MAIN_LOCATION}'`, args),
+    names(q),
+  ]);
+  const balance = (found.payload as { balances: Row[] }).balances.find(b => s(b.location_id) === MAIN_LOCATION);
+  const consistent = balance ? Number(ledger.movements) > 0 && Number(ledger.sum) === n(balance.quantity_atomic) : Number(ledger.movements) === 0;
+  return {
+    total: Number(total.total), page: at, pageSize: 25, consistent,
+    history: rows.map(r => { const op = r.op as Row, mv = r.mv as Row;
+      return { at: s(op.confirmed_utc || op.created_utc), kind: s(op.kind), delta: n(mv.delta_atomic), before: n(mv.balance_before_atomic), after: n(mv.balance_after_atomic),
+        user: k.user.get(s(op.actor_id)) ?? '', reason: s(op.reason_code), note: s(op.note), reference: s(op.external_reference), operationId: s(op.id) }; }),
+  };
+}
+
+/**
+ * «Verificar configuración» del consumo automático con lo que subió la caja (SqliteConsumptionConfiguration.CheckConsumption):
+ * productos activos que controlan inventario sin artículo, asociaciones sobrantes, artículos inactivos, sin saldo inicial o que no cuadran.
+ * La caja lo vuelve a revisar al activar o reanudar.
+ */
+export async function consumptionCheck(q: Query, branch: string) {
+  const data = await inventory(q, branch, 'UTC');
+  const items = new Map(data.items.map(i => [i.id, i]));
+  const problems: { code: string; product: string | null; item: string | null }[] = [];
+  for (const p of data.products.filter(x => x.active)) {
+    const add = (code: string, item: string | null = null) => problems.push({ code, product: p.name, item });
+    if (!p.linkedItemId) { if (p.trackInventory) add('TrackedProductWithoutInventoryLink'); continue; }
+    if (!p.trackInventory) { add('UnexpectedInventoryLink'); continue; }
+    const item = items.get(p.linkedItemId);
+    if (!item) { add('InventoryItemMissing'); continue; }
+    if (!item.active) add('InventoryItemInactive', item.name);
+    if (item.main === null) add('NotInitialized', item.name);
+  }
+  const ledger = new Map((await q(`SELECT m.v->>'item_id' AS item, sum((m.v->>'delta_atomic')::bigint) AS sum
+      FROM entity_state o CROSS JOIN LATERAL jsonb_array_elements(o.payload->'movements') AS m(v)
+      WHERE o.entity = 'inventory_operation' AND o.branch_id = $1 AND o.payload->'operation'->>'state' = 'CONFIRMED' AND m.v->>'location_id' = $2
+      GROUP BY 1`, [branch, MAIN_LOCATION])).map(r => [s(r.item), Number(r.sum)]));
+  const mismatched = data.items.filter(i => (i.main ?? null) !== (ledger.get(i.id) ?? null)).map(i => i.name);
+  if (mismatched.length) problems.unshift({ code: 'ReconciliationMismatch', product: null, item: mismatched.join(', ') });
+  return { problems };
 }
 
 export async function recipes(q: Query, branch: string | null) {
