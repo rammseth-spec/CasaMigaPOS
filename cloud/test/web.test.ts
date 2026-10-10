@@ -37,6 +37,24 @@ test('sales list searches by folio or product and the detail shows items, paymen
   await assert.rejects(web.saleDetail(q, null, 's1'), /inválida/, 'Only UUIDs.');
 });
 
+test('the history filters like the till: all days, one shift, and the ids shown in the detail', async () => {
+  const { q } = await database(); await seedSales(q);
+  const tz = parseRange(new URL('https://x/?from=2026-10-06&to=2026-10-06')).timeZone;
+  const everything = await web.salesList(q, { from: null, to: null, branchId: null, timeZone: tz, search: '', method: null, page: 0 });
+  const twoDays = await web.salesList(q, { ...range('2026-10-06', '2026-10-07'), search: '', method: null, page: 0 });
+  assert.ok(everything.total >= twoDays.total, '«Todos» does not filter by day.');
+  const first = twoDays.items.find(s => s.id === 's1')!;
+  assert.equal(first.terminalId, caja1);
+  const shift = await web.salesList(q, { from: null, to: null, branchId: centro, timeZone: tz, search: '', method: null, page: 0, session: first.cashSessionId });
+  assert.deepEqual(shift.items.map(s => s.id).sort(), ['s1', 's2', 's3'], '«Sesión actual» keeps only that shift.');
+
+  const id = '5a1e0000-0000-4000-8000-000000000001';
+  await send(q, caja1, centro, [{ entity: 'sale', id, payload: sale(id, first.cashSessionId, '2026-10-07T18:00:00+00:00', 'CASH', [['Concha', 1, 1900]], 9) }]);
+  const detail = await web.saleDetail(q, null, id);
+  assert.deepEqual([detail.internalFolio, detail.userId, detail.terminalId, detail.cashSessionId, detail.web],
+    [`${caja1.replace(/-/g, '')}-00000009`, 'u-admin', caja1, first.cashSessionId, false], 'Same internal folio as Sale.Folio on the till.');
+});
+
 test('cash totals come from the database, not from the truncated lists', async () => {
   const { q } = await database(); await seedSales(q);
   const totals = await web.cashTotals(q, range('2026-10-06', '2026-10-07', centro));

@@ -34,7 +34,11 @@ async function names(q: Query) {
 
 // ---------- Ventas ----------
 
-export interface SaleFilter extends Range { search: string; method: string | null; page: number }
+/**
+ * Filtros del historial (como la caja: «Todos» sin fechas, rango de días locales, folio y «Sesión actual»).
+ * Sin `from`/`to` no se filtra por día; `session` acota a un turno.
+ */
+export interface SaleFilter extends Omit<Range, 'from' | 'to'> { from: string | null; to: string | null; search: string; method: string | null; page: number; session?: string | null }
 export const PAGE = 50;
 
 export async function salesList(q: Query, f: SaleFilter) {
@@ -47,23 +51,24 @@ export async function salesList(q: Query, f: SaleFilter) {
   const rows = await q(`WITH s AS (${SALES}), r AS (${REFUNDS}),
       refunded AS (SELECT sale_id, sum(total) AS total, bool_or(payload->'refund'->>'kind' = 'CANCELLATION') AS cancelled FROM r GROUP BY sale_id)
     SELECT s.sale_id, s.branch_id, s.terminal_id, s.payload->'sale'->>'confirmed_utc' AS at, (s.payload->'sale'->>'sequence')::bigint AS sequence,
-      s.total, s.method, s.payload->'sale'->>'user_id' AS user_id, jsonb_array_length(s.payload->'items') AS lines,
+      s.total, s.method, s.payload->'sale'->>'user_id' AS user_id, s.session_id, jsonb_array_length(s.payload->'items') AS lines,
       (SELECT sum((i->>'quantity')::bigint) FROM jsonb_array_elements(s.payload->'items') i) AS pieces,
       refunded.total AS refunded, refunded.cancelled, count(*) OVER () AS total_count
     FROM s LEFT JOIN refunded ON refunded.sale_id = s.sale_id
-    WHERE s.day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR s.branch_id = $4::uuid)
+    WHERE ($2::date IS NULL OR s.day BETWEEN $2::date AND $3::date) AND ($4::uuid IS NULL OR s.branch_id = $4::uuid)
       AND ($5::text IS NULL OR s.method = $5)
       AND ($6::bigint IS NULL OR (s.payload->'sale'->>'sequence')::bigint = $6)
       AND ($7::text IS NULL OR EXISTS (SELECT 1 FROM jsonb_array_elements(s.payload->'items') i WHERE i->>'product_name' ILIKE '%' || $7 || '%'))
       AND ($9::uuid[] IS NULL OR s.terminal_id = ANY($9::uuid[]))
+      AND ($10::text IS NULL OR s.session_id = $10)
     ORDER BY (s.payload->'sale'->>'confirmed_utc')::timestamptz DESC, s.sale_id
     LIMIT ${PAGE} OFFSET $8`,
-    [f.timeZone, f.from, f.to, f.branchId, f.method, folio ? Number(folio[2]) : null, !folio && search ? search.slice(0, 80) : null, f.page * PAGE, terminals]);
+    [f.timeZone, f.from, f.to, f.branchId, f.method, folio ? Number(folio[2]) : null, !folio && search ? search.slice(0, 80) : null, f.page * PAGE, terminals, f.session ?? null]);
   const items = rows.map(r => {
     const terminal = k.terminal.get(s(r.terminal_id)) ?? 'Caja';
     return {
-      id: s(r.sale_id), branchId: s(r.branch_id), branch: k.branch.get(s(r.branch_id)) ?? '', terminal, folio: displayFolio(terminal, n(r.sequence)),
-      at: s(r.at), total: n(r.total), method: s(r.method), cashier: k.user.get(s(r.user_id)) ?? '', lines: n(r.lines), pieces: n(r.pieces),
+      id: s(r.sale_id), branchId: s(r.branch_id), branch: k.branch.get(s(r.branch_id)) ?? '', terminal, terminalId: s(r.terminal_id), folio: displayFolio(terminal, n(r.sequence)),
+      at: s(r.at), total: n(r.total), method: s(r.method), cashier: k.user.get(s(r.user_id)) ?? '', cashSessionId: s(r.session_id), lines: n(r.lines), pieces: n(r.pieces),
       refunded: n(r.refunded), cancelled: r.cancelled === true,
     };
   });
@@ -79,8 +84,11 @@ export async function saleDetail(q: Query, branch: string | null, id: string) {
   const k = await names(q);
   const p = row.payload as Row & { sale: Row; items: Row[]; payment: Row | null };
   const terminal = k.terminal.get(s(row.terminal_id)) ?? 'Caja';
+  const [kind] = await q(`SELECT kind FROM terminal WHERE id = $1`, [row.terminal_id]);
   return {
-    id, branch: k.branch.get(s(row.branch_id)) ?? '', terminal, folio: displayFolio(terminal, n(p.sale.sequence)), at: s(p.sale.confirmed_utc),
+    id, branchId: s(row.branch_id), branch: k.branch.get(s(row.branch_id)) ?? '', terminal, folio: displayFolio(terminal, n(p.sale.sequence)), at: s(p.sale.confirmed_utc),
+    // Como el detalle de la caja: folio interno (Sale.Folio = terminal sin guiones + consecutivo de 8 cifras) e identificadores.
+    internalFolio: `${s(row.terminal_id).replace(/-/g, '')}-${String(n(p.sale.sequence)).padStart(8, '0')}`, userId: s(p.sale.user_id), terminalId: s(row.terminal_id), cashSessionId: s(p.sale.cash_session_id), web: kind?.kind === 'web',
     cashier: k.user.get(s(p.sale.user_id)) ?? '', subtotal: n(p.sale.subtotal_cents), total: n(p.sale.total_cents),
     items: p.items.map(i => ({ position: n(i.position), productId: s(i.product_id), name: s(i.product_name), quantity: n(i.quantity), unitPrice: n(i.unit_price_cents), total: n(i.line_total_cents) })),
     payment: p.payment ? { method: s(p.payment.method), applied: n(p.payment.applied_cents), received: n(p.payment.received_cents), change: n(p.payment.change_cents), reference: s(p.payment.reference) } : null,
