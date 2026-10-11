@@ -24,6 +24,7 @@ try {
     ['web-reimpresion', sale('CASH', [['Concha de vainilla', 2, 1300], ['Cuerno', 1, 1500], ['Café de olla', 1, 2000]], 10000, null), true],
   ];
   await page.emulateMedia({ media: 'print' });
+  await page.addStyleTag({ content: 'html, body, #print-area { background: #fff !important; }' }); // papel blanco
   for (const [name, ticket, copy] of tickets) {
     await page.evaluate(async ([t, c]) => {
       window.print = () => {};
