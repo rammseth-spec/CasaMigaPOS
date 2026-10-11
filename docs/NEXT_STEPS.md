@@ -1,3 +1,19 @@
+# Siguiente: piloto en sucursal (10/10/2026)
+
+Caja y web completas (docs/PLAN_COMPLETAR.md: W1–W8, D1–D5, I1). Estabilización hecha: pruebas en navegador, de punta a punta, de volumen y simulacro de respaldo ([VOLUME.md](VOLUME.md)). **No se agregan funciones**: lo que sigue es usarlo.
+
+1. **Usuario:** desplegar la nube en Vercel (rama `casamiga-web`; migraciones de la nube hasta 009) y capturar las variables ([WEB.md](WEB.md)).
+2. **Usuario:** revisar por qué falló el CI de `main` en 1cb85cc (el CI ahora anota la prueba fallida en el correo) o correr `gh auth login`.
+3. Instalador 1.0 para la caja (`scripts/build-installer.ps1 -Version 1.0.0`), sin firma salvo nueva decisión.
+4. Piloto de una a dos semanas con [PILOTO.md](PILOTO.md) y el [MANUAL.md](MANUAL.md); corregir lo que salga.
+5. Pendiente técnico: actualizar `@vercel/blob` a 2.x (avisos de seguridad de `undici`), probando respaldos.
+
+Decisiones abiertas (no se hacen sin autorización): vender sin Internet en la web, impresora y cajón desde el navegador, consumo de inventario de las ventas web, firma del instalador.
+
+---
+
+# Registro anterior
+
 # FASE 1K.4D-R1 aprobada — siguiente trabajo pendiente de autorización
 
 El usuario aprobó el smoke visual final del build `work/Abrir-Casa-Miga-1K4D-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4D-R1`, con DataDirectory aislado `work/phase1k4d-r1-smoke-20261008` (schema 17).
