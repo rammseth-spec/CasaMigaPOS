@@ -128,5 +128,25 @@ public sealed class CloudEndToEndTests : SalesFixture
         // 6. Otra vuelta no repite nada.
         await engine.RunOnceAsync();
         Assert.AreEqual(1L, Convert.ToInt64(Sql("SELECT count(*) FROM web_sale")));
+
+        // 7. Simulacro de respaldo: la caja respalda en la nube y se restaura en una carpeta nueva como en docs/BACKUPS.md
+        //    (CasaMiga.Maintenance restore-cloud): misma base, con la venta del mostrador, la venta web y el precio nuevo.
+        using var backupHttp = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
+        var withBackup = new SyncEngine(new SqliteSyncOutbox(db), new HttpSyncTransport(new HttpClient()), directory, backup: new CloudBackupService(directory, db), backupHttp: backupHttp);
+        var uploaded = await withBackup.BackupAsync();
+        Assert.IsNotNull(uploaded);
+        var restored = Path.Combine(Path.GetTempPath(), "cm-restore-" + Guid.NewGuid().ToString("N")[..8]);
+        try
+        {
+            var folder = await CloudRestore.FromWebAsync(cloud.Url, "admin", password, restored, null, terminal.Name);
+            var copy = new Database(Path.Combine(folder, "casamiga.db"));
+            using var connection = copy.Open(readOnly: true);
+            long Count(string sql) { using var c = connection.CreateCommand(); c.CommandText = sql; return Convert.ToInt64(c.ExecuteScalar()); }
+            Assert.AreEqual(1L, Count("SELECT count(*) FROM sale"));
+            Assert.AreEqual(1L, Count("SELECT count(*) FROM web_sale"));
+            Assert.AreEqual(2100L, Count($"SELECT price_cents FROM product WHERE id='{product.Id:D}'"));
+            Assert.AreEqual(Count("SELECT count(*) FROM audit_entry"), Convert.ToInt64(Sql("SELECT count(*) FROM audit_entry")), "Same audit trail as the original.");
+        }
+        finally { try { Directory.Delete(restored, true); } catch (IOException) { } }
     }
 }
