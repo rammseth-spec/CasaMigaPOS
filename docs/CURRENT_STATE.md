@@ -1,3 +1,11 @@
+# FASE 1K.4G-B-R1 TÉCNICAMENTE COMPLETADA — SMOKE HUMANO PENDIENTE, 11/10/2026
+
+La tabla **Resultado real obtenido** conserva completos Producto, Piezas planeadas, Piezas reales y Comparación. Producto y Comparación distribuyen el espacio de forma flexible; las columnas numéricas tienen mínimos seguros, encabezados y valores centrados, editor con padding/foco nativo y filas automáticas desde 48 DIP. La comparación admite wrapping sin perder información. Resize y reorder están bloqueados únicamente en esta tabla.
+
+La corrección se limita a Presentation/WPF y pruebas. Focales: 78/78 generales de Producción y 3/3 WPF de Producción. Suite oficial **797/797** (584 general + 213 WPF), 0 fallidas/omitidas; Release `src/CasaMiga.Presentation/bin/Phase1K4G-B-R1/` con 0 errores/advertencias. Fixture schema 17 reutilizada sin registrar el borrador, sin migración 018, sin push y sin PR. Ver [PHASE_1K4G_B_R1_REPORT.md](PHASE_1K4G_B_R1_REPORT.md).
+
+## Registro anterior — 1K.4G-B
+
 # FASE 1K.4G-B TÉCNICAMENTE COMPLETADA — SMOKE HUMANO PENDIENTE, 10/10/2026
 
 Producción ahora permite buscar todos los productos activos, agregarlos a un plan multiproducto y comprender su preparación mediante estados derivados `LISTO PARA PRODUCIR`, `RECETA INCOMPLETA` y `SIN RECETA`. Los productos bloqueantes permanecen visibles y explican la configuración faltante. El flujo reutiliza la consolidación exacta de fórmulas compartidas, preview sin escritura, borrador inmutable, resultado real por producto y confirmación atómica de consumo más salida terminada. Se añadió merma mínima de producto terminado sobre el ledger `WASTE` existente, con motivo, nota y protección contra saldo negativo.

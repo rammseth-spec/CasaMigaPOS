@@ -181,6 +181,48 @@ public sealed class UsabilityPresentationTests
         fixture.AssertNoOperations();
     });
 
+    [TestMethod]
+    public Task ProductionResultGridKeepsCompleteHeadersCenteredNumbersAndReadableComparison()=>WpfTestHost.OnUi(() =>
+    {
+        var first=new ProductionResultLayoutRow("Producto sintético A","3","2","1 pieza menos de lo planeado");
+        var second=new ProductionResultLayoutRow("Producto sintético B","2","2","Igual a lo planeado");
+        var view=new ProductionView{DataContext=new ProductionResultLayoutModel(new[]{first,second})};
+        var window=new Window{Content=view,Left=-10000,Top=-10000,ShowInTaskbar=false,ShowActivated=false,WindowStartupLocation=WindowStartupLocation.Manual};
+        try
+        {
+            window.Show();
+            foreach(var (width,height,label) in new[]{(1280d,820d,"1280×820"),(1920d,1080d,"1920×1080"),(3440d,1440d,"3440×1440"),(1920d,1080d,"F11")})
+            {
+                window.Width=width;window.Height=height;WpfTestHost.Layout(window,width,height);
+                var grid=Descendants<DataGrid>(view).Single(x=>AutomationProperties.GetName(x)=="Resultado real de producción"&&Visible(x));
+                CollectionAssert.AreEqual(new[]{"Producto","Piezas planeadas","Piezas reales","Comparación"},grid.Columns.Select(x=>x.Header?.ToString()).ToArray(),label);
+                Assert.IsFalse(grid.CanUserResizeColumns,label);Assert.IsFalse(grid.CanUserReorderColumns,label);
+                Assert.AreEqual(180d,grid.Columns[0].MinWidth,label);Assert.AreEqual(165d,grid.Columns[1].MinWidth,label);Assert.AreEqual(150d,grid.Columns[2].MinWidth,label);Assert.AreEqual(260d,grid.Columns[3].MinWidth,label);
+                Assert.AreEqual(ScrollBarVisibility.Disabled,ScrollViewer.GetHorizontalScrollBarVisibility(grid),label);
+                Assert.AreEqual(48d,grid.MinRowHeight,label);
+                foreach(var row in Descendants<DataGridRow>(grid)){Assert.IsTrue(double.IsNaN(row.Height),label);Assert.IsGreaterThanOrEqualTo(48d,row.ActualHeight,label);}
+                foreach(var header in Descendants<DataGridColumnHeader>(grid).Where(x=>x.Content is string))
+                {
+                    Assert.AreEqual(VerticalAlignment.Center,header.VerticalContentAlignment,label);
+                    Assert.AreEqual(Equals(header.Content,"Producto")?HorizontalAlignment.Left:HorizontalAlignment.Center,header.HorizontalContentAlignment,label);
+                }
+                var planned=Descendants<TextBlock>(grid).Single(x=>ReferenceEquals(x.DataContext,first)&&x.Text=="3");
+                var actual=Descendants<TextBlock>(grid).Single(x=>ReferenceEquals(x.DataContext,first)&&x.Text=="2");
+                Assert.AreEqual(TextAlignment.Center,planned.TextAlignment,label);Assert.AreEqual(VerticalAlignment.Center,planned.VerticalAlignment,label);
+                Assert.AreEqual(TextAlignment.Center,actual.TextAlignment,label);Assert.AreEqual(VerticalAlignment.Center,actual.VerticalAlignment,label);
+                var comparison=Descendants<TextBlock>(grid).Single(x=>ReferenceEquals(x.DataContext,first)&&x.Text=="1 pieza menos de lo planeado");
+                Assert.AreEqual(TextWrapping.Wrap,comparison.TextWrapping,label);Assert.AreEqual(VerticalAlignment.Center,comparison.VerticalAlignment,label);
+                Assert.IsGreaterThan(0d,comparison.Margin.Left,label);Assert.IsGreaterThan(0d,comparison.Margin.Top,label);
+            }
+            var resultGrid=Descendants<DataGrid>(view).Single(x=>AutomationProperties.GetName(x)=="Resultado real de producción"&&Visible(x));
+            resultGrid.SelectedItem=first;resultGrid.CurrentCell=new DataGridCellInfo(first,resultGrid.Columns[2]);Assert.IsTrue(resultGrid.BeginEdit());WpfTestHost.Layout(window,1280,820);
+            var editor=Descendants<TextBox>(resultGrid).Single(x=>ReferenceEquals(x.DataContext,first));
+            Assert.AreEqual("2",editor.Text);Assert.AreEqual(TextAlignment.Center,editor.TextAlignment);Assert.AreEqual(HorizontalAlignment.Center,editor.HorizontalContentAlignment);Assert.AreEqual(VerticalAlignment.Center,editor.VerticalContentAlignment);Assert.IsGreaterThan(0d,editor.Padding.Left);
+            resultGrid.CancelEdit();
+        }
+        finally{window.Close();}
+    });
+
     private static (ScrollViewer Page,UserControl Module) Page(UIElement child)
     {
         var stack=new StackPanel();stack.Children.Add(child);stack.Children.Add(new Border{Height=900});
@@ -220,5 +262,22 @@ public sealed class UsabilityPresentationTests
         public ProductionViewModel Production()=>new(new(new SqliteProductionUnitOfWork(database),user,clock,terminal.Id),recipes,InventoryService,catalog,user,terminal.Id,(_,_)=>{});
         public void AssertNoOperations(){using var c=database.Open(true);foreach(var table in new[]{"sale","inventory_operation","production_batch"}){using var command=c.CreateCommand();command.CommandText=$"SELECT count(*) FROM {table}";Assert.AreEqual(0L,(long)command.ExecuteScalar()!,table);}}
         public void Dispose()=>Directory.Delete(root,true);
+    }
+
+    private sealed record ProductionResultLayoutModel(IReadOnlyList<ProductionResultLayoutRow> Actuals)
+    {
+        public bool Ready=>true;
+        public bool IsDetail=>true;
+        public bool DetailIsDraft=>true;
+        public string ActualHelpText=>"Ayuda";
+        public bool CanConfirmDetail=>false;
+    }
+
+    private sealed class ProductionResultLayoutRow(string productName,string planned,string actual,string difference)
+    {
+        public string ProductName{get;}=productName;
+        public string Planned{get;}=planned;
+        public string Actual{get;set;}=actual;
+        public string Difference{get;}=difference;
     }
 }

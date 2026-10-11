@@ -1,4 +1,18 @@
-# Próximo paso — smoke manual de FASE 1K.4G-B
+# Próximo paso — continuar smoke manual de FASE 1K.4G-B-R1
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4G-B-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-B-R1`, DataDirectory `work/phase1k4g-b-smoke-20261010` y las credenciales verificadas entregadas en la conversación.
+
+1. Iniciar sesión y abrir **Producción → Producciones en borrador → Ver detalle**.
+2. Confirmar que los encabezados completos son Producto, Piezas planeadas, Piezas reales y Comparación.
+3. Revisar A: planeado 3, real 2, `1 pieza menos de lo planeado`.
+4. Revisar B: planeado 2, real 2, `Igual a lo planeado`.
+5. Comprobar centrado, padding, foco del editor y wrapping en 1280×820, 1920×1080, 3440×1440 y F11.
+6. No redimensionar/reordenar columnas: ambas acciones están bloqueadas deliberadamente en esta tabla.
+7. **No pulsar Registrar producción.** No imprimir, no usar cajón y no modificar datos.
+
+Esperar aprobación humana. No push, no PR y no iniciar 1K.4G-C ni 1K.4H-B.
+
+## Registro anterior — smoke manual de FASE 1K.4G-B
 
 Usar exclusivamente `work/Abrir-Casa-Miga-1K4G-B.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-B`, DataDirectory `work/phase1k4g-b-smoke-20261010` y las credenciales verificadas entregadas en la conversación.
 
