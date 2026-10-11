@@ -27,7 +27,8 @@ try {
   for (const [name, ticket, copy] of tickets) {
     await page.evaluate(async ([t, c]) => {
       window.print = () => {};
-      const pos = await import('/js/pos.js');
+      const module = '/js/pos.js'; // ruta del navegador, no de Node
+      const pos = await import(module);
       pos.printTicket(t, c);
     }, [ticket, copy] as const);
     await page.locator('#print-area .receipt img').evaluateAll(images => Promise.all(images.map(i => (i as HTMLImageElement).decode().catch(() => {}))));
