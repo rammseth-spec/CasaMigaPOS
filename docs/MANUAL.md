@@ -144,6 +144,7 @@ En la computadora nueva, con Casa Miga cerrado: `CasaMiga.Maintenance restore-cl
 
 | Pasa esto | Haz esto |
 |---|---|
+| Aviso naranja «tiene la caja abierta y no se conecta» (web, encargado) | La computadora de la caja está sin Internet o apagada a media jornada. Revisa la red y que Casa Miga siga abierto; al volver sube todo solo. |
 | «Nube: sin conexión» | Sigue trabajando en la caja; sube todo al volver el Internet. En la web, espera a que regrese la red. |
 | No puedo entrar | Revisa mayúsculas. Tras varios intentos se bloquea un rato. Pide al administrador que restablezca tu contraseña. |
 | Me equivoqué en una venta | El encargado la cancela o devuelve piezas desde **Ventas** (con la caja abierta y antes del conteo). |

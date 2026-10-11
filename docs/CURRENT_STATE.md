@@ -6,8 +6,9 @@
 - **Navegador real** (`cloud/test-browser`, playwright-core sobre Edge/Chrome instalado, login real): entrar, vender (efectivo y tarjeta), tarjetas, historial, reportes, catálogo «Por confirmar», usuario nuevo con contraseña temporal, tienda nueva, corte con faltante y celular sin desbordes. Arreglos que salieron: foto de las tarjetas a todo el ancho y avisos que ya no se enciman.
 - **Punta a punta** (`CloudEndToEndTests`): la caja real contra la nube local (`cloud/scripts/e2e-server.ts`): alta, subida, login web con la contraseña de la caja, precio visible al momento, venta web, la caja aplica y rechaza, reportes con la venta web, y **simulacro de respaldo y restauración** en carpeta nueva.
 - **Volumen** ([VOLUME.md](VOLUME.md)): un año (109,500 ventas). Caja: Resumen de un año 100 s → 1.6 s (los reportes ya no unen las vistas `report_*`; **migración 030** con índices por fecha). Web: **migración de la nube 009** (`cm_utc` e índices) y consultas por rango UTC; Resumen de 92 días 51 s → 9 s en PGlite, pronóstico 24 s → 0.08 s. Ganancia en la web descuenta devoluciones por su fecha, igual que la caja.
+- **Aviso en la web** (encargado y administrador): si una caja de escritorio tiene la caja abierta y no se conecta desde hace más de 15 minutos, sale un aviso arriba (`/api/web/alerts`, revisado cada minuto); con la caja cerrada no avisa. Pruebas: nube `alerts.test.ts`, navegador «alert».
 - **Documentos:** [MANUAL.md](MANUAL.md) (cajero, encargado, administrador, web), [PILOTO.md](PILOTO.md), [RELEASE_NOTES_1.0.md](RELEASE_NOTES_1.0.md) y [NEXT_STEPS.md](NEXT_STEPS.md) al día.
-- Verificación: `verify.ps1` 727 + 210 (1 omitida: volumen, se activa con `CASAMIGA_VOLUME=1`); nube 72 + 10 en navegador.
+- Verificación: `verify.ps1` 727 + 210 (1 omitida: volumen, se activa con `CASAMIGA_VOLUME=1`); nube 73 + 11 en navegador.
 
 # Todas las pantallas de la web iguales a la caja (Catálogo a Usuarios) — 09/10/2026
 

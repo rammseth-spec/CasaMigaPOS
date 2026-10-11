@@ -271,6 +271,21 @@ function autoRefresh() {
   render({ silent: true });
 }
 
+/** Aviso de cajas con la caja abierta que no se conectan (encargado y administrador); se revisa cada minuto. */
+let lastAlerts = 0;
+async function checkAlerts() {
+  const node = $('alert');
+  lastAlerts = Date.now();
+  if (!state.me || !can('sales.view')) { node.hidden = true; return; }
+  try {
+    const list = await api('alerts', { branch: state.branch });
+    const since = t => t ? `desde las ${new Date(t).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: state.timeZone })}` : 'desde que se registró';
+    node.textContent = list.map(a => `${a.terminal} tiene la caja abierta y no se conecta ${since(a.lastSeenAt)}.`).join(' ')
+      + (list.length ? ' Revisa el Internet o la computadora de la caja (toca para ver Nube).' : '');
+    node.hidden = list.length === 0;
+  } catch { /* sin red: ya lo dice la píldora de la nube */ }
+}
+
 // ---------- Acceso ----------
 export function showLogin(message) {
   $('app').hidden = true; $('login').hidden = false; $('password-form').hidden = true; $('login-form').hidden = false;
@@ -370,7 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('change-password').addEventListener('click', () => showPasswordForm($('username').value));
   $('forgot').addEventListener('click', () => { $('login-help').hidden = !$('login-help').hidden; });
   $('logout').addEventListener('click', async () => {
-    await post('logout', {}).catch(() => {}); state.me = null;
+    await post('logout', {}).catch(() => {}); state.me = null; $('alert').hidden = true; lastAlerts = 0;
     setKey('cm-dev-out', '1', true); // en el servidor de prueba, no volver a entrar solo
     showLogin(''); showDevUsers();
   });
@@ -383,7 +398,8 @@ document.addEventListener('DOMContentLoaded', () => {
   $('branch').addEventListener('change', () => { state.branch = $('branch').value; remember(); window.dispatchEvent(new Event('cm-branch')); render(); });
   window.addEventListener('hashchange', () => { if (state.me) render(); });
   $('refresh').addEventListener('click', () => { lastRefresh = Date.now(); render({ silent: true }); });
-  setInterval(() => { if (Date.now() - lastRefresh >= REFRESH_MS) autoRefresh(); }, 5_000);
+  setInterval(() => { if (Date.now() - lastRefresh >= REFRESH_MS) autoRefresh(); if (state.me && Date.now() - lastAlerts >= 60_000) checkAlerts(); }, 5_000);
+  $('alert').addEventListener('click', () => { location.hash = '#/nube'; });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - lastRefresh >= 15_000) autoRefresh(); });
   start().catch(e => showLogin(e.status === 401 ? '' : e.message));
 });

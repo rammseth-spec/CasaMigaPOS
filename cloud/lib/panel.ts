@@ -161,6 +161,20 @@ export async function terminals(q: Query, branchId: string | null): Promise<Term
     lastSeenAt: x.last_seen_at ? iso(x.last_seen_at) : null, revoked: x.revoked_at !== null && x.revoked_at !== undefined, web: x.kind === 'web' }));
 }
 
+/**
+ * Aviso para encargados: una caja de escritorio con la caja ABIERTA que no se conecta desde hace más de 15 minutos (sin Internet o la
+ * computadora apagada a media jornada). Con la caja cerrada no avisa: de noche es normal que no se conecte.
+ */
+export async function alerts(q: Query, branchId: string | null) {
+  const rows = await q(`SELECT DISTINCT t.id, t.name, t.last_seen_at FROM terminal t
+    JOIN entity_state c ON c.terminal_id = t.id AND c.entity = 'cash_session' AND NOT c.deleted AND c.payload->>'state' = 'OPEN'
+    WHERE t.kind = 'desktop' AND t.revoked_at IS NULL AND ($1::uuid IS NULL OR t.branch_id = $1::uuid)
+      AND (t.last_seen_at IS NULL OR t.last_seen_at < now() - interval '15 minutes')
+    ORDER BY t.name`, [branchId]);
+  const iso = (v: unknown) => (v instanceof Date ? v.toISOString() : v ? String(v) : null);
+  return rows.map(x => ({ terminalId: String(x.id), terminal: String(x.name), lastSeenAt: iso(x.last_seen_at) }));
+}
+
 export async function branches(q: Query): Promise<{ id: string; name: string }[]> {
   return (await q('SELECT id, name FROM branch ORDER BY name', [])).map(x => ({ id: String(x.id), name: String(x.name) }));
 }

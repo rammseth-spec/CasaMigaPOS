@@ -144,6 +144,7 @@ button.status-pill:hover { background: var(--hover); }
 .filters select { width: auto; min-height: 38px; padding: 6px 10px; }
 .content { padding: 0 16px 24px 24px; display: grid; gap: 16px; align-content: start; }
 .banner { background: var(--error-soft); color: var(--error); border-radius: 12px; padding: 10px 14px; margin: 0 16px 12px 24px; }
+.banner.warn { background: var(--warn-soft); color: var(--warn-text); cursor: pointer; }
 .notice { background: var(--primary-soft); color: var(--primary-hover); border-radius: 12px; padding: 10px 14px; }
 
 /* ---------- Bloques ---------- */

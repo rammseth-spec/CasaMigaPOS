@@ -17,6 +17,7 @@ Candidata a 1.0 para el piloto en sucursal ([PILOTO.md](PILOTO.md)). Manual del 
 **Versión web (celular, tableta o computadora)**
 - Las mismas pantallas con el diseño de la caja, incluida la venta y el corte en cajas web con folios propios.
 - Cambios de catálogo, usuarios y tiendas visibles al momento, marcados «Por confirmar» hasta que la caja los recibe.
+- Aviso para el encargado si una caja tiene la caja abierta y deja de conectarse.
 
 ## Versiones de datos
 
@@ -27,7 +28,7 @@ Candidata a 1.0 para el piloto en sucursal ([PILOTO.md](PILOTO.md)). Manual del 
 ## Pruebas
 
 - Caja: 727 pruebas automáticas más 210 de pantallas, incluida la de punta a punta con la nube y el simulacro de respaldo y restauración.
-- Web: 72 pruebas de la nube y 10 recorridos en navegador (escritorio y celular).
+- Web: 73 pruebas de la nube y 11 recorridos en navegador (escritorio y celular).
 - Volumen: un año de ventas (109,500) con tiempos por pantalla en [VOLUME.md](VOLUME.md).
 - CI en GitHub: la caja (Windows) y la web (Linux), con la prueba fallida anotada en el correo.
 

@@ -4,6 +4,7 @@ import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Browser, Page } from 'playwright-core';
 import { horizontalOverflow, newPage, PASSWORDS, shot, signIn, startApp } from './harness.js';
+import { caja1, centro, send } from '../test/helpers.js';
 
 let app: Awaited<ReturnType<typeof startApp>>;
 let page: Page;
@@ -160,6 +161,18 @@ test('cash: blind count, shortage needs a note, then the till closes', () => ste
   await confirm.click();
   await page.getByText('Caja cerrada.').first().waitFor();
   await shot(page, 'caja-cerrada');
+}));
+
+test('alert: the desktop register has its till open and stopped connecting', () => step('aviso', async () => {
+  await send(app.q, caja1, centro, [{ entity: 'cash_session', id: 'cs-desk', payload: { id: 'cs-desk', terminal_id: caja1, opened_by: 'x', opened_utc: new Date().toISOString(), opening_cents: 0, state: 'OPEN' } }]);
+  await app.q(`UPDATE terminal SET last_seen_at = now() - interval '25 minutes' WHERE id = $1`, [caja1]);
+  await page.reload();
+  const alert = page.locator('#alert');
+  await alert.waitFor({ state: 'visible', timeout: 15000 });
+  assert.match(await alert.innerText(), /CASA-MIGA-CAJA-01 tiene la caja abierta y no se conecta desde las/);
+  await shot(page, 'aviso-caja-sin-conexion');
+  await alert.click();
+  await page.waitForURL(/#\/nube$/);
 }));
 
 test('phone: nothing scrolls sideways and the menu opens', async () => {

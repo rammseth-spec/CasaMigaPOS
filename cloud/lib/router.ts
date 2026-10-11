@@ -1,7 +1,7 @@
 // Todas las rutas de la versión web en una sola función (/api/web/<op>), con la base inyectable para pruebas y revisión local.
 import { failure, json, ProtocolError, readJson } from './protocol.js';
 import { changePassword, clearedCookie, issueSession, login, requirePermission, requireUser, scopeBranch, sessionCookie, sessionSecret, type WebUser } from './auth.js';
-import { dashboard, DEFAULT_TIME_ZONE, MAX_DAYS, parseRange, terminals, branches, type Query, type Range } from './panel.js';
+import { alerts, dashboard, DEFAULT_TIME_ZONE, MAX_DAYS, parseRange, terminals, branches, type Query, type Range } from './panel.js';
 import * as web from './web.js';
 import { createCommand, listCommands } from './commands.js';
 import * as backups from './backup.js';
@@ -16,7 +16,7 @@ export interface Env { SESSION_SECRET?: string; PANEL_TIME_ZONE?: string; BACKUP
 /** Permiso que pide cada pantalla (el mismo de la caja). */
 const VIEW: Record<string, string> = {
   dashboard: 'sales.view', sales: 'sales.view', sale: 'sales.view', compare: 'sales.view', heatmap: 'sales.view', 'cash-control': 'sales.view',
-  'production-suggestion': 'sales.view', report: 'sales.view', forecast: 'sales.view', terminals: 'sales.view', cash: 'cash.view', consignment: 'consignment.view', catalog: 'catalog.view',
+  'production-suggestion': 'sales.view', alerts: 'sales.view', report: 'sales.view', forecast: 'sales.view', terminals: 'sales.view', cash: 'cash.view', consignment: 'consignment.view', catalog: 'catalog.view',
   photo: 'catalog.view', pos: 'pos.use', 'pos-tickets': 'pos.use', 'pos-ticket': 'pos.use', 'pos-closures': 'cash.view', route: 'consignment.view', 'tray-account': 'consignment.view', 'tray-report': 'consignment.view', profit: 'recipe.view', 'tray-analytics': 'consignment.view', backups: 'users.manage', backup: 'users.manage', inventory: 'inventory.view', 'inventory-item': 'inventory.view', 'inventory-check': 'inventory.sale_consumption.configure', recipes: 'recipe.view', production: 'production.view', 'production-plan': 'production.create', 'production-batches': 'production.view', users: 'users.manage', commands: 'sales.view',
 };
 
@@ -117,6 +117,7 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       case 'forecast': return json(200, await reports.forecast(q, branch, timeZone, day(url.searchParams.get('day'), timeZone)));
       case 'production-suggestion': return json(200, await web.productionSuggestion(q, branch, timeZone, day(url.searchParams.get('day'), timeZone)));
       case 'terminals': return json(200, await terminals(q, branch));
+      case 'alerts': return json(200, await alerts(q, branch));
       case 'cash': {
         requirePermission(user, 'sales.view'); // trae el esperado del turno abierto: el cajero cuenta a ciegas
         const r = range();
