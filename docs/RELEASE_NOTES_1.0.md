@@ -19,6 +19,10 @@ Candidata a 1.0 para el piloto en sucursal ([PILOTO.md](PILOTO.md)). Manual del 
 - Cambios de catálogo, usuarios y tiendas visibles al momento, marcados «Por confirmar» hasta que la caja los recibe.
 - Aviso para el encargado si una caja tiene la caja abierta y deja de conectarse.
 
+## Instalador
+
+`CasaMigaPOS-1.0.0-setup.exe` · SHA-256 `02D4081A40D8255EB7353A6E63277739A4B57750361B763A7B16C8187F4A5E41` (generado con `scripts/build-installer.ps1 -Version 1.0.0`; `artifacts/` no se versiona).
+
 ## Versiones de datos
 
 - Caja: migraciones hasta **030** (029 copia de ventas web, 030 índices de reportes).
@@ -34,7 +38,8 @@ Candidata a 1.0 para el piloto en sucursal ([PILOTO.md](PILOTO.md)). Manual del 
 
 ## Limitaciones conocidas
 
-- La web necesita Internet; imprime con el navegador y no abre el cajón.
+- La web necesita Internet; imprime con el navegador (mismo diseño de ticket que la caja) y no abre el cajón.
+- El ticket de la caja dice «Pago CASH» en efectivo (formato validado en la impresora; cambiarlo requiere probar en la impresora).
 - Las ventas web no descuentan inventario en la caja (el consumo automático está apagado).
 - Si una caja rechaza un producto nuevo que ya se vendió en la web, la venta queda registrada con un producto que la caja no tiene.
 - El instalador no está firmado digitalmente (Windows puede advertir al instalar).
