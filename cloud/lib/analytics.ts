@@ -3,7 +3,7 @@
 // de cada insumo. Política de redondeo: el costo por pieza se redondea al centavo (mitad hacia arriba) y los totales son
 // costo por pieza × piezas; son estimaciones para decidir, no contabilidad.
 import type { Query, Range, Row } from './panel.js';
-import { REFUNDS, SALES } from './panel.js';
+import { REFUNDS_IN, SALES, SALES_IN } from './panel.js';
 
 const n = (v: unknown) => (v === null || v === undefined ? 0 : Number(v));
 const s = (v: unknown) => (v === null || v === undefined ? '' : String(v));
@@ -83,24 +83,21 @@ export async function profit(q: Query, r: Range) {
     return rows.get(k)!;
   };
   // Mostrador: lo vendido menos lo devuelto (por partida de la venta).
-  const sold = await q(`WITH s AS (${SALES})
+  const sold = await q(`WITH s AS (${SALES_IN})
     SELECT s.branch_id, i->>'product_id' AS product_id, i->>'product_name' AS name, (i->>'position')::int AS position, s.sale_id,
       (i->>'quantity')::bigint AS quantity, (i->>'line_total_cents')::bigint AS total
     FROM s, jsonb_array_elements(s.payload->'items') i
     WHERE s.day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR s.branch_id = $4::uuid)`, [r.timeZone, r.from, r.to, r.branchId]);
-  const position = new Map<string, Row>();
   for (const x of sold) {
-    position.set(`${s(x.sale_id)}/${n(x.position)}`, x);
     const p = at(s(x.branch_id), s(x.product_id), s(x.name)); p.counterPieces += n(x.quantity); p.counterRevenue += n(x.total);
   }
-  const refunded = await q(`WITH r AS (${REFUNDS})
-    SELECT r.sale_id, (i->>'position')::int AS position, (i->>'quantity')::bigint AS quantity, (i->>'line_total_cents')::bigint AS total
-    FROM r, jsonb_array_elements(r.payload->'items') i WHERE r.day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR r.branch_id = $4::uuid)`,
-    [r.timeZone, r.from, r.to, r.branchId]);
+  // Devoluciones por su fecha (como los reportes y la caja), aunque la venta sea de otro periodo: el pan sale de la partida devuelta.
+  const refunded = await q(`WITH r AS (${REFUNDS_IN}), s AS (${SALES})
+    SELECT s.branch_id, si->>'product_id' AS product_id, si->>'product_name' AS name, (ri->>'quantity')::bigint AS quantity, (ri->>'line_total_cents')::bigint AS total
+    FROM r JOIN s ON s.sale_id = r.sale_id AND s.branch_id = r.branch_id, jsonb_array_elements(r.payload->'items') ri, jsonb_array_elements(s.payload->'items') si
+    WHERE (si->>'position')::int = (ri->>'position')::int`, [r.timeZone, r.from, r.to, r.branchId]);
   for (const x of refunded) {
-    const line = position.get(`${s(x.sale_id)}/${n(x.position)}`);
-    if (!line) continue; // devolución de una venta de otro periodo: no se mezcla
-    const p = at(s(line.branch_id), s(line.product_id), s(line.name)); p.counterPieces -= n(x.quantity); p.counterRevenue -= n(x.total);
+    const p = at(s(x.branch_id), s(x.product_id), s(x.name)); p.counterPieces -= n(x.quantity); p.counterRevenue -= n(x.total);
   }
   // Charolas: lo cobrado de las recogidas en el periodo; lo que regresa se cuenta como costo perdido.
   const trays = await q(`SELECT branch_id, payload FROM entity_state WHERE entity = 'consignment_delivery' AND payload->'settlement' IS NOT NULL AND payload->'settlement' <> 'null'::jsonb

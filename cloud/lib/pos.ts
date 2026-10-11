@@ -170,12 +170,13 @@ export async function expectedCash(q: Query, branchId: string, sessionId: string
   const [row] = await q(`WITH
     sales AS (SELECT entity_id, COALESCE(payload->'payment'->>'method', 'CASH') AS method,
         COALESCE((payload->'payment'->>'applied_cents')::bigint, (payload->'sale'->>'total_cents')::bigint) AS applied
-      FROM entity_state WHERE branch_id = $1 AND entity = 'sale' AND NOT deleted AND payload->'sale'->>'cash_session_id' = $2),
-    all_sales AS (SELECT entity_id, COALESCE(payload->'payment'->>'method', 'CASH') AS method FROM entity_state WHERE branch_id = $1 AND entity = 'sale' AND NOT deleted)
+      FROM entity_state WHERE branch_id = $1 AND entity = 'sale' AND NOT deleted AND payload->'sale'->>'cash_session_id' = $2)
     SELECT (SELECT COALESCE(sum(applied), 0) FROM sales WHERE method = 'CASH') AS cash_sales,
       (SELECT count(*) FROM sales) AS tickets,
-      (SELECT COALESCE(sum((r.payload->'refund'->>'total_cents')::bigint), 0) FROM entity_state r JOIN all_sales x ON x.entity_id = r.payload->'refund'->>'sale_id'
-        WHERE r.branch_id = $1 AND r.entity = 'sale_refund' AND NOT r.deleted AND r.payload->'refund'->>'cash_session_id' = $2 AND x.method = 'CASH') AS cash_refunds,
+      (SELECT COALESCE(sum((r.payload->'refund'->>'total_cents')::bigint), 0) FROM entity_state r
+        JOIN entity_state x ON x.branch_id = r.branch_id AND x.entity = 'sale' AND NOT x.deleted AND x.entity_id = r.payload->'refund'->>'sale_id'
+        WHERE r.branch_id = $1 AND r.entity = 'sale_refund' AND NOT r.deleted AND r.payload->'refund'->>'cash_session_id' = $2
+          AND COALESCE(x.payload->'payment'->>'method', 'CASH') = 'CASH') AS cash_refunds,
       (SELECT COALESCE(sum(CASE WHEN payload->>'kind' = 'DEPOSIT' THEN 1 ELSE -1 END * (payload->>'amount_cents')::bigint), 0)
         FROM entity_state WHERE branch_id = $1 AND entity = 'cash_movement' AND NOT deleted AND payload->>'cash_session_id' = $2) AS movements`, [branchId, sessionId]);
   const session = await sessionPayload(q, branchId, sessionId);

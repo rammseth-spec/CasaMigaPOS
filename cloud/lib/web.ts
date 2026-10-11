@@ -2,7 +2,7 @@
 // `branch` ya viene acotado por el rol (auth.scopeBranch): null = todas las sucursales (sólo administrador).
 import { pendingOf } from './optimistic.js';
 import { ProtocolError } from './protocol.js';
-import { REFUNDS, SALES, type Query, type Range, type Row } from './panel.js';
+import { inPeriod, REFUNDS, REFUNDS_IN, SALES, SALES_IN, type Query, type Range, type Row } from './panel.js';
 
 const n = (v: unknown) => (v === null || v === undefined ? 0 : Number(v));
 const s = (v: unknown) => (v === null || v === undefined ? '' : String(v));
@@ -56,13 +56,13 @@ export async function salesList(q: Query, f: SaleFilter) {
       (SELECT sum((i->>'quantity')::bigint) FROM jsonb_array_elements(s.payload->'items') i) AS pieces,
       refunded.total AS refunded, refunded.cancelled, count(*) OVER () AS total_count
     FROM s LEFT JOIN refunded ON refunded.sale_id = s.sale_id
-    WHERE ($2::date IS NULL OR s.day BETWEEN $2::date AND $3::date) AND ($4::uuid IS NULL OR s.branch_id = $4::uuid)
+    WHERE ($2::date IS NULL OR (${inPeriod("s.payload->'sale'->>'confirmed_utc'")})) AND ($4::uuid IS NULL OR s.branch_id = $4::uuid)
       AND ($5::text IS NULL OR s.method = $5)
       AND ($6::bigint IS NULL OR (s.payload->'sale'->>'sequence')::bigint = $6)
       AND ($7::text IS NULL OR EXISTS (SELECT 1 FROM jsonb_array_elements(s.payload->'items') i WHERE i->>'product_name' ILIKE '%' || $7 || '%'))
       AND ($9::uuid[] IS NULL OR s.terminal_id = ANY($9::uuid[]))
       AND ($10::text IS NULL OR s.session_id = $10)
-    ORDER BY (s.payload->'sale'->>'confirmed_utc')::timestamptz DESC, s.sale_id
+    ORDER BY cm_utc(s.payload->'sale'->>'confirmed_utc') DESC, s.sale_id
     LIMIT ${PAGE} OFFSET $8`,
     [f.timeZone, f.from, f.to, f.branchId, f.method, folio ? Number(folio[2]) : null, !folio && search ? search.slice(0, 80) : null, f.page * PAGE, terminals, f.session ?? null]);
   const items = rows.map(r => {
@@ -112,12 +112,12 @@ export async function comparison(q: Query, r: Range) {
   const length = (Date.parse(r.to) - Date.parse(r.from)) / 86_400_000 + 1;
   const previous = { ...r, from: shift(r.from, -length), to: shift(r.from, -1) };
   const totals = async (x: Range) => {
-    const rows = await q(`WITH s AS (${SALES}), r AS (${REFUNDS})
+    const rows = await q(`WITH s AS (${SALES_IN}), r AS (${REFUNDS_IN})
       SELECT (SELECT count(*) FROM s WHERE day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR branch_id = $4::uuid)) AS tickets,
         (SELECT COALESCE(sum(total), 0) FROM s WHERE day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR branch_id = $4::uuid)) AS gross,
         (SELECT COALESCE(sum(total), 0) FROM r WHERE day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR branch_id = $4::uuid)) AS refunds`,
       [x.timeZone, x.from, x.to, x.branchId]);
-    const days = await q(`WITH s AS (${SALES}) SELECT day::text AS day, sum(total) AS gross FROM s
+    const days = await q(`WITH s AS (${SALES_IN}) SELECT day::text AS day, sum(total) AS gross FROM s
       WHERE day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR branch_id = $4::uuid) GROUP BY day`, [x.timeZone, x.from, x.to, x.branchId]);
     const t = rows[0];
     return { tickets: n(t.tickets), gross: n(t.gross), refunds: n(t.refunds), net: n(t.gross) - n(t.refunds), days: new Map(days.map(d => [s(d.day), n(d.gross)])) };
@@ -130,9 +130,9 @@ export async function comparison(q: Query, r: Range) {
 
 /** Tickets y ventas por día de la semana (0 = domingo) y hora local. */
 export async function heatmap(q: Query, r: Range) {
-  const rows = await q(`WITH s AS (${SALES})
-    SELECT extract(dow FROM (payload->'sale'->>'confirmed_utc')::timestamptz AT TIME ZONE $1)::int AS weekday,
-      extract(hour FROM (payload->'sale'->>'confirmed_utc')::timestamptz AT TIME ZONE $1)::int AS hour, count(*) AS tickets, sum(total) AS gross
+  const rows = await q(`WITH s AS (${SALES_IN})
+    SELECT extract(dow FROM cm_utc(payload->'sale'->>'confirmed_utc') AT TIME ZONE $1)::int AS weekday,
+      extract(hour FROM cm_utc(payload->'sale'->>'confirmed_utc') AT TIME ZONE $1)::int AS hour, count(*) AS tickets, sum(total) AS gross
     FROM s WHERE day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR branch_id = $4::uuid) GROUP BY 1, 2`, [r.timeZone, r.from, r.to, r.branchId]);
   return rows.map(x => ({ weekday: n(x.weekday), hour: n(x.hour), tickets: n(x.tickets), gross: n(x.gross) }));
 }
@@ -143,10 +143,10 @@ export async function cashControl(q: Query, r: Range) {
   const cuts = await q(`SELECT payload->>'opened_by' AS user_id, count(*) AS sessions,
       sum(LEAST((payload->>'difference_cents')::bigint, 0)) AS shortages, sum(GREATEST((payload->>'difference_cents')::bigint, 0)) AS overages,
       count(*) FILTER (WHERE (payload->>'difference_cents')::bigint <> 0) AS uneven
-    FROM entity_state WHERE entity = 'cash_session' AND payload->>'state' = 'CLOSED'
-      AND (((payload->>'opened_utc')::timestamptz AT TIME ZONE $1)::date) BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR branch_id = $4::uuid)
+    FROM entity_state WHERE entity = 'cash_session' AND NOT deleted AND payload->>'state' = 'CLOSED'
+      AND ${inPeriod("payload->>'opened_utc'")} AND ($4::uuid IS NULL OR branch_id = $4::uuid)
     GROUP BY 1`, [r.timeZone, r.from, r.to, r.branchId]);
-  const refunds = await q(`WITH r AS (${REFUNDS})
+  const refunds = await q(`WITH r AS (${REFUNDS_IN})
     SELECT payload->'refund'->>'user_id' AS user_id, payload->'refund'->>'kind' AS kind, payload->'refund'->>'reason' AS reason, total
     FROM r WHERE day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR branch_id = $4::uuid)`, [r.timeZone, r.from, r.to, r.branchId]);
   const byUser = new Map<string, { name: string; count: number; total: number; cancellations: number }>();
@@ -170,10 +170,10 @@ export async function cashControl(q: Query, r: Range) {
 /** Piezas sugeridas para un día: promedio del mismo día de la semana en las 4 semanas anteriores + 10 % (como la caja). */
 export async function productionSuggestion(q: Query, branch: string | null, timeZone: string, day: string) {
   const weeks = [1, 2, 3, 4].map(w => shift(day, -7 * w));
-  const rows = await q(`WITH s AS (${SALES})
+  const rows = await q(`WITH s AS (${SALES} AND ${inPeriod("payload->'sale'->>'confirmed_utc'", '$4', '$5')})
     SELECT i->>'product_name' AS name, s.day::text AS day, sum((i->>'quantity')::bigint) AS quantity
     FROM s, jsonb_array_elements(s.payload->'items') i
-    WHERE s.day = ANY($2::date[]) AND ($3::uuid IS NULL OR s.branch_id = $3::uuid) GROUP BY 1, 2`, [timeZone, weeks, branch]);
+    WHERE s.day = ANY($2::date[]) AND ($3::uuid IS NULL OR s.branch_id = $3::uuid) GROUP BY 1, 2`, [timeZone, weeks, branch, weeks[weeks.length - 1], weeks[0]]);
   const byProduct = new Map<string, number[]>();
   for (const x of rows) { const list = byProduct.get(s(x.name)) ?? []; list.push(n(x.quantity)); byProduct.set(s(x.name), list); }
   return {
@@ -203,7 +203,7 @@ export async function cashMovements(q: Query, r: Range) {
 export async function cashTotals(q: Query, r: Range) {
   const [cuts] = await q(`SELECT count(*) AS sessions, count(*) FILTER (WHERE payload->>'state' <> 'CLOSED') AS open
     FROM entity_state WHERE entity = 'cash_session' AND NOT deleted
-      AND (((payload->>'opened_utc')::timestamptz AT TIME ZONE $1)::date) BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR branch_id = $4::uuid)`,
+      AND ${inPeriod("payload->>'opened_utc'")} AND ($4::uuid IS NULL OR branch_id = $4::uuid)`,
     [r.timeZone, r.from, r.to, r.branchId]);
   const kinds = await q(`SELECT payload->>'kind' AS kind, count(*) AS count, sum((payload->>'amount_cents')::bigint) AS amount
     FROM entity_state WHERE entity = 'cash_movement' AND NOT deleted
