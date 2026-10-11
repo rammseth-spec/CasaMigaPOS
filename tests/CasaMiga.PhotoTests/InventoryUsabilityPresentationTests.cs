@@ -97,13 +97,20 @@ public sealed class InventoryUsabilityPresentationTests
 
         var history = Grid(view, "Historial de inventario");
         history.BringIntoView(); fixture.Layout();
-        Assert.IsTrue(history.Columns.Any(x => Equals(x.Header, "Existencia anterior")));
-        Assert.IsTrue(history.Columns.Any(x => Equals(x.Header, "Existencia resultante")));
-        Assert.IsFalse(history.Columns.Any(x => x.Header is "Delta" or "Antes" or "Después"));
+        CollectionAssert.AreEqual(new[] { "Fecha", "Operación", "Movimiento", "Existencia", "Usuario", "Detalle" }, history.Columns.Select(x => x.Header?.ToString()).ToArray());
+        Assert.IsFalse(history.CanUserResizeColumns);
+        Assert.IsFalse(history.CanUserReorderColumns);
+        Assert.AreEqual(ScrollBarVisibility.Disabled, ScrollViewer.GetHorizontalScrollBarVisibility(history));
         var row = vm.History.Single();
         Assert.AreEqual(fixture.Clock.UtcNow.ToLocalTime().ToString("dd/MM/yyyy · HH:mm", CultureInfo.InvariantCulture), row.Date);
         AssertText(history, row.Date);
+        Assert.AreEqual($"{row.Before} → {row.After}", row.BalanceChange);
+        StringAssert.Contains(row.Detail, $"Motivo: {row.Reason}");
+        StringAssert.Contains(row.Detail, $"Referencia: {row.Reference}");
+        AssertText(history, row.BalanceChange);
+        AssertText(history, row.Detail);
         StringAssert.StartsWith(row.Delta, "+");
+        foreach (var item in Descendants<DataGridRow>(history)) { Assert.IsTrue(double.IsNaN(item.Height)); Assert.IsGreaterThanOrEqualTo(48d, item.ActualHeight); }
         Assert.IsFalse(row.Date.Contains("+00:00") || row.Date.Contains("-06:00"));
         Capture(fixture.Window, $"1k3b-history-{width}.png");
         fixture.AssertUnchanged();

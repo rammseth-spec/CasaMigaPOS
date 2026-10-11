@@ -1,3 +1,11 @@
+# FASE 1K.4G-B-R2 TÉCNICAMENTE COMPLETADA — SMOKE HUMANO DE MERMA PENDIENTE, 11/10/2026
+
+Presentation cuenta con un sistema global reusable de tablas: encabezados con wrapping, texto humano completo, filas automáticas, mínimos seguros, cantidades centradas, importes a la derecha, selección Casa Miga y foco de teclado visible. Se auditaron Catálogo, Inventario, asociaciones, movimientos, Recetas, Producción, Caja, Historial de ventas y Reporte diario. El historial de movimientos se recompuso en Fecha, Operación, Movimiento, Existencia, Usuario y Detalle, sin perder valores ni unidades.
+
+Suite oficial **799/799** (584 general + 215 WPF), 0 fallidas/omitidas; Release `src/CasaMiga.Presentation/bin/Phase1K4G-B-R2/` con 0 errores/advertencias. Fixture `work/phase1k4g-b-r2-smoke-20261011`, schema 17, conserva A=2, B=2, Harina=9.58 kg, Huevo=28 y Agua=4.86 L. Base protegida intacta, sin migración 018, venta, impresión, cajón o merma. Ver [PHASE_1K4G_B_R2_REPORT.md](PHASE_1K4G_B_R2_REPORT.md). No push/PR ni inicio de 1K.4G-C/1K.4H-B.
+
+## Registro anterior — 1K.4G-B-R1
+
 # FASE 1K.4G-B-R1 TÉCNICAMENTE COMPLETADA — SMOKE HUMANO PENDIENTE, 11/10/2026
 
 La tabla **Resultado real obtenido** conserva completos Producto, Piezas planeadas, Piezas reales y Comparación. Producto y Comparación distribuyen el espacio de forma flexible; las columnas numéricas tienen mínimos seguros, encabezados y valores centrados, editor con padding/foco nativo y filas automáticas desde 48 DIP. La comparación admite wrapping sin perder información. Resize y reorder están bloqueados únicamente en esta tabla.

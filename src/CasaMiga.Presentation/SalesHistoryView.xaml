@@ -21,14 +21,14 @@
     </Grid>
    </Border>
    <Grid Grid.Row="2" Margin="0,0,0,8"><TextBlock Text="{Binding FilterSummary}" FontSize="16" FontWeight="SemiBold"/><TextBlock Text="{Binding EmptyMessage}" Foreground="{DynamicResource MutedBrush}" FontSize="16" HorizontalAlignment="Center" Visibility="{Binding HasNoSales,Converter={StaticResource VisibleWhen}}"/></Grid>
-   <DataGrid Grid.Row="3" x:Name="SalesList" ItemsSource="{Binding Sales}" SelectedItem="{Binding SelectedSale}" MinHeight="260" AutomationProperties.Name="Historial de ventas" HorizontalScrollBarVisibility="Disabled">
+   <DataGrid Grid.Row="3" x:Name="SalesList" ItemsSource="{Binding Sales}" SelectedItem="{Binding SelectedSale}" MinHeight="260" AutomationProperties.Name="Historial de ventas" CanUserResizeColumns="False" HorizontalScrollBarVisibility="Disabled">
     <DataGrid.Columns>
-     <DataGridTextColumn Header="Venta" Binding="{Binding SaleNumber}" Width="145"/>
-     <DataGridTextColumn Header="Fecha y hora" Binding="{Binding Date}" Width="155"/>
-     <DataGridTextColumn Header="Total" Binding="{Binding Total}" Width="110"/>
-     <DataGridTextColumn Header="Pago" Binding="{Binding Method}" Width="95"/>
-     <DataGridTextColumn Header="Responsable" Binding="{Binding Cashier}" Width="*" MinWidth="145"/>
-     <DataGridTextColumn Header="Caja" Binding="{Binding Terminal}" Width="160"/>
+     <DataGridTextColumn Header="Venta" Binding="{Binding SaleNumber}" Width="145" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/>
+     <DataGridTextColumn Header="Fecha y hora" Binding="{Binding Date}" Width="155" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/>
+     <DataGridTextColumn Header="Total" Binding="{Binding Total}" Width="110" ElementStyle="{StaticResource CasaMigaTableMoneyTextStyle}" HeaderStyle="{StaticResource CasaMigaTableCenteredHeaderStyle}"/>
+     <DataGridTextColumn Header="Pago" Binding="{Binding Method}" Width="95" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/>
+     <DataGridTextColumn Header="Responsable" Binding="{Binding Cashier}" Width="*" MinWidth="145" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/>
+     <DataGridTextColumn Header="Caja" Binding="{Binding Terminal}" Width="160" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/>
     </DataGrid.Columns>
    </DataGrid>
    <DockPanel Grid.Row="4" Margin="0,10,0,0"><Button DockPanel.Dock="Right" Content="Ver detalle" Click="DetailClick" Margin="12,0,0,0"/><WrapPanel DockPanel.Dock="Right"><Button Content="Anterior" Click="PreviousClick" IsEnabled="{Binding HasPrevious}" Margin="0,0,8,0"/><Button Content="Siguiente" Click="NextClick" IsEnabled="{Binding HasNext}"/></WrapPanel><TextBlock Text="{Binding PageLabel}" FontSize="14" VerticalAlignment="Center"/></DockPanel>
@@ -37,13 +37,13 @@
    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
    <TextBlock Text="{Binding DetailTitle}" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,8"/>
    <TextBlock Grid.Row="1" Text="{Binding DetailContext}" FontSize="15" Margin="0,0,0,10" TextWrapping="Wrap"/>
-   <DataGrid Grid.Row="2" ItemsSource="{Binding DetailItems}" MinHeight="230" AutomationProperties.Name="Partidas de venta" HorizontalScrollBarVisibility="Disabled">
+   <DataGrid Grid.Row="2" ItemsSource="{Binding DetailItems}" MinHeight="230" AutomationProperties.Name="Partidas de venta" CanUserResizeColumns="False" HorizontalScrollBarVisibility="Disabled">
     <DataGrid.Columns>
-     <DataGridTextColumn Header="#" Binding="{Binding Position}" Width="45"/>
-     <DataGridTextColumn Header="Producto vendido" Binding="{Binding Name}" Width="*" MinWidth="260"/>
-     <DataGridTextColumn Header="Precio unitario" Binding="{Binding UnitPrice}" Width="125"/>
-     <DataGridTextColumn Header="Cantidad" Binding="{Binding Quantity}" Width="110"/>
-     <DataGridTextColumn Header="Importe" Binding="{Binding LineTotal}" Width="125"/>
+     <DataGridTextColumn Header="#" Binding="{Binding Position}" Width="45" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/>
+     <DataGridTextColumn Header="Producto vendido" Binding="{Binding Name}" Width="*" MinWidth="260" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/>
+     <DataGridTextColumn Header="Precio unitario" Binding="{Binding UnitPrice}" Width="125" ElementStyle="{StaticResource CasaMigaTableMoneyTextStyle}" HeaderStyle="{StaticResource CasaMigaTableCenteredHeaderStyle}"/>
+     <DataGridTextColumn Header="Cantidad" Binding="{Binding Quantity}" Width="110" ElementStyle="{StaticResource CasaMigaTableCenteredTextStyle}" HeaderStyle="{StaticResource CasaMigaTableCenteredHeaderStyle}"/>
+     <DataGridTextColumn Header="Importe" Binding="{Binding LineTotal}" Width="125" ElementStyle="{StaticResource CasaMigaTableMoneyTextStyle}" HeaderStyle="{StaticResource CasaMigaTableCenteredHeaderStyle}"/>
     </DataGrid.Columns>
    </DataGrid>
    <Border Grid.Row="3" Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="10" Padding="12" Margin="0,10,0,0">

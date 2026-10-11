@@ -4,40 +4,6 @@
  xmlns:local="clr-namespace:CasaMiga.Presentation"
  xmlns:automation="clr-namespace:System.Windows.Automation;assembly=PresentationCore"
  local:NestedScrollBehavior.IsEnabled="True">
- <UserControl.Resources>
-  <Style x:Key="ProductionResultHeaderStyle" TargetType="{x:Type DataGridColumnHeader}">
-   <Setter Property="HorizontalContentAlignment" Value="Center"/>
-   <Setter Property="VerticalContentAlignment" Value="Center"/>
-   <Setter Property="Padding" Value="8,6"/>
-   <Setter Property="ContentTemplate">
-    <Setter.Value><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" TextAlignment="Center"/></DataTemplate></Setter.Value>
-   </Setter>
-  </Style>
-  <Style x:Key="ProductionResultProductHeaderStyle" TargetType="{x:Type DataGridColumnHeader}" BasedOn="{StaticResource ProductionResultHeaderStyle}">
-   <Setter Property="HorizontalContentAlignment" Value="Left"/>
-   <Setter Property="ContentTemplate">
-    <Setter.Value><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" TextAlignment="Left"/></DataTemplate></Setter.Value>
-   </Setter>
-  </Style>
-  <Style x:Key="ProductionResultNumberTextStyle" TargetType="{x:Type TextBlock}">
-   <Setter Property="HorizontalAlignment" Value="Stretch"/>
-   <Setter Property="VerticalAlignment" Value="Center"/>
-   <Setter Property="TextAlignment" Value="Center"/>
-   <Setter Property="Margin" Value="8,6"/>
-  </Style>
-  <Style x:Key="ProductionResultNumberEditorStyle" TargetType="{x:Type TextBox}" BasedOn="{StaticResource {x:Type TextBox}}">
-   <Setter Property="HorizontalContentAlignment" Value="Center"/>
-   <Setter Property="VerticalContentAlignment" Value="Center"/>
-   <Setter Property="TextAlignment" Value="Center"/>
-   <Setter Property="Margin" Value="6,4"/>
-   <Setter Property="Padding" Value="8,4"/>
-  </Style>
-  <Style x:Key="ProductionResultRowStyle" TargetType="{x:Type DataGridRow}">
-   <Setter Property="MinHeight" Value="48"/>
-   <Setter Property="Height" Value="Auto"/>
-   <Setter Property="VerticalContentAlignment" Value="Center"/>
-  </Style>
- </UserControl.Resources>
  <StackPanel IsEnabled="{Binding Ready}">
   <StackPanel Visibility="{Binding IsHome,Converter={StaticResource VisibleWhen}}">
    <TextBlock Text="¿Qué deseas hacer?" Style="{StaticResource SectionTitleText}" Margin="0,0,0,12"/>
@@ -53,23 +19,23 @@
      <TextBlock Text="Puedes consultar todos los productos activos. El estado indica si su receta está lista o qué configuración falta." Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,8"/>
      <TextBox Text="{Binding ProductSearch,UpdateSourceTrigger=PropertyChanged}" automation:AutomationProperties.Name="Buscar producto para producción" ToolTip="Buscar por nombre, receta o estado" Margin="0,0,0,8"/>
      <TextBlock Style="{StaticResource EmptyStateText}" Tag="{Binding FilteredProfiles.Count}" Text="No hay productos activos con esta búsqueda."/>
-     <DataGrid ItemsSource="{Binding FilteredProfiles}" SelectedItem="{Binding SelectedProductChoice}" Height="180" automation:AutomationProperties.Name="Productos disponibles para producción">
+     <DataGrid ItemsSource="{Binding FilteredProfiles}" SelectedItem="{Binding SelectedProductChoice}" Height="180" automation:AutomationProperties.Name="Productos disponibles para producción" CanUserResizeColumns="False" HorizontalScrollBarVisibility="Disabled">
       <DataGrid.Columns>
-       <DataGridTextColumn Header="Producto" Binding="{Binding ProductName}" Width="220"/>
-       <DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="180"/>
-       <DataGridTextColumn Header="Receta activa" Binding="{Binding ProfileName}" Width="190"/>
-       <DataGridTextColumn Header="Versión" Binding="{Binding VersionLabel}" Width="95"/>
-       <DataGridTemplateColumn Header="Detalle" Width="*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Detail}" TextWrapping="Wrap" VerticalAlignment="Center"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+       <DataGridTextColumn Header="Producto" Binding="{Binding ProductName}" Width="1.2*" MinWidth="160" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/>
+       <DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="1.05*" MinWidth="140" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/>
+       <DataGridTextColumn Header="Receta activa" Binding="{Binding ProfileName}" Width="1.1*" MinWidth="145" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/>
+       <DataGridTextColumn Header="Versión" Binding="{Binding VersionLabel}" Width="95" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/>
+       <DataGridTemplateColumn Header="Detalle" Width="*" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Detail}" TextWrapping="Wrap" VerticalAlignment="Center"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
       </DataGrid.Columns>
      </DataGrid>
      <Button Content="Agregar producto seleccionado" Click="AddOutputClick" IsEnabled="{Binding CanAddSelectedProduct}" HorizontalAlignment="Left" Margin="0,8,0,14"/>
      <TextBlock Text="2. Plan actual" Style="{StaticResource SectionTitleText}" Margin="0,0,0,8"/>
-     <DataGrid ItemsSource="{Binding Plan}" SelectedItem="{Binding SelectedPlan}" IsReadOnly="False" Height="175" automation:AutomationProperties.Name="Productos planeados para producción">
+     <DataGrid ItemsSource="{Binding Plan}" SelectedItem="{Binding SelectedPlan}" IsReadOnly="False" Height="175" automation:AutomationProperties.Name="Productos planeados para producción" CanUserResizeColumns="False" HorizontalScrollBarVisibility="Disabled">
       <DataGrid.Columns>
-       <DataGridTextColumn Header="Producto" Binding="{Binding Profile.ProductName}" IsReadOnly="True" Width="220"/>
-       <DataGridTextColumn Header="Estado" Binding="{Binding Profile.Status}" IsReadOnly="True" Width="180"/>
-       <DataGridTemplateColumn Header="Detalle" Width="*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Profile.Detail}" TextWrapping="Wrap" VerticalAlignment="Center"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
-       <DataGridTextColumn Header="Piezas planeadas" Binding="{Binding Planned,UpdateSourceTrigger=PropertyChanged}" Width="175"/>
+       <DataGridTextColumn Header="Producto" Binding="{Binding Profile.ProductName}" IsReadOnly="True" Width="1.2*" MinWidth="170" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/>
+       <DataGridTextColumn Header="Estado" Binding="{Binding Profile.Status}" IsReadOnly="True" Width="1.05*" MinWidth="140" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/>
+       <DataGridTemplateColumn Header="Detalle" Width="*" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Profile.Detail}" TextWrapping="Wrap" VerticalAlignment="Center"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+       <DataGridTextColumn Header="Piezas planeadas" Binding="{Binding Planned,UpdateSourceTrigger=PropertyChanged}" Width="165" ElementStyle="{StaticResource CasaMigaTableCenteredTextStyle}" EditingElementStyle="{StaticResource CasaMigaTableNumericEditorStyle}" HeaderStyle="{StaticResource CasaMigaTableCenteredHeaderStyle}"/>
       </DataGrid.Columns>
      </DataGrid>
      <TextBlock Text="{Binding PlanBlockingMessage}" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0" automation:AutomationProperties.LiveSetting="Polite"/>
@@ -81,9 +47,9 @@
     <StackPanel>
      <WrapPanel Margin="0,0,0,8"><TextBlock Text="2. Vista previa de necesidades" Style="{StaticResource SectionTitleText}"/><local:ContextHelp Label="Ayuda de vista previa" HelpText="{Binding PreviewHelpText}" Margin="8,-2,0,0"/></WrapPanel>
      <TextBlock Text="Preparaciones requeridas" FontWeight="SemiBold" Margin="0,2,0,6"/>
-     <DataGrid ItemsSource="{Binding FormulaRows}" Height="140" automation:AutomationProperties.Name="Preparaciones requeridas"><DataGrid.Columns><DataGridTextColumn Header="Preparación" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="Versión" Binding="{Binding VersionLabel}" Width="120"/><DataGridTextColumn Header="Cantidad requerida" Binding="{Binding Required}" Width="170"/></DataGrid.Columns></DataGrid>
+     <DataGrid ItemsSource="{Binding FormulaRows}" Height="140" automation:AutomationProperties.Name="Preparaciones requeridas" CanUserResizeColumns="False" HorizontalScrollBarVisibility="Disabled"><DataGrid.Columns><DataGridTextColumn Header="Preparación" Binding="{Binding Name}" Width="*" MinWidth="180" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/><DataGridTextColumn Header="Versión" Binding="{Binding VersionLabel}" Width="120" ElementStyle="{StaticResource CasaMigaTableCenteredTextStyle}" HeaderStyle="{StaticResource CasaMigaTableCenteredHeaderStyle}"/><DataGridTextColumn Header="Cantidad requerida" Binding="{Binding Required}" Width="170" ElementStyle="{StaticResource CasaMigaTableCenteredTextStyle}" HeaderStyle="{StaticResource CasaMigaTableCenteredHeaderStyle}"/></DataGrid.Columns></DataGrid>
      <TextBlock Text="Insumos y stock" FontWeight="SemiBold" Margin="0,14,0,6"/>
-     <DataGrid ItemsSource="{Binding RequirementRows}" Height="220" automation:AutomationProperties.Name="Necesidades y disponibilidad de insumos"><DataGrid.Columns><DataGridTextColumn Header="Insumo" Binding="{Binding Name}" Width="*"/><DataGridTextColumn Header="Necesario" Binding="{Binding Required}" Width="135"/><DataGridTextColumn Header="Disponible" Binding="{Binding Available}" Width="135"/><DataGridTextColumn Header="Faltante" Binding="{Binding Shortage}" Width="125"/><DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="135"/></DataGrid.Columns></DataGrid>
+     <DataGrid ItemsSource="{Binding RequirementRows}" Height="220" automation:AutomationProperties.Name="Necesidades y disponibilidad de insumos" CanUserResizeColumns="False" HorizontalScrollBarVisibility="Disabled"><DataGrid.Columns><DataGridTextColumn Header="Insumo" Binding="{Binding Name}" Width="*" MinWidth="170" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/><DataGridTextColumn Header="Necesario" Binding="{Binding Required}" Width="125" ElementStyle="{StaticResource CasaMigaTableCenteredTextStyle}" HeaderStyle="{StaticResource CasaMigaTableCenteredHeaderStyle}"/><DataGridTextColumn Header="Disponible" Binding="{Binding Available}" Width="125" ElementStyle="{StaticResource CasaMigaTableCenteredTextStyle}" HeaderStyle="{StaticResource CasaMigaTableCenteredHeaderStyle}"/><DataGridTextColumn Header="Faltante" Binding="{Binding Shortage}" Width="115" ElementStyle="{StaticResource CasaMigaTableCenteredTextStyle}" HeaderStyle="{StaticResource CasaMigaTableCenteredHeaderStyle}"/><DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="1.05*" MinWidth="120" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/></DataGrid.Columns></DataGrid>
     </StackPanel>
    </Border>
    <Border Background="{DynamicResource SurfaceSecondaryBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="10" Padding="14" Margin="0,0,0,12" Visibility="{Binding PreviewReady,Converter={StaticResource VisibleWhen}}"><TextBlock Text="{Binding PreviewState}" FontWeight="SemiBold" TextWrapping="Wrap" automation:AutomationProperties.LiveSetting="Polite"/></Border>
@@ -108,13 +74,13 @@
 
   <StackPanel Visibility="{Binding IsDrafts,Converter={StaticResource VisibleWhen}}">
    <TextBlock Text="Producciones en borrador" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="Estos planes ya están bloqueados. Abre uno para capturar el resultado real y registrarlo." Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,6,0,12"/><TextBlock Style="{StaticResource EmptyStateText}" Tag="{Binding Rows.Count}" Text="{Binding EmptyRowsMessage}"/>
-   <DataGrid ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}" Height="360" automation:AutomationProperties.Name="Producciones en borrador"><DataGrid.Columns><DataGridTextColumn Header="Fecha local" Binding="{Binding Date}" Width="145"/><DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="105"/><DataGridTextColumn Header="Creado por" Binding="{Binding Creator}" Width="170"/><DataGridTextColumn Header="Terminal" Binding="{Binding Terminal}" Width="185"/><DataGridTextColumn Header="Productos" Binding="{Binding Products}" Width="260"/><DataGridTextColumn Header="Resultado" Binding="{Binding Result}" Width="*"/></DataGrid.Columns></DataGrid>
+   <DataGrid ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}" Height="360" automation:AutomationProperties.Name="Producciones en borrador" CanUserResizeColumns="False" HorizontalScrollBarVisibility="Disabled"><DataGrid.Columns><DataGridTextColumn Header="Fecha" Binding="{Binding Date}" Width="1.05*" MinWidth="130" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/><DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="0.8*" MinWidth="95" ElementStyle="{StaticResource CasaMigaTableCenteredTextStyle}" HeaderStyle="{StaticResource CasaMigaTableCenteredHeaderStyle}"/><DataGridTextColumn Header="Creado por" Binding="{Binding Creator}" Width="1.1*" MinWidth="135" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/><DataGridTextColumn Header="Terminal" Binding="{Binding Terminal}" Width="1.15*" MinWidth="140" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/><DataGridTextColumn Header="Productos" Binding="{Binding Products}" Width="1.5*" MinWidth="175" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/><DataGridTextColumn Header="Resultado" Binding="{Binding Result}" Width="*" MinWidth="150" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/></DataGrid.Columns></DataGrid>
    <WrapPanel Margin="0,12"><Button Content="Volver" Style="{StaticResource SecondaryButton}" Click="BackClick" Margin="0,0,8,0"/><Button Content="Ver detalle" Click="OpenClick" IsEnabled="{Binding CanOpenDetail}"/></WrapPanel>
   </StackPanel>
 
   <StackPanel Visibility="{Binding IsHistory,Converter={StaticResource VisibleWhen}}">
    <TextBlock Text="Historial de producción" FontSize="24" FontWeight="SemiBold"/><TextBlock Text="Consulta de producciones registradas. Las fechas se muestran en la hora local de este equipo." Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,6,0,12"/><TextBlock Style="{StaticResource EmptyStateText}" Tag="{Binding Rows.Count}" Text="{Binding EmptyRowsMessage}"/>
-   <DataGrid ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}" Height="360" automation:AutomationProperties.Name="Historial de producción"><DataGrid.Columns><DataGridTextColumn Header="Fecha local" Binding="{Binding Date}" Width="135"/><DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="95"/><DataGridTextColumn Header="Registrado por" Binding="{Binding Creator}" Width="150"/><DataGridTextColumn Header="Productos" Binding="{Binding Products}" Width="*"/><DataGridTemplateColumn Header="Planeado / real" Width="215"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Result}" TextWrapping="Wrap" VerticalAlignment="Center"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn><DataGridTemplateColumn Header="Resultado obtenido" Width="210"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding OutputResult}" TextWrapping="Wrap" VerticalAlignment="Center"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn></DataGrid.Columns></DataGrid>
+   <DataGrid ItemsSource="{Binding Rows}" SelectedItem="{Binding SelectedRow}" Height="360" automation:AutomationProperties.Name="Historial de producción" CanUserResizeColumns="False" HorizontalScrollBarVisibility="Disabled"><DataGrid.Columns><DataGridTextColumn Header="Fecha" Binding="{Binding Date}" Width="1.05*" MinWidth="125" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/><DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="0.75*" MinWidth="90" ElementStyle="{StaticResource CasaMigaTableCenteredTextStyle}" HeaderStyle="{StaticResource CasaMigaTableCenteredHeaderStyle}"/><DataGridTextColumn Header="Registrado por" Binding="{Binding Creator}" Width="1.05*" MinWidth="125" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/><DataGridTextColumn Header="Productos" Binding="{Binding Products}" Width="1.45*" MinWidth="155" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/><DataGridTemplateColumn Header="Planeado / real" Width="1.2*" MinWidth="145" HeaderStyle="{StaticResource CasaMigaTableCenteredHeaderStyle}"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Result}" Style="{StaticResource CasaMigaTableTextStyle}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn><DataGridTemplateColumn Header="Resultado obtenido" Width="1.25*" MinWidth="155" HeaderStyle="{StaticResource CasaMigaTableCenteredHeaderStyle}"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding OutputResult}" Style="{StaticResource CasaMigaTableTextStyle}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn></DataGrid.Columns></DataGrid>
    <WrapPanel Margin="0,12"><Button Content="Volver" Style="{StaticResource SecondaryButton}" Click="BackClick" Margin="0,0,8,0"/><Button Content="Ver detalle" Click="OpenClick" IsEnabled="{Binding CanOpenDetail}"/></WrapPanel>
   </StackPanel>
 
@@ -126,20 +92,20 @@
     <StackPanel>
      <WrapPanel Margin="0,0,0,8"><TextBlock Text="Resultado real obtenido" Style="{StaticResource SectionTitleText}"/><local:ContextHelp Label="Ayuda de resultado real" HelpText="{Binding ActualHelpText}" Margin="8,-2,0,0"/></WrapPanel>
      <TextBlock Text="Escribe las piezas terminadas que realmente se obtuvieron. Se permiten cero piezas." Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,8"/>
-     <DataGrid ItemsSource="{Binding Actuals}" IsReadOnly="False" Height="190" MinRowHeight="48" RowStyle="{StaticResource ProductionResultRowStyle}" CanUserResizeColumns="False" CanUserReorderColumns="False" ScrollViewer.HorizontalScrollBarVisibility="Disabled" automation:AutomationProperties.Name="Resultado real de producción">
+     <DataGrid ItemsSource="{Binding Actuals}" IsReadOnly="False" Height="190" MinRowHeight="48" RowStyle="{StaticResource CasaMigaTableRowStyle}" CanUserResizeColumns="False" CanUserReorderColumns="False" ScrollViewer.HorizontalScrollBarVisibility="Disabled" automation:AutomationProperties.Name="Resultado real de producción">
       <DataGrid.Columns>
-       <DataGridTemplateColumn Header="Producto" Width="1.2*" MinWidth="180" HeaderStyle="{StaticResource ProductionResultProductHeaderStyle}" IsReadOnly="True">
-        <DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding ProductName}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="10,6"/></DataTemplate></DataGridTemplateColumn.CellTemplate>
+       <DataGridTemplateColumn Header="Producto" Width="1.2*" MinWidth="180" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}" IsReadOnly="True">
+        <DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding ProductName}" Style="{StaticResource CasaMigaTableTextStyle}"/></DataTemplate></DataGridTemplateColumn.CellTemplate>
        </DataGridTemplateColumn>
-       <DataGridTemplateColumn Header="Piezas planeadas" Width="170" MinWidth="165" MaxWidth="185" HeaderStyle="{StaticResource ProductionResultHeaderStyle}" IsReadOnly="True">
-        <DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Planned}" Style="{StaticResource ProductionResultNumberTextStyle}"/></DataTemplate></DataGridTemplateColumn.CellTemplate>
+       <DataGridTemplateColumn Header="Piezas planeadas" Width="170" MinWidth="165" MaxWidth="185" HeaderStyle="{StaticResource CasaMigaTableCenteredHeaderStyle}" IsReadOnly="True">
+        <DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Planned}" Style="{StaticResource CasaMigaTableCenteredTextStyle}"/></DataTemplate></DataGridTemplateColumn.CellTemplate>
        </DataGridTemplateColumn>
-       <DataGridTemplateColumn Header="Piezas reales" Width="160" MinWidth="150" MaxWidth="175" HeaderStyle="{StaticResource ProductionResultHeaderStyle}">
-        <DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Actual}" Style="{StaticResource ProductionResultNumberTextStyle}"/></DataTemplate></DataGridTemplateColumn.CellTemplate>
-        <DataGridTemplateColumn.CellEditingTemplate><DataTemplate><TextBox Text="{Binding Actual,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ProductionResultNumberEditorStyle}"/></DataTemplate></DataGridTemplateColumn.CellEditingTemplate>
+       <DataGridTemplateColumn Header="Piezas reales" Width="160" MinWidth="150" MaxWidth="175" HeaderStyle="{StaticResource CasaMigaTableCenteredHeaderStyle}">
+        <DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Actual}" Style="{StaticResource CasaMigaTableCenteredTextStyle}"/></DataTemplate></DataGridTemplateColumn.CellTemplate>
+        <DataGridTemplateColumn.CellEditingTemplate><DataTemplate><TextBox Text="{Binding Actual,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource CasaMigaTableNumericEditorStyle}"/></DataTemplate></DataGridTemplateColumn.CellEditingTemplate>
        </DataGridTemplateColumn>
-       <DataGridTemplateColumn Header="Comparación" Width="1.6*" MinWidth="260" HeaderStyle="{StaticResource ProductionResultHeaderStyle}" IsReadOnly="True">
-        <DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Difference}" TextWrapping="Wrap" TextAlignment="Left" VerticalAlignment="Center" Margin="10,6"/></DataTemplate></DataGridTemplateColumn.CellTemplate>
+       <DataGridTemplateColumn Header="Comparación" Width="1.6*" MinWidth="260" HeaderStyle="{StaticResource CasaMigaTableCenteredHeaderStyle}" IsReadOnly="True">
+        <DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Difference}" Style="{StaticResource CasaMigaTableTextStyle}"/></DataTemplate></DataGridTemplateColumn.CellTemplate>
        </DataGridTemplateColumn>
       </DataGrid.Columns>
      </DataGrid>

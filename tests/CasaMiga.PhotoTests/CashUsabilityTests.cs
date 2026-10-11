@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -59,7 +60,7 @@ public sealed class CashUsabilityTests
         finally{window.Close();vm.Logout();}
     });
 
-    [TestMethod,DataRow(1280,820,7),DataRow(1920,1080,9)]
+    [TestMethod,DataRow(1280,820,5),DataRow(1920,1080,6)]
     public Task CashHistoryUsesAvailableHeightAndKeepsPagingFooter(int width,int height,int minimumVisibleRows)=>WpfTestHost.OnUi(async()=>
     {
         using var f=new Fixture();f.SeedClosures(28);Assert.AreEqual(10L,f.Scalar("SELECT count(*) FROM cash_session WHERE discrepancy_note IS NULL"));var vm=new MainViewModel();await vm.InitializeAsync(new(f.Root,true));await vm.LoginAsync("review",f.Password);
@@ -71,14 +72,15 @@ public sealed class CashUsabilityTests
             var view=Descendants<CashHistoryView>(window).Single(x=>x.IsVisible);
             var grid=(DataGrid)view.FindName("CashHistoryGrid");var footer=(FrameworkElement)view.FindName("CashHistoryFooter");
             Assert.AreEqual(25,grid.Items.Count);Assert.IsTrue(grid.IsVisible&&footer.IsVisible);
-            var visibleRows=(int)Math.Floor((grid.ActualHeight-grid.ColumnHeaderHeight)/grid.RowHeight);
+            var header=Descendants<DataGridColumnHeader>(grid).First();
+            var visibleRows=(int)Math.Floor((grid.ActualHeight-header.ActualHeight)/grid.MinRowHeight);
             Assert.IsGreaterThanOrEqualTo(minimumVisibleRows,visibleRows,$"Filas visibles a {width}x{height}: {visibleRows}; alto de tabla {grid.ActualHeight:F1}.");
             Assert.AreEqual(0d,Descendants<ScrollViewer>(grid).First().ScrollableWidth,0.5);
             Assert.IsLessThanOrEqualTo(view.ActualHeight+2,footer.TranslatePoint(new Point(0,footer.ActualHeight),view).Y);
             Assert.AreEqual("28 cierres · página 1 de 2",vm.CashHistorySummary);
             var withoutNote=vm.CashClosures.First(x=>x.Row.DiscrepancyNote is null);
             await vm.NextCashHistoryAsync();WpfTestHost.Layout(window,width,height);Assert.AreEqual(3,grid.Items.Count);Assert.AreEqual("28 cierres · página 2 de 2",vm.CashHistorySummary);
-            Assert.IsGreaterThanOrEqualTo(minimumVisibleRows,(int)Math.Floor((grid.ActualHeight-grid.ColumnHeaderHeight)/grid.RowHeight));
+            Assert.IsGreaterThanOrEqualTo(minimumVisibleRows,(int)Math.Floor((grid.ActualHeight-header.ActualHeight)/grid.MinRowHeight));
             var withNote=vm.CashClosures.First(x=>x.Row.DiscrepancyNote is not null);vm.SelectedCashClosure=withNote;await vm.ShowCashClosureAsync();StringAssert.Contains(vm.CashClosureDetail!.Note,"SMOKE");vm.HideCashClosure();
             vm.SelectedCashClosure=withoutNote;await vm.ShowCashClosureAsync();Assert.AreEqual("Sin nota registrada",vm.CashClosureDetail!.Note);
         }

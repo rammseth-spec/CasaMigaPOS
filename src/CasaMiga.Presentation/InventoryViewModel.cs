@@ -53,6 +53,8 @@ public sealed record InventoryHistoryRowView(InventoryMovementRow Row)
     public string User => Row.ActorName;
     public string Reason => UiLabels.MovementReason(Row.ReasonCode);
     public string Reference => Row.ExternalReference ?? "—";
+    public string BalanceChange => $"{Before} → {After}";
+    public string Detail => $"Motivo: {Reason}\nReferencia: {Reference}";
     public string OperationId => Row.OperationId.ToString("D");
 }
 

@@ -1,3 +1,18 @@
+# Próximo paso — continuar smoke manual de FASE 1K.4G-B-R2 con merma
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4G-B-R2.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-B-R2`, DataDirectory `work/phase1k4g-b-r2-smoke-20261011` y las credenciales verificadas entregadas en la conversación.
+
+1. Iniciar sesión y revisar Inventario principal, detalle de Terminado sintético A y su Historial de movimientos.
+2. Confirmar que Fecha, Operación, Movimiento, Existencia, Usuario y Detalle se leen completos sin scroll horizontal.
+3. Confirmar los saldos preservados: A=2 piezas, B=2 piezas, Harina=9.58 kg, Huevo=28 piezas y Agua=4.86 L.
+4. Continuar el smoke autorizado de merma manual desde Terminado sintético A; no automatizarla ni ejecutarla desde herramientas.
+5. Revisar las tablas principales en 1280×820, 1920×1080, ultrawide y F11; reportar cualquier clipping real.
+6. No imprimir, usar cajón, vender ni registrar otra producción durante esta revisión.
+
+Esperar la revisión humana. No push, no PR y no iniciar 1K.4G-C, 1K.4H-B, Premium UI ni 1K.5.
+
+## Registro anterior — smoke manual de FASE 1K.4G-B-R1
+
 # Próximo paso — continuar smoke manual de FASE 1K.4G-B-R1
 
 Usar exclusivamente `work/Abrir-Casa-Miga-1K4G-B-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-B-R1`, DataDirectory `work/phase1k4g-b-smoke-20261010` y las credenciales verificadas entregadas en la conversación.
