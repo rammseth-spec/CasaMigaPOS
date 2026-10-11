@@ -628,15 +628,18 @@ tr.selected td { background: var(--primary-soft) !important; }
 .receipt { font: 13px/1.4 ui-monospace, "Cascadia Mono", Consolas, monospace; }
 .receipt p { margin: 0; } .receipt .center { text-align: center; }
 .receipt .line { display: flex; justify-content: space-between; gap: 8px; }
-.receipt .total { font-weight: 700; }
+.receipt .total { font-weight: 700; font-size: 1.6em; line-height: 1.25; margin: 2px 0; }
+.receipt .receipt-logo { display: block; width: 100%; max-width: 288px; margin: 0 auto 6px; image-rendering: pixelated; }
 .receipt hr { border: 0; border-top: 1px dashed var(--border); margin: 6px 0; }
 .receipt.on-screen { background: var(--surface-2); border-radius: 12px; padding: 14px; max-width: 360px; margin: 0 auto; }
+.receipt.on-screen .receipt-logo { mix-blend-mode: multiply; }
 #print-area { display: none; }
 @media print {
   @page { margin: 3mm; }
   body > *:not(#print-area) { display: none !important; }
   #print-area { display: block; }
   #print-area .receipt { width: 72mm; color: #000; font-size: 12px; }
+  #print-area .receipt .receipt-logo { max-width: none; }
   #print-area .receipt hr { border-top-color: #000; }
 }
 
