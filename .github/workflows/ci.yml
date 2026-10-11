@@ -68,6 +68,25 @@ jobs:
         shell: pwsh
         run: ./scripts/verify.ps1
 
+      # Cada prueba fallida sale como anotación (y en el resumen), así el correo de GitHub ya dice cuál fue.
+      - name: Report failed tests
+        if: failure()
+        shell: pwsh
+        run: |
+          $failed = @()
+          foreach ($file in Get-ChildItem TestResults -Filter *.trx -Recurse -ErrorAction SilentlyContinue) {
+            [xml]$trx = Get-Content -LiteralPath $file.FullName -Raw
+            foreach ($result in @($trx.TestRun.Results.UnitTestResult) | Where-Object { $_.outcome -eq 'Failed' }) {
+              $message = (("" + $result.Output.ErrorInfo.Message) -replace "\s+", " ").Trim()
+              if ($message.Length -gt 400) { $message = $message.Substring(0, 400) + "…" }
+              $failed += [pscustomobject]@{ Name = $result.testName; Message = $message }
+            }
+          }
+          if ($failed.Count -eq 0) { Write-Output "::error title=Verificación::Falló antes de las pruebas (restore o compilación); revisa el paso anterior."; exit 0 }
+          foreach ($test in $failed | Select-Object -First 10) { Write-Output "::error title=Prueba fallida: $($test.Name)::$($test.Message)" }
+          "## Pruebas fallidas ($($failed.Count))" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          foreach ($test in $failed) { "- **$($test.Name)**: $($test.Message)" | Out-File $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8 }
+
       - name: Upload verification artifacts
         if: always()
         uses: actions/upload-artifact@v4

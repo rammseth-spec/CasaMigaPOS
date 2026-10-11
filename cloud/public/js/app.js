@@ -79,6 +79,8 @@ export const can = permission => state.me?.permissions.includes(permission);
 
 // ---------- Avisos y diálogos ----------
 export function toast(message) {
+  // Uno a la vez, como los avisos de la caja: el nuevo reemplaza al anterior en lugar de encimarse.
+  for (const old of document.querySelectorAll('.toast')) old.remove();
   const node = h('div', { class: 'toast', role: 'status', text: message });
   document.body.append(node); setTimeout(() => node.remove(), 4200);
 }
