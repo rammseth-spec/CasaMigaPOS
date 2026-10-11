@@ -1,7 +1,7 @@
 // Reportes con las mismas cifras que la caja de escritorio (ReportService, SqliteReportStore y Analytics de QAv1):
 // ventas por fecha de venta y devoluciones por fecha de devolución, en días locales de la sucursal; las ventas
 // canceladas no cuentan como afluencia ni como demanda; el pronóstico promedia los días que sí hubo venta.
-import { REFUNDS, SALES, type Query, type Range } from './panel.js';
+import { inPeriod, REFUNDS, REFUNDS_IN, SALES, SALES_IN, SESSIONS_IN, type Query, type Range } from './panel.js';
 import { names } from './web.js';
 
 const n = (v: unknown) => (v === null || v === undefined ? 0 : Number(v));
@@ -26,31 +26,33 @@ export async function salesData(q: Query, r: Range): Promise<SalesData> {
   const p = [r.timeZone, r.from, r.to, r.branchId];
   const inRange = (alias: string) => `${alias}.day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR ${alias}.branch_id = $4::uuid)`;
   const [totals, sold, back, refundedTotal, byUser, byMethod, backByMethod, shifts, k] = await Promise.all([
-    q(`WITH s AS (${SALES}) SELECT count(*) AS sales, COALESCE(sum(total), 0) AS gross FROM s WHERE ${inRange('s')}`, p),
-    q(`WITH s AS (${SALES})
-      SELECT i->>'product_id' AS id, (array_agg(i->>'product_name' ORDER BY (s.payload->'sale'->>'confirmed_utc')::timestamptz DESC))[1] AS name,
+    q(`WITH s AS (${SALES_IN}) SELECT count(*) AS sales, COALESCE(sum(total), 0) AS gross FROM s WHERE ${inRange('s')}`, p),
+    q(`WITH s AS (${SALES_IN})
+      SELECT i->>'product_id' AS id, (array_agg(i->>'product_name' ORDER BY cm_utc(s.payload->'sale'->>'confirmed_utc') DESC))[1] AS name,
         sum((i->>'quantity')::bigint) AS quantity, sum((i->>'line_total_cents')::bigint) AS total
       FROM s, jsonb_array_elements(s.payload->'items') i WHERE ${inRange('s')} GROUP BY 1`, p),
-    q(`WITH s AS (${SALES}), r AS (${REFUNDS})
+    q(`WITH s AS (${SALES}), r AS (${REFUNDS_IN})
       SELECT i->>'product_id' AS id, max(i->>'product_name') AS name, sum((ri->>'quantity')::bigint) AS quantity, sum((ri->>'line_total_cents')::bigint) AS total
-      FROM r JOIN s ON s.sale_id = r.sale_id, jsonb_array_elements(r.payload->'items') ri, jsonb_array_elements(s.payload->'items') i
+      FROM r JOIN s ON s.sale_id = r.sale_id AND s.branch_id = r.branch_id, jsonb_array_elements(r.payload->'items') ri, jsonb_array_elements(s.payload->'items') i
       WHERE (i->>'position')::int = (ri->>'position')::int AND ${inRange('r')} GROUP BY 1`, p),
-    q(`WITH r AS (${REFUNDS}) SELECT COALESCE(sum(total), 0) AS total FROM r WHERE ${inRange('r')}`, p),
-    q(`WITH s AS (${SALES}) SELECT s.payload->'sale'->>'user_id' AS user_id, count(*) AS sales, sum(total) AS sold FROM s WHERE ${inRange('s')} GROUP BY 1`, p),
-    q(`WITH s AS (${SALES}) SELECT method, count(*) AS sales, sum(applied) AS sold FROM s WHERE ${inRange('s')} GROUP BY 1`, p),
-    q(`WITH s AS (${SALES}), r AS (${REFUNDS}) SELECT s.method, sum(r.total) AS total FROM r JOIN s ON s.sale_id = r.sale_id WHERE ${inRange('r')} GROUP BY 1`, p),
-    q(`WITH c AS (SELECT branch_id, payload AS c FROM entity_state WHERE entity = 'cash_session' AND NOT deleted),
-        s AS (${SALES}), r AS (${REFUNDS}),
-        cs AS (SELECT session_id, sum(applied) AS total FROM s WHERE method = 'CASH' GROUP BY 1),
-        cr AS (SELECT r.session_id, sum(r.total) AS total FROM r JOIN s ON s.sale_id = r.sale_id WHERE s.method = 'CASH' GROUP BY 1),
+    q(`WITH r AS (${REFUNDS_IN}) SELECT COALESCE(sum(total), 0) AS total FROM r WHERE ${inRange('r')}`, p),
+    q(`WITH s AS (${SALES_IN}) SELECT s.payload->'sale'->>'user_id' AS user_id, count(*) AS sales, sum(total) AS sold FROM s WHERE ${inRange('s')} GROUP BY 1`, p),
+    q(`WITH s AS (${SALES_IN}) SELECT method, count(*) AS sales, sum(applied) AS sold FROM s WHERE ${inRange('s')} GROUP BY 1`, p),
+    q(`WITH s AS (${SALES}), r AS (${REFUNDS_IN}) SELECT s.method, sum(r.total) AS total FROM r JOIN s ON s.sale_id = r.sale_id AND s.branch_id = r.branch_id WHERE ${inRange('r')} GROUP BY 1`, p),
+    // Sólo lo de los turnos del periodo (índices por turno de la migración 009).
+    q(`WITH c0 AS (${SESSIONS_IN}), c AS (SELECT branch_id, p AS c FROM c0), ids AS (SELECT c->>'id' AS id FROM c),
+        s AS NOT MATERIALIZED (${SALES}), r AS NOT MATERIALIZED (${REFUNDS}),
+        cs AS (SELECT ids.id AS session_id, x.total FROM ids CROSS JOIN LATERAL (SELECT sum(applied) AS total FROM s WHERE method = 'CASH' AND session_id = ids.id) x),
+        cr AS (SELECT r.session_id, sum(r.total) AS total FROM r JOIN s ON s.sale_id = r.sale_id AND s.branch_id = r.branch_id
+          WHERE s.method = 'CASH' AND r.session_id IN (SELECT id FROM ids) GROUP BY 1),
         mv AS (SELECT payload->>'cash_session_id' AS session_id, sum(CASE WHEN payload->>'kind' = 'DEPOSIT' THEN 1 ELSE -1 END * (payload->>'amount_cents')::bigint) AS net
-          FROM entity_state WHERE entity = 'cash_movement' AND NOT deleted GROUP BY 1),
-        cn AS (SELECT payload->>'session_id' AS session_id, max((payload->>'counted_cents')::bigint) AS counted FROM entity_state WHERE entity = 'cash_count' AND NOT deleted GROUP BY 1)
+          FROM entity_state WHERE entity = 'cash_movement' AND NOT deleted AND payload->>'cash_session_id' IN (SELECT id FROM ids) GROUP BY 1),
+        cn AS (SELECT payload->>'session_id' AS session_id, max((payload->>'counted_cents')::bigint) AS counted FROM entity_state
+          WHERE entity = 'cash_count' AND NOT deleted AND payload->>'session_id' IN (SELECT id FROM ids) GROUP BY 1)
       SELECT c.c->>'id' AS id, c.c->>'opened_by' AS opened_by, c.c->>'opened_utc' AS opened_at, c.c->>'closed_utc' AS closed_at, c.c->>'state' AS state,
         (c.c->>'opening_cents')::bigint AS opening, COALESCE((c.c->>'counted_cents')::bigint, cn.counted) AS counted, cs.total AS cash_sales, cr.total AS refunds, mv.net AS movements
       FROM c LEFT JOIN cs ON cs.session_id = c.c->>'id' LEFT JOIN cr ON cr.session_id = c.c->>'id' LEFT JOIN mv ON mv.session_id = c.c->>'id' LEFT JOIN cn ON cn.session_id = c.c->>'id'
-      WHERE (((c.c->>'opened_utc')::timestamptz AT TIME ZONE $1)::date) BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR c.branch_id = $4::uuid)
-      ORDER BY (c.c->>'opened_utc')::timestamptz, c.c->>'id'`, p),
+      ORDER BY cm_utc(c.c->>'opened_utc'), c.c->>'id'`, p),
     names(q),
   ]);
   const saleCount = n(totals[0].sales), gross = n(totals[0].gross), refunded = n(refundedTotal[0].total);
@@ -83,7 +85,7 @@ export async function salesData(q: Query, r: Range): Promise<SalesData> {
 
 /** Ventas por día local (sin canceladas), una entrada por día aunque no haya ventas (Analytics.Daily). */
 async function daily(q: Query, r: Range) {
-  const rows = await q(`WITH s AS (${SALES}) SELECT day::text AS day, count(*) AS sales, sum(total) AS total FROM s
+  const rows = await q(`WITH s AS (${SALES_IN}) SELECT day::text AS day, count(*) AS sales, sum(total) AS total FROM s
     WHERE day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR branch_id = $4::uuid) AND NOT ${CANCELLED} GROUP BY 1`, [r.timeZone, r.from, r.to, r.branchId]);
   const byDay = new Map(rows.map(x => [s(x.day).slice(0, 10), { sales: n(x.sales), amount: n(x.total) }]));
   const length = Math.round((Date.parse(r.to) - Date.parse(r.from)) / 86_400_000) + 1;
@@ -108,13 +110,13 @@ export async function report(q: Query, r: Range) {
   const previous: Range = { ...r, from: shift(r.from, -length), to: shift(r.from, -1) };
   const [current, before, days, previousDays, heat, refundFacts] = await Promise.all([
     salesData(q, r), salesData(q, previous), daily(q, r), daily(q, previous),
-    q(`WITH s AS (${SALES})
-      SELECT extract(isodow FROM (payload->'sale'->>'confirmed_utc')::timestamptz AT TIME ZONE $1)::int AS weekday,
-        extract(hour FROM (payload->'sale'->>'confirmed_utc')::timestamptz AT TIME ZONE $1)::int AS hour, count(*) AS sales, sum(total) AS total
+    q(`WITH s AS (${SALES_IN})
+      SELECT extract(isodow FROM cm_utc(payload->'sale'->>'confirmed_utc') AT TIME ZONE $1)::int AS weekday,
+        extract(hour FROM cm_utc(payload->'sale'->>'confirmed_utc') AT TIME ZONE $1)::int AS hour, count(*) AS sales, sum(total) AS total
       FROM s WHERE day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR branch_id = $4::uuid) AND NOT ${CANCELLED} GROUP BY 1, 2`, [r.timeZone, r.from, r.to, r.branchId]),
-    q(`WITH s AS (${SALES}), r AS (${REFUNDS})
+    q(`WITH s AS (${SALES}), r AS (${REFUNDS_IN})
       SELECT r.payload->'refund'->>'reason' AS reason, r.total, s.payload->'sale'->>'user_id' AS cashier
-      FROM r JOIN s ON s.sale_id = r.sale_id WHERE r.day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR r.branch_id = $4::uuid)
+      FROM r JOIN s ON s.sale_id = r.sale_id AND s.branch_id = r.branch_id WHERE r.day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR r.branch_id = $4::uuid)
       ORDER BY r.payload->'refund'->>'refunded_utc'`, [r.timeZone, r.from, r.to, r.branchId]),
   ]);
   const k = await names(q);
@@ -167,11 +169,12 @@ export async function report(q: Query, r: Range) {
 /** Piezas sugeridas para un día (Analytics.Forecast): mismo día de las 4 semanas anteriores, sólo días con venta y productos activos, +10 %. */
 export async function forecast(q: Query, branch: string | null, timeZone: string, target: string, weeks = 4) {
   const days = Array.from({ length: weeks }, (_, i) => shift(target, -7 * (i + 1)));
-  const rows = await q(`WITH s AS (${SALES})
-    SELECT i->>'product_id' AS id, i->>'product_name' AS name, s.day::text AS day, (s.payload->'sale'->>'confirmed_utc')::timestamptz AS at, (i->>'quantity')::bigint AS quantity
+  // Sólo las semanas a promediar: del día más antiguo al más reciente (índice por hora de venta).
+  const rows = await q(`WITH s AS (${SALES} AND ${inPeriod("payload->'sale'->>'confirmed_utc'", '$4', '$5')})
+    SELECT i->>'product_id' AS id, i->>'product_name' AS name, s.day::text AS day, cm_utc(s.payload->'sale'->>'confirmed_utc') AS at, (i->>'quantity')::bigint AS quantity
     FROM s CROSS JOIN LATERAL jsonb_array_elements(s.payload->'items') i
     JOIN entity_state p ON p.entity = 'product' AND p.entity_id = i->>'product_id' AND p.branch_id = s.branch_id AND (p.payload->'product'->>'active')::int = 1
-    WHERE s.day = ANY($2::date[]) AND ($3::uuid IS NULL OR s.branch_id = $3::uuid) AND NOT ${CANCELLED}`, [timeZone, days, branch]);
+    WHERE s.day = ANY($2::date[]) AND ($3::uuid IS NULL OR s.branch_id = $3::uuid) AND NOT ${CANCELLED}`, [timeZone, days, branch, days[days.length - 1], days[0]]);
   const openDays = new Set(rows.map(x => s(x.day).slice(0, 10))).size;
   const last = days[0];
   const byProduct = new Map<string, { name: string; at: number; total: number; last: number; days: Set<string> }>();

@@ -36,7 +36,7 @@ export function parseRange(url: URL, timeZone = DEFAULT_TIME_ZONE): Range {
 // ---------- Consultas ----------
 
 export const SALES = `SELECT branch_id, terminal_id, entity_id AS sale_id, payload,
-    ((payload->'sale'->>'confirmed_utc')::timestamptz AT TIME ZONE $1)::date AS day,
+    (cm_utc(payload->'sale'->>'confirmed_utc') AT TIME ZONE $1)::date AS day,
     (payload->'sale'->>'total_cents')::bigint AS total,
     COALESCE(payload->'payment'->>'method', 'CASH') AS method,
     (payload->'sale'->>'cash_session_id') AS session_id,
@@ -44,11 +44,24 @@ export const SALES = `SELECT branch_id, terminal_id, entity_id AS sale_id, paylo
   FROM entity_state WHERE entity = 'sale' AND NOT deleted`;
 
 export const REFUNDS = `SELECT branch_id, entity_id AS refund_id, payload,
-    ((payload->'refund'->>'refunded_utc')::timestamptz AT TIME ZONE $1)::date AS day,
+    (cm_utc(payload->'refund'->>'refunded_utc') AT TIME ZONE $1)::date AS day,
     (payload->'refund'->>'total_cents')::bigint AS total,
     payload->'refund'->>'sale_id' AS sale_id,
     payload->'refund'->>'cash_session_id' AS session_id
   FROM entity_state WHERE entity = 'sale_refund' AND NOT deleted`;
+
+/**
+ * El periodo en días locales como instantes UTC ($1 zona, $2 desde, $3 hasta): con los índices de la migración 009 sólo se leen las filas
+ * del periodo en lugar de convertir la fecha de todo el historial. Igual que «día local BETWEEN desde AND hasta».
+ */
+export const inPeriod = (at: string, from = '$2', to = '$3', zone = '$1') =>
+  `cm_utc(${at}) >= (${from}::date::timestamp AT TIME ZONE ${zone}) AND cm_utc(${at}) < ((${to}::date + 1)::timestamp AT TIME ZONE ${zone})`;
+/** Ventas y devoluciones del periodo y la sucursal ($1–$4). */
+export const SALES_IN = `${SALES} AND ${inPeriod("payload->'sale'->>'confirmed_utc'")} AND ($4::uuid IS NULL OR branch_id = $4::uuid)`;
+export const REFUNDS_IN = `${REFUNDS} AND ${inPeriod("payload->'refund'->>'refunded_utc'")} AND ($4::uuid IS NULL OR branch_id = $4::uuid)`;
+/** Turnos que abrieron en el periodo y la sucursal ($1–$4). */
+export const SESSIONS_IN = `SELECT branch_id, terminal_id, payload AS p FROM entity_state WHERE entity = 'cash_session' AND NOT deleted
+  AND ${inPeriod("payload->>'opened_utc'")} AND ($4::uuid IS NULL OR branch_id = $4::uuid)`;
 
 const MOVEMENTS = `SELECT payload->>'cash_session_id' AS session_id, payload->>'kind' AS kind, (payload->>'amount_cents')::bigint AS amount
   FROM entity_state WHERE entity = 'cash_movement' AND NOT deleted`;
@@ -59,13 +72,13 @@ const day = (v: unknown) => (v instanceof Date ? v.toISOString().slice(0, 10) : 
 export interface DayRow { branchId: string; day: string; tickets: number; gross: number; cash: number; card: number; transfer: number; refunds: number }
 
 export async function salesByDay(q: Query, r: Range): Promise<DayRow[]> {
-  const sales = await q(`WITH s AS (${SALES})
+  const sales = await q(`WITH s AS (${SALES_IN})
     SELECT branch_id, day::text AS day, count(*) AS tickets, sum(total) AS gross,
       sum(total) FILTER (WHERE method = 'CASH') AS cash, sum(total) FILTER (WHERE method = 'CARD') AS card,
       sum(total) FILTER (WHERE method = 'TRANSFER') AS transfer
     FROM s WHERE day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR branch_id = $4::uuid)
     GROUP BY branch_id, day`, [r.timeZone, r.from, r.to, r.branchId]);
-  const refunds = await q(`WITH r AS (${REFUNDS})
+  const refunds = await q(`WITH r AS (${REFUNDS_IN})
     SELECT branch_id, day::text AS day, sum(total) AS refunds FROM r
     WHERE day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR branch_id = $4::uuid)
     GROUP BY branch_id, day`, [r.timeZone, r.from, r.to, r.branchId]);
@@ -83,8 +96,8 @@ export async function salesByDay(q: Query, r: Range): Promise<DayRow[]> {
 export interface RefundsByMethod { cash: number; card: number; transfer: number }
 
 export async function refundsByMethod(q: Query, r: Range): Promise<RefundsByMethod> {
-  const rows = await q(`WITH s AS (${SALES}), r AS (${REFUNDS})
-    SELECT s.method, sum(r.total) AS total FROM r JOIN s ON s.sale_id = r.sale_id
+  const rows = await q(`WITH s AS (${SALES}), r AS (${REFUNDS_IN})
+    SELECT s.method, sum(r.total) AS total FROM r JOIN s ON s.sale_id = r.sale_id AND s.branch_id = r.branch_id
     WHERE r.day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR r.branch_id = $4::uuid)
     GROUP BY s.method`, [r.timeZone, r.from, r.to, r.branchId]);
   const by = (m: string) => n(rows.find(x => x.method === m)?.total);
@@ -94,7 +107,7 @@ export async function refundsByMethod(q: Query, r: Range): Promise<RefundsByMeth
 export interface ProductRow { name: string; quantity: number; total: number }
 
 export async function topProducts(q: Query, r: Range, limit = 10): Promise<ProductRow[]> {
-  const rows = await q(`WITH s AS (${SALES})
+  const rows = await q(`WITH s AS (${SALES_IN})
     SELECT item->>'product_name' AS name, sum((item->>'quantity')::bigint) AS quantity, sum((item->>'line_total_cents')::bigint) AS total
     FROM s, jsonb_array_elements(s.payload->'items') AS item
     WHERE s.day BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR s.branch_id = $4::uuid)
@@ -110,11 +123,13 @@ export interface SessionRow {
 
 /** Cortes que abrieron en el periodo. Abiertos: el esperado es lo que va del turno; cerrados: lo que se registró al cerrar. */
 export async function sessions(q: Query, r: Range): Promise<SessionRow[]> {
-  const rows = await q(`WITH c AS (SELECT branch_id, terminal_id, payload AS p FROM entity_state WHERE entity = 'cash_session' AND NOT deleted),
-    s AS (${SALES}), r AS (${REFUNDS}), m AS (${MOVEMENTS}),
-    cs AS (SELECT session_id, sum(applied) AS total FROM s WHERE method = 'CASH' GROUP BY session_id),
-    cr AS (SELECT r.session_id, sum(r.total) AS total FROM r JOIN s ON s.sale_id = r.sale_id WHERE s.method = 'CASH' GROUP BY r.session_id),
-    mv AS (SELECT session_id, sum(CASE WHEN kind = 'DEPOSIT' THEN amount ELSE -amount END) AS net FROM m GROUP BY session_id)
+  // Sólo las ventas, devoluciones y movimientos de esos turnos (índices por turno de la migración 009).
+  const rows = await q(`WITH c AS (${SESSIONS_IN}), ids AS (SELECT p->>'id' AS id FROM c),
+    s AS NOT MATERIALIZED (${SALES}), r AS NOT MATERIALIZED (${REFUNDS}), m AS NOT MATERIALIZED (${MOVEMENTS}),
+    cs AS (SELECT ids.id AS session_id, x.total FROM ids CROSS JOIN LATERAL (SELECT sum(applied) AS total FROM s WHERE method = 'CASH' AND session_id = ids.id) x),
+    cr AS (SELECT r.session_id, sum(r.total) AS total FROM r JOIN s ON s.sale_id = r.sale_id AND s.branch_id = r.branch_id
+      WHERE s.method = 'CASH' AND r.session_id IN (SELECT id FROM ids) GROUP BY r.session_id),
+    mv AS (SELECT session_id, sum(CASE WHEN kind = 'DEPOSIT' THEN amount ELSE -amount END) AS net FROM m WHERE session_id IN (SELECT id FROM ids) GROUP BY session_id)
     SELECT c.p->>'id' AS id, c.branch_id, COALESCE(t.name, 'Caja') AS terminal,
       c.p->>'opened_utc' AS opened_at, c.p->>'closed_utc' AS closed_at, c.p->>'state' AS state,
       (c.p->>'opening_cents')::bigint AS opening, cs.total AS cash_sales, cr.total AS cash_refunds, mv.net AS movements,
@@ -122,9 +137,7 @@ export async function sessions(q: Query, r: Range): Promise<SessionRow[]> {
       c.p->>'discrepancy_note' AS note
     FROM c LEFT JOIN terminal t ON t.id = c.terminal_id
       LEFT JOIN cs ON cs.session_id = c.p->>'id' LEFT JOIN cr ON cr.session_id = c.p->>'id' LEFT JOIN mv ON mv.session_id = c.p->>'id'
-    WHERE (((c.p->>'opened_utc')::timestamptz AT TIME ZONE $1)::date) BETWEEN $2::date AND $3::date
-      AND ($4::uuid IS NULL OR c.branch_id = $4::uuid)
-    ORDER BY (c.p->>'opened_utc')::timestamptz DESC LIMIT 300`, [r.timeZone, r.from, r.to, r.branchId]);
+    ORDER BY cm_utc(c.p->>'opened_utc') DESC LIMIT 300`, [r.timeZone, r.from, r.to, r.branchId]);
   return rows.map(x => {
     const open = x.state !== 'CLOSED';
     const running = n(x.opening) + n(x.cash_sales) - n(x.cash_refunds) + n(x.movements);
@@ -157,7 +170,7 @@ export async function cashDifferences(q: Query, r: Range) {
   const [row] = await q(`SELECT COALESCE(sum(LEAST((payload->>'difference_cents')::bigint, 0)), 0) AS shortages,
       COALESCE(sum(GREATEST((payload->>'difference_cents')::bigint, 0)), 0) AS overages
     FROM entity_state WHERE entity = 'cash_session' AND NOT deleted AND payload->>'state' = 'CLOSED'
-      AND (((payload->>'opened_utc')::timestamptz AT TIME ZONE $1)::date) BETWEEN $2::date AND $3::date AND ($4::uuid IS NULL OR branch_id = $4::uuid)`,
+      AND ${inPeriod("payload->>'opened_utc'")} AND ($4::uuid IS NULL OR branch_id = $4::uuid)`,
     [r.timeZone, r.from, r.to, r.branchId]);
   return { shortages: n(row.shortages), overages: n(row.overages) };
 }

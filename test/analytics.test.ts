@@ -65,6 +65,12 @@ test('profit compares the counter with trays; returned tray pieces count as lost
   assert.equal(p.counter.coveredRevenue, 17100, 'Bread without cost is shown but left out of profit.');
   assert.equal(p.trays.returnedCost, 420);
   assert.equal(p.products.find(x => x.name === 'Dona')!.counterProfit, null);
+
+  // Al día siguiente devuelven otra concha de esa venta: cuenta el día de la devolución, como en la caja.
+  await send(q, caja1, centro, [{ entity: 'sale_refund', id: 'r2', payload: { refund: { id: 'r2', sale_id: 's1', refunded_utc: '2026-10-07T16:00:00Z', total_cents: 1900, kind: 'RETURN' },
+    items: [{ position: 1, quantity: 1, line_total_cents: 1900 }] } }]);
+  const next = (await profit(q, range('2026-10-07', '2026-10-07'))).products.find(x => x.name === 'Concha')!;
+  assert.deepEqual([next.counterPieces, next.counterRevenue], [-1, -1900]);
 });
 
 test('tray analytics: order frequency, usual days, best sellers and sell-through per store', async () => {
