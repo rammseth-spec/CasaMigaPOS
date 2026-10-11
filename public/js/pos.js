@@ -225,19 +225,22 @@ function resultText(r) {
 
 // ---------- Ticket impreso ----------
 
+// Mismo diseño que el ticket térmico de la caja (TextReceiptRenderer + logo Variante 04 de 576 puntos): logo, folio, fecha con zona,
+// cajero, terminal, partidas, Subtotal, TOTAL grande, pago con Efectivo / Aplicado / Cambio y mensaje final.
 function ticketLines(r, copy = false) {
   const row = (left, right, cls) => h('div', { class: `line ${cls ?? ''}`.trim() }, h('span', { text: left }), h('span', { class: 'num', text: right }));
   return [
     copy ? h('p', { class: 'center', text: '*** REIMPRESIÓN ***' }) : null,
-    h('p', { class: 'center', text: 'Casa Miga' }), h('p', { class: 'center muted', text: r.branch }),
+    h('img', { class: 'receipt-logo', src: '/ticket-logo.png', alt: 'Casa Miga Panadería' }),
+    r.branch ? h('p', { class: 'center', text: `Sucursal ${r.branch}` }) : null,
     h('hr'),
-    h('p', { text: `Folio: ${r.folio}` }), h('p', { text: `Fecha: ${new Date(r.at).toLocaleString('es-MX', { timeZone: state.timeZone, dateStyle: 'short', timeStyle: 'medium' })}` }),
-    h('p', { text: `Cajero: ${r.cashier || '—'}` }), h('p', { text: `Caja: ${r.till}` }),
+    h('p', { text: `Folio: ${r.folio}` }), h('p', { text: `Fecha: ${stamp(r.at)}` }),
+    h('p', { text: `Cajero: ${r.cashier || '—'}` }), h('p', { text: `Terminal: ${r.till}` }),
     h('hr'),
     r.items.map(i => [h('p', { text: i.name }), row(`${i.quantity} x ${fmt(i.unitPrice)}`, fmt(i.total))]),
     h('hr'),
     row('Subtotal', fmt(r.total)), row('TOTAL', fmt(r.total), 'total'),
-    r.method === 'CASH' ? [row('Pago', 'EFECTIVO'), row('Efectivo', fmt(r.received)), row('Cambio', fmt(r.change))]
+    r.method === 'CASH' ? [row('Pago', 'EFECTIVO'), row('Efectivo', fmt(r.received)), row('Aplicado', fmt(r.total)), row('Cambio', fmt(r.change))]
       : [row('Pago', r.method === 'CARD' ? 'TARJETA' : 'TRANSFERENCIA'), row('Pagado', fmt(r.total)), r.reference ? row('Referencia', r.reference) : null],
     h('hr'), h('p', { class: 'center', text: 'Gracias por su compra.' }), copy ? h('p', { class: 'center', text: 'COPIA' }) : null];
 }
