@@ -8,10 +8,13 @@
 import { spawn } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { createServer } from 'node:net';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { gunzipSync } from 'node:zlib';
 import { login } from '../lib/auth.js';
 import { createTill } from '../lib/pos.js';
 import { sha256Hex } from '../lib/protocol.js';
+import { storeBatch } from '../lib/store.js';
 import { permissions, send, user } from '../test/helpers.js';
 import { localEnv, memoryDatabase, startLocalServer } from './localServer.js';
 
@@ -40,8 +43,21 @@ await new Promise<void>(resolve => {
 });
 const { q } = await memoryDatabase(join(directory, 'base'));
 
-if (args.includes('--demo') && Number((await q('SELECT count(*) AS n FROM branch', []))[0].n) === 0) {
-  // Como si una caja de escritorio hubiera subido su sucursal: permisos, usuarios y catálogo.
+const demoFile = new URL('./demo/casamiga-demo.json.gz', import.meta.url);
+const empty = Number((await q('SELECT count(*) AS n FROM branch', []))[0].n) === 0;
+if (args.includes('--demo') && empty && existsSync(demoFile)) {
+  // La demo completa de la caja (scripts/build-demo-data.ts): 26 panes con foto, ventas, cortes, charolas, inventario, recetas y
+  // producción, subida como la subiría la caja. Usuarios con las contraseñas fijas de prueba de su rol.
+  const data = JSON.parse(gunzipSync(readFileSync(demoFile)).toString('utf8')) as
+    { branch: { id: string; name: string }; terminal: { id: string; name: string }; entries: Parameters<typeof storeBatch>[2]['entries'] };
+  await q('INSERT INTO branch(id, name) VALUES ($1, $2)', [data.branch.id, data.branch.name]);
+  await q('INSERT INTO terminal(id, branch_id, name, key_sha256) VALUES ($1, $2, $3, $4)', [data.terminal.id, data.branch.id, data.terminal.name, sha256Hex(randomBytes(32).toString('hex'))]);
+  for (let i = 0; i < data.entries.length; i += 200)
+    await storeBatch(q, { id: data.terminal.id, branchId: data.branch.id }, { branchId: data.branch.id, entries: data.entries.slice(i, i + 200) });
+  await createTill(q, await login(q, 'admin', 'Admin#2026'), data.branch.id);
+  console.log(`Demo completa cargada: ${data.branch.name}, ${data.entries.length} registros (panes con foto, ventas, charolas, inventario y recetas) y la caja web CAJA-WEB-02.`);
+} else if (args.includes('--demo') && empty) {
+  // Sin el archivo de la demo: una sucursal mínima, como si una caja de escritorio hubiera subido permisos, usuarios y catálogo.
   const branch = randomUUID(), terminal = randomUUID();
   await q('INSERT INTO branch(id, name) VALUES ($1, $2)', [branch, 'Sucursal de prueba']);
   await q(`INSERT INTO terminal(id, branch_id, name, key_sha256) VALUES ($1, $2, 'CASA-MIGA-CAJA-01', $3)`, [terminal, branch, sha256Hex(randomBytes(32).toString('hex'))]);
@@ -69,7 +85,7 @@ try {
 const url = noLogin ? `http://127.0.0.1:${port}` : `http://localhost:${port}`;
 console.log(`\nCasa Miga web lista: ${url}`);
 console.log(`Datos: ${directory}${noLogin ? ' · entra sola (sólo desde esta computadora)' : ''}`);
-console.log('Usuarios de prueba: ' + TEST_USERS.map(u => `${u.username} / ${u.password}`).join(' · '));
+console.log('Usuarios de prueba: ' + TEST_USERS.map(u => `${u.username} / ${u.password}`).join(' · ') + ' (en la demo completa, ana y luis también usan Cajero#2026)');
 console.log('Deja esta ventana abierta mientras la usas; Ctrl+C la apaga.\n');
 // Con --demo se abre sola en el navegador (Mac, Windows o Linux).
 if (args.includes('--demo')) {
