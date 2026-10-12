@@ -1,6 +1,18 @@
 # Casa Miga POS
 
-**Estado actual (09/10/2026):** QAv1 incluye la rama QA (fases 1K.4B–1K.4D: carrito, historial de ventas, nota de discrepancia e historial de caja) además de la versión web con punto de venta. Ver [estado actual](docs/CURRENT_STATE.md). Los párrafos de fase de abajo son históricos.
+**Estado actual (12/10/2026):** versión 1.0 candidata para el piloto: caja de escritorio y web completas, sincronizadas por la nube. Qué hace: [MANUAL.md](docs/MANUAL.md) · estado: [CURRENT_STATE.md](docs/CURRENT_STATE.md) · notas: [RELEASE_NOTES_1.0.md](docs/RELEASE_NOTES_1.0.md). Los párrafos de fase de abajo son históricos.
+
+## Probar en local (Windows)
+
+Requisitos: Git, [.NET SDK 10](https://dotnet.microsoft.com/download) y [Node.js 24](https://nodejs.org).
+
+```powershell
+git clone https://github.com/rammseth-spec/CasaMigaPOS.git
+cd CasaMigaPOS
+./scripts/run-local.ps1
+```
+
+Levanta la nube local con la web en `http://localhost:4173` (base y respaldos guardados en `%USERPROFILE%\CasaMiga-Prueba`) y abre la caja de escritorio con su propia carpeta de datos, sin tocar una instalación real. La primera vez: crear el administrador en la caja, registrarla en **Nube** con la dirección y el secreto de alta que muestra el script, y entrar a la web con el mismo usuario. Opciones: `-Datos <carpeta>`, `-Puerto <n>`, `-SoloNube`. Pruebas: `./scripts/verify.ps1` (caja) y `cd cloud; npm test; npm run test:browser` (web).
 
 **FASE 1K.4C-R3 TÉCNICAMENTE COMPLETADA; SMOKE MANUAL PENDIENTE.** La entrada de fechas del Historial permite escribir únicamente ocho dígitos e inserta automáticamente las barras de `dd/mm/aaaa`; conserva Backspace, Delete, selección, reemplazo y pegado, además del calendario y validación humana de R2. Focales 32/32; suite 743/743; Release limpio; schema 16 sin migración 017 y base protegida intacta. Ver [reporte 1K.4C-R3](docs/PHASE_1K4C_R3_REPORT.md) y [evidencia](docs/evidence/phase1k4c-r3-verification.md). No iniciar 1K.4D ni publicar hasta su cierre.
 

@@ -73,6 +73,8 @@ Ver [SYNC_PLAN.md](SYNC_PLAN.md#publicar-en-vercel). Variables: `DATABASE_URL` (
 Revisión local sin Neon ni Vercel:
 
 1. `CasaMiga.Maintenance export-sync <copia de datos> <archivo.json>` (aplica las migraciones a esa copia y vuelca su cola sin marcar nada como enviado).
+Prueba completa en una sola computadora (nube local que guarda en disco + caja con datos aparte): `./scripts/run-local.ps1` desde la raíz (ver README).
+
 2. Desde `cloud/`: `npm run dev:web -- <archivo.json>` y abrir `http://localhost:4173`. Con `ENROLLMENT_SECRET` definido, una copia de la app puede registrarse contra `http://localhost:4173` y probar el ciclo completo (subir, ver, editar en la web, aplicar en la caja).
 
 Este servidor de prueba **no pide contraseña** (decisión del usuario, 08/10/2026): entra solo con el último usuario elegido y, con «Salir», se elige otro (administrador, encargado o cajero). Para pedirla: `--con-login`. Empieza con una caja web lista (`CAJA-WEB-02`). Sólo existe en `scripts/dev-web.ts`, que no se publica (`.vercelignore`): la nube en Vercel siempre pide contraseña. Mientras corre, cualquiera en la misma red Wi-Fi puede entrar; úsalo sólo con datos de prueba.
