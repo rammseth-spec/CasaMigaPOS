@@ -114,7 +114,10 @@ export async function startLocalServer(q: Query, options: { port?: number; noLog
     res.writeHead(response.status, headers);
     res.end(Buffer.from(await response.arrayBuffer()));
   });
-  await new Promise<void>(resolve => (options.host ? server.listen(options.port ?? 0, options.host, resolve) : server.listen(options.port ?? 0, resolve)));
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    if (options.host) server.listen(options.port ?? 0, options.host, resolve); else server.listen(options.port ?? 0, resolve);
+  });
   base = `http://localhost:${(server.address() as AddressInfo).port}`;
   return { server, url: base, env };
 }
