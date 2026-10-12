@@ -5,7 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace CasaMiga.Tests;
 
 /// <summary>El catálogo de revisión (docs/catalog): los 26 primeros son idénticos a la tabla autorizada v2 documentada; después van los panes
-/// agregados por el usuario (docs/catalog/README.md).</summary>
+/// agregados por el usuario (docs/catalog/README.md). Cada producto tiene su foto provisional en assets/catalog-provisional-ia.</summary>
 [TestClass]
 public sealed class AuthorizedCatalogTests
 {
@@ -31,9 +31,28 @@ public sealed class AuthorizedCatalogTests
         }
         Assert.AreEqual(rows.Count, rows.Select(r => r[1]).Distinct(StringComparer.Ordinal).Count());
         CollectionAssert.AreEqual(Enumerable.Range(1, rows.Count).Select(i => i.ToString(CultureInfo.InvariantCulture)).ToArray(), rows.Select(r => r[0]).ToArray(), "Ids consecutivos.");
-        CollectionAssert.AreEqual(new[] { "Pan de muerto grande,22,Pan dulce", "Pay de queso,22,Pan dulce", "Pay de elote,22,Pan dulce" },
+        CollectionAssert.AreEqual(new[] { "Pan de muerto grande,22,Pan dulce", "Pay de queso,22,Pays", "Pay de elote,22,Pays" },
             rows.Skip(26).Select(r => $"{r[1]},{r[2]},{r[3]}").ToArray());
         Assert.IsTrue(rows.All(r => int.Parse(r[2], CultureInfo.InvariantCulture) > 0));
-        CollectionAssert.AreEquivalent(new[] { "Pan dulce", "Dona", "Galleta", "Bebida" }, rows.Select(r => r[3]).Distinct().ToArray());
+        // La siembra crea las categorías en el orden en que aparecen: «Pays» (12/10/2026) queda al final.
+        CollectionAssert.AreEqual(new[] { "Pan dulce", "Dona", "Galleta", "Bebida", "Pays" }, rows.Select(r => r[3]).Distinct().ToArray());
+    }
+
+    [TestMethod]
+    public void EveryProductHasAProvisionalPhotoRecordedInTheManifest()
+    {
+        var folder = Catalog("photos");
+        var rows = File.ReadAllLines(Catalog("catalogo-autorizado-v2.csv")).Skip(1).Where(l => l.Length > 0).Select(l => l.Split(',')).ToList();
+        using var manifest = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(folder, "manifest.json")));
+        var entries = manifest.RootElement.EnumerateArray().ToDictionary(e => e.GetProperty("sku").GetString()!, e => e);
+        Assert.HasCount(rows.Count, entries, "Una foto provisional por producto del catálogo.");
+        foreach (var row in rows)
+        {
+            var sku = $"CM-{int.Parse(row[0], CultureInfo.InvariantCulture):000}";
+            var entry = entries[sku];
+            Assert.AreEqual("PROVISIONAL", entry.GetProperty("provenance").GetString(), sku);
+            var file = Path.Combine(folder, entry.GetProperty("file").GetString()!);
+            Assert.AreEqual(entry.GetProperty("sha256").GetString()!.ToLowerInvariant(), Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(file))), sku);
+        }
     }
 }

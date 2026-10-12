@@ -46,7 +46,7 @@ const { q } = await memoryDatabase(join(directory, 'base'));
 const demoFile = new URL('./demo/casamiga-demo.json.gz', import.meta.url);
 const empty = Number((await q('SELECT count(*) AS n FROM branch', []))[0].n) === 0;
 if (args.includes('--demo') && empty && existsSync(demoFile)) {
-  // La demo completa de la caja (scripts/build-demo-data.ts): 26 panes con foto, ventas, cortes, charolas, inventario, recetas y
+  // La demo completa de la caja (scripts/build-demo-data.ts): 29 panes con foto, ventas, cortes, charolas, inventario, recetas y
   // producción, subida como la subiría la caja. Usuarios con las contraseñas fijas de prueba de su rol.
   const data = JSON.parse(gunzipSync(readFileSync(demoFile)).toString('utf8')) as
     { branch: { id: string; name: string }; terminal: { id: string; name: string }; entries: Parameters<typeof storeBatch>[2]['entries'] };

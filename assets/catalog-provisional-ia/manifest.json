@@ -232,5 +232,32 @@
     "job_id": "27da9072-376b-4506-bf06-bc425d2b30f7",
     "generated_utc": "2026-10-06T23:34:00Z",
     "sha256": "3b2f8c9da25239116396af7d32169c1d94f57ab9f0432d2d6c73c8b1e424e35b"
+  },
+  {
+    "sku": "CM-027",
+    "file": "CM-027.jpg",
+    "provenance": "PROVISIONAL",
+    "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+    "job_id": "fb893b83-f769-408e-8af4-f96550c31e14",
+    "generated_utc": "2026-10-12T20:06:55Z",
+    "sha256": "ab698f419867fba4b98efd1c069c3cfb98f771dd6aed82317b0252f13c41b4aa"
+  },
+  {
+    "sku": "CM-028",
+    "file": "CM-028.jpg",
+    "provenance": "PROVISIONAL",
+    "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+    "job_id": "7af9c4db-1f42-4be1-b8fe-a239f8684473",
+    "generated_utc": "2026-10-12T20:06:55Z",
+    "sha256": "9fd56434f85c43020f929423763db52ede0b47b84410da46ea2dd9b813b44d46"
+  },
+  {
+    "sku": "CM-029",
+    "file": "CM-029.jpg",
+    "provenance": "PROVISIONAL",
+    "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+    "job_id": "f24edb47-9a26-473c-a97e-f711dd84f129",
+    "generated_utc": "2026-10-12T20:06:55Z",
+    "sha256": "ed1c928984a1fd2387c2eede306999144e28d888631ec80237de9c2214b32eba"
   }
 ]
