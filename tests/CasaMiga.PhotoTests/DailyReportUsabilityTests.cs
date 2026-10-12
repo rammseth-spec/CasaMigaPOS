@@ -155,7 +155,7 @@ public sealed class DailyReportUsabilityTests
     private sealed class Fixture : IDisposable
     {
         public string Root { get; } = Path.Combine(Path.GetTempPath(), "CasaMigaDailyReportWpf", Guid.NewGuid().ToString("N"));
-        public string Password { get; } = "DailyReport-Review!2026";
+        public string Password { get; } = "Aa1!" + Guid.NewGuid().ToString("N")[..12];
         public Fixture(bool seedSales = false)
         {
             Directory.CreateDirectory(Root);

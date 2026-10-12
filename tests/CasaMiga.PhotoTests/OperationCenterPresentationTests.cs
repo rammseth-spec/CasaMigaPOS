@@ -247,7 +247,7 @@ public sealed class OperationCenterPresentationTests
     {
         private readonly string directory=System.IO.Path.Combine(System.IO.Path.GetTempPath(),"CasaMigaOperationsUi",Guid.NewGuid().ToString("N"));
         public MainViewModel Model{get;}=new();
-        public async Task InitializeAsync(){await Model.InitializeAsync(new FoundationOptions(directory,IsDevelopment:true));var password=Guid.NewGuid().ToString("N");await Model.BootstrapAsync("operations-admin","Operación",password,password);await Model.LoginAsync("operations-admin",password);Assert.IsTrue(Model.CanNavigate,Model.Message);}
+        public async Task InitializeAsync(){await Model.InitializeAsync(new FoundationOptions(directory,IsDevelopment:true));var password="Aa1!"+Guid.NewGuid().ToString("N")[..12];await Model.BootstrapAsync("operations-admin","Operación",password,password);await Model.LoginAsync("operations-admin",password);Assert.IsTrue(Model.CanNavigate,Model.Message);}
         public void Dispose()=>Directory.Delete(directory,true);
     }
 }

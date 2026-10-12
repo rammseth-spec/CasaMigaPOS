@@ -99,7 +99,7 @@ public sealed class OperationCenterTests
     public void HeaderStaysCleanThenReportsActiveAndReadyWorkWithLocalClock()
     {
         using var fixture=new DirectoryFixture();
-        var start=new DateTimeOffset(2026,10,8,9,7,0,TimeSpan.FromHours(-6));
+        var start=new DateTimeOffset(new DateTime(2026,10,8,9,7,0,DateTimeKind.Local));
         var center=new OperationCenterViewModel(fixture.Path,()=>start);
         Assert.AreEqual("09:07",center.ClockTime);
         StringAssert.Contains(center.ClockDate,"8 oct");

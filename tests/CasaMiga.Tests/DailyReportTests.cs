@@ -204,7 +204,7 @@ public sealed class DailyReportTests
             clock = new(new(2026, 10, 9, 18, 0, 0, TimeSpan.Zero));
             Terminal = TerminalNamed("CAJA UNO");
             var identity = new IdentityService(work, new LocalPasswords(), clock, user);
-            var password = Guid.NewGuid().ToString("N") + "!Aa";
+            var password = "Aa1!" + Guid.NewGuid().ToString("N")[..12];
             identity.Bootstrap("report-admin", "Responsable reporte", password);
             Assert.IsTrue(identity.Login("report-admin", password));
             Catalog = new(work, user, clock, Terminal.Id);

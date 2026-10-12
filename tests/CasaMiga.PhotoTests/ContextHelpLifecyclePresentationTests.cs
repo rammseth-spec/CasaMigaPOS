@@ -60,7 +60,7 @@ public sealed class ContextHelpLifecyclePresentationTests
         help.Visibility = Visibility.Collapsed; Dispatch(); Assert.IsFalse(help.IsOpen, "Navigation or logout hides the view and closes its help.");
         help.Visibility = Visibility.Visible; WpfTestHost.Layout(owner, 1280, 820);
         Open(button); Assert.IsTrue(help.IsOpen);
-        owner.Width += 20; Dispatch(); Assert.IsFalse(help.IsOpen, "A size/fullscreen transition closes help with stale coordinates.");
+        owner.Width = 900; owner.Height = 600; Dispatch(); Assert.IsFalse(help.IsOpen, "A size/fullscreen transition closes help with stale coordinates.");
         Open(button); Assert.IsTrue(help.IsOpen);
         owner.Close(); Dispatch(); Assert.IsFalse(help.IsOpen, "Closing the owner removes its overlay.");
         Assert.IsFalse(help.HelpSurface.IsVisible);
