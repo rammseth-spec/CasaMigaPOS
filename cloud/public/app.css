@@ -704,7 +704,9 @@ dialog footer { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: 
   .status-pill.user, #fullscreen { display: none; }
   .status-pill { margin-left: 0; }
   .filters { padding: 0 16px 10px; }
-  .filters .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; width: 100%; padding-bottom: 2px; }
+  /* Los periodos se acomodan en renglones: en celular no se cortan ni hay que deslizarlos. */
+  .filters .chips { flex-wrap: wrap; width: 100%; }
+  .filters .chips .chip, .filters .chips button { padding: 6px 12px; }
   .content { padding: 0 16px 32px; gap: 12px; }
   .banner { margin: 0 16px 10px; }
   .grid-3 { grid-template-columns: 1fr; }
@@ -724,7 +726,9 @@ dialog footer { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: 
   .checkout-actions { grid-template-columns: 1fr; }
   .checkout-actions button.secondary { order: 3; }
   .move-fields { grid-template-columns: 1fr; }
-  .history-row, .history-row.dates { grid-template-columns: 1fr; }
+  /* Folio y su botón en un renglón; fechas lado a lado y Buscar / Limpiar debajo. */
+  .history-row { grid-template-columns: 1fr auto; gap: 8px; }
+  .history-row.dates { grid-template-columns: 1fr 1fr; gap: 8px; }
   .report-kpis.five, .report-kpis.four, .report-kpis.three { grid-template-columns: 1fr 1fr; }
   .report-two { grid-template-columns: 1fr; }
   .closure-boxes { grid-template-columns: 1fr; }
@@ -753,9 +757,16 @@ dialog footer { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: 
   dialog form, dialog .sheet, dialog.checkout > .checkout-card { max-height: 92dvh; padding: 18px 16px; }
   table.cards thead { display: none; }
   table.cards, table.cards tbody { display: block; }
-  table.cards tr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-  table.cards td { border: 0; padding: 0; }
+  table.cards tr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; padding: 12px 10px; border-bottom: 1px solid var(--line); border-radius: 12px; }
+  table.cards td { border: 0; padding: 0; min-width: 0; overflow-wrap: anywhere; }
   table.cards td.num { text-align: left; }
   table.cards td[data-label]::before { content: attr(data-label); display: block; font-size: 12px; color: var(--muted); font-weight: 600; }
   table.cards td.span { grid-column: 1 / -1; }
+  table.cards td.phone-hide { display: none; }
+  /* La primera celda es el título de la tarjeta (el pan, el folio, el usuario…): a todo el ancho y sin etiqueta. */
+  table.cards td:first-child { grid-column: 1 / -1; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  table.cards td:first-child::before { display: none; }
+  /* Seleccionada o al tocar: se resalta la tarjeta completa, no celda por celda. */
+  table.cards tr.selected, table.cards tr.click:hover { background: var(--primary-soft); }
+  table.cards tr.selected td, table.cards tr.click:hover td { background: transparent !important; }
 }

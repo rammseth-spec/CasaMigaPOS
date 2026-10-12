@@ -2,6 +2,8 @@
 
 `catalogo-autorizado-v2.csv` reproduce, fila por fila, la tabla de [phase1k2c-provisional-map.md](../phase1k2c-provisional-map.md): 26 productos con nombre, precio y categoría del catálogo autorizado v2. La prueba `AuthorizedCatalogTests` impide que ambos difieran. Los mosaicos de fotos originales nunca se versionaron.
 
+**Agregados por el usuario (12/10/2026):** 27 Pan de muerto grande ($22), 28 Pay de queso ($22) y 29 Pay de elote ($22), en «Pan dulce». No tienen foto provisional (`CM-027.jpg` … `CM-029.jpg` no existen): aparecen «Sin imagen» hasta subir su foto. `AuthorizedCatalogTests` compara los 26 primeros con la tabla v2 y fija estos tres.
+
 ## Fotos provisionales generadas con IA
 
 `assets/catalog-provisional-ia/CM-001.jpg` … `CM-026.jpg` (768 × 768, ~2 MB en total) son ilustraciones generadas con IA a partir del nombre de cada producto, para que la caja se vea completa durante la revisión. **No son fotos de los productos reales**: entran con procedencia `PROVISIONAL` y deben reemplazarse por fotos reales antes de producción. `manifest.json` registra SKU, modelo, identificador de generación y SHA-256 de cada archivo.

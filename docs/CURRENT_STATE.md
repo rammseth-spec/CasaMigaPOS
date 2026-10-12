@@ -1,3 +1,9 @@
+# Catálogo y celular — 12/10/2026
+
+- **Panes nuevos** (pedido del usuario): 27 Pan de muerto grande, 28 Pay de queso y 29 Pay de elote, $22 cada uno, en «Pan dulce», en el catálogo autorizado (`docs/catalog`), la siembra de revisión y la demo de la web local. Sin foto provisional («Sin imagen» hasta subirla). En la sucursal real se dan de alta en Catálogo.
+- **Web en celular:** las tablas en tarjeta llevan el primer dato como título a todo el ancho (el pan con su foto, el folio, el usuario) y se resalta la tarjeta completa; en Ventas se ocultan terminal, CashSessionId y «Devuelto $0» (siguen en el detalle); búsqueda del historial compacta; los periodos (Hoy, Ayer…) se acomodan en renglones en vez de cortarse; Venta con la caja cerrada avisa por qué lleva a Caja. Revisión: `cloud/scripts/phone-review.ts` (11 pantallas a 375 px, ninguna se desborda).
+- **Prueba local:** entrada automática temporal con un usuario fijo por rol (admin, encargado, cajero); `npm run local -- <carpeta> 4173 --sin-contrasena --demo` en Mac/Linux con la demo completa (26+3 panes, ventas, charolas, inventario y recetas). Ver README.
+
 # Estabilización para el piloto — 10/10/2026
 
 **Implementado y probado.** Pedido del usuario: «arranca con todo en ese orden» (pruebas → documentos → producción → piloto); sin funciones nuevas.

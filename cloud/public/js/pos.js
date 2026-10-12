@@ -47,7 +47,12 @@ export async function tillOf(branchId) {
 export async function vender(ctx) {
   const data = await loadTill(ctx);
   // Como en la caja de escritorio: con la caja cerrada (o ya contada) no se entra a vender; se va a «Tu caja».
-  if (!data.till || !data.session || data.session.count) { location.replace('#/caja'); return h('p', { class: 'muted', text: 'Abriendo Caja…' }); }
+  if (!data.till || !data.session || data.session.count) {
+    // Como en la caja de escritorio: sin caja abierta no se vende. Se dice por qué antes de llevar a Caja.
+    toast(!data.till ? 'Para vender, elige la caja de este dispositivo.' : !data.session ? 'Para vender, primero abre la caja.'
+      : 'Esta caja ya se contó: ciérrala y ábrela de nuevo para vender.');
+    location.replace('#/caja'); return h('p', { class: 'muted', text: 'Abriendo Caja…' });
+  }
   return sell(data);
 }
 
