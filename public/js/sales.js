@@ -52,11 +52,11 @@ async function listView() {
       h('td', { 'data-label': 'Folio' }, h('strong', { text: s.folio })),
       h('td', { 'data-label': 'Fecha local', text: stamp(s.at) }),
       h('td', { class: 'num', 'data-label': 'Total', text: fmt(s.total) }),
-      h('td', { class: 'num', 'data-label': 'Devuelto', text: s.refunded ? fmt(s.refunded) : fmt(0) }),
+      h('td', { class: 'num' + (s.refunded ? '' : ' phone-hide'), 'data-label': 'Devuelto', text: s.refunded ? fmt(s.refunded) : fmt(0) }),
       h('td', { 'data-label': 'Pago', text: METHOD[s.method] ?? s.method }),
       h('td', { 'data-label': 'Cajero actual', text: s.cashier || '—' }),
-      h('td', { 'data-label': 'Terminal actual', text: s.terminal }),
-      h('td', { class: 'mono', 'data-label': 'CashSessionId', text: s.cashSessionId }));
+      h('td', { class: 'phone-hide', 'data-label': 'Terminal actual', text: s.terminal }),
+      h('td', { class: 'mono phone-hide', 'data-label': 'CashSessionId', text: s.cashSessionId }));
     return tr;
   });
   return h('div', { class: 'cash-card history' },
