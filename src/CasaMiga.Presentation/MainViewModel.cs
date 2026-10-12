@@ -198,19 +198,38 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
             ? LoginAsync(account.Username, account.Password) : Task.CompletedTask;
     private async Task TryDevelopmentAutoLoginAsync(FoundationOptions options)
     {
-        if (!IsLogin) return;
+        if (!IsLogin && !IsBootstrap) return;
         DevelopmentAutoLogin? auto;
         try { auto = DevelopmentAutoLogin.TryLoad(options); }
         catch (Exception error) when (error is System.IO.InvalidDataException or System.Text.Json.JsonException or System.IO.IOException or UnauthorizedAccessException)
         { Message = $"No se pudo leer {DevelopmentAutoLogin.FileName}; inicia sesión manualmente."; Notify(); return; }
         developmentLogin = auto;
         if (auto is null) return;
+        // Prueba local en una computadora nueva: la instalación está vacía, así que se crea el administrador con esas credenciales.
+        if (IsBootstrap) { await BootstrapAsync(auto.Username, "Administrador", auto.Password, auto.Password); if (!IsLogin) return; }
         await LoginAsync(auto.Username, auto.Password);
         runtime?.TryLog(CanNavigate ? "development.autologin" : "development.autologin.failed");
         if (CanNavigate)
         {
             MessageIsSuccess = true;
             Message = $"Sesión iniciada automáticamente como {auto.Username.Trim().ToUpperInvariant()} (sólo desarrollo). Para desactivarlo borra {DevelopmentAutoLogin.FileName} de la carpeta de datos.";
+            // Prueba local: un usuario por rol con su contraseña fija (se crean una vez, como haría el administrador en Usuarios).
+            foreach (var account in auto.Accounts.Skip(1).Where(a => a.Role is not null))
+                try
+                {
+                    var exists = await Task.Run(() => login!.ListUsers().Any(u => string.Equals(u.Username, account.Username.Trim(), StringComparison.OrdinalIgnoreCase)));
+                    if (exists) continue;
+                    var temporary = await Task.Run(() => login!.CreateUser(account.Username, account.DisplayName ?? account.Username, account.Role!));
+                    await Task.Run(() => login!.ChangePassword(account.Username, temporary, account.Password));
+                }
+                catch (Exception error) when (error is ArgumentException or InvalidOperationException or AccessDeniedException)
+                { Message += $"\nNo se pudo crear {account.Username}: {error.Message}"; }
+            // Y queda conectada a la nube local, sin capturar dirección ni secreto.
+            if (auto.Cloud is { } cloud && Sync is { IsRegistered: false } sync)
+            {
+                sync.ApiUrl = cloud.Url; sync.BranchName = string.IsNullOrWhiteSpace(cloud.Branch) ? "Sucursal de prueba" : cloud.Branch;
+                await sync.RegisterAsync(cloud.Secret);
+            }
         }
         else if (IsLogin) Message = "El inicio automático de desarrollo no funcionó. Inicia sesión manualmente.";
         Notify();

@@ -53,7 +53,7 @@ function diskStorage(directory: string, base: () => string): Storage {
   };
 }
 
-export async function startLocalServer(q: Query, options: { port?: number; noLogin?: boolean; env?: LocalEnv; blobDirectory?: string } = {}): Promise<{ server: Server; url: string; env: LocalEnv }> {
+export async function startLocalServer(q: Query, options: { port?: number; noLogin?: boolean; env?: LocalEnv; blobDirectory?: string; host?: string } = {}): Promise<{ server: Server; url: string; env: LocalEnv }> {
   const env = options.env ?? localEnv();
   const noLogin = options.noLogin ?? false;
   const root = fileURLToPath(new URL('../public/', import.meta.url));
@@ -114,7 +114,7 @@ export async function startLocalServer(q: Query, options: { port?: number; noLog
     res.writeHead(response.status, headers);
     res.end(Buffer.from(await response.arrayBuffer()));
   });
-  await new Promise<void>(resolve => server.listen(options.port ?? 0, resolve));
+  await new Promise<void>(resolve => (options.host ? server.listen(options.port ?? 0, options.host, resolve) : server.listen(options.port ?? 0, resolve)));
   base = `http://localhost:${(server.address() as AddressInfo).port}`;
   return { server, url: base, env };
 }

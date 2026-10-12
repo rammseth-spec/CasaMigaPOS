@@ -9,10 +9,18 @@ Requisitos: Git, [.NET SDK 10](https://dotnet.microsoft.com/download) y [Node.js
 ```powershell
 git clone https://github.com/rammseth-spec/CasaMigaPOS.git
 cd CasaMigaPOS
-./scripts/run-local.ps1
+powershell -ExecutionPolicy Bypass -File scripts/run-local.ps1
 ```
 
-Levanta la nube local con la web en `http://localhost:4173` (base y respaldos guardados en `%USERPROFILE%\CasaMiga-Prueba`) y abre la caja de escritorio con su propia carpeta de datos, sin tocar una instalación real. La primera vez: crear el administrador en la caja, registrarla en **Nube** con la dirección y el secreto de alta que muestra el script, y entrar a la web con el mismo usuario. Opciones: `-Datos <carpeta>`, `-Puerto <n>`, `-SoloNube`. Pruebas: `./scripts/verify.ps1` (caja) y `cd cloud; npm test; npm run test:browser` (web).
+Levanta la nube local con la web y abre la caja de escritorio con su propia carpeta de datos (`%USERPROFILE%\CasaMiga-Prueba`), sin tocar una instalación real. **Por ahora entra solo** (temporal, sólo prueba local): la caja crea los usuarios de prueba, inicia sesión como admin y se registra en la nube local; la web se abre en `http://127.0.0.1:4173` y entra sola (sólo desde esa computadora). Al tocar **Salir** hay un botón por usuario.
+
+| Rol | Usuario | Contraseña |
+|---|---|---|
+| Administrador | `admin` | `Admin#2026` |
+| Encargado | `encargado` | `Encargado#2026` |
+| Cajero | `cajero` | `Cajero#2026` |
+
+Sólo para la prueba local; nunca usar estos usuarios en la sucursal. Opciones: `-ConContrasena` (todo pide usuario y contraseña como en la sucursal), `-Datos <carpeta>`, `-Puerto <n>`, `-SoloNube`. Para empezar de cero: cerrar la caja y la ventana de la nube y borrar la carpeta de datos de prueba. Pruebas: `./scripts/verify.ps1` (caja) y `cd cloud; npm test; npm run test:browser` (web).
 
 **FASE 1K.4C-R3 TÉCNICAMENTE COMPLETADA; SMOKE MANUAL PENDIENTE.** La entrada de fechas del Historial permite escribir únicamente ocho dígitos e inserta automáticamente las barras de `dd/mm/aaaa`; conserva Backspace, Delete, selección, reemplazo y pegado, además del calendario y validación humana de R2. Focales 32/32; suite 743/743; Release limpio; schema 16 sin migración 017 y base protegida intacta. Ver [reporte 1K.4C-R3](docs/PHASE_1K4C_R3_REPORT.md) y [evidencia](docs/evidence/phase1k4c-r3-verification.md). No iniciar 1K.4D ni publicar hasta su cierre.
 

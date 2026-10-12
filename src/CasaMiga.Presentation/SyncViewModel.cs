@@ -30,6 +30,7 @@ public sealed class SyncViewModel : INotifyPropertyChanged, IDisposable
     }
 
     public SyncStatus Status { get; private set; } = new(SyncState.NotConfigured, 0, null, "");
+    public bool IsRegistered { get { try { return engine.RegisteredApi is not null; } catch (Exception) { return false; } } }
     public string ApiUrl { get; set; } = DefaultApiUrl;
     public string BranchName { get; set; }
     public bool Busy { get; private set; }
