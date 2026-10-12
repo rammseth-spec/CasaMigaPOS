@@ -95,21 +95,22 @@ public sealed class ControlledReceiptPrintTest(
     private static void ValidateSafePayload(byte[] payload,PrintingSettings settings)
     {
         if(payload.Length==0)throw Unsafe();
-        var cuts=0;var tableSelections=0;
+        var cuts=0;var tableSelections=0;var logos=0;var orderingContacts=0;var socials=0;var hearts=0;
+        var logo=OfficialReceiptLogo.Command();var ordering=ReceiptOrderContactRaster.Command();var social=ReceiptSocialRaster.Command();var heart=ReceiptHeartRaster.Command();
         for(var index=0;index<payload.Length;index++)
         {
-            if(index==(settings.CharacterTable.HasValue?3:0) && settings.Columns==48)
-            {
-                var graphic=OfficialReceiptLogo.Command();
-                if(!payload.AsSpan(index,3).SequenceEqual(new byte[]{0x1b,0x61,0})
-                    || payload.Length<index+3+graphic.Length || !payload.AsSpan(index+3,graphic.Length).SequenceEqual(graphic))throw Unsafe();
-                index+=3+graphic.Length-1;continue;
-            }
+            if(payload.AsSpan(index).StartsWith(logo)){logos++;index+=logo.Length-1;continue;}
+            if(payload.AsSpan(index).StartsWith(ordering)){orderingContacts++;index+=ordering.Length-1;continue;}
+            if(payload.AsSpan(index).StartsWith(social)){socials++;index+=social.Length-1;continue;}
+            if(payload.AsSpan(index).StartsWith(heart)){hearts++;index+=heart.Length-1;continue;}
             if(payload[index]==0x1b)
             {
-                if(index+2>=payload.Length || payload[index+1]!=0x74 || settings.CharacterTable is not { } table
-                    || payload[index+2]!=(byte)table || index!=0)throw Unsafe();
-                tableSelections++;index+=2;continue;
+                if(index+2>=payload.Length)throw Unsafe();
+                if(payload[index+1]==0x74 && settings.CharacterTable is { } table && payload[index+2]==(byte)table && index==0)
+                {tableSelections++;index+=2;continue;}
+                if(payload[index+1]==0x61 && payload[index+2] is 0x00 or 0x01)
+                {index+=2;continue;}
+                throw Unsafe();
             }
             if(payload[index]==0x1d)
             {
@@ -121,18 +122,22 @@ public sealed class ControlledReceiptPrintTest(
             }
             if(payload[index]<0x20 && payload[index] is not (0x0a or 0x0d))throw Unsafe();
         }
-        if(cuts!=(settings.CutMode=="Partial"?1:0) || tableSelections!=(settings.CharacterTable.HasValue?1:0))throw Unsafe();
+        if(cuts!=(settings.CutMode=="Partial"?1:0) || tableSelections!=(settings.CharacterTable.HasValue?1:0)
+            || logos!=(settings.Columns==48?1:0)
+            || orderingContacts!=(settings.Columns==48&&!string.IsNullOrWhiteSpace(settings.Business.Phone)?1:0)
+            || socials>1 || hearts!=(settings.Columns==48?1:0))throw Unsafe();
     }
 
     private static InvalidOperationException Unsafe()=>new("El ticket contiene bytes fuera del conjunto ASCII/ESC-POS autorizado.");
     private static string PrintableText(byte[] payload,string encodingName)
     {
-        using var text=new MemoryStream();
+        using var text=new MemoryStream();var logo=OfficialReceiptLogo.Command();var ordering=ReceiptOrderContactRaster.Command();var social=ReceiptSocialRaster.Command();var heart=ReceiptHeartRaster.Command();
         for(var index=0;index<payload.Length;index++)
         {
-            if(index+10<payload.Length && payload.AsSpan(index,3).SequenceEqual(new byte[]{0x1b,0x61,0})
-                && payload.AsSpan(index+3,4).SequenceEqual(new byte[]{0x1d,0x76,0x30,0}))
-            {index+=3+OfficialReceiptLogo.Command().Length-1;continue;}
+            if(payload.AsSpan(index).StartsWith(logo)){index+=logo.Length-1;continue;}
+            if(payload.AsSpan(index).StartsWith(ordering)){index+=ordering.Length-1;continue;}
+            if(payload.AsSpan(index).StartsWith(social)){index+=social.Length-1;continue;}
+            if(payload.AsSpan(index).StartsWith(heart)){index+=heart.Length-1;continue;}
             if(payload[index] is 0x1b or 0x1d){index+=2;continue;}
             text.WriteByte(payload[index]);
         }

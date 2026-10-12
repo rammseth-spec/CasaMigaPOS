@@ -1,0 +1,38 @@
+{
+  "phase": "1K.4E-R1",
+  "printer": "Qian QOP-T80UL-RI-02",
+  "queue": "POS-80",
+  "transport": "ESC/POS RAW",
+  "columns": 48,
+  "encoding": "ibm850",
+  "characterTable": 2,
+  "saleSequence": 17,
+  "saleDisplay": "Venta #000017",
+  "snapshotSha256": "4679BE25A26FC7A0754245BEB46417C9B5161B35E8753E8AE25B97D9641603B3",
+  "original": {
+    "bytes": 23853,
+    "sha256": "50DE3C3831D9F11B1A0CA41F6993123A45B49EE7784AD300EC989BBAA5C1D0EB"
+  },
+  "reprint": {
+    "bytes": 23888,
+    "sha256": "58A496A312948C5D00BFEC055BF9F8AD1CEA051255DAD8067DA2FF552DDC3BFA"
+  },
+  "commandsInOriginal": {
+    "escT2": 1,
+    "alignLeft": 4,
+    "alignCenter": 3,
+    "officialLogoRaster": 1,
+    "socialLogosRaster": 1,
+    "heartRaster": 1,
+    "totalDoubleHeight": 1,
+    "normalSize": 2,
+    "partialCutGsV1": 1,
+    "drawerKick": 0,
+    "finalFeedBytes": 6
+  },
+  "openCashDrawer": false,
+  "physicalPrintSubmitted": false,
+  "sourceDatabaseSha256": "CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D",
+  "sourceSchema": 16,
+  "fixtureSchema": 17
+}

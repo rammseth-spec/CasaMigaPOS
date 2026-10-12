@@ -14,6 +14,116 @@ Decisiones abiertas (no se hacen sin autorización): vender sin Internet en la w
 
 # Registro anterior
 
+## Smoke pendiente heredado de QA (integrado el 12/10/2026)
+
+Tras la integración, pantalla completa es el botón de ícono de la barra (ayuda «Pantalla completa · F11») y el Centro operativo se abre con el reloj de la barra.
+
+### Smoke manual de FASE 1K.4H-A-R1
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4H-A-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4H-A-R1`, DataDirectory `work/phase1k4h-a-r1-smoke-20261010` y las credenciales verificadas entregadas en la conversación.
+
+1. Iniciar sesión y comprobar `Pantalla completa · F11`; entrar con clic, confirmar `Salir de pantalla completa · F11` y salir con F11.
+2. Abrir **Reporte diario** y confirmar 10/10/2026 con EN CURSO, $70.00, 2 tickets, 5 piezas y ticket promedio $35.00.
+3. Revisar Ventas por hora: primera 09:00, última 17:00 y pico 09:00–09:59; comprobar tooltips/lectura accesible.
+4. Revisar caja abierta: Apertura 08:00, Cierre En curso, responsable humano, Contado Pendiente y Diferencia Pendiente.
+5. Consultar 06/10/2026 y confirmar «No hubo ventas registradas este día» sin gráfico vacío.
+6. Consultar 07/10/2026 y revisar cierre exacto, hora de cierre y duración.
+7. Consultar 08/10/2026 y revisar faltante de $2.00 con nota.
+8. Consultar 09/10/2026 y confirmar «2 sesiones en el día» con apertura, cierre, responsables y métricas por sesión.
+9. Revisar Productos más vendidos y el encabezado `Producto`.
+10. Confirmar los textos deliberados de Producción, Materias primas y Preparación para mañana.
+11. Revisar 1280×820, 1920×1080, 3440×1440, F11 y Escape; comprobar scroll vertical y ausencia de clipping/scroll horizontal global.
+12. No imprimir, vender, cerrar caja, usar cajón ni modificar inventario/recetas/producción.
+
+Esperar aprobación humana. No push, no PR, no 1K.4H-B, no 1K.4G-B/C y no 1K.5. Si se autoriza el siguiente desarrollo, 1K.4H-B debe comenzar con auditoría de confiabilidad de merma/producción; modelo recomendado GPT-6 Sol, esfuerzo alto.
+
+## Registro anterior — smoke de 1K.4H-A
+
+## Registro anterior — auditoría 1K.4G-A
+
+# Próximo paso — responder auditoría 1K.4G-A y autorizar 1K.4G-B
+
+Revisar `PHASE_1K4G_AUDIT.md` y `PHASE_1K4G_PRODUCT_MATRIX.md`. Completar `PHASE_1K4G_RECIPE_QUESTIONNAIRE.md` con datos reales de Casa Miga, empezando por:
+
+1. identificar qué productos se elaboran y cuáles son reventa;
+2. nombrar cada masa/preparación base y asignarle productos;
+3. indicar rendimiento, ingredientes y cantidades exactas;
+4. proporcionar gramaje/cantidad por pieza y extras;
+5. definir huevo/COUNT y alternativas de levadura;
+6. decidir qué productos terminados llevarán inventario;
+7. proporcionar reservas mínimas y confirmar si 1.0 requiere muestra/cortesía y uso interno.
+
+No convertir precios, fotos, nombres o el saldo de Harina del fixture en recetas confirmadas. No insertar datos, crear migración 018, iniciar 1K.4G-B, 1K.4H o reportes hasta autorización posterior. Si las respuestas confirman reservas, costos o destinos no venta persistentes, diseñar primero el alcance mínimo de 018 y detenerse antes de implementarlo.
+
+Modelo recomendado para 1K.4G-B: **GPT-6 Astra** por la reconciliación de datos comerciales con versionado, ledger y posible migración; **GPT-6 Sol** sólo si el bloque autorizado se limita a captura de datos usando schema 17 sin cambios estructurales.
+
+## Registro anterior — smoke conjunto 1K.4F-R2 + 1K.4E-R2
+
+# Próximo paso — smoke conjunto 1K.4F-R2 + 1K.4E-R2
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4F-R2.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4F-R2`, DataDirectory `work/phase1k4f-r2-smoke-20261009`. La apertura automática queda en login y no equivale a aprobación humana.
+
+1. Iniciar sesión; revisar a 1280×820, 1920×1080, ultrawide y F11 el orden Caja, resumen operativo cuando exista, reloj y F11.
+2. Confirmar Caja abierta en la fixture; cerrar sesión sólo si se desea comprobar que el login no expone información operativa. No cerrar la caja.
+3. Abrir el Centro operativo desde el reloj y desde el resumen; comprobar R1, Escape, temporizadores/listos/urgentes y ausencia de ceros sin actividad.
+4. Desde Historial localizar `Venta #000017`. Sólo cuando el usuario autorice la prueba física, reimprimir en POS-80 y revisar dirección, icono, «Pedidos por WhatsApp», `461 276 7429`, separador, marca REIMPRESIÓN, productos, TOTAL, redes, agradecimiento, corazón, seis LF y corte.
+5. La prueba de original requiere una venta sintética manual con autorización expresa; usar «Cobrar + imprimir ticket». Confirmar cero apertura de cajón y ausencia de duplicación.
+
+No push, no PR, no iniciar 1K.4G/1K.5 y no modificar driver, puerto, codepage, corte o cajón.
+
+## Registro anterior — smoke manual final de FASE 1K.4F-R1
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4F-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4F-R1`, DataDirectory `work/phase1k4f-r1-smoke-20261009`. La apertura automática queda en login y no equivale a aprobación humana.
+
+1. Revisar login; iniciar sesión con las credenciales verificadas entregadas en la conversación y abrir Centro operativo.
+2. Confirmar que los editores de Temporizadores y Notas están cerrados y que la lista aparece primero.
+3. Pulsar `+ Nuevo`, cancelar, volver a abrir y crear un timer; comprobar que el editor se cierra y el timer aparece. Crear tres y revisar densidad a 1280×820.
+4. Terminar uno; confirmar `¡Listo!`, Atender, Reiniciar y Eliminar sin pérdida de jerarquía.
+5. Pulsar `+ Nueva`, cancelar, crear una nota y editarla; comprobar rótulo «Editar nota», guardado y autocierre.
+6. Crear un recordatorio, dejarlo vencer, pulsar Posponer y comprobar que sólo entonces aparecen 5/10/15 min; elegir 5 min y confirmar que se ocultan.
+7. Dejar dos eventos vencer juntos y confirmar una sola alerta breve, doble pulso/micro-shake de 600 ms, sonido y estado persistente. Repetir con la ventana detrás/minimizada para revisar taskbar sin robo de foco.
+8. Comprobar primer Escape sobre editor/desplegable y segundo Escape sobre panel; revisar F11, Alt+Tab, minimizar/restaurar, 1280×820 y 1920×1080.
+9. Cerrar completamente y reabrir el mismo launcher; comprobar timer activo por deadline, notas y recordatorios. Observar parpadeos/CPU.
+10. Cerrar sesión y confirmar retorno a login.
+
+No imprimir, usar cajón, vender, abrir/cerrar caja ni modificar inventario/recetas/producción. `operations-hub.json` sigue fuera de `.cmbackup`. Esperar aprobación humana; no push y no iniciar 1K.4G/1K.5.
+
+## Registro anterior — smoke 1K.4F
+
+El build 1K.4F fue sustituido por R1 debido al espacio vertical ocupado por sus formularios permanentes.
+
+## Registro anterior — 1K.4E-R1
+
+# Próximo paso — smoke físico manual de ticket 1K.4E-R1
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4E-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4E-R1`, DataDirectory `work/phase1k4e-r1-smoke-20261008` (schema 17). No usar accesos anclados ni builds anteriores.
+
+1. Iniciar sesión con las credenciales verificadas entregadas en la conversación.
+2. Abrir Historial, localizar `Venta #000017` y revisar $72.00, Efectivo, recibido $100.00 y cambio $28.00.
+3. Reimprimir sólo cuando el usuario decida ejecutar la prueba física. Confirmar el orden: «Hecho en:», Variante 04 reducida, dirección, separador, REIMPRESIÓN, venta, productos, totales, pago, «Síguenos en:», logotipos de Facebook/Instagram, cuentas, agradecimiento, corazón, espacio final y corte.
+4. Confirmar que no aparecen las palabras Facebook/Instagram, pero sí sus logotipos y `Casa Miga   @casamiga126`.
+5. Confirmar legibilidad del nombre largo en dos líneas, TOTAL destacado, seis LF de separación, ausencia de apertura de cajón y ausencia de mutaciones comerciales.
+6. Para probar ORIGINAL físicamente, realizar una venta exclusivamente sintética desde POS sólo con autorización humana expresa y usar «Cobrar + imprimir ticket».
+7. Reportar el resultado físico antes de cerrar 1K.4E-R1.
+
+No iniciar 1K.4F, migración 018, instalador, cambio de driver/puerto/codepage/corte o activación de cajón. No hacer push.
+
+## Registro anterior — 1K.4E
+
+# Próximo paso anterior — smoke físico manual de ticket 1K.4E
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4E.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4E`, DataDirectory `work/phase1k4e-smoke-20261008` (schema 17). No usar accesos anclados ni builds anteriores.
+
+1. Iniciar sesión con las credenciales verificadas entregadas en la conversación.
+2. Abrir Historial, localizar `Venta #000017` y revisar $72.00, Efectivo, recibido $100.00 y cambio $28.00; no debe aparecer GUID, `CASH` ni `Aplicado`.
+3. Revisar snapshot: nombre corto, nombre largo, acentos y cantidades múltiples.
+4. Sólo cuando el usuario decida hacer la prueba física, reimprimir esa venta. Confirmar «Hecho en:», Variante 04 nítida, dirección sin teléfono, TOTAL destacado, Facebook, Instagram, mensaje, corazón y corte parcial.
+5. Confirmar marca `REIMPRESIÓN`, que el cajón no abre y que no cambian venta, pago, caja, inventario ni producción.
+6. Para probar ORIGINAL físicamente, realizar una venta exclusivamente sintética desde el POS sólo con autorización humana expresa y usar «Cobrar + imprimir ticket». La preparación automática no crea requests de impresión.
+7. Salir. Reportar el resultado físico antes de cerrar formalmente 1K.4E.
+
+No iniciar 1K.4F, migración 018, instalador, cambio de driver/puerto/codepage/corte o activación de cajón. No hacer push durante esta fase.
+
 # FASE 1K.4D-R1 aprobada — siguiente trabajo pendiente de autorización
 
 El usuario aprobó el smoke visual final del build `work/Abrir-Casa-Miga-1K4D-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4D-R1`, con DataDirectory aislado `work/phase1k4d-r1-smoke-20261008` (schema 17).
@@ -492,3 +602,20 @@ Antes de producción continúan pendientes datos reales, logo monocromático apr
 Checkpoint vigente 1I.5: reabrir instalación existente, login SMOKECASHIER y comprobar venta con consumo ACTIVO; principal anterior fue Administrator. No cerrar fase ni repetir esa intención.
 
 Revisión adicional completada: logo completo, iconos, hover estable, ausencia de cambios visuales al bloquear la navegación y pestañas de Catálogo/Recetas con selección verde.
+# Próximo paso — smoke manual de FASE 1K.4F
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4F.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4F`, DataDirectory `work/phase1k4f-smoke-20261008`. La apertura automática queda en login y no equivale a aprobación humana.
+
+1. Antes de autenticar, confirmar la composición Login opción 3: usuario/contraseña cómodos, reloj a la derecha, hora y fecha únicamente; no deben verse nombres, estados ni conteos operativos.
+2. Iniciar sesión con las credenciales verificadas entregadas en la conversación. Revisar Header D, F11 y el botón completo del reloj.
+3. Abrir Panel 4; confirmar ancho compacto, scroll interno, tarjetas y ausencia de parpadeo o reconstrucción del módulo actual.
+4. Revisar los escenarios aislados ya preparados: timer activo, pausado, listo; nota sin recordatorio, futura y vencida. No son datos de producto.
+5. Crear un timer de 1 minuto y otro adicional; pausar, reanudar, navegar al POS, cerrar el panel, esperar finalización, abrir desde `1 listo`, atender, reiniciar y eliminar.
+6. Crear una nota, editarla, agregar recordatorio corto, esperar su vencimiento, atenderla y eliminarla.
+7. Con el panel abierto probar Escape, Alt+Tab y minimizar/restaurar. F11 debe conservar su prioridad después de cerrar el panel.
+8. Revisar 1280×820 y 1920×1080/F11; confirmar targets cómodos, encabezado limpio sin actividad y CPU estable sin refresh del catálogo o fotos.
+9. Cerrar sesión: debe salir de fullscreen y volver al login sin mostrar información operativa.
+
+No imprimir, no usar cajón, no vender, no abrir/cerrar caja ni modificar inventario/recetas/producción. `operations-hub.json` no está incluido en `.cmbackup`; reprogramación se realiza mediante Editar y guardar una nueva fecha/hora. Esperar aprobación del smoke antes de cualquier publicación. No hacer push y no iniciar 1K.5.
+
+## Registro anterior — 1K.4E-R1

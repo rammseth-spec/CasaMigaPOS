@@ -136,6 +136,7 @@ public interface ILocalStore
     SaleRefundRecord? FindRefundByOperation(Guid operation);
     SalesHistoryPage QuerySales(SalesHistoryFilter filter);
     SalesHistoryDetail? FindSaleDetail(Guid saleId);
+    DailyReportSnapshot QueryDailyReport(DateTimeOffset fromUtc, DateTimeOffset untilUtc);
     ReceiptSnapshot? FindReceiptSnapshot(Guid saleId);
     void AddReceiptSnapshot(ReceiptSnapshot snapshot);
     ReceiptPrintRequest? FindOriginalReceiptPrintRequest(Guid saleId);

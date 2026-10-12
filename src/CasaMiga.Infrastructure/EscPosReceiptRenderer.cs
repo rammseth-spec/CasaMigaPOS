@@ -9,6 +9,8 @@ public sealed class EscPosReceiptRenderer : IReceiptPayloadRenderer
     private static readonly byte[] DoubleHeight = [0x1d, 0x21, 0x01];
     private static readonly byte[] NormalSize = [0x1d, 0x21, 0x00];
     private static readonly byte[] PartialCut = [0x1d, 0x56, 0x01];
+    private static readonly byte[] AlignLeft = [0x1b,0x61,0x00];
+    private static readonly byte[] AlignCenter = [0x1b,0x61,0x01];
 
     public byte[] Render(ReceiptDocument document,ReceiptCopyKind copyKind,PrintingSettings settings)
     {
@@ -23,8 +25,10 @@ public sealed class EscPosReceiptRenderer : IReceiptPayloadRenderer
         var encoding=Encoding.GetEncoding(settings.EncodingName,EncoderFallback.ExceptionFallback,DecoderFallback.ExceptionFallback);
         var lines=new TextReceiptRenderer(settings.Columns).Render(document,copyKind)
             .Replace("\n","\r\n",StringComparison.Ordinal).Split("\r\n",StringSplitOptions.None);
+        if(string.Equals(settings.EncodingName,"us-ascii",StringComparison.OrdinalIgnoreCase))
+            lines=lines.Select(line=>line.Replace('·','-')).ToArray();
         var originalHeader=Wrap(document.Business.DisplayName,settings.Columns).ToArray();
-        var headerIndex=copyKind==ReceiptCopyKind.Original?0:1;
+        const int headerIndex=1; // "Hecho en:" precedes the brand in both original and reprint.
         using var output=new MemoryStream();
         if(settings.CharacterTable is { } table)
         {
@@ -33,13 +37,20 @@ public sealed class EscPosReceiptRenderer : IReceiptPayloadRenderer
         }
         for(var index=0;index<lines.Length-1;index++)
         {
+            if(index==0)
+            {
+                output.Write(AlignCenter);
+                WriteLine(output,encoding,lines[index].Trim());
+                output.Write(AlignLeft);
+                continue;
+            }
             if(index==headerIndex)
             {
                 // Current brand is a rendering policy, independent of immutable historical snapshots.
                 // All tickets on the approved 48-column / 576-dot printer use the current master.
                 if(settings.Columns==48)
                 {
-                    output.Write([0x1b,0x61,0]);
+                    output.Write(AlignLeft);
                     output.Write(OfficialReceiptLogo.Command());
                     output.Write(NormalSize);
                     WriteLine(output,encoding,"");
@@ -58,11 +69,29 @@ public sealed class EscPosReceiptRenderer : IReceiptPayloadRenderer
                 output.Write(DoubleHeight);WriteLine(output,encoding,lines[index]);output.Write(NormalSize);
                 continue;
             }
+            if(settings.Columns==48&&string.Equals(lines[index].Trim(),"Pedidos por WhatsApp",StringComparison.Ordinal))
+            {
+                output.Write(AlignCenter);
+                output.Write(ReceiptOrderContactRaster.Command());
+                output.Write(AlignLeft);
+            }
             WriteLine(output,encoding,lines[index]);
+            if(settings.Columns==48&&string.Equals(lines[index].Trim(),"Síguenos en:",StringComparison.Ordinal))
+            {
+                output.Write(AlignCenter);
+                output.Write(ReceiptSocialRaster.Command());
+                output.Write(AlignLeft);
+            }
+        }
+        if(settings.Columns==48)
+        {
+            output.Write(AlignCenter);
+            output.Write(ReceiptHeartRaster.Command());
+            output.Write(AlignLeft);
         }
         if(settings.CutMode=="Partial")
         {
-            output.Write([0x0a,0x0a,0x0a,0x0a]);
+            output.Write([0x0a,0x0a,0x0a,0x0a,0x0a,0x0a]);
             output.Write(PartialCut);
         }
         return output.ToArray();
