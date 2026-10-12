@@ -22,6 +22,19 @@ Levanta la nube local con la web y abre la caja de escritorio con su propia carp
 
 Sólo para la prueba local; nunca usar estos usuarios en la sucursal. Opciones: `-ConContrasena` (todo pide usuario y contraseña como en la sucursal), `-Datos <carpeta>`, `-Puerto <n>`, `-SoloNube`. Para empezar de cero: cerrar la caja y la ventana de la nube y borrar la carpeta de datos de prueba. Pruebas: `./scripts/verify.ps1` (caja) y `cd cloud; npm test; npm run test:browser` (web).
 
+### Sólo la web en Mac o Linux
+
+La caja de escritorio es de Windows; en Mac se prueba la web. Requisitos: Git y [Node.js 24](https://nodejs.org).
+
+```bash
+git clone https://github.com/rammseth-spec/CasaMigaPOS.git
+cd CasaMigaPOS/cloud
+npm ci
+npm run local -- ~/CasaMiga-Prueba 4173 --sin-contrasena --demo
+```
+
+Abrir `http://127.0.0.1:4173`: entra sola como admin; con **Salir** hay un botón por usuario (los mismos de la tabla). `--demo` crea la primera vez una sucursal de prueba con los tres usuarios, diez panes y una caja web; sin la caja de escritorio, los cambios de catálogo, inventario y similares se quedan «Por confirmar». Para apagar: Ctrl+C. Para empezar de cero: borrar `~/CasaMiga-Prueba`.
+
 **FASE 1K.4C-R3 TÉCNICAMENTE COMPLETADA; SMOKE MANUAL PENDIENTE.** La entrada de fechas del Historial permite escribir únicamente ocho dígitos e inserta automáticamente las barras de `dd/mm/aaaa`; conserva Backspace, Delete, selección, reemplazo y pegado, además del calendario y validación humana de R2. Focales 32/32; suite 743/743; Release limpio; schema 16 sin migración 017 y base protegida intacta. Ver [reporte 1K.4C-R3](docs/PHASE_1K4C_R3_REPORT.md) y [evidencia](docs/evidence/phase1k4c-r3-verification.md). No iniciar 1K.4D ni publicar hasta su cierre.
 
 **FASE 1K.3C TÉCNICAMENTE COMPLETADA; SMOKE MANUAL PENDIENTE.** Recetas ofrece búsqueda incremental de ingredientes, unidades compatibles por dimensión, versionado y estados humanos, alternativas por grupo/opción, secciones distintas para preparaciones e ingredientes directos, ayudas breves y acciones inválidas deshabilitadas. Suite 708/708; Release 0 errores/advertencias. Build aislado `Phase1K3C`; schema 16 sin migración 017 y datos protegidos. Ver [reporte 1K.3C](docs/PHASE_1K3C_REPORT.md) y [evidencia](docs/evidence/phase1k3c-verification.md). 1K.3B fue aprobada manualmente por el usuario antes de esta autorización. FASE 1K permanece abierta.
