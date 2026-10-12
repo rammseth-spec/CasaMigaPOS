@@ -5,6 +5,7 @@
 // --demo: si la base está vacía, crea una sucursal con un usuario fijo por rol, panes y una caja web, para probar la web sin la caja
 //         de escritorio (por ejemplo en Mac). Los cambios que necesitan la caja (catálogo, inventario…) quedan «Por confirmar».
 // Variables opcionales: ENROLLMENT_SECRET (alta de cajas), SESSION_SECRET, BACKUP_SECRET y CRON_SECRET (run-local.ps1 las genera).
+import { spawn } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { login } from '../lib/auth.js';
@@ -45,7 +46,16 @@ if (args.includes('--demo') && Number((await q('SELECT count(*) AS n FROM branch
   console.log('Datos de demostración creados: Sucursal de prueba, 3 usuarios (uno por rol), 10 panes y la caja web CAJA-WEB-02.');
 }
 
-const { url } = await startLocalServer(q, { port: Number(portText ?? 4173), env: localEnv(), blobDirectory: join(directory, 'respaldos'), noLogin, host: noLogin ? '127.0.0.1' : undefined });
-console.log(`Nube local en ${url} · datos en ${directory}${noLogin ? ' · la web entra sola (sólo desde esta computadora)' : ''}`);
-if (noLogin) console.log(`Abre http://127.0.0.1:${portText ?? 4173} en el navegador.`);
+const port = Number(portText ?? 4173);
+await startLocalServer(q, { port, env: localEnv(), blobDirectory: join(directory, 'respaldos'), noLogin, host: noLogin ? '127.0.0.1' : undefined });
+// Sin contraseña sólo escucha en 127.0.0.1: esa es la dirección que hay que abrir (en Mac, «localhost» puede ir primero a ::1).
+const url = noLogin ? `http://127.0.0.1:${port}` : `http://localhost:${port}`;
+console.log(`\nCasa Miga web lista: ${url}`);
+console.log(`Datos: ${directory}${noLogin ? ' · entra sola (sólo desde esta computadora)' : ''}`);
 console.log('Usuarios de prueba: ' + TEST_USERS.map(u => `${u.username} / ${u.password}`).join(' · '));
+console.log('Deja esta ventana abierta mientras la usas; Ctrl+C la apaga.\n');
+// Con --demo se abre sola en el navegador (Mac, Windows o Linux).
+if (args.includes('--demo')) {
+  const [command, ...rest] = process.platform === 'darwin' ? ['open', url] : process.platform === 'win32' ? ['cmd', '/c', 'start', '', url] : ['xdg-open', url];
+  spawn(command, rest, { stdio: 'ignore', detached: true }).on('error', () => console.log(`Abre ${url} en el navegador.`)).unref();
+}
