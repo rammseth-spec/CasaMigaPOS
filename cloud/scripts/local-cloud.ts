@@ -7,6 +7,7 @@
 // Variables opcionales: ENROLLMENT_SECRET (alta de cajas), SESSION_SECRET, BACKUP_SECRET y CRON_SECRET (run-local.ps1 las genera).
 import { spawn } from 'node:child_process';
 import { randomBytes, randomUUID } from 'node:crypto';
+import { createServer } from 'node:net';
 import { join } from 'node:path';
 import { login } from '../lib/auth.js';
 import { createTill } from '../lib/pos.js';
@@ -25,6 +26,18 @@ const args = process.argv.slice(2);
 const [directory, portText] = args.filter(a => !a.startsWith('--'));
 const noLogin = args.includes('--sin-contrasena');
 if (!directory) throw new Error('Falta la carpeta de datos de la nube local.');
+const port = Number(portText ?? 4173);
+function busy(): never {
+  // Lo más común: ya hay una web corriendo en otra ventana de Terminal.
+  console.error(`\nEl puerto ${port} ya está ocupado: probablemente la web ya está corriendo en otra ventana.`);
+  console.error(`Ábrela en http://127.0.0.1:${port}, o cierra esa ventana (Ctrl+C), o usa otro puerto, por ejemplo: npm run local -- ${directory} ${port + 2} …\n`);
+  process.exit(1);
+}
+// Antes de abrir la base: dos copias nunca deben abrir la misma carpeta de datos a la vez.
+await new Promise<void>(resolve => {
+  const probe = createServer().once('error', () => busy());
+  probe.listen(port, noLogin ? '127.0.0.1' : undefined, () => probe.close(() => resolve()));
+});
 const { q } = await memoryDatabase(join(directory, 'base'));
 
 if (args.includes('--demo') && Number((await q('SELECT count(*) AS n FROM branch', []))[0].n) === 0) {
@@ -46,8 +59,12 @@ if (args.includes('--demo') && Number((await q('SELECT count(*) AS n FROM branch
   console.log('Datos de demostración creados: Sucursal de prueba, 3 usuarios (uno por rol), 10 panes y la caja web CAJA-WEB-02.');
 }
 
-const port = Number(portText ?? 4173);
-await startLocalServer(q, { port, env: localEnv(), blobDirectory: join(directory, 'respaldos'), noLogin, host: noLogin ? '127.0.0.1' : undefined });
+try {
+  await startLocalServer(q, { port, env: localEnv(), blobDirectory: join(directory, 'respaldos'), noLogin, host: noLogin ? '127.0.0.1' : undefined });
+} catch (error) {
+  if ((error as NodeJS.ErrnoException).code !== 'EADDRINUSE') throw error;
+  busy();
+}
 // Sin contraseña sólo escucha en 127.0.0.1: esa es la dirección que hay que abrir (en Mac, «localhost» puede ir primero a ::1).
 const url = noLogin ? `http://127.0.0.1:${port}` : `http://localhost:${port}`;
 console.log(`\nCasa Miga web lista: ${url}`);
