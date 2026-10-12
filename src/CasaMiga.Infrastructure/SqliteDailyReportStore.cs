@@ -21,7 +21,7 @@ public sealed partial class SqliteLocalUnitOfWork
             var moments = new List<DailySaleMoment>();
             using (var timeline = Command(
                 "SELECT s.confirmed_utc,SUM(p.applied_cents) FROM sale s " +
-                "JOIN payment p ON p.sale_id=s.id AND p.method='CASH' " +
+                "JOIN payment p ON p.sale_id=s.id " +
                 "WHERE s.confirmed_utc >= $from AND s.confirmed_utc < $until " +
                 "GROUP BY s.id,s.confirmed_utc ORDER BY s.confirmed_utc ASC,s.id ASC", bounds))
             using (var reader = timeline.ExecuteReader())
@@ -38,7 +38,7 @@ public sealed partial class SqliteLocalUnitOfWork
                 "SELECT COALESCE(SUM(i.quantity),0) FROM sale s " +
                 "JOIN sale_item i ON i.sale_id=s.id " +
                 "WHERE s.confirmed_utc >= $from AND s.confirmed_utc < $until " +
-                "AND EXISTS(SELECT 1 FROM payment p WHERE p.sale_id=s.id AND p.method='CASH')", bounds))
+                "AND EXISTS(SELECT 1 FROM payment p WHERE p.sale_id=s.id)", bounds))
             using (var reader = totals.ExecuteReader())
             {
                 if (!reader.Read()) throw new InvalidDataException("No se pudo calcular el reporte diario.");
@@ -50,12 +50,13 @@ public sealed partial class SqliteLocalUnitOfWork
                 "SELECT i.product_name,SUM(i.quantity),SUM(i.line_total_cents) FROM sale s " +
                 "JOIN sale_item i ON i.sale_id=s.id " +
                 "WHERE s.confirmed_utc >= $from AND s.confirmed_utc < $until " +
-                "AND EXISTS(SELECT 1 FROM payment p WHERE p.sale_id=s.id AND p.method='CASH') " +
+                "AND EXISTS(SELECT 1 FROM payment p WHERE p.sale_id=s.id) " +
                 "GROUP BY i.product_id,i.product_name ORDER BY SUM(i.quantity) DESC,SUM(i.line_total_cents) DESC,i.product_name COLLATE NOCASE ASC,i.product_id ASC LIMIT 5", bounds))
             using (var reader = top.ExecuteReader())
                 while (reader.Read()) products.Add(new(reader.GetString(0), reader.GetInt64(1), new(reader.GetInt64(2))));
 
             var sessions = new List<DailyCashSessionSummary>();
+            var openSessions = new List<int>();
             using (var cash = Command(
                 "SELECT c.id,COALESCE(NULLIF(trim(t.name),''),'No disponible')," +
                 "COALESCE(NULLIF(trim(o.display_name),''),'No disponible')," +
@@ -77,10 +78,16 @@ public sealed partial class SqliteLocalUnitOfWork
                         Guid.Parse(reader.GetString(0)), reader.GetString(1), reader.GetString(2),
                         reader.IsDBNull(3) ? null : reader.GetString(3), Date(reader, 4)!.Value, Date(reader, 5), isOpen,
                         opening, cashSales,
-                        isOpen ? opening + cashSales : OptionalMoney(reader, 9),
+                        isOpen ? null : OptionalMoney(reader, 9),
                         OptionalMoney(reader, 10), OptionalMoney(reader, 11),
                         reader.IsDBNull(12) ? null : reader.GetString(12)));
+                    if (isOpen) openSessions.Add(sessions.Count - 1);
                 }
+            }
+            foreach (var index in openSessions)
+            {
+                var row = sessions[index];
+                sessions[index] = row with { Expected = row.OpeningFund + row.CashSales - CashRefundsTotal(row.Id) + CashMovementTotals(row.Id).Net };
             }
 
             return new(new Money(sales), tickets, pieces, moments.AsReadOnly(), products.AsReadOnly(), sessions.AsReadOnly());

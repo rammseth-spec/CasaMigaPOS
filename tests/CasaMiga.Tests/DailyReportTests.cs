@@ -51,6 +51,26 @@ public sealed class DailyReportTests
     }
 
     [TestMethod]
+    public void CardAndTransferSalesCountAsSalesButNeverAsDrawerCash()
+    {
+        using var fixture = new Fixture();
+        var product = fixture.Product("MIX", "Concha", 1300);
+        var session = fixture.Open(fixture.Terminal, fixture.FromUtc.AddHours(1), new Money(10000));
+        fixture.Sale(session, fixture.FromUtc.AddHours(2), [(product, "Concha", 2, 1300)]);
+        fixture.Sale(session, fixture.FromUtc.AddHours(3), [(product, "Concha", 1, 1300)], method: PaymentMethod.Card);
+        fixture.Sale(session, fixture.FromUtc.AddHours(4), [(product, "Concha", 3, 1300)], method: PaymentMethod.Transfer);
+
+        var report = fixture.Service.Read(fixture.Day);
+        Assert.AreEqual(7800L, report.Sales.Cents);
+        Assert.AreEqual(3, report.Tickets);
+        Assert.AreEqual(6L, report.Pieces);
+        Assert.AreEqual(6L, report.TopProducts.Single().Pieces);
+        var drawer = report.CashSessions.Single();
+        Assert.AreEqual(2600L, drawer.CashSales.Cents, "Card and transfer never enter the drawer.");
+        Assert.AreEqual(12600L, drawer.Expected!.Value.Cents);
+    }
+
+    [TestMethod]
     public void EmptyDayReturnsRealZeroesAndExactCentAverageUsesDecimalRounding()
     {
         using var fixture = new Fixture();
@@ -205,14 +225,15 @@ public sealed class DailyReportTests
             var session = CashSession.Open(Guid.NewGuid(), terminal.Id, user.Current!.Id, at, fund);
             work.Run(store => { store.AddCashSession(session); return true; }); return session;
         }
-        public Sale Sale(CashSession session, DateTimeOffset at, (Product Product, string Name, int Quantity, long Price)[] lines, TerminalIdentity? saleTerminal = null)
+        public Sale Sale(CashSession session, DateTimeOffset at, (Product Product, string Name, int Quantity, long Price)[] lines, TerminalIdentity? saleTerminal = null,
+            PaymentMethod method = PaymentMethod.Cash)
             => work.Run(store =>
             {
                 var terminal = saleTerminal ?? Terminal;
                 var sale = new Sale(Guid.NewGuid(), Guid.NewGuid(), user.Current!.Id, terminal.Id, session.Id,
                     store.NextSaleSequence(terminal.Id), at,
                     lines.Select(x => new SaleItem(x.Product.Id, x.Name, new Money(x.Price), x.Quantity)),
-                    Guid.NewGuid(), new Money(lines.Sum(x => checked(x.Price * x.Quantity))));
+                    Guid.NewGuid(), new Money(lines.Sum(x => checked(x.Price * x.Quantity))), method);
                 store.AddSale(sale); return sale;
             });
         public void Close(CashSession session, DateTimeOffset at, Money counted, string? note = null) => work.Run(store =>
