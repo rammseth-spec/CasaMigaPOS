@@ -259,5 +259,14 @@
     "job_id": "f24edb47-9a26-473c-a97e-f711dd84f129",
     "generated_utc": "2026-10-12T20:06:55Z",
     "sha256": "ed1c928984a1fd2387c2eede306999144e28d888631ec80237de9c2214b32eba"
+  },
+  {
+    "sku": "CM-030",
+    "file": "CM-030.jpg",
+    "provenance": "PROVISIONAL",
+    "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+    "job_id": "5b6d3362-ae96-4554-b5f7-e953a2b9fb3e",
+    "generated_utc": "2026-10-12T20:13:20Z",
+    "sha256": "677f53bcbce5d8dcc2cd7dad04ee45547b96510dcff34fd69bd521d6016ca23c"
   }
 ]
