@@ -3,7 +3,7 @@
   <ItemGroup>
     <Compile Include="../../src/CasaMiga.Presentation/ConsumptionViewModel.cs" Link="Presentation/ConsumptionViewModel.cs" />
     <Compile Include="../../src/CasaMiga.Presentation/CheckoutInventoryMessages.cs" Link="Presentation/CheckoutInventoryMessages.cs" />
-    <PackageReference Include="MSTest.TestFramework" Version="3.10.4" />
+    <PackageReference Include="MSTest.TestFramework" Version="4.5.1" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.10.4" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <ProjectReference Include="../../src/CasaMiga.Infrastructure/CasaMiga.Infrastructure.csproj" />
