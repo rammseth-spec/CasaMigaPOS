@@ -5,7 +5,7 @@
     <Compile Include="../../src/CasaMiga.Presentation/CheckoutInventoryMessages.cs" Link="Presentation/CheckoutInventoryMessages.cs" />
     <PackageReference Include="MSTest.TestFramework" Version="3.10.4" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.10.4" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
     <ProjectReference Include="../../src/CasaMiga.Infrastructure/CasaMiga.Infrastructure.csproj" />
     <None Include="../../docs/catalog/catalogo-autorizado-v2.csv" Link="Catalog/catalogo-autorizado-v2.csv" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../docs/phase1k2c-provisional-map.md" Link="Catalog/phase1k2c-provisional-map.md" CopyToOutputDirectory="PreserveNewest" />

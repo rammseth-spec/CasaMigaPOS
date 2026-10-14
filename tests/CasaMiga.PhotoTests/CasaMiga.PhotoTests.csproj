@@ -3,7 +3,7 @@
   <ItemGroup>
     <PackageReference Include="MSTest.TestFramework" Version="3.10.4" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.10.4" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
     <ProjectReference Include="../../src/CasaMiga.Infrastructure/CasaMiga.Infrastructure.csproj" />
     <ProjectReference Include="../../src/CasaMiga.Presentation/CasaMiga.Presentation.csproj" />
   </ItemGroup>
