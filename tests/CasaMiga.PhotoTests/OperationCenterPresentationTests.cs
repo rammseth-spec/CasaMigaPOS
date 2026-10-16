@@ -48,11 +48,13 @@ public sealed class OperationCenterPresentationTests
             try
             {
                 window.Show();WpfTestHost.Layout(window,size.Width,size.Height);
-                var clock=Descendants<Border>(window).Single(x=>AutomationProperties.GetName(x)=="Hora local");
+                // Acceso del diseño de main: la hora grande vive en el panel de marca (no hay tarjeta «Hora local»).
+                var clock=Descendants<TextBlock>(window).Single(x=>AutomationProperties.GetName(x)=="Hora");
                 Assert.IsTrue(clock.IsVisible);
                 Assert.IsTrue(IsInside(clock,window));
                 Assert.IsFalse(Descendants<OperationCenterView>(window).Single().IsVisible,"Operational details remain hidden before login.");
-                Assert.AreEqual(0,Descendants<TextBlock>(clock).Count(x=>x.Text.Contains("activo",StringComparison.OrdinalIgnoreCase)||x.Text.Contains("listo",StringComparison.OrdinalIgnoreCase)));
+                DependencyObject brand=clock;while(brand is not Border)brand=VisualTreeHelper.GetParent(brand);
+                Assert.AreEqual(0,Descendants<TextBlock>(brand).Count(x=>x.Text.Contains("activo",StringComparison.OrdinalIgnoreCase)||x.Text.Contains("listo",StringComparison.OrdinalIgnoreCase)));
             }
             finally{window.Close();}
         }
