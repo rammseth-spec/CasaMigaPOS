@@ -268,5 +268,14 @@
     "job_id": "5b6d3362-ae96-4554-b5f7-e953a2b9fb3e",
     "generated_utc": "2026-10-12T20:13:20Z",
     "sha256": "677f53bcbce5d8dcc2cd7dad04ee45547b96510dcff34fd69bd521d6016ca23c"
+  },
+  {
+    "sku": "CM-031",
+    "file": "CM-031.jpg",
+    "provenance": "PROVISIONAL",
+    "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+    "job_id": "b5752fa7-f255-47b4-9425-cb6474bc1c7d",
+    "generated_utc": "2026-10-16T04:52:06Z",
+    "sha256": "2462aaa12608bc3237eb860956d97ebacfbc1961785bcf6bcfa5bff8f9f1713f"
   }
 ]

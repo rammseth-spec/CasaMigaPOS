@@ -20,7 +20,7 @@ public sealed class AuthorizedCatalogTests
         var table = File.ReadAllLines(Catalog("phase1k2c-provisional-map.md"))
             .Select(l => Regex.Match(l, @"^\| (\d+) \| (.+?) \| \$(\d+)\.00 \| (.+?) \|")).Where(m => m.Success).ToList();
 
-        Assert.HasCount(30, rows, "26 de la tabla v2 + pan de muerto grande, pay de queso, pay de elote y bisquet (12/10/2026).");
+        Assert.HasCount(31, rows, "26 de la tabla v2 + pan de muerto grande, pay de queso, pay de elote y bisquet (12/10/2026) y baguette (15/10/2026).");
         Assert.HasCount(26, table);
         for (int i = 0; i < 26; i++)
         {
@@ -31,11 +31,11 @@ public sealed class AuthorizedCatalogTests
         }
         Assert.AreEqual(rows.Count, rows.Select(r => r[1]).Distinct(StringComparer.Ordinal).Count());
         CollectionAssert.AreEqual(Enumerable.Range(1, rows.Count).Select(i => i.ToString(CultureInfo.InvariantCulture)).ToArray(), rows.Select(r => r[0]).ToArray(), "Ids consecutivos.");
-        CollectionAssert.AreEqual(new[] { "Pan de muerto grande,22,Pan dulce", "Pay de queso,22,Pays", "Pay de elote,22,Pays", "Bisquet,13,Pan dulce" },
+        CollectionAssert.AreEqual(new[] { "Pan de muerto grande,22,Pan dulce", "Pay de queso,22,Pays", "Pay de elote,22,Pays", "Bisquet,13,Pan dulce", "Baguette,9,Pan salado" },
             rows.Skip(26).Select(r => $"{r[1]},{r[2]},{r[3]}").ToArray());
         Assert.IsTrue(rows.All(r => int.Parse(r[2], CultureInfo.InvariantCulture) > 0));
-        // La siembra crea las categorías en el orden en que aparecen: «Pays» (12/10/2026) queda al final.
-        CollectionAssert.AreEqual(new[] { "Pan dulce", "Dona", "Galleta", "Bebida", "Pays" }, rows.Select(r => r[3]).Distinct().ToArray());
+        // La siembra crea las categorías en el orden en que aparecen: «Pays» (12/10/2026) y «Pan salado» (15/10/2026) quedan al final.
+        CollectionAssert.AreEqual(new[] { "Pan dulce", "Dona", "Galleta", "Bebida", "Pays", "Pan salado" }, rows.Select(r => r[3]).Distinct().ToArray());
     }
 
     [TestMethod]
