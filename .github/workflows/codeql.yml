@@ -20,6 +20,7 @@ on:
       - "global.json"
 
 permissions:
+  actions: read
   contents: read
   security-events: write
   packages: read

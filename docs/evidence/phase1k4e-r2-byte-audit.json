@@ -1,0 +1,46 @@
+{
+  "phase": "1K.4E-R2",
+  "generatedOffline": true,
+  "physicalPrints": 0,
+  "printing": {
+    "queueName": "POS-80",
+    "columns": 48,
+    "encodingName": "ibm850",
+    "characterTable": 2,
+    "cutMode": "Partial",
+    "openCashDrawer": false,
+    "phone": "461 276 7429"
+  },
+  "original": {
+    "bytes": 24063,
+    "sha256": "0C32856DBC6D8F24B2612A63941F9AB68527FB67115C952650160E1DA3629B4A"
+  },
+  "reprint": {
+    "bytes": 24098,
+    "sha256": "47B73172C36A03B9231256C21B76A92233C19D399605E6172FB358D4F7B43699"
+  },
+  "commands": {
+    "escT2": 1,
+    "officialLogoRaster": 1,
+    "orderingContactRaster": 1,
+    "socialRaster": 1,
+    "heartRaster": 1,
+    "totalDoubleHeight": 1,
+    "normalSize": 2,
+    "partialCutGsV1": 1,
+    "drawerEscP": 0,
+    "finalLineFeeds": 6
+  },
+  "orderingContactRaster": {
+    "kind": "generic phone in circle",
+    "width": 32,
+    "height": 32,
+    "bitDepth": 1,
+    "rowBytes": 4,
+    "commandBytes": 136
+  },
+  "protectedDatabaseSha256": "CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D",
+  "protectedSchema": 16,
+  "fixtureSchema": 17,
+  "migration018Exists": false
+}

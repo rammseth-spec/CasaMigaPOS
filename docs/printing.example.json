@@ -3,17 +3,17 @@
   "enabled": false,
   "queueName": "NOMBRE EXACTO DE LA COLA WINDOWS",
   "columns": 48,
-  "encodingName": "windows-1252",
-  "characterTable": 16,
-  "cutMode": "Disabled",
+  "encodingName": "ibm850",
+  "characterTable": 2,
+  "cutMode": "Partial",
   "openCashDrawer": false,
   "business": {
-    "displayName": "DATOS SINTÉTICOS — CONFIGURAR ANTES DE IMPRIMIR",
-    "address": null,
+    "displayName": "Casa Miga",
+    "address": "Insurgentes 116\nEsquina con Albino García\nBarrio de Santiaguito\nC.P. 38000 · Celaya, Gto.",
     "phone": null,
     "taxId": null,
-    "contact": null,
-    "closingMessage": "MENSAJE SINTÉTICO DE PRUEBA",
+    "contact": "Facebook: Casa Miga\nInstagram: @casamiga126",
+    "closingMessage": "Gracias por su compra",
     "monochromeLogoPath": null
   }
 }

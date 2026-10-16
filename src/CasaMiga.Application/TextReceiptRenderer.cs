@@ -12,47 +12,53 @@ public sealed class TextReceiptRenderer(int columns = 48)
     {
         ArgumentNullException.ThrowIfNull(receipt);
         var lines = new List<string>();
-        if (copyKind != ReceiptCopyKind.Original) AddCentered(lines, "*** REIMPRESIÓN ***");
+        AddCentered(lines, "Hecho en:");
         AddCentered(lines, receipt.Business.DisplayName);
         AddOptionalCentered(lines, receipt.Business.Address);
-        AddOptionalCentered(lines, receipt.Business.Phone);
+        AddOrderingContact(lines, receipt.Business.Phone);
         AddOptionalCentered(lines, receipt.Business.TaxId);
-        AddOptionalCentered(lines, receipt.Business.Contact);
         lines.Add(new string('-', Columns));
-        AddWrapped(lines, $"Folio: {receipt.Folio}");
-        AddWrapped(lines, $"Fecha: {receipt.ConfirmedAt:dd/MM/yyyy HH:mm:ss zzz}");
+        if (copyKind != ReceiptCopyKind.Original) AddCentered(lines, "*** REIMPRESIÓN ***");
+        AddWrapped(lines, HumanSaleNumber(receipt.Folio));
+        AddWrapped(lines, $"Fecha: {receipt.ConfirmedAt:dd/MM/yyyy · HH:mm}");
         AddWrapped(lines, $"Cajero: {receipt.CashierName}");
-        AddWrapped(lines, $"Terminal: {receipt.TerminalName}");
         lines.Add(new string('-', Columns));
-        foreach (var item in receipt.Items)
+        for(var index=0;index<receipt.Items.Count;index++)
         {
-            AddWrapped(lines, item.ProductName);
+            var item=receipt.Items[index];
+            AddWrapped(lines, item.ProductName,Math.Min(31,Columns));
             var left = $"{item.Quantity} x {Money(item.UnitPrice)}";
             lines.Add(Pair(left, Money(item.LineTotal)));
+            if(index<receipt.Items.Count-1)lines.Add("");
         }
         lines.Add(new string('-', Columns));
         lines.Add(Pair("Subtotal", Money(receipt.Subtotal)));
         lines.Add(Pair("TOTAL", Money(receipt.Total)));
-        if (receipt.PaymentMethod == "CASH")
-        {
-            // Formato validado en impresora física; no cambiar sin nuevo smoke.
-            lines.Add(Pair("Pago", receipt.PaymentMethod));
-            lines.Add(Pair("Efectivo", Money(receipt.Received)));
-            lines.Add(Pair("Aplicado", Money(receipt.Applied)));
-            lines.Add(Pair("Cambio", Money(receipt.Change)));
-        }
-        else
-        {
-            lines.Add(Pair("Pago", receipt.PaymentMethod == "CARD" ? "TARJETA" : "TRANSFERENCIA"));
-            lines.Add(Pair("Pagado", Money(receipt.Applied)));
-        }
         lines.Add(new string('-', Columns));
+        AddWrapped(lines,$"Pago: {Payment(receipt.PaymentMethod)}");
+        if(string.Equals(receipt.PaymentMethod,"CASH",StringComparison.Ordinal))
+        {
+            lines.Add(Pair("Recibido:", Money(receipt.Received)));
+            lines.Add(Pair("Cambio:", Money(receipt.Change)));
+        }
+        else lines.Add(Pair("Pagado:", Money(receipt.Applied)));
+        lines.Add(new string('-', Columns));
+        AddContactFooter(lines, receipt.Business.Contact);
+        lines.Add("");
         AddCentered(lines, receipt.Business.ClosingMessage);
-        if (copyKind != ReceiptCopyKind.Original) AddCentered(lines, "COPIA · NO ABRE CAJÓN");
+        lines.Add("");
         return string.Join("\n", lines) + "\n";
     }
 
     private static string Money(Money value) => "$" + (value.Cents / 100m).ToString("N2", CultureInfo.GetCultureInfo("es-MX"));
+    private static string Payment(string method)=>method switch{"CASH"=>"Efectivo","CARD"=>"Tarjeta","TRANSFER"=>"Transferencia",_=>method};
+    private static string HumanSaleNumber(string folio)
+    {
+        var separator=folio.LastIndexOf('-');var token=separator>=0?folio[(separator+1)..]:folio;
+        if(!long.TryParse(token,NumberStyles.None,CultureInfo.InvariantCulture,out var sequence)||sequence<1)
+            throw new InvalidDataException("El folio histórico no contiene una secuencia de venta válida.");
+        return $"Venta #{sequence:D6}";
+    }
     private string Pair(string left,string right)
     {
         if (right.Length >= Columns) return right[^Columns..];
@@ -60,20 +66,49 @@ public sealed class TextReceiptRenderer(int columns = 48)
         if(left.Length>available)left=left[..Math.Max(0,available)];
         return left+new string(' ',Columns-left.Length-right.Length)+right;
     }
-    private void AddOptionalCentered(List<string> lines,string? value){if(!string.IsNullOrWhiteSpace(value))AddCentered(lines,value);}
+    private void AddOptionalCentered(List<string> lines,string? value)
+    {
+        if(string.IsNullOrWhiteSpace(value))return;
+        foreach(var paragraph in value.Replace("\r","").Split('\n'))
+            if(!string.IsNullOrWhiteSpace(paragraph))AddCentered(lines,paragraph.Trim());
+    }
+    private void AddOrderingContact(List<string> lines,string? phone)
+    {
+        if(string.IsNullOrWhiteSpace(phone))return;
+        AddCentered(lines,"Pedidos por WhatsApp");
+        AddOptionalCentered(lines,phone);
+    }
+    private void AddContactFooter(List<string> lines,string? value)
+    {
+        if(string.IsNullOrWhiteSpace(value))return;
+        var entries=value.Replace("\r","").Split('\n',StringSplitOptions.RemoveEmptyEntries|StringSplitOptions.TrimEntries);
+        var facebook=entries.SingleOrDefault(line=>line.StartsWith("Facebook:",StringComparison.OrdinalIgnoreCase));
+        var instagram=entries.SingleOrDefault(line=>line.StartsWith("Instagram:",StringComparison.OrdinalIgnoreCase));
+        if(facebook is not null&&instagram is not null&&entries.Length==2)
+        {
+            AddCentered(lines,"Síguenos en:");
+            var facebookAccount=facebook[(facebook.IndexOf(':')+1)..].Trim();
+            var instagramAccount=instagram[(instagram.IndexOf(':')+1)..].Trim();
+            AddCentered(lines,$"{facebookAccount}   {instagramAccount}");
+            return;
+        }
+        AddOptionalCentered(lines,value);
+    }
     private void AddCentered(List<string> lines,string value)
     {
         foreach(var part in Wrap(value))lines.Add(part.Length>=Columns?part:new string(' ',(Columns-part.Length)/2)+part);
     }
-    private void AddWrapped(List<string> lines,string value)=>lines.AddRange(Wrap(value));
-    private IEnumerable<string> Wrap(string value)
+    private void AddWrapped(List<string> lines,string value,int? width=null)=>lines.AddRange(Wrap(value,width));
+    private IEnumerable<string> Wrap(string value,int? requestedWidth=null)
     {
+        var width=requestedWidth??Columns;
+        if(width<1||width>Columns)throw new ArgumentOutOfRangeException(nameof(requestedWidth));
         var normalized=value.Replace("\r","").Replace('\n',' ').Trim();
         if(normalized.Length==0){yield return "";yield break;}
-        while(normalized.Length>Columns)
+        while(normalized.Length>width)
         {
-            var split=normalized.LastIndexOf(' ',Columns);
-            if(split<1)split=Columns;
+            var split=normalized.LastIndexOf(' ',width);
+            if(split<1)split=width;
             yield return normalized[..split].TrimEnd();normalized=normalized[split..].TrimStart();
         }
         yield return normalized;

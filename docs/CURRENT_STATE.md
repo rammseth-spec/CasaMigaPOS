@@ -1,3 +1,95 @@
+# Integración de QA en main — 12/10/2026
+
+Se combinó QA (1K.4E ticket físico, 1K.4F encabezado y Centro operativo, 1K.4G auditoría de recetas y producción, 1K.4H-A reporte diario) en main por PR. A petición del usuario se conserva el diseño de QAv1/main: acceso con la hora grande (opción B) y barra superior del rediseño A. Las funciones de QA viven dentro de él: el reloj y el aviso del Centro operativo son píldoras de la barra (`OperationsButton`, `OperationsStatusButton`), «Diario» en el riel abre el Reporte diario y pantalla completa sigue siendo el botón de ícono (`FullScreenButton`). El ticket conserva el formato físico de 1K.4E; con tarjeta o transferencia imprime «Pago: Tarjeta» o «Pago: Transferencia» y «Pagado:», sin Recibido ni Cambio. Las pruebas de QA se adaptaron a ese diseño. Pendiente: CI de Windows del PR y prueba humana del ticket y del encabezado.
+
+# FASE 1K.4H-A-R1 TÉCNICAMENTE COMPLETADA — SMOKE HUMANO PENDIENTE, 10/10/2026
+
+R1 refina el Reporte Diario sin cambiar su naturaleza read-only. Ventas por hora usa una timeline acotada con `payment.applied_cents`, convierte timestamps mediante la zona horaria inyectada y agrupa en memoria; muestra primera/última venta y hora pico con desempate por importe, tickets y hora temprana. Caja comunica apertura, cierre, duración, responsable y múltiples sesiones sin alterar métricas. La UI conserva cuatro KPI, una sola frase resumen, tabla histórica con encabezado humano y estados futuros deliberados.
+
+El botón global ahora dice `Pantalla completa · F11` o `Salir de pantalla completa · F11`, cambia icono/ayuda accesible inmediatamente y conserva clic, F11 y Escape. Revisión explícita: 1280×820, 1920×1080, 3440×1440 y F11, sin clipping ni scroll horizontal global; el reporte limita su ancho a 1480 DIP.
+
+Focales generales 7/7; focales WPF 6/6 y regresión WPF ampliada 23/23. Suite oficial final **794/794** (582 general + 212 WPF), 0 fallidas/omitidas; Release 0 errores/advertencias. Base protegida intacta con SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`; schema 17 sólo en fixture, sin migración 018. Build `src/CasaMiga.Presentation/bin/Phase1K4H-A-R1/`, launcher `work/Abrir-Casa-Miga-1K4H-A-R1.cmd`, DataDirectory `work/phase1k4h-a-r1-smoke-20261010`. Ver [PHASE_1K4H_A_R1_REPORT.md](PHASE_1K4H_A_R1_REPORT.md). No push; smoke humano pendiente.
+
+## Registro anterior — 1K.4H-A
+
+Casa Miga incorpora **Reporte diario** de sólo lectura con fecha local, cuatro KPIs, top 5 por snapshots históricos, resumen consolidado de caja y detalle de múltiples sesiones. Usa `payment.applied_cents`, límites `[inicio local, día siguiente)` convertidos a UTC, `sales.view` + `cash.view` y consultas SQL agregadas sin N+1. Categorías se omiten porque no están snapshotteadas. Producción, materias primas, preparación de mañana y merma distinguen dato no disponible de cero real.
+
+Fixture aislada `work/phase1k4h-a-smoke-20261009`, schema 17, escenarios A–G y credencial verificada. Focales de datos 4/4, regresión ventas/caja/ticket 79/79, focales WPF 4/4 y regresión WPF 27/27. Suite final **791/791** (581 general + 210 WPF), 0 fallidas/omitidas; Release 0 errores/advertencias. El build identificado, hashes y commit local se registran en [PHASE_1K4H_A_REPORT.md](PHASE_1K4H_A_REPORT.md). No migración 018, no push, ticket/impresión/operations hub y recetas comerciales intactos.
+
+## Registro anterior — 1K.4G-A
+
+# FASE 1K.4G-A — AUDITORÍA MAESTRA COMPLETADA, 09/10/2026
+
+El checkpoint aprobado previo se publicó mediante avance normal en `origin/QA`: `30887e85de0c3c1505c67c7c4169092e5e9b2b54` → `5f5da76f2885ce9deaa2e74f3f3f33519eced5ec`, sin commits remotos exclusivos, force, merge, rebase, reset ni rama nueva. La auditoría posterior permanece local y exclusivamente documental.
+
+La copia aislada vigente contiene 31 productos activos en cinco categorías, pero **cero fórmulas, cero perfiles de producción, cero ítems terminados vinculados y cero lotes**. Sólo existe Harina como materia prima; su saldo de 50 kg y presentación Bulto 25 kg pertenecen a la copia de revisión y no se declaran comerciales. Los 31 productos quedan `FALTA INFORMACIÓN`; 0 completos y 0 parciales.
+
+La arquitectura sí soporta fórmula base compartida, ingredientes directos, alternativas, agregación multiproducto, escala exacta MASS/VOLUME/COUNT, preview sin reserva, borrador con snapshots y confirmación atómica de consumo más salida real. Producción puede sumar producto terminado y el consumo por ventas puede restarlo, pero la copia no tiene perfiles, ítems terminados o `product_inventory_link`, y el flag de consumo está `DISABLED`.
+
+Documentos: `PHASE_1K4G_AUDIT.md`, `PHASE_1K4G_PRODUCT_MATRIX.md` y `PHASE_1K4G_RECIPE_QUESTIONNAIRE.md`. Verificación completa: **783/783** (577 generales + 206 WPF), 0 fallidas/omitidas; Release 0 errores/advertencias. Base protegida schema 16 y SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`; fixture schema 17. No se cargaron recetas ni datos comerciales, no se creó migración 018 y no se inició 1K.4G-B/1K.4H. El siguiente paso es obtener respuestas reales producto por producto y por masa.
+
+## Registro anterior — 1K.4F-R2 + 1K.4E-R2
+
+# FASES 1K.4F-R2 + 1K.4E-R2 TÉCNICAMENTE COMPLETADAS, 09/10/2026
+
+El pase controlado concluyó en dos correcciones independientes. El commit A separa en el header estado real de caja, resumen contextual, reloj clickable y F11. El commit B usa `Business.Phone` para imprimir «Pedidos por WhatsApp» y `461 276 7429`, con un raster local 1-bit de teléfono en círculo de 32×32, después de la dirección y antes del primer separador. Original y reimpresión recorren el mismo renderer; Variante 04 permanece intacta a 446 puntos.
+
+Focales A **21/21** y B **27/27**. Suite conjunta `scripts/verify.ps1`: **783/783** (577 generales + 206 WPF/Presentation), 0 fallidas y 0 omitidas; Release 0 errores/advertencias. Payloads fuera de línea: original 24,063 bytes, SHA-256 `0C32856DBC6D8F24B2612A63941F9AB68527FB67115C952650160E1DA3629B4A`; reimpresión 24,098 bytes, SHA-256 `47B73172C36A03B9231256C21B76A92233C19D399605E6172FB358D4F7B43699`. Un ESC t 2, un logo, un icono de pedidos, un raster social, un corazón, un GS V 1, seis LF y cero ESC p. Ningún trabajo se envió a POS-80.
+
+Revisión conjunta: `src/CasaMiga.Presentation/bin/Phase1K4F-R2/`, launcher `work/Abrir-Casa-Miga-1K4F-R2.cmd`, DataDirectory `work/phase1k4f-r2-smoke-20261009`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4F-R2`. Base protegida schema 16 y SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`; fixture schema 17; sin migración 018. Smoke humano de header y prueba física del ticket pendientes. Sin push/PR; no iniciar 1K.4G/1K.5.
+
+## Registro de bloque A — 1K.4F-R2
+
+El encabezado operativo separa ahora cuatro piezas compactas: estado real de caja, resumen contextual del Centro operativo, reloj/fecha y acceso F11. El estado usa `MainViewModel.HasOpenCash`, que se actualiza desde `CashService.Current` y las operaciones reales de apertura/cierre; no existe estado financiero duplicado. El resumen desaparece sin actividad y prioriza urgente, listo y activo. El reloj conserva `HH:mm`, fecha compacta y abre el panel; F11 mantiene un target de 40 DIP, texto visible y ayuda accesible.
+
+El bloque no cambió la altura del header ni la lógica del Centro operativo R1. Pruebas focales: **21/21** (19 de Centro operativo/modelo/WPF y dos del shell), sin fallas ni omisiones. Se verificaron caja abierta/cerrada, ausencia/actividad/listo/urgente/combinación, click del reloj, F11, 1280×820, 1920×1080 y 3440×1440, además de que los ticks no notifican ni recrean POS/Catálogo. Ver `PHASE_1K4F_R2_REPORT.md`. Continúa el bloque B independiente de 1K.4E-R2 antes del build conjunto; sin push.
+
+## Registro anterior — 1K.4F-R1
+
+# FASE 1K.4F-R1 TÉCNICAMENTE COMPLETADA — SMOKE VISUAL HUMANO PENDIENTE, 09/10/2026
+
+R1 convierte el Centro operativo en una vista de trabajo primero. Los editores de temporizador y nota aparecen colapsados; `+ Nuevo`/`+ Nueva` los abren dentro de la misma sección, Cancelar descarta sin crear y una creación o guardado válido vuelve automáticamente a la lista. Editar una nota reutiliza el editor con el rótulo «Editar nota». Las tarjetas reducen moderadamente padding y separación; a 1280×820 las pruebas WPF confirman al menos tres tarjetas de temporizador completas con los editores cerrados.
+
+Un recordatorio listo muestra Atender, Posponer, Editar y Eliminar. Posponer revela inline únicamente 5/10/15 minutos, cierra tras elegir y también responde a Escape. Escape cancela primero el editor o desplegable transitorio y después cierra el panel; F11, Alt+Tab y minimizar conservan la semántica previa. Header y login permanecen intactos para evitar regresiones visuales. Alertas `¡Listo!`, doble pulso/micro-shake de 600 ms, sonido, taskbar, iconos y Normal/Urgente no cambiaron.
+
+La persistencia se auditó sobre `work/phase1k4f-r1-smoke-20261009`: nota simple, recordatorio urgente y timer activo se recargaron desde `operations-hub.json`; tras un minuto simulado el timer siguió Running con 2,640 segundos, consistente con su deadline UTC. El archivo continúa fuera de `.cmbackup`; backup/restore no se modificó. Focales **16/16**; suite **779/779** (576 generales + 203 WPF/Presentation), 0 fallidas y 0 omitidas. Release identificado 0 errores/advertencias. Base protegida schema 16 y SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`; fixture schema 17; no existe migración 018. Impresión 1K.4E-R1, Qian, `printing.json`, cajón y datos comerciales permanecen intactos. Ver `PHASE_1K4F_R1_REPORT.md` y `evidence/phase1k4f-r1-verification.md`.
+
+Build de revisión: `src/CasaMiga.Presentation/bin/Phase1K4F-R1/`; launcher `work/Abrir-Casa-Miga-1K4F-R1.cmd`; título `Casa Miga POS · Caja · DESARROLLO · 1K.4F-R1`. No push. No iniciar 1K.4G ni 1K.5.
+
+## Registro anterior — 1K.4F
+
+# FASE 1K.4F TÉCNICAMENTE COMPLETADA — SUSTITUIDA POR R1, 09/10/2026
+
+Casa Miga incorpora un Centro operativo en Presentation sin migraciones ni cambios de negocio. El Header D muestra hora local `HH:mm`, fecha abreviada y un indicador acotado de activos/listos/urgentes. El botón completo abre el Panel 4 de 420 DIP dentro del mismo árbol visual y HWND; no existe Popup o Window principal adicional. Escape lo cierra antes de salir de F11, y desactivación/minimización también lo cierran para evitar superficies huérfanas.
+
+Los temporizadores usan deadline UTC, remaining real al pausar, nuevo deadline al reanudar y un único `DispatcherTimer` de presentación. El tick notifica únicamente propiedades nombradas, no llama `PropertyChanged(null)`, no guarda cada segundo y no toca Catálogo, POS, fotos ni Views. Se admiten múltiples timers, presets 5/10/15/30/45/60, pausa, reanudación, reinicio, eliminación y atención. Timers y notas comparten iconografía vectorial local, prioridad Normal/Urgente y persistencia retrocompatible; recordatorios listos pueden posponerse 5/10/15 minutos.
+
+Un vencimiento conserva `¡Listo!` y genera una sola alerta agrupada por tick: doble pulso + micro-shake de 600 ms en Header D, `SystemSounds.Asterisk` una vez y, sin foco/minimizado, tres destellos discretos de barra de tareas mediante `FlashWindowEx` sin restaurar ni robar foco. No hay MessageBox, loop ni animación continua.
+
+La persistencia local versionada está en `DataDirectory/operations-hub.json`, con escritura atómica; sobrevive navegación y reinicio. La auditoría de `InstallationBackup` confirma que `.cmbackup` sólo incluye DB, terminal y fotos activas, por lo que este archivo no se respalda ni restaura. Integrarlo requeriría un cambio estructural posterior. Login opción 3 muestra únicamente hora y fecha junto a los campos; nunca expone temporizadores, notas ni recordatorios antes de autenticar.
+
+Fixture aislada `work/phase1k4f-smoke-20261008`; build `src/CasaMiga.Presentation/bin/Phase1K4F/`; launcher `work/Abrir-Casa-Miga-1K4F.cmd`; título `Casa Miga POS · Caja · DESARROLLO · 1K.4F`. Focales **13/13**; suite completa **776/776** (576 generales + 200 WPF/Presentation), 0 fallidas y 0 omitidas. Release: 0 errores y 0 advertencias. Base protegida schema 16 y SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`, sin cambios; sólo la fixture avanza a schema 17. No existe migración 018. Impresión 1K.4E-R1, Qian, `printing.json`, cajón y datos comerciales permanecen intactos. Ver `PHASE_1K4F_REPORT.md` y `evidence/phase1k4f-annex-verification.md`.
+
+## Registro anterior — 1K.4E-R1
+
+# FASE 1K.4E-R1 TÉCNICAMENTE COMPLETADA — SMOKE FÍSICO PENDIENTE, 08/10/2026
+
+La discrepancia física de 1K.4E provenía de la composición real compartida: `TextReceiptRenderer` colocaba las redes en la cabecera, carecía de separador entre TOTAL y pago y dejaba sólo cuatro LF finales; las pruebas verificaban presencia, no el orden físico completo. No existía un renderer alterno ni una configuración vieja en la fixture. R1 conserva el pipeline validado y ordena explícitamente original/reimpresión: «Hecho en:», logo, dirección, separador, marca opcional, venta, productos, totales, pago, pie y corte.
+
+Variante 04 se redujo de 490 a 446 puntos (9.0%), sin deformación. Los nombres de producto usan hasta 31 columnas y tienen respiración vertical; TOTAL conserva doble altura y restaura el tamaño. Se agregaron separadores antes del pago y del pie, seis LF finales, corazón y corte parcial. Por instrucción posterior del usuario, el pie dice «Síguenos en:», imprime un raster 1-bit con los logotipos de Facebook e Instagram y después sólo `Casa Miga   @casamiga126`; las palabras de las plataformas ya no se imprimen.
+
+Fixture aislada `work/phase1k4e-r1-smoke-20261008`, schema 17, venta `#000017`, total $72, recibido $100 y cambio $28. Payloads fuera de línea: original 23,853 bytes, SHA-256 `50DE3C3831D9F11B1A0CA41F6993123A45B49EE7784AD300EC989BBAA5C1D0EB`; reimpresión 23,888 bytes, SHA-256 `58A496A312948C5D00BFEC055BF9F8AD1CEA051255DAD8067DA2FF552DDC3BFA`. Auditoría: un logo, un raster social, un corazón, un corte, cero ESC p. Focales 30/30; suite completa 763/763 (576 generales + 187 WPF), sin fallas/omisiones; Release 0 errores/advertencias. Base protegida intacta, schema 16 y hash `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Sin migración 018 ni impresión automática. Ver `PHASE_1K4E_R1_REPORT.md`.
+
+## Registro anterior — 1K.4E
+
+# FASE 1K.4E TÉCNICAMENTE COMPLETADA — SMOKE FÍSICO NO APROBADO, 08/10/2026
+
+El ticket Qian definitivo conserva ESC/POS RAW, 48 columnas, CP850/ESC t 2 y corte parcial GS V 1. Usa Variante 04 a 490 puntos de ancho (12.5% menor que R2), «Hecho en:», dirección oficial, `Venta #NNNNNN`, fecha local, cajero humano, snapshots históricos, importes humanos, redes, mensaje final y corazón raster. `REIMPRESIÓN` queda visible antes de la venta; no crea venta/pago, no mueve caja/inventario y no abre cajón. El teléfono es configuración opcional: null/vacío no agrega línea.
+
+Fixture aislada `work/phase1k4e-smoke-20261008`, schema 17, venta sintética `#000017`, total $72, recibido $100, cambio $28 y caja abierta para revisión. Sus payloads original/reimpresión fueron generados fuera de línea; ninguno fue enviado a `POS-80`. Focales 28/28; suite completa 761/761 (574 generales + 187 WPF), sin fallas ni omisiones; Release 0 errores/advertencias. La base protegida permanece schema 16 y SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. Sin migración 018. Ver `PHASE_1K4E_REPORT.md`, `printing-variant04.md` y `evidence/phase1k4e-byte-audit.json`.
+
+# FASE 1K.4D-R1 CERRADA Y APROBADA — 08/10/2026
+
 # Catálogo y celular — 12/10/2026
 
 - **Panes nuevos** (pedido del usuario): 27 Pan de muerto grande, 28 Pay de queso y 29 Pay de elote, $22 cada uno, y 30 Bisquet, $13, y (15/10/2026) 31 Baguette, $9, en el catálogo autorizado (`docs/catalog`), la siembra de revisión y la demo de la web local. El pan de muerto grande y el bisquet van en «Pan dulce»; los dos pays, en la categoría nueva «Pays»; la baguette, en la categoría nueva «Pan salado». Los cinco tienen foto provisional generada con IA como las otras 26 (`assets/catalog-provisional-ia`, procedencia `PROVISIONAL`; reemplazar por fotos reales antes de producción). En la sucursal real se dan de alta en Catálogo.

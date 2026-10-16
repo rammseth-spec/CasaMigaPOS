@@ -83,10 +83,15 @@ public sealed class PaymentMethodTests : SalesFixture
         var profile = new BusinessReceiptProfile("Casa Miga", null, null, null, null, "Gracias", null);
         string Render(Sale sale) => string.Join("\n", new TextReceiptRenderer().Render(
             ReceiptDocument.FromSale(work.Run(s => s.FindSaleDetail(sale.Id))!, profile, TimeZoneInfo.Utc), ReceiptCopyKind.Original));
+        // Mismo formato del ticket físico (1K.4E): «Pago: …»; tarjeta y transferencia sólo dicen lo pagado.
         var cardText = Render(card);
-        StringAssert.Contains(cardText, "TARJETA"); Assert.DoesNotContain("Cambio", cardText);
+        StringAssert.Contains(cardText, "Pago: Tarjeta"); StringAssert.Contains(cardText, "Pagado:");
+        Assert.DoesNotContain("Recibido", cardText); Assert.DoesNotContain("Cambio", cardText);
+        var transferText = Render(Sell(PaymentMethod.Transfer));
+        StringAssert.Contains(transferText, "Pago: Transferencia"); Assert.DoesNotContain("Cambio", transferText);
         var cashText = Render(cashSale);
-        StringAssert.Contains(cashText, "CASH"); StringAssert.Contains(cashText, "Cambio");
+        StringAssert.Contains(cashText, "Pago: Efectivo"); StringAssert.Contains(cashText, "Recibido:"); StringAssert.Contains(cashText, "Cambio:");
+        Assert.DoesNotContain("CASH", cashText); Assert.DoesNotContain("Pagado", cashText);
     }
 
     [TestMethod]

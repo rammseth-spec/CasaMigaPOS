@@ -30,7 +30,7 @@ public sealed class Phase1K1ShellTests
             StringAssert.Contains(theme, $"x:Key=\"{resource}\"");
 
         // Rediseño A (07-10-2026): riel de íconos con nombres cortos; el nombre completo queda en AutomationProperties.Name.
-        foreach (var section in new[] { "Ir a Punto de venta", "Ir a Caja", "Ir a Charolas", "Ir a Historial de ventas", "Ir a Reportes", "Ir a Catálogo",
+        foreach (var section in new[] { "Ir a Punto de venta", "Ir a Caja", "Ir a Charolas", "Ir a Historial de ventas", "Ir a Reportes", "Ir a Reporte diario", "Ir a Catálogo",
                      "CurrentUserName", "CurrentRoleLabel", "CurrentTerminalName", "IsSignedOut", "IsNotPos" })
             StringAssert.Contains(shell, section);
         Assert.AreEqual(1, Count(shell, "AutomationProperties.Name=\"Salir de mi usuario\""));
