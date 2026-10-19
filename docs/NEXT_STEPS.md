@@ -1,4 +1,16 @@
-# Próximo paso — preparar FASE 1K.4G-C-C-B sin publicar recetas incompletas
+# Próximo paso — smoke humano de FASE 1K.4G-C-C-B1
+
+Abrir únicamente `work/Abrir-Casa-Miga-1K4G-C-C-B1.cmd`. Confirmar el título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-C-C-B1` y revisar la copia `work/phase1k4g-c-c-b1-review-20261018`. Las credenciales verificadas se entregan en la conversación y no se versionan.
+
+1. En Inventario confirmar 67 artículos: 31 materias primas y 36 terminados.
+2. Revisar Azúcar estándar/MASS, Agua/VOLUME, Huevo/COUNT y Concha de vainilla/COUNT.
+3. Confirmar que todos los artículos nuevos están activos y sin saldo inicial; Harina conserva su presentación Bulto 25 kg y el saldo heredado.
+4. Confirmar que no existen asociaciones de producto y que el consumo automático por venta sigue desactivado.
+5. No registrar entradas, mermas, conteos, vínculos, producción, ventas o cambios de configuración.
+
+Después de la aprobación humana, diseñar C-C-B2 desde [el reporte B1](PHASE_1K4G_C_C_B1_REPORT.md). Antes de publicar fórmulas deben resolverse la dimensión de vainilla, la identidad de la mezcla multigrano, rendimientos, aproximaciones y limitaciones de preparaciones derivadas/consumos fijos. B2 debe usar otra copia aislada y demostrar ausencia de doble consumo. Modelo recomendado: **GPT-6.1 Sol, esfuerzo alto**.
+
+## Registro anterior — preparar FASE 1K.4G-C-C-B sin publicar recetas incompletas
 
 La consolidación documental C-C-A está cerrada. Antes de implementar C-C-B, resolver los bloqueos del [recetario maestro](PHASE_1K4G_C_RECIPE_MASTER.md), la [matriz de 36 productos](PHASE_1K4G_C_RECIPE_MATRIX.md) y la [auditoría técnica](PHASE_1K4G_C_RECIPE_TECHNICAL_AUDIT.md).
 

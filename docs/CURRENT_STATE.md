@@ -1,3 +1,11 @@
+# FASE 1K.4G-C-C-B1 COMPLETADA TÉCNICAMENTE — SMOKE HUMANO PENDIENTE, 18/10/2026
+
+La copia aislada `work/phase1k4g-c-c-b1-review-20261018` deriva de C-B mediante backup SQLite/WAL seguro. Contiene 31 materias primas (Harina heredada y 30 nuevas) y 36 artículos terminados COUNT vinculados documentalmente a los 36 ProductId activos. No se crearon `ProductInventoryLink`, fórmulas, perfiles, lotes, saldos o movimientos nuevos. Vainilla y mezcla multigrano siguen pendientes; el consumo automático permanece `DISABLED`.
+
+Origen C-B SHA-256 `F16ED3CFA7CDF94B0DC20B8E790DCC3B27A69F065A1FAB35BCE122050B282576`; destino B1 `B40CCD0C50024B433F698953875F5D08A5F85356B70FE91511B2AA3B41F87CAF`; base protegida `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. `integrity_check=ok`, 0 FK, schema 17, sin migración 018. Suite oficial **799/799** y Release/build B1 **0 errores, 0 advertencias**. Build `src/CasaMiga.Presentation/bin/Phase1K4G-C-C-B1/`; launcher `work/Abrir-Casa-Miga-1K4G-C-C-B1.cmd`. Ver [reporte B1](PHASE_1K4G_C_C_B1_REPORT.md). No push ni inicio de B2.
+
+## Registro anterior — 1K.4G-C-C-A
+
 # FASE 1K.4G-C-C-A COMPLETADA DOCUMENTALMENTE, 18/10/2026
 
 El recetario comercial maestro conserva las fórmulas y prácticas aportadas por el usuario sin convertir aproximaciones en datos exactos. La matriz cubre los 36 productos activos de la copia C-B con SKU, ProductId, preparación, directos, rendimiento, bloqueo técnico y control contra doble consumo. La auditoría confirma que el motor actual consolida fórmulas compartidas, múltiples requisitos y salidas reales, pero no soporta fórmulas derivadas, requisitos fijos por tanda, rendimiento intermedio variable ni destinos operativos específicos para degustación o consumo interno.
