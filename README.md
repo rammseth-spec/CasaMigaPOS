@@ -39,6 +39,18 @@ Abrir `http://127.0.0.1:4173`: entra sola como admin; con **Salir** hay un botó
 
 El encabezado y la pantalla completa ahora siguen el diseño de main; ver `docs/CURRENT_STATE.md`.
 
+### Registro de QA integrado el 19/10/2026 (1K.4G-B a 1K.4G-C-C-B2)
+
+Pantallas con el diseño de main y Producción completa de QA; ver `docs/CURRENT_STATE.md`.
+
+**FASE 1K.4G-C-C-B1 COMPLETADA TÉCNICAMENTE; SMOKE HUMANO PENDIENTE.** En una nueva copia aislada se prepararon 31 materias primas (Harina reutilizada + 30 altas verificadas) y 36 artículos terminados COUNT, uno por producto activo. No se crearon saldos, movimientos, recetas, producción o vínculos; el consumo automático sigue desactivado. Suite 799/799 y Release limpio. Ver [reporte B1](docs/PHASE_1K4G_C_C_B1_REPORT.md). No se inició B2 ni se publicó en GitHub.
+
+**FASE 1K.4G-C-C-A COMPLETADA DOCUMENTALMENTE.** El recetario comercial aportado quedó preservado por familia, cruzado con las 36 identidades activas y auditado contra el motor actual. No se publicaron fórmulas ni perfiles: rendimientos inconsistentes, cantidades aproximadas, preparaciones derivadas y consumos fijos por tanda permanecen bloqueados. Ver [recetario maestro](docs/PHASE_1K4G_C_RECIPE_MASTER.md), [matriz producto–receta](docs/PHASE_1K4G_C_RECIPE_MATRIX.md) y [auditoría técnica](docs/PHASE_1K4G_C_RECIPE_TECHNICAL_AUDIT.md). C-C-B no inició; no cambiaron código, migraciones ni bases.
+
+**FASE 1K.4G-C-B CERRADA TRAS REVISIÓN HUMANA.** El catálogo aprobado tiene 36 productos activos y cinco históricos inactivos. Se crearon diez identidades, se editaron once conservando ID y se desactivaron cinco sin borrar historial. Sólo cambiaron `product` y `audit_entry` en la copia de revisión; ventas, caja, inventario, recetas y fotografías conservaron sus datos. Suite 799/799, Release sin errores ni advertencias, schema 17 sin migración 018. Ver [reporte y tabla de precios](docs/PHASE_1K4G_C_B_REPORT.md). No se publicó en GitHub.
+
+**FASE 1K.4G-C-A COMPLETADA DOCUMENTALMENTE.** La conciliación del catálogo maestro de 36 productos encontró 27 candidatos y nueve altas inequívocas: 14 CONSERVAR, 11 RENOMBRAR, nueve AGREGAR, un REVISAR DUPLICADO y un REQUIERE DECISIÓN COMERCIAL. No se modificaron bases, código, pruebas o migraciones. C-B no inició y espera decisiones de precio, SKU, categorías, bollo duplicado y Dona especial. Ver [conciliación del catálogo](docs/PHASE_1K4G_C_CATALOG_RECONCILIATION.md).
+
 **FASES 1K.4F-R2 Y 1K.4E-R2 TÉCNICAMENTE COMPLETADAS; SMOKE HUMANO/FÍSICO PENDIENTE.** El header separa estado real de caja, resumen operativo, reloj clickable y F11. El ticket configura `461 276 7429`, muestra «Pedidos por WhatsApp» y un icono térmico 1-bit antes del primer separador, tanto en original como reimpresión. Focales A 21/21 y B 27/27; suite conjunta 783/783; Release 0 errores/advertencias; schema protegido 16 y fixture 17, sin migración 018. Ver [reporte 1K.4F-R2](docs/PHASE_1K4F_R2_REPORT.md), [reporte 1K.4E-R2](docs/PHASE_1K4E_R2_REPORT.md) y [auditoría de bytes](docs/evidence/phase1k4e-r2-byte-audit.json). No iniciar 1K.4G/1K.5 ni publicar antes del smoke.
 
 **Registro anterior — 1K.4F-R1.** Centro operativo orientado a la lista: editores de timer y nota colapsados, creación/edición inline con autocierre, tarjetas compactas y Posponer 5/10/15. Suite 779/779. Ver [reporte 1K.4F-R1](docs/PHASE_1K4F_R1_REPORT.md).

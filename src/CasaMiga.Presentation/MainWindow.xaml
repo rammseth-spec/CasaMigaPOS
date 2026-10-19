@@ -195,7 +195,10 @@
         <local:DailyReportView DataContext="{Binding DailyReport}" Visibility="{Binding DataContext.IsDailyReport,RelativeSource={RelativeSource AncestorType=Window},Converter={StaticResource VisibleWhen}}"/>
         <local:InventoryView DataContext="{Binding Inventory}" Visibility="{Binding DataContext.IsInventory,RelativeSource={RelativeSource AncestorType=Window},Converter={StaticResource VisibleWhen}}"/>
         <local:RecipeView DataContext="{Binding Recipes}" Visibility="{Binding DataContext.IsRecipes,RelativeSource={RelativeSource AncestorType=Window},Converter={StaticResource VisibleWhen}}"/>
-        <local:ProductionView DataContext="{Binding Production}" Visibility="{Binding DataContext.IsProduction,RelativeSource={RelativeSource AncestorType=Window},Converter={StaticResource VisibleWhen}}"/>
+        <!-- Producción (1K.4G-C-C-B2) reparte la altura visible entre sus listas: ocupa la altura de la ventana, con un mínimo, y desplaza por dentro. -->
+        <local:ProductionView DataContext="{Binding Production}" Visibility="{Binding DataContext.IsProduction,RelativeSource={RelativeSource AncestorType=Window},Converter={StaticResource VisibleWhen}}" Height="{Binding ViewportHeight,RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
+         <local:ProductionView.Style><Style TargetType="local:ProductionView"><Setter Property="MinHeight" Value="320"/><Style.Triggers><DataTrigger Binding="{Binding IsDrafts}" Value="True"><Setter Property="MinHeight" Value="440"/></DataTrigger><DataTrigger Binding="{Binding IsHistory}" Value="True"><Setter Property="MinHeight" Value="440"/></DataTrigger></Style.Triggers></Style></local:ProductionView.Style>
+        </local:ProductionView>
         <!-- Caja: estado grande con punto de color, detalle y la acción que corresponde. -->
         <!-- Con caja abierta, a la derecha (o debajo si no cabe) van los gastos, entradas y retiros del turno. -->
         <WrapPanel Visibility="{Binding IsDashboard,Converter={StaticResource VisibleWhen}}">

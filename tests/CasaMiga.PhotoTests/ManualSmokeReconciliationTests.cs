@@ -103,26 +103,18 @@ public sealed class ManualSmokeReconciliationTests
         Assert.IsTrue(model.IsBuilder);
         Assert.IsTrue(model.Ready);
         Assert.IsTrue(model.CanCreate, "A permission restriction must not mask the invalid-plan assertions.");
-        AssertRenderedText(view, "No hay perfiles productivos activos.");
-        Assert.IsFalse(VisibleButton(view, "Agregar producto").IsEnabled);
+        AssertRenderedText(view, "No hay productos activos con esta búsqueda.");
+        AssertRenderedText(view, "Agrega al menos un producto al plan.");
+        AssertRenderedText(view, "Aún no hay productos en el plan. Selecciona uno en la lista y pulsa «Agregar producto seleccionado».");
+        AssertRenderedText(view, "Selecciona un producto de la lista para agregarlo al plan.");
+        Assert.IsFalse(VisibleButton(view, "Agregar producto seleccionado").IsEnabled);
         Assert.IsFalse(VisibleButton(view, "Quitar seleccionado").IsEnabled);
         Assert.IsFalse(VisibleButton(view, "Calcular necesidades").IsEnabled);
         Assert.IsFalse(VisibleButton(view, "Preparar registro de producción").IsEnabled);
         Assert.IsTrue(VisibleButton(view, "Cancelar").IsEnabled);
-        var grid = Descendants<DataGrid>(view).Single(x => x.IsVisible && ReferenceEquals(x.ItemsSource, model.Plan));
-        Assert.AreEqual(1, model.Plan.Count);
-        grid.SelectedItem = model.Plan.Single();
-        fixture.Layout();
-        Assert.AreSame(model.Plan.Single(), model.SelectedPlan);
-        Assert.IsFalse(VisibleButton(view, "Quitar seleccionado").IsEnabled, "A selected sole row must remain non-removable.");
-
-        foreach (var quantity in new[] { "", "0", "-1", "1.5", "abc", "1" })
-        {
-            model.Plan[0].Planned = quantity;
-            fixture.Layout();
-            Assert.IsFalse(VisibleButton(view, "Calcular necesidades").IsEnabled, $"No active profile exists; quantity '{quantity}' cannot make the plan valid.");
-            Assert.IsFalse(VisibleButton(view, "Preparar registro de producción").IsEnabled);
-        }
+        Assert.AreEqual(0, model.Plan.Count, "A new production starts without a placeholder row of quantity 1.");
+        Assert.IsFalse(Descendants<DataGrid>(view).Any(x => x.IsVisible && ReferenceEquals(x.ItemsSource, model.Plan)), "The empty plan table is replaced by its empty state.");
+        AssertRenderedText(view, model.CreateDraftHint);
         Capture(fixture.Window, "r1-production-no-profiles.png");
         fixture.AssertNoCommercialEffects();
     });

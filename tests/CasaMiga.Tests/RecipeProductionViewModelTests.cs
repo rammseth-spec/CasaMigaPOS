@@ -55,7 +55,7 @@ public sealed partial class RecipePersistenceTests
 
     [TestMethod] public async Task ProductionUiPreviewsCreatesConfirmsAndShowsHistory()
     {
-        ProductionSetup();var vm=ProductionVm();await vm.LoadAsync();var profile=vm.Profiles.Single(x=>x.VersionId==profileVersion.Id);StringAssert.Contains(profile.ToString(),"Versión 1");vm.NewProduction();vm.Plan[0].Profile=profile;vm.Plan[0].Planned="2";var beforePreview=AllRows(true);await vm.PreviewAsync();
+        ProductionSetup();var vm=ProductionVm();await vm.LoadAsync();var profile=vm.Profiles.Single(x=>x.VersionId==profileVersion.Id);StringAssert.Contains(profile.ToString(),"Versión 1");vm.NewProduction();vm.SelectedProductChoice=profile;vm.AddOutput();vm.Plan[0].Planned="2";var beforePreview=AllRows(true);await vm.PreviewAsync();
         Assert.AreEqual(beforePreview,AllRows(true),"La vista previa debe ser de sólo lectura.");Assert.IsTrue(vm.PreviewReady);Assert.IsTrue(vm.PreviewConfirmable,vm.PreviewState);Assert.IsNotEmpty(vm.FormulaRows);Assert.IsTrue(vm.FormulaRows.All(x=>x.VersionLabel.StartsWith("Versión ",StringComparison.Ordinal)));Assert.IsTrue(vm.RequirementRows.All(x=>!x.Required.Contains("mg")&&!x.Required.Contains("µL")));Assert.IsTrue(vm.RequirementRows.All(x=>x.State=="Suficiente"&&x.Shortage=="—"));Assert.IsNotEmpty(vm.Alternatives);
         await vm.CreateDraftAsync();Assert.IsTrue(vm.DetailIsDraft);StringAssert.Contains(vm.ConfirmationRestriction,"quedó fijado");Assert.AreEqual("Plan de producción",vm.DetailPlanTitle);Assert.AreEqual("Preparaciones del plan",vm.DetailFormulasTitle);Assert.AreEqual("Ingredientes que se descontarán",vm.DetailInputsTitle);vm.Actuals[0].Actual="3";Assert.AreEqual("1 pieza más de lo planeado",vm.Actuals[0].Difference);
         await Task.WhenAll(vm.ConfirmAsync(),vm.ConfirmAsync());Assert.IsTrue(vm.DetailIsConfirmed);Assert.AreEqual(1L,Sql("SELECT count(*) FROM audit_entry WHERE action='production.confirmed'"));
@@ -64,7 +64,7 @@ public sealed partial class RecipePersistenceTests
 
     [TestMethod] public async Task ProductionUiAcceptsZeroAndShowsHumanErrors()
     {
-        ProductionSetup();var vm=ProductionVm();await vm.LoadAsync();Assert.IsTrue(vm.Profiles.Any(x=>x.VersionId==profileVersion.Id),vm.Message);vm.NewProduction();vm.Plan[0].Profile=vm.Profiles.Single(x=>x.VersionId==profileVersion.Id);vm.Plan[0].Planned="2";await vm.PreviewAsync();Assert.IsTrue(vm.PreviewConfirmable,vm.PreviewState);await vm.CreateDraftAsync();Assert.IsTrue(vm.DetailIsDraft,vm.Message);vm.Actuals[0].Actual="0";Assert.IsTrue(vm.TotalZero);Assert.AreEqual("2 piezas menos de lo planeado",vm.Actuals[0].Difference);await vm.ConfirmAsync();Assert.IsTrue(vm.DetailIsConfirmed,vm.Message);Assert.AreEqual(0L,Sql("SELECT count(*) FROM inventory_operation WHERE kind='PRODUCTION_OUTPUT'"));await vm.ShowHistoryAsync();StringAssert.Contains(vm.Rows.Single().OutputResult,"sin producto terminado");
+        ProductionSetup();var vm=ProductionVm();await vm.LoadAsync();Assert.IsTrue(vm.Profiles.Any(x=>x.VersionId==profileVersion.Id),vm.Message);vm.NewProduction();vm.SelectedProductChoice=vm.Profiles.Single(x=>x.VersionId==profileVersion.Id);vm.AddOutput();vm.Plan[0].Planned="2";await vm.PreviewAsync();Assert.IsTrue(vm.PreviewConfirmable,vm.PreviewState);await vm.CreateDraftAsync();Assert.IsTrue(vm.DetailIsDraft,vm.Message);vm.Actuals[0].Actual="0";Assert.IsTrue(vm.TotalZero);Assert.AreEqual("2 piezas menos de lo planeado",vm.Actuals[0].Difference);await vm.ConfirmAsync();Assert.IsTrue(vm.DetailIsConfirmed,vm.Message);Assert.AreEqual(0L,Sql("SELECT count(*) FROM inventory_operation WHERE kind='PRODUCTION_OUTPUT'"));await vm.ShowHistoryAsync();StringAssert.Contains(vm.Rows.Single().OutputResult,"sin producto terminado");
         Assert.AreEqual("No hay existencia suficiente para registrar esta producción.",ProductionViewModel.ErrorMessage(new(ProductionFailure.InsufficientStock)));
         Assert.AreEqual("La producción cambió o ya fue registrada desde otra operación. Actualiza la información.",ProductionViewModel.ErrorMessage(new(ProductionFailure.ConcurrencyConflict)));
         Assert.AreEqual("Un insumo o producto terminado ya no está activo.",ProductionViewModel.ErrorMessage(new(ProductionFailure.InactiveItem)));
@@ -91,10 +91,38 @@ public sealed partial class RecipePersistenceTests
 
     [TestMethod] public async Task ProductionUiDisablesRegistrationUntilEveryActualIsValid()
     {
-        ProductionSetup();var vm=ProductionVm();await vm.LoadAsync();vm.NewProduction();vm.Plan[0].Profile=vm.Profiles.Single(x=>x.VersionId==profileVersion.Id);vm.Plan[0].Planned="2";await vm.PreviewAsync();await vm.CreateDraftAsync();
+        ProductionSetup();var vm=ProductionVm();await vm.LoadAsync();vm.NewProduction();vm.SelectedProductChoice=vm.Profiles.Single(x=>x.VersionId==profileVersion.Id);vm.AddOutput();vm.Plan[0].Planned="2";await vm.PreviewAsync();await vm.CreateDraftAsync();
         Assert.IsTrue(vm.CanConfirmDetail);vm.Actuals[0].Actual="";Assert.IsFalse(vm.ActualsAreValid);Assert.IsFalse(vm.CanConfirmDetail);StringAssert.Contains(vm.ConfirmationRestriction,"entera");
         vm.Actuals[0].Actual="-1";Assert.IsFalse(vm.CanConfirmDetail);vm.Actuals[0].Actual="0";Assert.IsTrue(vm.CanConfirmDetail);Assert.IsTrue(vm.TotalZero);
         Assert.AreEqual(1L,Sql("SELECT count(*) FROM production_batch WHERE status='DRAFT'"));Assert.AreEqual(0L,Sql("SELECT count(*) FROM inventory_operation WHERE kind LIKE 'PRODUCTION_%'"));
+    }
+
+    [TestMethod] public async Task ProductionUiShowsEveryProductAndExplainsReadiness()
+    {
+        ProductionSetup();
+        var without=catalog.CreateProduct(product.CategoryId,"NO-RECIPE","Producto sin receta","",new Money(100));
+        var incompleteProduct=catalog.CreateProduct(product.CategoryId,"INCOMPLETE","Producto incompleto","",new Money(100));
+        var incompleteItem=inventory.CreateInventoryItem("INCOMPLETE-OUT","Salida incompleta",InventoryItemKind.FinishedGood,InventoryDimension.Count);
+        RecipeApplication().CreateProfile(new(Guid.NewGuid(),incompleteProduct.Id,incompleteItem.Id));
+        var vm=ProductionVm();await vm.LoadAsync();
+        Assert.AreEqual("LISTO PARA PRODUCIR",vm.Profiles.Single(x=>x.ProductId==product.Id).Status);
+        Assert.AreEqual("SIN RECETA",vm.Profiles.Single(x=>x.ProductId==without.Id).Status);
+        Assert.AreEqual("RECETA INCOMPLETA",vm.Profiles.Single(x=>x.ProductId==incompleteProduct.Id).Status);
+        vm.ProductSearch="sin receta";Assert.HasCount(1,vm.FilteredProfiles);Assert.AreEqual(without.Id,vm.FilteredProfiles.Single().ProductId);
+        vm.NewProduction();vm.SelectedProductChoice=vm.Profiles.Single(x=>x.ProductId==without.Id);vm.AddOutput();
+        Assert.IsFalse(vm.CanCalculate);StringAssert.Contains(vm.PlanBlockingMessage,"no tiene perfil productivo");
+        var blocked=vm.Plan.Single();vm.SelectedProductChoice=vm.Profiles.Single(x=>x.ProductId==product.Id);vm.AddOutput();vm.SelectedPlan=blocked;vm.RemoveOutput();vm.Plan.Single().Planned="2";
+        Assert.IsTrue(vm.CanCalculate,vm.PlanBlockingMessage);await vm.PreviewAsync();Assert.IsTrue(vm.PreviewConfirmable,vm.PreviewState);
+    }
+
+    [TestMethod] public async Task ProductionUiRecordsFinishedGoodWasteWithReasonAndRejectsOverdraw()
+    {
+        ProductionSetup();inventory.ReceiveInventory(new(Guid.NewGuid(),finished.Id,ProductionContract.Main,3,InventoryUnits.Piece.Code));
+        var vm=ProductionVm();await vm.LoadAsync();vm.OpenWaste();Assert.IsTrue(vm.IsWaste);Assert.IsTrue(vm.CanRecordWaste);
+        vm.SelectedWasteProduct=vm.WasteProducts.Single(x=>x.ProductId==product.Id);vm.SelectedWasteReason=vm.WasteReasons.Single(x=>x.Value==WasteReason.ProductionError);vm.WasteQuantity="2";vm.WasteNote="Lote sintético";
+        Assert.IsTrue(vm.CanSaveWaste);await vm.SaveWasteAsync();Assert.IsTrue(vm.MessageIsSuccess,vm.Message);
+        var row=inventory.MovementHistory(new(finished.Id)).Items.Single(x=>x.Kind==InventoryMovementKind.Waste);Assert.AreEqual(-2,row.DeltaAtomic);Assert.AreEqual("PRODUCTION_ERROR",row.ReasonCode);Assert.AreEqual("Lote sintético",row.Note);
+        vm.WasteQuantity="2";await vm.SaveWasteAsync();Assert.IsFalse(vm.MessageIsSuccess);StringAssert.Contains(vm.Message,"suficientes");Assert.AreEqual(1L,Sql($"SELECT quantity_atomic FROM inventory_balance WHERE item_id='{finished.Id}'"));
     }
 
     [TestMethod] public void ProductionDetailAggregatesRepeatedInputSnapshots()

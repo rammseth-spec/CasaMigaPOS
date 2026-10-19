@@ -5,9 +5,11 @@ using CasaMiga.Domain;
 
 namespace CasaMiga.Presentation;
 
-public sealed record ProductionProfileChoice(Guid VersionId,Guid ProductId,string ProductName,string ProfileName,int Version)
+public sealed record ProductionProfileChoice(Guid? VersionId,Guid ProductId,Guid? FinishedItemId,string ProductName,string ProfileName,int Version,string Status,string Detail)
 {
-    public override string ToString()=>$"{ProductName} · {ProfileName} · Versión {Version}";
+    public bool Ready=>Status=="LISTO PARA PRODUCIR"&&VersionId.HasValue;
+    public string VersionLabel=>Version>0?$"Versión {Version}":"—";
+    public override string ToString()=>Ready?$"{ProductName} · {ProfileName} · Versión {Version}":$"{ProductName} · {Status}";
 }
 public sealed class ProductionPlanEdit : INotifyPropertyChanged
 {
@@ -51,6 +53,10 @@ public sealed record ProductionAlternativeOption(Guid Id,string Label,bool Eligi
 {
     public override string ToString()=>Eligible?Label:$"{Label} · no disponible";
 }
+public sealed record ProductionWasteReasonChoice(WasteReason Value,string Label)
+{
+    public override string ToString()=>Label;
+}
 
 public sealed class ProductionViewModel(ProductionService service,RecipeService recipes,InventoryService inventory,
     CatalogService catalog,UserSession user,Guid terminalId,Action<string,string?> log):INotifyPropertyChanged
@@ -58,7 +64,7 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
     private string screen="home";private StoredProductionBatch? batch;private Guid? createBatchId,createOperationId;
     private IReadOnlyDictionary<Guid,RecipeItemChoice> items=new Dictionary<Guid,RecipeItemChoice>();
     public bool Busy{get;private set;} public bool Ready=>!Busy; public bool CanView{get;private set;} public bool CanCreate{get;private set;} public bool CanConfirm{get;private set;}
-    public bool IsHome=>screen=="home";public bool IsBuilder=>screen=="builder";public bool IsDrafts=>screen=="drafts";public bool IsHistory=>screen=="history";public bool IsDetail=>screen=="detail";
+    public bool IsHome=>screen=="home";public bool IsBuilder=>screen=="builder";public bool IsDrafts=>screen=="drafts";public bool IsHistory=>screen=="history";public bool IsDetail=>screen=="detail";public bool IsWaste=>screen=="waste";
     public bool DetailIsDraft=>batch?.Status=="DRAFT"; public bool DetailIsConfirmed=>batch?.Status=="CONFIRMED";
     private bool OwnDraft=>DetailIsDraft&&CanConfirm&&batch?.CreatedBy==user.Current?.Id&&batch?.TerminalId==terminalId;
     public bool ActualsAreValid=>Actuals.Count>0&&Actuals.All(x=>x.IsValid);
@@ -69,21 +75,59 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
     public string ActualHelpText=>"La cantidad real es el número de piezas terminadas obtenidas. El inventario recibe esa cantidad real, pero los insumos se descuentan según el plan bloqueado. Ejemplo sintético: 5 planeadas y 4 reales consumen los insumos de 5 y agregan 4 terminados. Registrar cero consume los insumos planeados y no genera producto terminado.";
     public string Message{get;private set;}="";public bool MessageIsSuccess{get;private set;}
     public IReadOnlyList<ProductionProfileChoice> Profiles{get;private set;}=[];
+    public IReadOnlyList<ProductionProfileChoice> FilteredProfiles{get;private set;}=[];
+    private string productSearch="";private ProductionProfileChoice? selectedProductChoice;
+    public string ProductSearch{get=>productSearch;set{if(productSearch==value)return;productSearch=value;FilterProducts();}}
+    public ProductionProfileChoice? SelectedProductChoice{get=>selectedProductChoice;set{if(selectedProductChoice==value)return;selectedProductChoice=value;Notify();}}
     private ProductionPlanEdit? selectedPlan; private ProductionHistoryRow? selectedRow;
     private bool trackingPlan; private readonly HashSet<ProductionPlanEdit> trackedPlan=[];
     public ObservableCollection<ProductionPlanEdit> Plan{get;}=[];public ProductionPlanEdit? SelectedPlan{get=>selectedPlan;set{if(selectedPlan==value)return;selectedPlan=value;Notify();}}
-    public bool HasProfiles=>Profiles.Count>0;
-    private bool ValidPlan=>Plan.Count>0&&Plan.All(x=>x.Profile is not null&&Profiles.Contains(x.Profile)&&long.TryParse(x.Planned,out var count)&&count>0)&&Plan.Select(x=>x.Profile!.VersionId).Distinct().Count()==Plan.Count;
+    public bool HasProfiles=>Profiles.Any(x=>x.Ready);
+    public bool CanAddSelectedProduct=>Ready&&IsBuilder&&SelectedProductChoice is not null&&!Plan.Any(x=>x.Profile?.ProductId==SelectedProductChoice.ProductId);
+    private bool ValidPlan=>Plan.Count>0&&Plan.All(x=>x.Profile is {Ready:true}&&Profiles.Contains(x.Profile)&&long.TryParse(x.Planned,out var count)&&count>0)&&Plan.Select(x=>x.Profile!.ProductId).Distinct().Count()==Plan.Count;
+    public string PlanBlockingMessage
+    {
+        get
+        {
+            if(Plan.Count==0)return "Agrega al menos un producto al plan.";
+            var blocked=Plan.FirstOrDefault(x=>x.Profile is not {Ready:true});
+            if(blocked?.Profile is {} product)return $"{product.ProductName}: {product.Detail}";
+            if(blocked is not null)return "Selecciona un producto para cada fila.";
+            if(Plan.Any(x=>!long.TryParse(x.Planned,out var count)||count<=0))return "Cada cantidad planeada debe ser un entero mayor que cero.";
+            if(Plan.Select(x=>x.Profile!.ProductId).Distinct().Count()!=Plan.Count)return "No repitas el mismo producto en el plan.";
+            return "Plan listo para calcular.";
+        }
+    }
     public bool CanCalculate=>Ready&&CanCreate&&IsBuilder&&ValidPlan;
     public bool CanCreateDraft=>CanCalculate&&PreviewReady&&PreviewConfirmable;
-    public bool CanRemoveOutput=>Ready&&IsBuilder&&Plan.Count>1&&SelectedPlan is not null&&Plan.Contains(SelectedPlan);
+    public bool CanRemoveOutput=>Ready&&IsBuilder&&SelectedPlan is not null&&Plan.Contains(SelectedPlan);
     public bool CanOpenDetail=>Ready&&SelectedRow is not null;
+    // Visible explanations for actions that are disabled; tooltips alone are not discoverable on touch screens.
+    public string AddProductHint=>SelectedProductChoice is not {} choice?"Selecciona un producto de la lista para agregarlo al plan.":
+        Plan.Any(x=>x.Profile?.ProductId==choice.ProductId)?$"{choice.ProductName} ya está en el plan; ajusta sus piezas en «Plan actual».":
+        !choice.Ready?$"{choice.ProductName}: {choice.Detail}":$"{choice.ProductName} está listo para agregarse.";
+    public string RemoveOutputHint=>Plan.Count==0?"El plan está vacío.":"Selecciona una fila del plan para quitarla.";
+    public string CreateDraftHint=>!ValidPlan?"Para preparar el registro, primero completa un plan válido y calcula sus necesidades.":
+        !PreviewReady?"Pulsa «Calcular necesidades» para revisar insumos y existencias antes de preparar el registro.":
+        !PreviewConfirmable?"No se puede preparar el registro: corrige lo indicado arriba y vuelve a calcular.":"Al preparar el registro, el plan quedará fijado como borrador.";
+    public string OpenDetailHint=>SelectedRow is null?"Selecciona una producción de la lista para ver su detalle.":"";
+    public string WasteHint=>!CanRecordWaste?"No tienes permiso para registrar merma.":SelectedWasteProduct?.FinishedItemId is null?"Selecciona el producto terminado.":
+        !long.TryParse(WasteQuantity,out var pieces)||pieces<=0?"Escribe un número entero de piezas mayor que cero.":SelectedWasteReason is null?"Selecciona el motivo.":
+        SelectedWasteReason.Value==WasteReason.Other&&string.IsNullOrWhiteSpace(WasteNote)?"Con el motivo «Otro» la observación es obligatoria.":"";
     public string EmptyRowsMessage=>IsDrafts?"No hay producciones en borrador.":"Aún no hay producciones confirmadas.";
     public ObservableCollection<ProductionAlternativeEdit> Alternatives{get;}=[];
     public IReadOnlyList<ProductionFormulaRow> FormulaRows{get;private set;}=[];public IReadOnlyList<ProductionRequirementRow> RequirementRows{get;private set;}=[];
     public bool PreviewReady{get;private set;} public bool PreviewConfirmable{get;private set;} public string PreviewState{get;private set;}="";
     public IReadOnlyList<ProductionHistoryRow> Rows{get;private set;}=[];public ProductionHistoryRow? SelectedRow{get=>selectedRow;set{if(selectedRow==value)return;selectedRow=value;Notify();}}
     public ObservableCollection<ProductionActualEdit> Actuals{get;}=[];
+    public bool CanRecordWaste{get;private set;} public IReadOnlyList<ProductionProfileChoice> WasteProducts=>Profiles.Where(x=>x.Ready&&x.FinishedItemId.HasValue).ToArray();
+    private ProductionProfileChoice? selectedWasteProduct;private string wasteQuantity="1";private ProductionWasteReasonChoice? selectedWasteReason;private string wasteNote="";
+    public ProductionProfileChoice? SelectedWasteProduct{get=>selectedWasteProduct;set{selectedWasteProduct=value;Notify();}}
+    public string WasteQuantity{get=>wasteQuantity;set{wasteQuantity=value;Notify();}}
+    public IReadOnlyList<ProductionWasteReasonChoice> WasteReasons{get;}=[new(WasteReason.Damaged,"Producto dañado"),new(WasteReason.Expired,"Producto vencido"),new(WasteReason.ProductionError,"Error de producción"),new(WasteReason.Other,"Otro")];
+    public ProductionWasteReasonChoice? SelectedWasteReason{get=>selectedWasteReason;set{selectedWasteReason=value;Notify();}}
+    public string WasteNote{get=>wasteNote;set{wasteNote=value;Notify();}}
+    public bool CanSaveWaste=>Ready&&IsWaste&&CanRecordWaste&&SelectedWasteProduct?.FinishedItemId is not null&&long.TryParse(WasteQuantity,out var value)&&value>0&&SelectedWasteReason is not null&&(SelectedWasteReason.Value!=WasteReason.Other||!string.IsNullOrWhiteSpace(WasteNote));
     public string DetailHeader=>batch is null?"":$"Producción · {(batch.Status=="DRAFT"?"Borrador":"Confirmada")}";
     public string DetailContext=>batch is null?"":$"Creada: {batch.CreatedAt.ToLocalTime():dd/MM/yyyy HH:mm}\nCreada por: {batch.CreatedByName}\nTerminal: {batch.TerminalName}"+(batch.ConfirmedAt is {} confirmed?$"\nRegistrada: {confirmed.ToLocalTime():dd/MM/yyyy HH:mm}":"");
     public string DetailPlanTitle=>"Plan de producción";
@@ -97,7 +141,7 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
 
     public Task LoadAsync()=>Run(async()=>
     {
-        CanView=await Task.Run(()=>catalog.Can("production.view"));CanCreate=await Task.Run(()=>catalog.Can("production.create"));CanConfirm=await Task.Run(()=>catalog.Can("production.confirm"));if(!CanView)throw new AccessDeniedException();
+        CanView=await Task.Run(()=>catalog.Can("production.view"));CanCreate=await Task.Run(()=>catalog.Can("production.create"));CanConfirm=await Task.Run(()=>catalog.Can("production.confirm"));CanRecordWaste=await Task.Run(()=>inventory.Can("inventory.waste"));if(!CanView)throw new AccessDeniedException();
         await LoadChoices();screen="home";
     });
     private async Task LoadChoices()
@@ -105,12 +149,42 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
         var itemRows=new List<InventoryListRow>();for(int page=0;;page++){var r=await Task.Run(()=>inventory.List(new(Page:page,PageSize:100)));itemRows.AddRange(r.Items);if(itemRows.Count>=r.Total)break;}
         items=itemRows.ToDictionary(x=>x.InventoryItemId,x=>new RecipeItemChoice(x.InventoryItemId,x.Name,x.Dimension));
         var products=new List<ProductRow>();for(int page=0;;page++){var r=await Task.Run(()=>catalog.Products(new(Page:page)));products.AddRange(r.Items);if(products.Count>=r.Total)break;}
-        var names=products.ToDictionary(x=>x.Product.Id,x=>x.Product.Name);var list=new List<ProductionProfileChoice>();
-        foreach(var p in await Task.Run(()=>recipes.ListProfiles(200)))if(p.ActiveVersionId is {} id&&await Task.Run(()=>recipes.GetProfileVersion(id)) is { } v)list.Add(new(id,p.ProductId,names.GetValueOrDefault(p.ProductId,"Producto"),v.Value.Name,v.Value.Version));
-        Profiles=list;
+        var profiles=await Task.Run(()=>recipes.ListProfiles(200));var list=new List<ProductionProfileChoice>();
+        foreach(var product in products.Where(x=>x.Product.IsActive).OrderBy(x=>x.Product.Name,StringComparer.CurrentCultureIgnoreCase))
+        {
+            var candidates=profiles.Where(x=>x.ProductId==product.Product.Id).ToArray();
+            if(candidates.Length==0){list.Add(new(null,product.Product.Id,null,product.Product.Name,"",0,"SIN RECETA","Este producto no tiene perfil productivo. Configura y publica su receta antes de producirlo."));continue;}
+            ProductionProfileChoice? ready=null;string reason="El perfil productivo no tiene una versión activa publicada.";Guid? finished=candidates[0].FinishedItemId;
+            foreach(var summary in candidates)
+            {
+                finished=summary.FinishedItemId;
+                if(summary.ActiveVersionId is not {} id)continue;
+                var stored=await Task.Run(()=>recipes.GetProfileVersion(id));
+                if(stored is null||stored.Value.State!=ProductionVersionState.Published){reason="La versión activa del perfil no está publicada.";continue;}
+                var version=stored.Value;var output=itemRows.FirstOrDefault(x=>x.InventoryItemId==version.FinishedInventoryItemId);
+                if(output is null||!output.Active||output.Kind!=InventoryItemKind.FinishedGood||output.Dimension!=InventoryDimension.Count){reason="El producto terminado debe ser un artículo activo de inventario contado en piezas.";continue;}
+                var missingFormula=false;var invalidFormulaIngredients=false;
+                foreach(var requirement in version.Formulas)
+                {
+                    var formula=await Task.Run(()=>recipes.GetFormulaVersion(requirement.FormulaVersionId));
+                    if(formula is null||formula.Value.State!=ProductionVersionState.Published){missingFormula=true;break;}
+                    if(formula.Value.Ingredients.Any(x=>!itemRows.Any(i=>i.InventoryItemId==x.InventoryItemId&&i.Active))||
+                        formula.Value.Alternatives.Any(group=>!group.Options.Any(option=>itemRows.Any(i=>i.InventoryItemId==option.Ingredient.InventoryItemId&&i.Active))))
+                        invalidFormulaIngredients=true;
+                }
+                if(missingFormula){reason="Una preparación requerida no existe o no está publicada.";continue;}
+                if(invalidFormulaIngredients){reason="Una preparación no tiene todos sus insumos obligatorios o una alternativa activa.";continue;}
+                var ingredientIds=version.DirectIngredients.Select(x=>x.Ingredient.InventoryItemId).Distinct().ToArray();
+                if(ingredientIds.Any(id2=>!itemRows.Any(x=>x.InventoryItemId==id2&&x.Active))){reason="Un ingrediente directo no existe o está inactivo.";continue;}
+                ready=new(id,product.Product.Id,version.FinishedInventoryItemId,product.Product.Name,version.Name,version.Version,"LISTO PARA PRODUCIR","Receta y salida configuradas.");break;
+            }
+            list.Add(ready??new(null,product.Product.Id,finished,product.Product.Name,"",0,"RECETA INCOMPLETA",reason));
+        }
+        Profiles=list;FilterProducts();
     }
-    public void NewProduction(){if(!Ready||!CanCreate)return;TrackPlan();Plan.Clear();SelectedPlan=null;Plan.Add(new());Alternatives.Clear();FormulaRows=[];RequirementRows=[];PreviewReady=false;PreviewConfirmable=false;createBatchId=Guid.NewGuid();createOperationId=Guid.NewGuid();screen="builder";Message="";Notify();}
-    public void AddOutput(){if(Ready&&CanCreate&&IsBuilder&&HasProfiles)Plan.Add(new());}
+    private void FilterProducts(){var term=(ProductSearch??"").Trim();FilteredProfiles=Profiles.Where(x=>term.Length==0||x.ProductName.Contains(term,StringComparison.CurrentCultureIgnoreCase)||x.ProfileName.Contains(term,StringComparison.CurrentCultureIgnoreCase)||x.Status.Contains(term,StringComparison.OrdinalIgnoreCase)).ToArray();if(SelectedProductChoice is not null&&!FilteredProfiles.Contains(SelectedProductChoice))SelectedProductChoice=null;Notify();}
+    public void NewProduction(){if(!Ready||!CanCreate)return;TrackPlan();Plan.Clear();SelectedPlan=null;SelectedProductChoice=null;ProductSearch="";Alternatives.Clear();FormulaRows=[];RequirementRows=[];PreviewReady=false;PreviewConfirmable=false;createBatchId=Guid.NewGuid();createOperationId=Guid.NewGuid();screen="builder";Message="";Notify();}
+    public void AddOutput(){if(SelectedProductChoice is null){if(Ready&&CanCreate&&IsBuilder&&Plan.All(x=>x.Profile is not null))Plan.Add(new());return;}if(!CanAddSelectedProduct)return;var empty=Plan.FirstOrDefault(x=>x.Profile is null);if(empty is not null){empty.Profile=SelectedProductChoice;empty.Planned="1";SelectedPlan=empty;}else{Plan.Add(new(){Profile=SelectedProductChoice,Planned="1"});SelectedPlan=Plan[^1];}SelectedProductChoice=null;Notify();}
     public void RemoveOutput(){if(!CanRemoveOutput)return;Plan.Remove(SelectedPlan!);SelectedPlan=null;}
     private void TrackPlan()
     {
@@ -126,8 +200,8 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
     private void InvalidatePreview(){PreviewReady=false;PreviewConfirmable=false;PreviewState="";FormulaRows=[];RequirementRows=[];Notify();}
     private PrepareProductionCommand Command()
     {
-        var lines=Plan.Select(x=>{if(x.Profile is null)throw new ArgumentException("Selecciona un perfil en cada producto.");if(!long.TryParse(x.Planned,out var count)||count<=0)throw new ArgumentException("La cantidad planeada debe ser un entero mayor que cero.");return new RequestedProductionOutput(x.Profile.VersionId,count);}).ToArray();
-        if(lines.Select(x=>x.ProfileVersionId).Distinct().Count()!=lines.Length)throw new ArgumentException("No repitas el mismo producto en el plan.");
+        var lines=Plan.Select(x=>{if(x.Profile is not {Ready:true} profile||profile.VersionId is not {} version)throw new ArgumentException(x.Profile?.Detail??"Selecciona un producto listo para producir.");if(!long.TryParse(x.Planned,out var count)||count<=0)throw new ArgumentException("La cantidad planeada debe ser un entero mayor que cero.");return new RequestedProductionOutput(version,count);}).ToArray();
+        if(Plan.Select(x=>x.Profile!.ProductId).Distinct().Count()!=lines.Length)throw new ArgumentException("No repitas el mismo producto en el plan.");
         var choices=Alternatives.Where(x=>x.Selected is {Eligible:true}).Select(x=>new ProductionAlternativeSelection(x.FormulaVersionId,x.GroupId,x.Selected!.Id)).ToArray();return new(lines,choices);
     }
     public Task PreviewAsync()=>Run(async()=>
@@ -165,6 +239,17 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
         if(batch is null||!CanConfirmDetail)throw new ArgumentException(ConfirmationRestriction);var actual=Actuals.Select(x=>{if(!long.TryParse(x.Actual,out var value)||value<0)throw new ArgumentException("La cantidad real debe ser un entero igual o mayor que cero.");return new ActualOutputLine(x.ProductId,value);}).ToArray();
         batch=await Task.Run(()=>service.ConfirmProduction(new(batch.Id,batch.OperationId,ProductionContract.Revision(batch),actual)));LoadDetail();MessageIsSuccess=true;Message="Producción registrada correctamente.";
     });
+    public void OpenWaste()
+    {
+        if(!Ready||!CanRecordWaste)return;selectedWasteProduct=WasteProducts.FirstOrDefault();selectedWasteReason=WasteReasons.First();wasteQuantity="1";wasteNote="";screen="waste";Message="";Notify();
+    }
+    public Task SaveWasteAsync()=>Run(async()=>
+    {
+        if(!CanRecordWaste||SelectedWasteProduct?.FinishedItemId is not {} item||SelectedWasteReason is null||(SelectedWasteReason.Value==WasteReason.Other&&string.IsNullOrWhiteSpace(WasteNote)))throw new ArgumentException("Completa producto, piezas y motivo de la merma.");
+        if(!long.TryParse(WasteQuantity,out var quantity)||quantity<=0)throw new ArgumentException("La merma debe ser un número entero de piezas mayor que cero.");
+        await Task.Run(()=>inventory.RecordWaste(new(Guid.NewGuid(),item,InventoryLocationIds.Main,quantity,InventoryUnits.Piece.Code,SelectedWasteReason.Value,string.IsNullOrWhiteSpace(WasteNote)?null:WasteNote.Trim())));
+        MessageIsSuccess=true;Message=$"Merma registrada: {quantity} {(quantity==1?"pieza":"piezas")} de {SelectedWasteProduct.ProductName}.";WasteQuantity="1";WasteNote="";
+    });
     public void Back(){screen=screen=="detail"?"home":"home";Message="";Notify();}
     public static string ErrorMessage(ProductionException e)=>e.Code switch
     {
@@ -174,5 +259,5 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
         .GroupBy(x=>(x.ItemId,x.Required.Dimension))
         .Select(group=>$"{group.First().Name}: {InventoryDisplay.FormatProduction(group.Sum(x=>x.Required.AtomicUnits),group.Key.Dimension)}"+
             (group.Any(x=>x.GroupId.HasValue)?" · alternativa seleccionada":"")).ToArray();
-    private async Task Run(Func<Task> action){if(Busy)return;Busy=true;Message="";MessageIsSuccess=false;Notify();try{await action();}catch(AccessDeniedException){Message="No tienes permiso para esta operación de producción.";log("production.authorization.denied",null);}catch(ProductionException e){Message=ErrorMessage(e);if(e.Shortages.Count>0)Message+=" "+string.Join(" ",e.Shortages.Select(x=>$"Faltan {InventoryDisplay.FormatProduction(x.Required-(x.Available??0),items[x.ItemId].Dimension)} de {items[x.ItemId].Name}."));}catch(ProductionDomainException){Message="Revisa las cantidades y configuración del plan.";}catch(ArgumentException e){Message=e.Message;}catch(Exception e){Message=$"No se completó la operación de producción (código: {e.GetType().Name}).";log("production.operation.failed",e.GetType().Name);}finally{Busy=false;Notify();}}
+    private async Task Run(Func<Task> action){if(Busy)return;Busy=true;Message="";MessageIsSuccess=false;Notify();try{await action();}catch(AccessDeniedException){Message="No tienes permiso para esta operación de producción.";log("production.authorization.denied",null);}catch(ProductionException e){Message=ErrorMessage(e);if(e.Shortages.Count>0)Message+=" "+string.Join(" ",e.Shortages.Select(x=>$"Faltan {InventoryDisplay.FormatProduction(x.Required-(x.Available??0),items[x.ItemId].Dimension)} de {items[x.ItemId].Name}."));}catch(InventoryApplicationException e){Message=e.Error switch{InventoryError.InsufficientStock=>"No hay suficientes piezas terminadas para registrar la merma.",InventoryError.NotInitialized=>"El producto terminado todavía no tiene saldo inicial.",InventoryError.InventoryItemInactive=>"El producto terminado está inactivo.",InventoryError.InvalidNote=>e.Message,_=>"No se pudo registrar la merma de producto terminado."};}catch(ProductionDomainException){Message="Revisa las cantidades y configuración del plan.";}catch(ArgumentException e){Message=e.Message;}catch(Exception e){Message=$"No se completó la operación de producción (código: {e.GetType().Name}).";log("production.operation.failed",e.GetType().Name);}finally{Busy=false;Notify();}}
 }

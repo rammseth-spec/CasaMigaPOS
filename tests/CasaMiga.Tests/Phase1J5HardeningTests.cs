@@ -13,7 +13,7 @@ public sealed partial class RecipePersistenceTests
     {
         ProductionSetup();
         var vm=ProductionVm();await vm.LoadAsync();vm.NewProduction();
-        vm.Plan[0].Profile=vm.Profiles.Single(x=>x.VersionId==profileVersion.Id);
+        vm.SelectedProductChoice=vm.Profiles.Single(x=>x.VersionId==profileVersion.Id);vm.AddOutput();
         vm.Plan[0].Planned="2";await vm.PreviewAsync();
         Assert.IsTrue(vm.PreviewConfirmable,vm.PreviewState);
         await vm.CreateDraftAsync();Assert.IsTrue(vm.DetailIsDraft,vm.Message);

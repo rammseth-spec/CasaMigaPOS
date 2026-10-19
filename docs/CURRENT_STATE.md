@@ -1,3 +1,78 @@
+# Integración de QA en main — 19/10/2026
+
+Se combinó en main lo nuevo de QA: 1K.4G-B (planeación de producción y lectura del resultado), 1K.4G-B-R2 (tablas), 1K.4G-C (conciliación del catálogo comercial y recetario comercial maestro), 1K.4G-C-C-B1 (preparación de inventario), R1 (acomodo) y 1K.4G-C-C-B2 (usabilidad de producción). Igual que el 12/10, se conserva el diseño de main: Catálogo, Recetas, Inventario, Historial de ventas, Punto de venta, Cobro, Cierres, Reporte diario y la ventana principal quedan como en main. No se adoptan R1 (menú que se contrae, encabezado compacto y desplazamiento propio de cada vista) ni el sistema de tablas de R2 (renglones de 48 px, cebra y cuadrícula). Sí entra Producción completa (B, B-R1 y B2): en la ventana de main ocupa la altura visible, y sus tablas usan el diseño de main con renglones que crecen. Los estilos con nombre de R2 (`CasaMigaTable*`) existen en el tema sobre las tablas de main. No se incluyen las pruebas de diseño de R1 y R2 (`AdaptiveLayoutPresentationTests`, `TableReadabilityPresentationTests` y sus cambios en pruebas existentes).
+
+El recetario (`PHASE_1K4G_C_RECIPE_MASTER.md`, `PHASE_1K4G_C_RECIPE_MATRIX.md` y `PHASE_1K4G_C_RECIPE_TECHNICAL_AUDIT.md`) queda como documentación: no carga recetas en la caja y la auditoría reporta 0 productos listos para consumo automático. La conciliación de 1K.4G-C describe 36 productos en la copia de revisión de QA; el catálogo autorizado del repo (`docs/catalog`, 31 productos) no cambia hasta que el usuario lo decida. Pendiente: CI de Windows del PR y prueba humana de Producción.
+
+# FASE 1K.4G-C-C-B2 — APROBADA TÉCNICAMENTE Y CERRADA CON COMMIT LOCAL, 19/10/2026
+
+Fixture sintética nueva `work/phase1k4g-c-c-b2-demo-20261019` (DEMO - NO COMERCIAL, schema 17, 36 productos, 48 artículos, 7 producciones confirmadas y 3 borradores; sin ventas, caja ni impresión). Validación funcional en copia scratch 34/34 sin defectos del motor. Producción mejoró lista adaptable, columnas, filas acotadas, plan inicial vacío y explicaciones de acciones deshabilitadas, sólo en Presentation. `scripts/verify.ps1` **806/806**, Release 0 errores / 0 advertencias. Bases protegidas sin cambios. Reinicio del desplazamiento comprobado automáticamente sobre copia. Checkpoint local en la rama `phase/1k4g-c-c-b2-production-ux`; sin push ni merge a `master`. Pendientes no bloqueantes y prueba física de DPI en el [reporte B2](PHASE_1K4G_C_C_B2_REPORT.md).
+
+## Registro anterior — 1K.4G-C-C-B1-R1
+
+# FASE 1K.4G-C-C-B1-R1 — LAYOUT ADAPTABLE COMPLETADO TÉCNICAMENTE, SMOKE HUMANO PENDIENTE, 19/10/2026
+
+
+Inventario, Catálogo, Recetas y Producción usan listas principales que crecen con el espacio disponible; POS evita recortar nombre y precio, y la barra lateral/encabezado/acceso se adaptan a ventanas estrechas. Caja e Historial permiten desplazar columnas cuando el ancho físico no alcanza; el reporte diario aprovecha mejor pantallas grandes. Los formularios largos conservan scroll. No se alteraron flujos comerciales, datos, migraciones ni impresión. La copia de revisión R1 parte de B1 con SHA-256 idéntico y credencial comprobada en lectura. Véase [reporte R1](PHASE_1K4G_C_C_B1_R1_LAYOUT_REPORT.md). Falta aprobación visual humana; no iniciar C-C-B2 ni hacer push.
+
+## Registro anterior — 1K.4G-C-C-B1
+
+# FASE 1K.4G-C-C-B1 COMPLETADA TÉCNICAMENTE — SMOKE HUMANO PENDIENTE, 18/10/2026
+
+La copia aislada `work/phase1k4g-c-c-b1-review-20261018` deriva de C-B mediante backup SQLite/WAL seguro. Contiene 31 materias primas (Harina heredada y 30 nuevas) y 36 artículos terminados COUNT vinculados documentalmente a los 36 ProductId activos. No se crearon `ProductInventoryLink`, fórmulas, perfiles, lotes, saldos o movimientos nuevos. Vainilla y mezcla multigrano siguen pendientes; el consumo automático permanece `DISABLED`.
+
+Origen C-B SHA-256 `F16ED3CFA7CDF94B0DC20B8E790DCC3B27A69F065A1FAB35BCE122050B282576`; destino B1 `B40CCD0C50024B433F698953875F5D08A5F85356B70FE91511B2AA3B41F87CAF`; base protegida `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. `integrity_check=ok`, 0 FK, schema 17, sin migración 018. Suite oficial **799/799** y Release/build B1 **0 errores, 0 advertencias**. Build `src/CasaMiga.Presentation/bin/Phase1K4G-C-C-B1/`; launcher `work/Abrir-Casa-Miga-1K4G-C-C-B1.cmd`. Ver [reporte B1](PHASE_1K4G_C_C_B1_REPORT.md). No push ni inicio de B2.
+
+## Registro anterior — 1K.4G-C-C-A
+
+# FASE 1K.4G-C-C-A COMPLETADA DOCUMENTALMENTE, 18/10/2026
+
+El recetario comercial maestro conserva las fórmulas y prácticas aportadas por el usuario sin convertir aproximaciones en datos exactos. La matriz cubre los 36 productos activos de la copia C-B con SKU, ProductId, preparación, directos, rendimiento, bloqueo técnico y control contra doble consumo. La auditoría confirma que el motor actual consolida fórmulas compartidas, múltiples requisitos y salidas reales, pero no soporta fórmulas derivadas, requisitos fijos por tanda, rendimiento intermedio variable ni destinos operativos específicos para degustación o consumo interno.
+
+No se crearon Formula, FormulaVersion, ProductionProfile, InventoryItem, ProductInventoryLink ni movimientos. C-C-B no inició. No cambiaron código, pruebas, migraciones o bases. La suite 799/799 y el Release limpio de C-B se conservan como último baseline funcional; no se repitieron por tratarse de un cierre exclusivamente documental. Ver [recetario maestro](PHASE_1K4G_C_RECIPE_MASTER.md), [matriz](PHASE_1K4G_C_RECIPE_MATRIX.md) y [auditoría](PHASE_1K4G_C_RECIPE_TECHNICAL_AUDIT.md).
+
+## Registro anterior — 1K.4G-C-B
+
+# FASE 1K.4G-C-B CERRADA TRAS REVISIÓN HUMANA, 18/10/2026
+
+Con las decisiones comerciales aprobadas, la copia `work/phase1k4g-c-b-review-20261018` contiene 36 productos activos y cinco históricos inactivos. Se crearon diez, se editaron once conservando ID/SKU existente cuando procedía y se desactivaron cinco sin borrar ventas. Se asignaron códigos únicos CM-027–CM-040 a nuevas identidades y a cuatro productos existentes sin SKU. Los precios confirmados para C-B se aplicaron; los otros 24 se conservaron del origen y requieren revisión comercial. El origen 1K.4F-R2, la base protegida y la evidencia cerrada 1K.4G-B-R2 conservan sus SHA-256.
+
+En la copia únicamente cambiaron `product` y `audit_entry`; ventas, pagos, caja, recibos, inventario, recetas, vínculos, fotos y archivos de configuración permanecieron iguales por digest. `integrity_check=ok`, 0 violaciones FK, schema 17; sin migración 018. `scripts/verify.ps1`: **799/799**, sin fallas/omisiones; Release sin errores ni warnings. Build/launcher identificados `Phase1K4G-C-B`, DataDirectory exclusivo, título de desarrollo. La revisión visual humana fue aprobada antes de autorizar C-C-A. Ver [reporte C-B](PHASE_1K4G_C_B_REPORT.md). No se hizo push.
+
+## Registro anterior — 1K.4G-C-A
+
+# FASE 1K.4G-C-A COMPLETADA DOCUMENTALMENTE — DECISIONES COMERCIALES PENDIENTES, 18/10/2026
+
+La conciliación del catálogo maestro de 36 productos contra el catálogo de revisión de 31 productos encontró 27 candidatos y nueve altas inequívocas. La matriz clasifica 14 CONSERVAR, 11 RENOMBRAR, nueve AGREGAR, un REVISAR DUPLICADO y un REQUIERE DECISIÓN COMERCIAL. Puerquito y Coronita se retiran; la Galleta de nuez y coco se sustituirá por dos identidades nuevas; el bollo duplicado y Dona especial requieren decisión antes de C-B.
+
+La revisión fue de sólo lectura sobre la base protegida schema 16, el catálogo 1K.4F-R2 schema 17 y la evidencia cerrada 1K.4G-B-R2. La base protegida conserva SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. No se modificaron bases, código, pruebas o migraciones; no se inició C-B/C-C. Ver [PHASE_1K4G_C_CATALOG_RECONCILIATION.md](PHASE_1K4G_C_CATALOG_RECONCILIATION.md).
+
+## Registro anterior — 1K.4G-B-R2
+
+# FASE 1K.4G-B-R2 CERRADA — APROBADA CON OBSERVACIONES NO BLOQUEANTES, 18/10/2026
+
+Presentation cuenta con un sistema global reusable de tablas: encabezados con wrapping, texto humano completo, filas automáticas, mínimos seguros, cantidades centradas, importes a la derecha, selección Casa Miga y foco de teclado visible. Se auditaron Catálogo, Inventario, asociaciones, movimientos, Recetas, Producción, Caja, Historial de ventas y Reporte diario. El historial de movimientos se recompuso en Fecha, Operación, Movimiento, Existencia, Usuario y Detalle, sin perder valores ni unidades.
+
+Suite oficial **799/799** (584 general + 215 WPF), 0 fallidas/omitidas; Release `src/CasaMiga.Presentation/bin/Phase1K4G-B-R2/` con 0 errores/advertencias. El smoke humano posterior confirmó producción A=2/B=2, venta de una pieza de cada producto y merma única de A; saldos finales A=0, B=1, Harina=9.58 kg, Huevo=28 y Agua=4.86 L. La auditoría read-only verificó integridad SQLite/FK/saldos, una sola operación WASTE y ausencia de efectos financieros o consumos duplicados. La fixture `work/phase1k4g-b-r2-smoke-20261011`, schema 17, quedó cerrada como evidencia; la base protegida permaneció intacta y no existe migración 018. Ver [PHASE_1K4G_B_R2_REPORT.md](PHASE_1K4G_B_R2_REPORT.md). No push/PR ni inicio de C-B/1K.4H-B.
+
+## Registro anterior — 1K.4G-B-R1
+
+# FASE 1K.4G-B-R1 TÉCNICAMENTE COMPLETADA — SMOKE HUMANO PENDIENTE, 11/10/2026
+
+La tabla **Resultado real obtenido** conserva completos Producto, Piezas planeadas, Piezas reales y Comparación. Producto y Comparación distribuyen el espacio de forma flexible; las columnas numéricas tienen mínimos seguros, encabezados y valores centrados, editor con padding/foco nativo y filas automáticas desde 48 DIP. La comparación admite wrapping sin perder información. Resize y reorder están bloqueados únicamente en esta tabla.
+
+La corrección se limita a Presentation/WPF y pruebas. Focales: 78/78 generales de Producción y 3/3 WPF de Producción. Suite oficial **797/797** (584 general + 213 WPF), 0 fallidas/omitidas; Release `src/CasaMiga.Presentation/bin/Phase1K4G-B-R1/` con 0 errores/advertencias. Fixture schema 17 reutilizada sin registrar el borrador, sin migración 018, sin push y sin PR. Ver [PHASE_1K4G_B_R1_REPORT.md](PHASE_1K4G_B_R1_REPORT.md).
+
+## Registro anterior — 1K.4G-B
+
+# FASE 1K.4G-B TÉCNICAMENTE COMPLETADA — SMOKE HUMANO PENDIENTE, 10/10/2026
+
+Producción ahora permite buscar todos los productos activos, agregarlos a un plan multiproducto y comprender su preparación mediante estados derivados `LISTO PARA PRODUCIR`, `RECETA INCOMPLETA` y `SIN RECETA`. Los productos bloqueantes permanecen visibles y explican la configuración faltante. El flujo reutiliza la consolidación exacta de fórmulas compartidas, preview sin escritura, borrador inmutable, resultado real por producto y confirmación atómica de consumo más salida terminada. Se añadió merma mínima de producto terminado sobre el ledger `WASTE` existente, con motivo, nota y protección contra saldo negativo.
+
+Fixture aislada `work/phase1k4g-b-smoke-20261010`, schema 17, con A+B compartiendo preparación, C con faltante, producto sin receta, perfil incompleto, MASS/VOLUME/COUNT, salidas vinculadas y borrador para resultado real menor. Focales de producción 78/78, focales WPF 3/3 y suite oficial **796/796** (584 general + 212 WPF), 0 fallidas/omitidas. Release `src/CasaMiga.Presentation/bin/Phase1K4G-B/`: 0 errores/advertencias. No migración 018, no datos comerciales, no impresión y Reporte Diario intacto. Ver [PHASE_1K4G_B_REPORT.md](PHASE_1K4G_B_REPORT.md).
+
+## Registro anterior — 1K.4H-A-R1
+
 # Integración de QA en main — 12/10/2026
 
 Se combinó QA (1K.4E ticket físico, 1K.4F encabezado y Centro operativo, 1K.4G auditoría de recetas y producción, 1K.4H-A reporte diario) en main por PR. A petición del usuario se conserva el diseño de QAv1/main: acceso con la hora grande (opción B) y barra superior del rediseño A. Las funciones de QA viven dentro de él: el reloj y el aviso del Centro operativo son píldoras de la barra (`OperationsButton`, `OperationsStatusButton`), «Diario» en el riel abre el Reporte diario y pantalla completa sigue siendo el botón de ícono (`FullScreenButton`). El ticket conserva el formato físico de 1K.4E; con tarjeta o transferencia imprime «Pago: Tarjeta» o «Pago: Transferencia» y «Pagado:», sin Recibido ni Cambio. Las pruebas de QA se adaptaron a ese diseño. Pendiente: CI de Windows del PR y prueba humana del ticket y del encabezado.

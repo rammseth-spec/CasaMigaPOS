@@ -20,6 +20,141 @@ Tras la integración, pantalla completa es el botón de ícono de la barra (ayud
 
 ### Smoke manual de FASE 1K.4H-A-R1
 
+## Pendiente heredado de QA (integrado el 19/10/2026)
+
+En main se conserva el diseño de main (sin el acomodo R1 ni las tablas R2); Producción entra completa. El recetario es documentación y todavía no se carga en la caja.
+
+### Próximo paso según QA — B2 cerrada; definir el siguiente bloque de Casa Miga POS 1.0
+
+FASE 1K.4G-C-C-B2 aprobada técnicamente y cerrada con commit local en `phase/1k4g-c-c-b2-production-ux` (sin push ni merge). No iniciar otra fase sin autorización. Pendientes no bloqueantes registrados: desplazamiento largo en el detalle de producción a resoluciones pequeñas, mensajes de estado poco visibles, texto redundante en el selector de merma, límites del shell con escalado alto y prueba física de DPI/navegación.
+
+## Smoke físico opcional sobre la fixture DEMO
+
+Abrir únicamente `work/Abrir-Casa-Miga-1K4G-C-C-B2.cmd`, confirmar el título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-C-C-B2` y la terminal `DEMO - NO COMERCIAL · Caja B2`. Usuario `demo-admin`; la contraseña se entrega sólo en la conversación.
+
+1. Producción → Nueva producción: buscar, seleccionar y agregar varios productos; revisar filas visibles, columnas, Detalle con tooltip y textos de acciones deshabilitadas. Calcular necesidades con Concha de chocolate 100 (faltante de cacao) y con Puerquito (piloncillo sin saldo inicial).
+
+2. Borradores: abrir D1/D2/D3, capturar resultados igual, menor, mayor o cero y confirmar si se desea; todo es DEMO. Historial: comprobar filas uniformes y detalle de P1 (Bolillo v1).
+
+3. Recetas: masa salada v1/v2 publicadas y v3 borrador; perfiles incompletos.
+
+4. Revisar 1920×1080 y 1366×768 en ventana, maximizada y F11; anotar cualquier recorte. No imprimir ni operar Caja/POS.
+
+Pendientes reales: escalas físicas en vivo y los bloqueos del recetario comercial antes de cualquier carga real. Modelo recomendado para la carga comercial: esfuerzo alto, otra copia aislada.
+
+## Registro anterior — smoke humano del layout R1 de FASE 1K.4G-C-C-B1
+
+# Próximo paso — smoke humano del layout R1 de FASE 1K.4G-C-C-B1
+
+
+Abrir únicamente `work/Abrir-Casa-Miga-1K4G-C-C-B1-R1.cmd`, confirmar título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-C-C-B1-R1` y revisar la copia aislada `work/phase1k4g-c-c-b1-r1-review-20261019`. Las credenciales verificadas se entregan en la conversación.
+
+Comprobar Inventario, Catálogo, POS, Caja, Recetas, Producción, Historial, Reporte diario, Centro operativo, acceso y diálogo en ventana normal, maximizada y F11. Usar pantalla baja y alta, probar barra lateral de POS expandida/contraída, y verificar nombres, precios, paginación, scroll y botones sin efectuar operaciones. Las escalas y resoluciones físicas no observadas directamente permanecen pendientes; véase el [reporte R1](PHASE_1K4G_C_C_B1_R1_LAYOUT_REPORT.md). Esperar aprobación humana antes de C-C-B2. No imprimir ni hacer push.
+
+## Registro anterior — smoke de B1
+
+# Próximo paso — smoke humano de FASE 1K.4G-C-C-B1
+
+Abrir únicamente `work/Abrir-Casa-Miga-1K4G-C-C-B1.cmd`. Confirmar el título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-C-C-B1` y revisar la copia `work/phase1k4g-c-c-b1-review-20261018`. Las credenciales verificadas se entregan en la conversación y no se versionan.
+
+1. En Inventario confirmar 67 artículos: 31 materias primas y 36 terminados.
+2. Revisar Azúcar estándar/MASS, Agua/VOLUME, Huevo/COUNT y Concha de vainilla/COUNT.
+3. Confirmar que todos los artículos nuevos están activos y sin saldo inicial; Harina conserva su presentación Bulto 25 kg y el saldo heredado.
+4. Confirmar que no existen asociaciones de producto y que el consumo automático por venta sigue desactivado.
+5. No registrar entradas, mermas, conteos, vínculos, producción, ventas o cambios de configuración.
+
+Después de la aprobación humana, diseñar C-C-B2 desde [el reporte B1](PHASE_1K4G_C_C_B1_REPORT.md). Antes de publicar fórmulas deben resolverse la dimensión de vainilla, la identidad de la mezcla multigrano, rendimientos, aproximaciones y limitaciones de preparaciones derivadas/consumos fijos. B2 debe usar otra copia aislada y demostrar ausencia de doble consumo. Modelo recomendado: **GPT-6.1 Sol, esfuerzo alto**.
+
+## Registro anterior — preparar FASE 1K.4G-C-C-B sin publicar recetas incompletas
+
+La consolidación documental C-C-A está cerrada. Antes de implementar C-C-B, resolver los bloqueos del [recetario maestro](PHASE_1K4G_C_RECIPE_MASTER.md), la [matriz de 36 productos](PHASE_1K4G_C_RECIPE_MATRIX.md) y la [auditoría técnica](PHASE_1K4G_C_RECIPE_TECHNICAL_AUDIT.md).
+
+1. Medir rendimientos exactos de masa dulce, salada, dona, polvorón, galleta y pan de muerto; conciliar costra y salidas mixtas.
+2. Confirmar cantidades marcadas aproximadas, barnices, acabados, muffins, café y mezcla multigrano.
+3. Definir unidades y política COUNT para huevos, sobres de Tradi Pan y otros insumos indivisibles.
+4. Resolver la esencia de vainilla informada en MASS y VOLUME sin inventar conversión.
+5. Autorizar un diseño para masa enriquecida derivada y consumos fijos por tanda; el motor vigente no los representa fielmente.
+6. Definir aceite reutilizable, sobrantes/reproceso, degustación y consumo interno como destinos separados.
+7. En C-C-B usar una copia aislada, cargar sólo datos exactos y mantener el consumo automático desactivado hasta validar producción, inventario y venta sin doble consumo.
+
+No modificar la evidencia C-B ni las bases protegidas. No crear recetas comerciales directamente sobre una instalación de uso. Modelo recomendado para C-C-B: **GPT-6.1 Sol, esfuerzo alto**.
+
+## Registro anterior — smoke humano de FASE 1K.4G-C-B (aprobado)
+
+Abrir únicamente `work/Abrir-Casa-Miga-1K4G-C-B.cmd`. Verificar el título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-C-B` y el DataDirectory `work/phase1k4g-c-b-review-20261018`. La aplicación queda preparada en acceso; las credenciales de esta copia se entregan en la conversación, no se versionan aquí.
+
+1. En Catálogo comprobar los 36 activos, las diez altas, nombres, SKU, categorías y precios de la [tabla final C-B](PHASE_1K4G_C_B_REPORT.md). Los 24 precios marcados H son heredados, no aprobados expresamente.
+2. Mostrar inactivos y comprobar CM-018, Dona especial, Galleta de nuez y coco, Puerquito y Coronita de nuez. CM-017 debe quedar activo a $15 y CM-019 a $16.
+3. Revisar las dos fotos reales, las 21 provisionales y el placeholder de trece productos activos sin foto; ninguna foto se reasignó.
+4. En Punto de venta revisar búsqueda por nombre/SKU, variedades separadas, tarjetas, categorías y navegación. No confirmar venta, imprimir ni modificar inventario.
+5. La revisión fue aprobada antes de C-C-A. Cualquier corrección futura debe partir del reporte C-B y conservar sus IDs/historial.
+
+## Registro anterior — decisiones previas a C-B (resueltas para la copia aislada)
+
+# Próximo paso — resolver decisiones comerciales para FASE 1K.4G-C-B
+
+Revisar `docs/PHASE_1K4G_C_CATALOG_RECONCILIATION.md`. No iniciar C-B hasta recibir como mínimo:
+
+1. DataDirectory exacta que será origen autorizado; no modificar la base protegida ni reutilizar la fixture R2 cerrada.
+2. Confirmación de si las familias maestras serán categorías visibles o si se conservan las cinco categorías actuales.
+3. ID, precio y foto canónicos del Bollo relleno de crema pastelera (`CM-017` recomendado frente a `CM-018`).
+4. Decisión sobre la equivalencia entre Dona especial y Dona combinada de chocolate negro y blanco.
+5. Precios de las nueve altas y validación de los precios actuales.
+6. Convención/asignación de los 13 o 14 SKU pendientes.
+7. Política `track_inventory` para las altas y los cuatro candidatos que hoy tienen el flag activo.
+8. Confirmación de desactivar Galleta de nuez y coco después de crear Galleta de nuez y Galleta de coco.
+9. Fotos reales cuando estén disponibles; no generar ni copiar imágenes entre productos.
+
+C-B debe usar `CatalogService` sobre una copia aislada, preservar IDs al renombrar, crear IDs sólo para faltantes, no mover ventas/snapshots y no tocar recetas, vínculos o saldos. No requiere migración 018 según el análisis actual. Modelo recomendado: **GPT-6 Sol, esfuerzo alto**.
+
+## Registro anterior — smoke manual de FASE 1K.4G-B-R2
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4G-B-R2.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-B-R2`, DataDirectory `work/phase1k4g-b-r2-smoke-20261011` y las credenciales verificadas entregadas en la conversación.
+
+1. Iniciar sesión y revisar Inventario principal, detalle de Terminado sintético A y su Historial de movimientos.
+2. Confirmar que Fecha, Operación, Movimiento, Existencia, Usuario y Detalle se leen completos sin scroll horizontal.
+3. Confirmar los saldos preservados: A=2 piezas, B=2 piezas, Harina=9.58 kg, Huevo=28 piezas y Agua=4.86 L.
+4. Continuar el smoke autorizado de merma manual desde Terminado sintético A; no automatizarla ni ejecutarla desde herramientas.
+5. Revisar las tablas principales en 1280×820, 1920×1080, ultrawide y F11; reportar cualquier clipping real.
+6. No imprimir, usar cajón, vender ni registrar otra producción durante esta revisión.
+
+Esperar la revisión humana. No push, no PR y no iniciar 1K.4G-C, 1K.4H-B, Premium UI ni 1K.5.
+
+## Registro anterior — smoke manual de FASE 1K.4G-B-R1
+
+# Próximo paso — continuar smoke manual de FASE 1K.4G-B-R1
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4G-B-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-B-R1`, DataDirectory `work/phase1k4g-b-smoke-20261010` y las credenciales verificadas entregadas en la conversación.
+
+1. Iniciar sesión y abrir **Producción → Producciones en borrador → Ver detalle**.
+2. Confirmar que los encabezados completos son Producto, Piezas planeadas, Piezas reales y Comparación.
+3. Revisar A: planeado 3, real 2, `1 pieza menos de lo planeado`.
+4. Revisar B: planeado 2, real 2, `Igual a lo planeado`.
+5. Comprobar centrado, padding, foco del editor y wrapping en 1280×820, 1920×1080, 3440×1440 y F11.
+6. No redimensionar/reordenar columnas: ambas acciones están bloqueadas deliberadamente en esta tabla.
+7. **No pulsar Registrar producción.** No imprimir, no usar cajón y no modificar datos.
+
+Esperar aprobación humana. No push, no PR y no iniciar 1K.4G-C ni 1K.4H-B.
+
+## Registro anterior — smoke manual de FASE 1K.4G-B
+
+Usar exclusivamente `work/Abrir-Casa-Miga-1K4G-B.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-B`, DataDirectory `work/phase1k4g-b-smoke-20261010` y las credenciales verificadas entregadas en la conversación.
+
+1. Iniciar sesión, abrir **Producción** y confirmar que la búsqueda muestra cinco productos sintéticos.
+2. Revisar `LISTO PARA PRODUCIR` en A, B y C; `SIN RECETA` e `RECETA INCOMPLETA` en los otros escenarios.
+3. Agregar A=3 y B=2; calcular y confirmar que aparece una sola preparación compartida consolidada.
+4. Confirmar que el preview no cambia saldos ni crea movimientos.
+5. Agregar C y verificar el faltante visible y el bloqueo de registro.
+6. Agregar el producto sin receta y el incompleto por separado; revisar la explicación humana y retirar la fila.
+7. Abrir **Producciones en borrador**, seleccionar el borrador A+B y capturar un resultado real menor al planeado sin confirmarlo si sólo se revisa UI.
+8. Revisar **Registrar merma terminada** con producto, piezas, motivo y observación; no confirmar salvo autorización explícita del usuario.
+9. Revisar 1280×820, 1920×1080, 3440×1440, F11 y Escape; comprobar scroll vertical y ausencia de scroll horizontal global.
+10. No imprimir, vender, cerrar caja, abrir cajón ni introducir recetas comerciales.
+
+Esperar aprobación humana. No push del checkpoint 1K.4G-B, no PR y no iniciar 1K.4G-C, 1K.4H-B, Premium UI ni 1K.5.
+
+## Registro anterior — smoke manual de FASE 1K.4H-A-R1
+
 Usar exclusivamente `work/Abrir-Casa-Miga-1K4H-A-R1.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4H-A-R1`, DataDirectory `work/phase1k4h-a-r1-smoke-20261010` y las credenciales verificadas entregadas en la conversación.
 
 1. Iniciar sesión y comprobar `Pantalla completa · F11`; entrar con clic, confirmar `Salir de pantalla completa · F11` y salir con F11.
