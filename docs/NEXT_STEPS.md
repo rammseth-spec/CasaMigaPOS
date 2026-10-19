@@ -1,3 +1,11 @@
+# Próximo paso — smoke humano del layout R1 de FASE 1K.4G-C-C-B1
+
+Abrir únicamente `work/Abrir-Casa-Miga-1K4G-C-C-B1-R1.cmd`, confirmar título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-C-C-B1-R1` y revisar la copia aislada `work/phase1k4g-c-c-b1-r1-review-20261019`. Las credenciales verificadas se entregan en la conversación.
+
+Comprobar Inventario, Catálogo, POS, Caja, Recetas, Producción, Historial, Reporte diario, Centro operativo, acceso y diálogo en ventana normal, maximizada y F11. Usar pantalla baja y alta, probar barra lateral de POS expandida/contraída, y verificar nombres, precios, paginación, scroll y botones sin efectuar operaciones. Las escalas y resoluciones físicas no observadas directamente permanecen pendientes; véase el [reporte R1](PHASE_1K4G_C_C_B1_R1_LAYOUT_REPORT.md). Esperar aprobación humana antes de C-C-B2. No imprimir ni hacer push.
+
+## Registro anterior — smoke de B1
+
 # Próximo paso — smoke humano de FASE 1K.4G-C-C-B1
 
 Abrir únicamente `work/Abrir-Casa-Miga-1K4G-C-C-B1.cmd`. Confirmar el título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-C-C-B1` y revisar la copia `work/phase1k4g-c-c-b1-review-20261018`. Las credenciales verificadas se entregan en la conversación y no se versionan.

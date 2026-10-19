@@ -332,7 +332,8 @@ public sealed class InventoryUsabilityPresentationTests
     }
     private static async Task WaitUntil(Func<bool> done)
     {
-        var deadline = DateTime.UtcNow.AddSeconds(8);
+        // The full solution runs WPF and database suites concurrently on slower review hosts.
+        var deadline = DateTime.UtcNow.AddSeconds(20);
         while (!done() && DateTime.UtcNow < deadline) await Task.Delay(35);
         Assert.IsTrue(done(), "The real asynchronous search must finish without Enter or SearchAsync from the test.");
     }

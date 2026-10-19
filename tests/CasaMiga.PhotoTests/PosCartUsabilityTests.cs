@@ -62,7 +62,7 @@ public sealed class PosCartUsabilityTests
             Assert.IsTrue(cart.ViewportHeight>0);if(width==1280)Assert.IsTrue(cart.ExtentHeight>cart.ViewportHeight,"Six compact rows must use the cart's own vertical scroll at 1280x820.");Assert.AreEqual(0d,cart.ScrollableWidth,0.5);
             var fullyVisible=Descendants<Border>(view).Where(x=>fixture.Products.Any(p=>AutomationProperties.GetName(x)==p.Name)).Count(x=>IsFullyVisible(x,cart));
             Assert.IsTrue(fullyVisible>=4,$"Expected at least four comfortable rows at {width}x{height}; found {fullyVisible}. Viewport={cart.ViewportHeight:F1}, extent={cart.ExtentHeight:F1}.");
-            var longName=Descendants<TextBlock>(cart).Single(x=>x.Text==fixture.LongProduct.Name);Assert.AreEqual(TextWrapping.Wrap,longName.TextWrapping);Assert.IsTrue(longName.ActualHeight<=34.5);
+            var longName=Descendants<TextBlock>(cart).Single(x=>x.Text==fixture.LongProduct.Name);Assert.AreEqual(TextWrapping.Wrap,longName.TextWrapping);Assert.AreEqual(TextTrimming.None,longName.TextTrimming);Assert.IsTrue(double.IsPositiveInfinity(longName.MaxHeight));
             var pay=Descendants<Button>(view).Single(x=>Equals(x.Content,"Cobrar"));var footerY=pay.TransformToAncestor(view).Transform(new Point()).Y;
             cart.ScrollToEnd();WpfTestHost.Layout(window,contentWidth,contentHeight);
             Assert.AreEqual(footerY,pay.TransformToAncestor(view).Transform(new Point()).Y,0.5,"The totals and actions must remain fixed while cart lines scroll.");

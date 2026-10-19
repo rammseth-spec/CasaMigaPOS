@@ -3,7 +3,7 @@
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  xmlns:local="clr-namespace:CasaMiga.Presentation"
  xmlns:automation="clr-namespace:System.Windows.Automation;assembly=PresentationCore">
- <StackPanel MaxWidth="1480" HorizontalAlignment="Stretch" IsEnabled="{Binding IsReady}">
+ <StackPanel MaxWidth="1800" HorizontalAlignment="Stretch" IsEnabled="{Binding IsReady}">
   <Grid Margin="0,0,0,16">
    <Grid.ColumnDefinitions><ColumnDefinition Width="250"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
    <StackPanel><TextBlock Text="Fecha del reporte" Style="{StaticResource CaptionText}" FontWeight="SemiBold"/><local:DateEntryControl Text="{Binding DateText,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" HasError="{Binding HasDateError}" AutomationName="Fecha del reporte" EntryCommitted="DateCommitted" Margin="0,5,0,0"/></StackPanel>

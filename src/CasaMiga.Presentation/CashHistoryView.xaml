@@ -8,7 +8,7 @@
     <TextBlock Text="Sólo lectura · Cierres de esta caja" Style="{StaticResource CaptionText}" Margin="0,2,0,0"/>
     <TextBlock Text="Todavía no hay cierres registrados en esta caja." Margin="0,6,0,0" Visibility="{Binding HasNoCashClosures,Converter={StaticResource VisibleWhen}}"/>
    </StackPanel>
-  <DataGrid x:Name="CashHistoryGrid" Grid.Row="2" ItemsSource="{Binding CashClosures}" SelectedItem="{Binding SelectedCashClosure}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" MinHeight="170" MinWidth="0" CanUserResizeColumns="False" HorizontalScrollBarVisibility="Disabled" SelectionMode="Single" AutomationProperties.Name="Cierres anteriores">
+  <DataGrid x:Name="CashHistoryGrid" Grid.Row="2" ItemsSource="{Binding CashClosures}" SelectedItem="{Binding SelectedCashClosure}" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" MinHeight="170" MinWidth="0" CanUserResizeColumns="False" HorizontalScrollBarVisibility="Auto" SelectionMode="Single" AutomationProperties.Name="Cierres anteriores">
    <DataGrid.Columns>
     <DataGridTextColumn Header="Cierre" Binding="{Binding Date}" Width="1.1*" MinWidth="130" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/>
     <DataGridTextColumn Header="Caja" Binding="{Binding Terminal}" Width="*" MinWidth="130" ElementStyle="{StaticResource CasaMigaTableTextStyle}" HeaderStyle="{StaticResource CasaMigaTableTextHeaderStyle}"/>

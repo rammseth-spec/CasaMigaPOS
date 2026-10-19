@@ -103,7 +103,7 @@ public sealed class PosCatalogUsabilityTests
         using var fixture=new Fixture();var pos=fixture.Pos();await pos.EnterAsync();await pos.CategoryAsync(fixture.Savory.Id);
         var posView=new PosView{DataContext=pos};WpfTestHost.Layout(posView,width-430,height-180);
         var name=Descendants<TextBlock>(posView).Single(x=>x.Text==fixture.LongProduct.Name);
-        Assert.AreEqual(TextWrapping.Wrap,name.TextWrapping);Assert.IsTrue(name.ActualHeight<=name.MaxHeight+0.5);Assert.IsTrue(name.ActualWidth>0);
+        Assert.AreEqual(TextWrapping.Wrap,name.TextWrapping);Assert.AreEqual(TextTrimming.None,name.TextTrimming);Assert.IsTrue(double.IsPositiveInfinity(name.MaxHeight));Assert.IsTrue(name.ActualWidth>0);
         Assert.IsTrue(Descendants<TextBlock>(posView).Any(x=>x.Text.EndsWith("16.00",StringComparison.Ordinal)));
         Assert.IsTrue(Descendants<TextBlock>(posView).Any(x=>x.Text=="Sin imagen"));
 

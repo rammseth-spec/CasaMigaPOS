@@ -91,7 +91,9 @@ public sealed class TableReadabilityPresentationTests
         var cash = Grid(views.OfType<CashHistoryView>().Single(), "Cierres anteriores");
         Assert.IsTrue(cash.Columns.All(x => x.MinWidth >= 100));
         var sales = Grid(views.OfType<SalesHistoryView>().Single(), "Historial de ventas");
-        Assert.AreEqual(ScrollBarVisibility.Disabled, ScrollViewer.GetHorizontalScrollBarVisibility(sales));
+        Assert.AreEqual(ScrollBarVisibility.Auto, ScrollViewer.GetHorizontalScrollBarVisibility(sales));
+        Assert.AreEqual(ScrollBarVisibility.Auto, ScrollViewer.GetHorizontalScrollBarVisibility(inventoryMain));
+        Assert.AreEqual(ScrollBarVisibility.Auto, ScrollViewer.GetHorizontalScrollBarVisibility(cash));
         var daily = Grid(views.OfType<DailyReportView>().Single(), "Productos más vendidos");
         Assert.AreEqual(ScrollBarVisibility.Disabled, ScrollViewer.GetHorizontalScrollBarVisibility(daily));
     });

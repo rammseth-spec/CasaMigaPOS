@@ -97,7 +97,11 @@ public partial class MainWindow : Window
     private void FullScreenClick(object sender, RoutedEventArgs e) => ToggleFullScreen();
     private void OperationsClick(object sender,RoutedEventArgs e)=>Model.Operations?.OpenPanel();
     private void OperationsBackdropClick(object sender,MouseButtonEventArgs e)=>Model.Operations?.ClosePanel();
-    private void WindowLoaded(object sender,RoutedEventArgs e){EnsureOperationAlertSubscription();Model.Operations?.Tick(DateTimeOffset.Now);operationTick.Start();}
+    private void WindowLoaded(object sender,RoutedEventArgs e){Model.SetViewportWidth(ActualWidth);EnsureOperationAlertSubscription();Model.Operations?.Tick(DateTimeOffset.Now);operationTick.Start();}
+    private void WindowSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is MainViewModel model) model.SetViewportWidth(e.NewSize.Width);
+    }
     private void WindowClosed(object? sender,EventArgs e)
     {
         operationTick.Stop();

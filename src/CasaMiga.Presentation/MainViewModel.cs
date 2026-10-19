@@ -12,15 +12,24 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
     public PosViewModel? Pos { get; private set; }
     public bool IsPos => screen == "pos";
     public bool IsNotPos => !IsPos;
-    public bool IsScrollableContent => CanNavigate && !IsPos && !IsDashboard;
+    public bool IsScrollableContent => CanNavigate && !IsPos && !IsDashboard && !IsInventory && !IsCatalog && !IsSalesHistory && !IsRecipes && !IsProduction;
     private bool posSidebarExpanded;
+    private bool compactViewport;
+    public bool IsCompactHeader => compactViewport;
+    public void SetViewportWidth(double width)
+    {
+        var compact = width < 1100;
+        if (compactViewport == compact) return;
+        compactViewport = compact;
+        Notify();
+    }
     public bool IsPosSidebarCompact => IsPos && !posSidebarExpanded;
     public bool IsPosSidebarExpanded => IsPos && posSidebarExpanded;
-    public double SidebarWidth => IsPosSidebarCompact ? 84 : 248;
+    public double SidebarWidth => IsPosSidebarCompact ? 84 : IsPos && compactViewport ? 180 : compactViewport ? 200 : 248;
     public System.Windows.Controls.ScrollBarVisibility SidebarScrollBarVisibility => IsPosSidebarCompact
         ? System.Windows.Controls.ScrollBarVisibility.Hidden
         : System.Windows.Controls.ScrollBarVisibility.Auto;
-    public System.Windows.Thickness ShellContentMargin => IsPos ? new(14,12,14,12) : new(24,20,24,20);
+    public System.Windows.Thickness ShellContentMargin => IsPos ? compactViewport ? new(8,8,8,8) : new(14,12,14,12) : compactViewport ? new(12,12,12,12) : new(24,20,24,20);
     public void TogglePosSidebar(){if(!IsPos)return;posSidebarExpanded=!posSidebarExpanded;Notify();}
     public bool HasCart => user?.Cart is { IsEmpty:false };
     public bool HasPendingCheckout => user?.CheckoutPending==true;

@@ -36,7 +36,8 @@ public sealed class Phase1K1ShellTests
         Assert.AreEqual(0, Count(pos, "Salir de usuario"));
         StringAssert.Contains(shell, "CanViewInventory"); StringAssert.Contains(shell, "CanViewRecipes");
         StringAssert.Contains(shell, "CanViewProduction"); StringAssert.Contains(shell, "CanViewSales");
-        StringAssert.Contains(shell, "MinWidth=\"960\""); StringAssert.Contains(shell, "MinHeight=\"640\"");
+        StringAssert.Contains(shell, "MinWidth=\"820\""); StringAssert.Contains(shell, "MinHeight=\"440\"");
+        StringAssert.Contains(shell, "IsCompactHeader"); StringAssert.Contains(shellCode, "SetViewportWidth(ActualWidth)");
         StringAssert.Contains(theme, "#4B2E19"); StringAssert.Contains(theme, "#FDF8EF"); StringAssert.Contains(theme, "#A67C52");
         StringAssert.Contains(theme, "BEREL 405N");
         StringAssert.Contains(theme, "#4A5D4E");
@@ -63,7 +64,7 @@ public sealed class Phase1K1ShellTests
         StringAssert.Contains(catalog,"ChangePhotoClick");StringAssert.Contains(catalog,"RemovePhotoClick");
         StringAssert.Contains(crop,"CropRectangle");StringAssert.Contains(crop,"OverlayMouseDown");StringAssert.Contains(crop,"ResizeHandle");StringAssert.Contains(crop,"Ajuste avanzado por coordenadas");
         StringAssert.Contains(shell,"SidebarWidth");StringAssert.Contains(shell,"IsPosSidebarCompact");StringAssert.Contains(shell,"SidebarScrollBarVisibility");
-        StringAssert.Contains(theme,"x:Name=\"NavLabel\"");StringAssert.Contains(theme,"x:Name=\"NavIcon\"");StringAssert.Contains(theme,"Value=\"276\"");
+        StringAssert.Contains(theme,"x:Name=\"NavLabel\"");StringAssert.Contains(theme,"x:Name=\"NavIcon\"");StringAssert.Contains(theme,"Value=\"250\"");
         var smoke=File.ReadAllText(Presentation("Phase1K2CSmoke.Program.cs"));
         Assert.AreEqual(26,Count(smoke,"new AssetSource("));StringAssert.Contains(smoke,"mapping.json");StringAssert.Contains(smoke,"Provenance=\"PROVISIONAL\"");
     }

@@ -1,3 +1,9 @@
+# FASE 1K.4G-C-C-B1-R1 — LAYOUT ADAPTABLE COMPLETADO TÉCNICAMENTE, SMOKE HUMANO PENDIENTE, 19/10/2026
+
+Inventario, Catálogo, Recetas y Producción usan listas principales que crecen con el espacio disponible; POS evita recortar nombre y precio, y la barra lateral/encabezado/acceso se adaptan a ventanas estrechas. Caja e Historial permiten desplazar columnas cuando el ancho físico no alcanza; el reporte diario aprovecha mejor pantallas grandes. Los formularios largos conservan scroll. No se alteraron flujos comerciales, datos, migraciones ni impresión. La copia de revisión R1 parte de B1 con SHA-256 idéntico y credencial comprobada en lectura. Véase [reporte R1](PHASE_1K4G_C_C_B1_R1_LAYOUT_REPORT.md). Falta aprobación visual humana; no iniciar C-C-B2 ni hacer push.
+
+## Registro anterior — 1K.4G-C-C-B1
+
 # FASE 1K.4G-C-C-B1 COMPLETADA TÉCNICAMENTE — SMOKE HUMANO PENDIENTE, 18/10/2026
 
 La copia aislada `work/phase1k4g-c-c-b1-review-20261018` deriva de C-B mediante backup SQLite/WAL seguro. Contiene 31 materias primas (Harina heredada y 30 nuevas) y 36 artículos terminados COUNT vinculados documentalmente a los 36 ProductId activos. No se crearon `ProductInventoryLink`, fórmulas, perfiles, lotes, saldos o movimientos nuevos. Vainilla y mezcla multigrano siguen pendientes; el consumo automático permanece `DISABLED`.
