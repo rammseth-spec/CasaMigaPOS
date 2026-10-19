@@ -398,7 +398,21 @@ Se carga en este orden, porque cada paso necesita que la caja ya tenga el anteri
 2. [ ] **Preparaciones base** (paso 2) como **borrador**, con su rendimiento medido.
 3. [ ] **Producto terminado** de cada pan (artículo de inventario por pieza) y su **perfil de producción** (paso 3) como **borrador**.
 
-Se puede hacer a mano en **Recetas** e **Inventario** de la caja, o desde la web: la web manda cada cambio y la caja lo aplica al sincronizar. Mientras algo esté en borrador **no descuenta inventario ni calcula producción**.
+Ya está preparado (19/10/2026): el recetario de este documento, con los rendimientos reportados marcados «por medir», está en `docs/catalog/recetario-borrador.json` y se carga **en borrador** con un script que manda los cambios por la web; la caja los aplica al sincronizar:
+
+```bash
+cd cloud
+npm run cargar -- https://<dirección de la web>              # sólo muestra qué falta
+npm run cargar -- https://<dirección de la web> --enviar --esperar
+```
+
+- Pide el usuario y la contraseña de un administrador (o `CASAMIGA_USUARIO` / `CASAMIGA_CONTRASENA`).
+- Manda, en orden: **catálogo autorizado con sus fotos provisionales** → insumos y un producto terminado por pan → preparaciones en borrador → lo que lleva cada pan en borrador. Sólo manda lo que falta: volver a correrlo no duplica nada.
+- Lo de cada pan espera a que sus preparaciones estén **publicadas** (la caja lo exige); volver a correr el script después de publicarlas.
+- En la prueba local de Windows (`scripts/run-local.ps1`) corre solo al final; la demo de la web (`npm run local -- … --demo`) ya trae todo en borrador.
+- Cuando el paso 2 tenga los rendimientos medidos, se corrige `recetario-borrador.json` y la versión en borrador en la caja.
+
+Mientras algo esté en borrador **no descuenta inventario ni calcula producción**.
 
 ## Paso 7 — Revisar y publicar
 

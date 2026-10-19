@@ -1,15 +1,18 @@
 ﻿# Prueba local completa en una sola computadora: nube local (con la web) + caja de escritorio, con datos aparte de cualquier
 # instalación real. Los datos se guardan en una carpeta y sobreviven a reinicios.
-# Uso: ./scripts/run-local.ps1 [-Datos <carpeta>] [-Puerto 4173] [-SoloNube] [-ConContrasena]
+# Uso: ./scripts/run-local.ps1 [-Datos <carpeta>] [-Puerto 4173] [-SoloNube] [-ConContrasena] [-SinCarga]
 # Por ahora (pedido del usuario, temporal) entra solo: la caja crea su administrador y un usuario fijo por rol, inicia sesión y se
 # registra en la nube local, y la web entra sola como administrador (sólo desde esta computadora). Con -ConContrasena todo pide
 # usuario y contraseña como en la sucursal.
+# Al final, por la web, la caja recibe lo que le falte del catálogo autorizado con sus fotos provisionales y del recetario en
+# borrador (cloud/scripts/cargar-caja.ts); sólo manda lo que falta, así que no duplica nada. -SinCarga lo omite.
 # Requisitos: Windows, .NET SDK 10 y Node.js 24. Sólo para probar; nunca con datos de la sucursal.
 param(
     [string]$Datos = (Join-Path $env:USERPROFILE 'CasaMiga-Prueba'),
     [int]$Puerto = 4173,
     [switch]$SoloNube,
-    [switch]$ConContrasena
+    [switch]$ConContrasena,
+    [switch]$SinCarga
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
@@ -103,3 +106,16 @@ foreach ($u in $usuarios) { Write-Host ('  {0,-14} {1,-12} {2}' -f $u.Rol, $u.Us
 Write-Host ''
 Write-Host '  Para vender en la web: Venta → + Nueva caja web.'
 Write-Host 'Para empezar de cero, cierra la caja y la ventana de la nube y borra la carpeta de datos de prueba.'
+
+if (-not $ConContrasena -and -not $SoloNube -and -not $SinCarga) {
+    # Catálogo con fotos y recetario en borrador por la web; la caja los aplica al sincronizar (cada 5 s). Espera hasta que la caja
+    # tenga todo lo que se puede mandar; las recetas de cada pan llegan cuando sus preparaciones estén publicadas en Recetas.
+    Write-Host ''
+    Write-Host 'Cargando en la caja el catálogo con fotos y el recetario en borrador…' -ForegroundColor Green
+    Push-Location (Join-Path $repo 'cloud')
+    try {
+        $env:CASAMIGA_USUARIO = $usuarios[0].Username; $env:CASAMIGA_CONTRASENA = $usuarios[0].Password
+        npm run --silent cargar -- $url --enviar --esperar
+        if ($LASTEXITCODE -ne 0) { Write-Warning 'No se completó la carga; vuelve a correr run-local.ps1 o: npm run cargar -- <dirección> --enviar --esperar (desde cloud).' }
+    } finally { Remove-Item Env:CASAMIGA_USUARIO, Env:CASAMIGA_CONTRASENA -ErrorAction SilentlyContinue; Pop-Location }
+}

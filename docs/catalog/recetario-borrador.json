@@ -1,0 +1,207 @@
+{
+  "version": 1,
+  "fecha": "2026-10-19",
+  "fuente": "Recetario comercial de quien elabora el pan (18/10/2026, docs/PHASE_1K4G_C_RECIPE_MASTER.md), insumos de 1K.4G-C-C-B1 y catálogo autorizado (docs/catalog). Hoja de trabajo: docs/RECETARIO_PARA_COMPLETAR.md.",
+  "nombreBorrador": "Recetario 18/10/2026 · borrador por medir",
+  "unidades": "Cantidades en g (masa), ml (volumen) o pz (piezas). «estado»: aproximado o por medir; sin estado = confirmado.",
+  "insumos": [
+    { "codigo": "MP-HAR-001", "nombre": "Harina", "mide": "g" },
+    { "codigo": "MP-AZU-EST", "nombre": "Azúcar estándar", "mide": "g", "tambienSeLlama": ["Azúcar"] },
+    { "codigo": "MP-AZU-GLA", "nombre": "Azúcar glass", "mide": "g" },
+    { "codigo": "MP-MAR-001", "nombre": "Margarina", "mide": "g" },
+    { "codigo": "MP-MAN-VEG", "nombre": "Manteca vegetal", "mide": "g" },
+    { "codigo": "MP-MAN-001", "nombre": "Mantequilla", "mide": "g" },
+    { "codigo": "MP-SAL-001", "nombre": "Sal", "mide": "g" },
+    { "codigo": "MP-AGU-001", "nombre": "Agua", "mide": "ml" },
+    { "codigo": "MP-HUE-001", "nombre": "Huevo", "mide": "pz" },
+    { "codigo": "MP-LEV-FRE", "nombre": "Levadura fresca", "mide": "g" },
+    { "codigo": "MP-TRA-011", "nombre": "Tradi Pan · sobre de 11 g", "mide": "pz" },
+    { "codigo": "MP-LEV-SEC", "nombre": "Levadura seca", "mide": "g" },
+    { "codigo": "MP-ACE-VEG", "nombre": "Aceite vegetal", "mide": "ml" },
+    { "codigo": "MP-CAC-001", "nombre": "Cacao en polvo", "mide": "g" },
+    { "codigo": "MP-CAN-001", "nombre": "Canela en polvo", "mide": "g" },
+    { "codigo": "MP-CHO-NEG", "nombre": "Chocolate negro de cobertura", "mide": "g" },
+    { "codigo": "MP-CHO-BLA", "nombre": "Chocolate blanco de cobertura", "mide": "g" },
+    { "codigo": "MP-NUE-001", "nombre": "Nuez", "mide": "g" },
+    { "codigo": "MP-ALM-001", "nombre": "Almendra fileteada", "mide": "g" },
+    { "codigo": "MP-COC-001", "nombre": "Coco rallado", "mide": "g" },
+    { "codigo": "MP-AJO-001", "nombre": "Ajonjolí", "mide": "g" },
+    { "codigo": "MP-CRE-PAS", "nombre": "Crema pastelera comprada", "mide": "g" },
+    { "codigo": "MP-REL-ZAR", "nombre": "Relleno de zarzamora comprado", "mide": "g" },
+    { "codigo": "MP-CHI-COL", "nombre": "Chispas de colores", "mide": "g" },
+    { "codigo": "MP-QUE-CRE", "nombre": "Queso crema", "mide": "g" },
+    { "codigo": "MP-LEC-CON", "nombre": "Leche condensada", "mide": "g" },
+    { "codigo": "MP-LEC-EVA", "nombre": "Leche evaporada", "mide": "ml" },
+    { "codigo": "MP-FEC-MAI", "nombre": "Fécula de maíz", "mide": "g" },
+    { "codigo": "MP-LEC-PRO", "nombre": "Leche para producción", "mide": "ml" },
+    { "codigo": "MP-POL-HOR", "nombre": "Polvo para hornear (Royal)", "mide": "g" },
+    { "codigo": "MP-NAR-RAL", "nombre": "Naranja para ralladura", "mide": "pz" },
+    { "codigo": "MP-VAI-001", "nombre": "Esencia de vainilla", "mide": "ml", "nota": "Unidad provisional (paso 0): la masa dulce la reporta en g." },
+    { "codigo": "MP-CHI-CHO", "nombre": "Chispas de chocolate", "mide": "g", "nota": "Alta nueva para la dona negra con chispas; confirmar que son de chocolate." },
+    { "codigo": "MP-SEM-MUL", "nombre": "Mezcla de semillas multigrano", "mide": "g", "nota": "Composición por confirmar (paso 1.2)." }
+  ],
+  "preparaciones": [
+    {
+      "codigo": "MASA-DULCE", "nombre": "Masa dulce base", "tanda": "3 kg de harina",
+      "rinde": "5750 g", "rindeEstado": "por medir",
+      "notas": "Rinde: medición histórica de 5,750 g con 3 kg de harina (tanda habitual: 4 kg, sin medir). Manteca: tipo por confirmar. Vainilla: reportada 20 g por kg, capturada en ml hasta decidir la unidad.",
+      "ingredientes": [
+        { "insumo": "MP-HAR-001", "cantidad": "3000 g" },
+        { "insumo": "MP-AZU-EST", "cantidad": "600 g" },
+        { "insumo": "MP-MAR-001", "cantidad": "300 g" },
+        { "insumo": "MP-MAN-VEG", "cantidad": "300 g", "estado": "por medir" },
+        { "insumo": "MP-AGU-001", "cantidad": "750 ml" },
+        { "insumo": "MP-SAL-001", "cantidad": "60 g" },
+        { "insumo": "MP-VAI-001", "cantidad": "60 ml", "estado": "por medir" },
+        { "insumo": "MP-HUE-001", "cantidad": "12 pz" }
+      ],
+      "alternativas": [[{ "insumo": "MP-LEV-FRE", "cantidad": "90 g" }, { "insumo": "MP-TRA-011", "cantidad": "6 pz" }]]
+    },
+    {
+      "codigo": "COSTRA", "nombre": "Costra de concha", "tanda": "1 tanda",
+      "rinde": "1312 g", "rindeEstado": "por medir",
+      "notas": "Los ingredientes suman 1,330 g y se midieron 1,312 g. Falta el reparto blanca/chocolate; el cacao (25 g a la parte de chocolate) no se incluye hasta definirlo.",
+      "ingredientes": [
+        { "insumo": "MP-MAN-VEG", "cantidad": "350 g" },
+        { "insumo": "MP-AZU-GLA", "cantidad": "175 g" },
+        { "insumo": "MP-AZU-EST", "cantidad": "175 g" },
+        { "insumo": "MP-HAR-001", "cantidad": "630 g" }
+      ]
+    },
+    {
+      "codigo": "RELLENO-ROL", "nombre": "Relleno de rol de canela", "tanda": "1 tanda (13 roles)",
+      "rinde": "140 g",
+      "notas": "Va por tanda (140 g para 13 roles); en cada rol se reparte 1/13. Manteca: tipo por confirmar.",
+      "ingredientes": [
+        { "insumo": "MP-MAR-001", "cantidad": "80 g" },
+        { "insumo": "MP-MAN-VEG", "cantidad": "20 g", "estado": "por medir" },
+        { "insumo": "MP-CAN-001", "cantidad": "20 g" },
+        { "insumo": "MP-AZU-EST", "cantidad": "20 g" }
+      ]
+    },
+    {
+      "codigo": "MASA-SALADA", "nombre": "Masa salada", "tanda": "3 kg de harina",
+      "rinde": "4500 g", "rindeEstado": "por medir",
+      "notas": "Rinde: producción habitual de 30 baguettes y 15 bolillos de 100 g; no incluye el bolillo pequeño interno. Medir la masa cruda total.",
+      "ingredientes": [
+        { "insumo": "MP-HAR-001", "cantidad": "3000 g" },
+        { "insumo": "MP-AZU-EST", "cantidad": "120 g" },
+        { "insumo": "MP-SAL-001", "cantidad": "60 g" },
+        { "insumo": "MP-ACE-VEG", "cantidad": "150 ml" },
+        { "insumo": "MP-AGU-001", "cantidad": "1650 ml" }
+      ],
+      "alternativas": [[{ "insumo": "MP-LEV-FRE", "cantidad": "90 g" }, { "insumo": "MP-LEV-SEC", "cantidad": "30 g" }]]
+    },
+    {
+      "codigo": "MASA-DONA", "nombre": "Masa de donas y berlinesas", "tanda": "2 kg de harina",
+      "rinde": "4160 g", "rindeEstado": "por medir",
+      "notas": "Rinde: observación del 14/10/2026 (44 donas de 85 g, 4 berlinesas de 90 g y 60 g de sobrante). Aceite de fritura: falta la regla (paso 0).",
+      "ingredientes": [
+        { "insumo": "MP-HAR-001", "cantidad": "2000 g" },
+        { "insumo": "MP-AGU-001", "cantidad": "800 ml" },
+        { "insumo": "MP-HUE-001", "cantidad": "8 pz" },
+        { "insumo": "MP-AZU-EST", "cantidad": "400 g" },
+        { "insumo": "MP-SAL-001", "cantidad": "20 g" },
+        { "insumo": "MP-LEV-FRE", "cantidad": "80 g" },
+        { "insumo": "MP-VAI-001", "cantidad": "100 ml" },
+        { "insumo": "MP-MAN-VEG", "cantidad": "200 g" }
+      ]
+    },
+    {
+      "codigo": "GLASEADO", "nombre": "Glaseado", "tanda": "1 tanda",
+      "rinde": "110 g", "rindeEstado": "por medir",
+      "notas": "Rinde provisional (100 g de azúcar glass + 10 ml de agua); hay que pesar el glaseado que sale.",
+      "ingredientes": [
+        { "insumo": "MP-AZU-GLA", "cantidad": "100 g" },
+        { "insumo": "MP-AGU-001", "cantidad": "10 ml" }
+      ]
+    },
+    {
+      "codigo": "MASA-POLVORON", "nombre": "Masa de polvorón", "tanda": "media tanda (la habitual)",
+      "rinde": "1800 g", "rindeEstado": "por medir",
+      "notas": "Rinde reportado: 18 polvorones de 100 g; no cuadra con los ingredientes. Sabor: ralladura de 2 naranjas o 60 ml de vainilla.",
+      "ingredientes": [
+        { "insumo": "MP-HAR-001", "cantidad": "900 g" },
+        { "insumo": "MP-MAN-VEG", "cantidad": "500 g" },
+        { "insumo": "MP-AZU-EST", "cantidad": "500 g" },
+        { "insumo": "MP-HUE-001", "cantidad": "1 pz" },
+        { "insumo": "MP-POL-HOR", "cantidad": "40 g" }
+      ],
+      "alternativas": [[{ "insumo": "MP-NAR-RAL", "cantidad": "2 pz" }, { "insumo": "MP-VAI-001", "cantidad": "60 ml" }]]
+    },
+    {
+      "codigo": "MASA-GALLETA", "nombre": "Masa de galleta", "tanda": "media tanda (la habitual)",
+      "rinde": "1950 g", "rindeEstado": "por medir",
+      "notas": "Rinde reportado: 19 galletas de 100 g + 1 de 50 g para degustación; no cuadra exacto. Huevo: usan 1 y sobra un poco. Manteca: tipo por confirmar.",
+      "ingredientes": [
+        { "insumo": "MP-HAR-001", "cantidad": "900 g" },
+        { "insumo": "MP-AZU-EST", "cantidad": "500 g" },
+        { "insumo": "MP-MAN-VEG", "cantidad": "250 g", "estado": "por medir" },
+        { "insumo": "MP-MAR-001", "cantidad": "250 g" },
+        { "insumo": "MP-HUE-001", "cantidad": "1 pz", "estado": "aproximado" },
+        { "insumo": "MP-VAI-001", "cantidad": "25 ml" },
+        { "insumo": "MP-POL-HOR", "cantidad": "50 g" }
+      ]
+    },
+    {
+      "codigo": "RELLENO-PAY", "nombre": "Relleno de pay de queso", "tanda": "1 tanda (15 pays)",
+      "rinde": "15 pz",
+      "notas": "Cada pay lleva además 20 g de masa de galleta cruda (300 g por tanda).",
+      "ingredientes": [
+        { "insumo": "MP-QUE-CRE", "cantidad": "360 g" },
+        { "insumo": "MP-LEC-CON", "cantidad": "250 g" },
+        { "insumo": "MP-HUE-001", "cantidad": "3 pz" },
+        { "insumo": "MP-LEC-EVA", "cantidad": "200 ml" },
+        { "insumo": "MP-VAI-001", "cantidad": "10 ml" },
+        { "insumo": "MP-FEC-MAI", "cantidad": "15 g" }
+      ]
+    },
+    {
+      "codigo": "MASA-MUERTO", "nombre": "Masa de pan de muerto", "tanda": "2 kg de harina",
+      "rinde": "3016 g", "rindeEstado": "por medir",
+      "notas": "Rinde reportado: 15 grandes de 120 g y 19 pequeños de 64 g; no cuadra con los ingredientes. Acabado (margarina y azúcar) pendiente.",
+      "ingredientes": [
+        { "insumo": "MP-HAR-001", "cantidad": "2000 g" },
+        { "insumo": "MP-LEC-PRO", "cantidad": "800 ml" },
+        { "insumo": "MP-AZU-EST", "cantidad": "500 g" },
+        { "insumo": "MP-MAR-001", "cantidad": "300 g" },
+        { "insumo": "MP-LEV-FRE", "cantidad": "80 g" },
+        { "insumo": "MP-HUE-001", "cantidad": "8 pz" },
+        { "insumo": "MP-SAL-001", "cantidad": "20 g" }
+      ]
+    }
+  ],
+  "panes": [
+    { "catalogo": 1, "pan": "Concha de vainilla", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "80 g" }, { "codigo": "COSTRA", "cantidad": "30 g", "estado": "aproximado" }] },
+    { "catalogo": 2, "pan": "Concha de chocolate", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "80 g" }, { "codigo": "COSTRA", "cantidad": "30 g", "estado": "aproximado" }], "notas": "Falta el cacao por pieza (25 g a la parte de chocolate de la costra)." },
+    { "catalogo": 6, "pan": "Rol de canela", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "84.615 g" }, { "codigo": "RELLENO-ROL", "cantidad": "10.769 g" }], "notas": "1,100 g de masa dulce y 140 g de relleno para 13 roles, repartidos por pieza." },
+    { "catalogo": 17, "pan": "Bollo relleno de crema pastelera", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "80 g" }], "directos": [{ "insumo": "MP-CRE-PAS", "cantidad": "15 g" }, { "insumo": "MP-AZU-GLA", "cantidad": "3 g" }], "notas": "Barnizado de huevo ≈1 ml, por definir." },
+    { "catalogo": 19, "pan": "Bollo relleno de zarzamora", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "85 g" }], "directos": [{ "insumo": "MP-REL-ZAR", "cantidad": "15 g" }] },
+    { "catalogo": 32, "pan": "Rosquita de ajonjolí", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "80 g" }], "directos": [{ "insumo": "MP-AJO-001", "cantidad": "1.5 g", "estado": "aproximado" }] },
+    { "catalogo": 33, "pan": "Bollo con ajonjolí", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "80 g" }], "directos": [{ "insumo": "MP-AJO-001", "cantidad": "6 g" }], "notas": "Barnizado: 1 huevo alcanza para ≈35 bollos, por definir." },
+    { "catalogo": 4, "pan": "Cuernito de mantequilla", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "76.578 g", "estado": "por medir" }], "directos": [{ "insumo": "MP-MAN-001", "cantidad": "3.422 g", "estado": "por medir" }], "notas": "Masa enriquecida (80 g) repartida en masa dulce y mantequilla, suponiendo 1,790 g de masa dulce + 80 g de mantequilla por preparación. Barnizado por definir." },
+    { "catalogo": 16, "pan": "Danés con crema pastelera", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "76.578 g", "estado": "por medir" }], "directos": [{ "insumo": "MP-MAN-001", "cantidad": "3.422 g", "estado": "por medir" }, { "insumo": "MP-CRE-PAS", "cantidad": "21 g" }], "notas": "Masa enriquecida (80 g) repartida como en el cuernito. Barnizado por definir." },
+    { "catalogo": 5, "pan": "Cuernito especial con almendra", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "67.005 g", "estado": "por medir" }], "directos": [{ "insumo": "MP-MAN-001", "cantidad": "2.995 g", "estado": "por medir" }, { "insumo": "MP-ALM-001", "cantidad": "6 g" }, { "insumo": "MP-AZU-GLA", "cantidad": "2 g" }], "notas": "Bigote: masa enriquecida (70 g) repartida como en el cuernito." },
+    { "catalogo": 31, "pan": "Baguette", "preparaciones": [{ "codigo": "MASA-SALADA", "cantidad": "100 g" }], "directos": [{ "insumo": "MP-AJO-001", "cantidad": "5 g", "estado": "aproximado" }], "notas": "Barnizado de huevo por definir." },
+    { "catalogo": 3, "pan": "Bolillo mantequilla", "preparaciones": [{ "codigo": "MASA-SALADA", "cantidad": "100 g" }], "directos": [{ "insumo": "MP-MAN-001", "cantidad": "7 g", "estado": "aproximado" }] },
+    { "catalogo": 8, "pan": "Dona de azúcar", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "85 g" }], "directos": [{ "insumo": "MP-AZU-EST", "cantidad": "9 g" }] },
+    { "catalogo": 7, "pan": "Dona de chocolate", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "85 g" }], "directos": [{ "insumo": "MP-CHO-NEG", "cantidad": "10 g" }] },
+    { "catalogo": 21, "pan": "Dona sencilla de chocolate blanco", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "85 g" }], "directos": [{ "insumo": "MP-CHO-BLA", "cantidad": "10 g" }] },
+    { "catalogo": 20, "pan": "Dona glaseada", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "85 g" }, { "codigo": "GLASEADO", "cantidad": "15 g" }] },
+    { "catalogo": 34, "pan": "Dona de chocolate negro con chispas", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "85 g" }], "directos": [{ "insumo": "MP-CHO-NEG", "cantidad": "10 g" }, { "insumo": "MP-CHI-CHO", "cantidad": "3 g", "estado": "aproximado" }] },
+    { "catalogo": 35, "pan": "Dona de chocolate blanco con coco", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "85 g" }], "directos": [{ "insumo": "MP-CHO-BLA", "cantidad": "10 g" }, { "insumo": "MP-COC-001", "cantidad": "5 g", "estado": "aproximado" }] },
+    { "catalogo": 36, "pan": "Dona de chocolate con nuez", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "85 g" }], "directos": [{ "insumo": "MP-CHO-NEG", "cantidad": "10 g", "estado": "por medir" }, { "insumo": "MP-NUE-001", "cantidad": "10 g" }], "notas": "Tipo de chocolate por confirmar (se puso negro)." },
+    { "catalogo": 37, "pan": "Dona combinada de chocolate negro y blanco", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "85 g" }], "directos": [{ "insumo": "MP-CHO-NEG", "cantidad": "5 g", "estado": "por medir" }, { "insumo": "MP-CHO-BLA", "cantidad": "5 g", "estado": "por medir" }], "notas": "10 g de chocolate en total; el reparto negro/blanco está por confirmar (se puso mitad y mitad)." },
+    { "catalogo": 38, "pan": "Berlinesa rellena de crema pastelera", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "90 g" }], "directos": [{ "insumo": "MP-CRE-PAS", "cantidad": "18 g", "estado": "aproximado" }] },
+    { "catalogo": 39, "pan": "Berlinesa rellena de zarzamora", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "90 g" }], "directos": [{ "insumo": "MP-REL-ZAR", "cantidad": "18 g", "estado": "aproximado" }] },
+    { "catalogo": 10, "pan": "Polvorón", "preparaciones": [{ "codigo": "MASA-POLVORON", "cantidad": "100 g" }] },
+    { "catalogo": 11, "pan": "Polvorón de nuez", "preparaciones": [{ "codigo": "MASA-POLVORON", "cantidad": "100 g" }], "directos": [{ "insumo": "MP-NUE-001", "cantidad": "12 g" }], "notas": "Barnizado por definir." },
+    { "catalogo": 23, "pan": "Galleta con chispitas de colores", "preparaciones": [{ "codigo": "MASA-GALLETA", "cantidad": "100 g" }], "directos": [{ "insumo": "MP-CHI-COL", "cantidad": "10 g" }] },
+    { "catalogo": 40, "pan": "Galleta de nuez", "preparaciones": [{ "codigo": "MASA-GALLETA", "cantidad": "100 g" }], "directos": [{ "insumo": "MP-NUE-001", "cantidad": "10 g" }], "notas": "Barnizado por definir." },
+    { "catalogo": 41, "pan": "Galleta de coco", "preparaciones": [{ "codigo": "MASA-GALLETA", "cantidad": "100 g" }], "directos": [{ "insumo": "MP-COC-001", "cantidad": "10 g" }] },
+    { "catalogo": 42, "pan": "Galleta multigrano", "preparaciones": [{ "codigo": "MASA-GALLETA", "cantidad": "100 g" }], "directos": [{ "insumo": "MP-SEM-MUL", "cantidad": "10 g" }] },
+    { "catalogo": 28, "pan": "Pay de queso", "preparaciones": [{ "codigo": "RELLENO-PAY", "cantidad": "1 pz" }, { "codigo": "MASA-GALLETA", "cantidad": "20 g" }] },
+    { "catalogo": 27, "pan": "Pan de muerto grande", "preparaciones": [{ "codigo": "MASA-MUERTO", "cantidad": "120 g" }], "notas": "Acabado de margarina y azúcar por definir." },
+    { "catalogo": 13, "pan": "Pan de muerto", "preparaciones": [{ "codigo": "MASA-MUERTO", "cantidad": "64 g" }], "notas": "Pequeño. Acabado de margarina y azúcar por definir." }
+  ]
+}

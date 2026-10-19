@@ -635,12 +635,17 @@ export function jpegSize(bytes: Buffer): { width: number; height: number } | nul
 }
 
 /** Últimos cambios con su estado en cada caja de la sucursal. */
-export async function listCommands(q: Query, branch: string | null) {
-  const rows = await q(`SELECT c.id, c.seq, c.branch_id, c.kind, c.payload, c.requested_by_name, c.requested_at,
+/** Últimos cambios de la sucursal; con «pending», todos los que la caja todavía no aplica ni rechazó (para el cargador, sin tope de 100). */
+export async function listCommands(q: Query, branch: string | null, pending = false) {
+  const columns = `c.id, c.seq, c.branch_id, c.kind, c.payload - 'image' - 'passwordHash' AS payload, c.requested_by_name, c.requested_at,
       (SELECT count(*) FROM terminal t WHERE t.branch_id = c.branch_id AND t.revoked_at IS NULL AND t.kind = 'desktop') AS terminals,
       (SELECT count(*) FROM command_result r WHERE r.command_id = c.id AND r.status = 'applied') AS applied,
-      (SELECT string_agg(r.message, ' · ') FROM command_result r WHERE r.command_id = c.id AND r.status = 'rejected') AS rejected
-    FROM branch_command c WHERE ($1::uuid IS NULL OR c.branch_id = $1::uuid) ORDER BY c.seq DESC LIMIT 100`, [branch]);
+      (SELECT string_agg(r.message, ' · ') FROM command_result r WHERE r.command_id = c.id AND r.status = 'rejected') AS rejected`;
+  const rows = pending
+    ? await q(`SELECT * FROM (SELECT ${columns} FROM branch_command c WHERE ($1::uuid IS NULL OR c.branch_id = $1::uuid)
+        AND NOT EXISTS (SELECT 1 FROM command_result r WHERE r.command_id = c.id AND r.status = 'rejected')) x
+        WHERE x.terminals = 0 OR x.applied < x.terminals ORDER BY x.seq DESC LIMIT 5000`, [branch])
+    : await q(`SELECT ${columns} FROM branch_command c WHERE ($1::uuid IS NULL OR c.branch_id = $1::uuid) ORDER BY c.seq DESC LIMIT 100`, [branch]);
   return rows.map(r => {
     const payload = { ...(r.payload as Row) }; delete payload.passwordHash; delete payload.image;
     const terminals = Number(r.terminals), applied = Number(r.applied);

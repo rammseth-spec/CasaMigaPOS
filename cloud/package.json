@@ -12,7 +12,8 @@
     "typecheck": "tsc -p .",
     "dev:web": "node --import tsx scripts/dev-web.ts",
     "test:browser": "node --import tsx --test --test-concurrency=1 \"test-browser/*.test.ts\"",
-    "local": "node --import tsx scripts/local-cloud.ts"
+    "local": "node --import tsx scripts/local-cloud.ts",
+    "cargar": "node --import tsx scripts/cargar-caja.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.0",

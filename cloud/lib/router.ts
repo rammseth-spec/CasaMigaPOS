@@ -74,7 +74,8 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
     if (op === 'me') return json(200, { ...me(user), branches: (await branches(q)).filter(b => user.admin || b.id === user.branchId), timeZone, maxDays: MAX_DAYS });
 
     if (op === 'command' && request.method === 'POST') {
-      const body = (await readJson(request, 50_000)) as { branchId?: unknown; kind?: unknown; payload?: unknown } | null;
+      // Una foto de producto viaja aquí como cambio product.photo (hasta 1.4 MB en base64; la pantalla de Catálogo la deja en 900 KB).
+      const body = (await readJson(request, 1_500_000)) as { branchId?: unknown; kind?: unknown; payload?: unknown } | null;
       return json(200, await createCommand(q, user, body?.branchId, body?.kind, body?.payload));
     }
     // Punto de venta web (docs/POS_WEB.md).
@@ -164,7 +165,7 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       }
       case 'production-batches': return json(200, await planning.productionBatches(q, branch, url.searchParams.get('status') === 'DRAFT' ? 'DRAFT' : 'CONFIRMED'));
       case 'users': return json(200, await web.users(q, branch));
-      case 'commands': return json(200, await listCommands(q, branch));
+      case 'commands': return json(200, await listCommands(q, branch, url.searchParams.get('pendientes') === '1'));
       // Las cajas web no tienen base propia: lo suyo va en la copia nocturna de la nube.
       case 'backups': return json(200, { sets: await backups.list(q, branch), terminals: (await terminals(q, branch)).filter(t => !t.web) });
       case 'backup': {

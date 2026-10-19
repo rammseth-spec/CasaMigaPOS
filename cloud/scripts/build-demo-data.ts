@@ -5,6 +5,7 @@ import { existsSync, readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 import { identityHash } from '../lib/auth.js';
+import { finishedCode, loadRecetario, namesOf, normalize, quantity, stableId, validate, type Line } from './recetario.js';
 
 const PASSWORDS: Record<string, string> = { Administrator: 'Admin#2026', Manager: 'Encargado#2026', Cashier: 'Cajero#2026' };
 const file = process.argv[2];
@@ -57,6 +58,71 @@ for (const [id, name, price, category] of catalog) {
   photos++;
 }
 console.log(`${added} panes nuevos del catálogo autorizado agregados a la demo (${photos} con foto, ${newCategories} categorías nuevas).`);
+// Recetario en borrador (docs/catalog/recetario-borrador.json): insumos, preparaciones y lo que lleva cada pan, sin publicar, como si
+// la caja lo hubiera capturado. Reutiliza los insumos que ya existen con el mismo código o nombre y no repite lo ya cargado.
+const recetario = loadRecetario();
+const problems = validate(recetario, catalog.map(row => row[1]));
+if (problems.length) throw new Error(`El recetario tiene problemas:\n${problems.join('\n')}`);
+const latest = (entity: string) => { const map = new Map<string, Entry>(); for (const e of entries) if (e.entity === entity) map.set(e.entityId, e); return [...map.values()]; };
+const push = (entity: string, entityId: string, payload: Record<string, unknown>, change = 'insert') => entries.push({ seq: ++seq, entity, entityId, change, enqueuedAt: now, payload });
+const items = latest('inventory_item').map(e => e.payload.item as Record<string, unknown>);
+let newItems = 0, newFormulas = 0, newProfiles = 0;
+const addItem = (code: string, name: string, kind: string, dimension: string, names: string[]) => {
+  const found = items.find(i => normalize(String(i.code)) === normalize(code) || names.includes(normalize(String(i.name))));
+  if (found) return String(found.id);
+  const id = stableId(`insumo:${code}`);
+  push('inventory_item', id, { item: { id, code, name, kind, dimension, active: 1, created_utc: now, modified_utc: now }, units: [], balances: [] });
+  items.push({ id, code, name }); newItems++;
+  return id;
+};
+const DIMENSION = { g: 'MASS', ml: 'VOLUME', pz: 'COUNT' } as const;
+const itemId = new Map(recetario.insumos.map(i => [i.codigo, addItem(i.codigo, i.nombre, 'RAW_MATERIAL', DIMENSION[i.mide], namesOf(i))]));
+const line = (l: Line) => {
+  const q = quantity(l.cantidad);
+  return { item_id: itemId.get(l.insumo)!, quantity_atomic: q.atomic, dimension: q.dimension, ...(q.dimension === 'COUNT' ? { count_policy: 'CEILING_WHOLE_COUNT' } : {}) };
+};
+const formulaVersion = new Map<string, string>();
+const formulas = latest('formula');
+for (const p of recetario.preparaciones) {
+  const existing = formulas.find(f => normalize(String((f.payload.formula as Record<string, unknown>).code)) === normalize(p.codigo));
+  const versionId = stableId(`preparacion:${p.codigo}:${recetario.fecha}`);
+  formulaVersion.set(p.codigo, versionId);
+  if (existing) continue;
+  const id = stableId(`preparacion:${p.codigo}`), y = quantity(p.rinde), group = (g: number) => stableId(`preparacion:${p.codigo}:alternativa:${g}`);
+  push('formula', id, {
+    formula: { id, code: p.codigo, name: p.nombre, active_version_id: null, revision: 1 },
+    versions: [{ id: versionId, formula_id: id, version: 1, state: 'DRAFT', yield_dimension: y.dimension, yield_atomic: y.atomic, name: recetario.nombreBorrador, notes: p.notas ?? null, revision: 1 }],
+    ingredients: p.ingredientes.map((l, i) => ({ version_id: versionId, sequence: i + 1, ...line(l) })),
+    groups: (p.alternativas ?? []).map((_, g) => ({ version_id: versionId, id: group(g), sequence: g + 1, name: `Alternativa ${g + 1}` })),
+    options: (p.alternativas ?? []).flatMap((options, g) => options.map((l, o) => ({ version_id: versionId, group_id: group(g), id: stableId(`preparacion:${p.codigo}:alternativa:${g}:${l.insumo}`),
+      sequence: o + 1, preference_rank: o + 1, ...line(l) }))),
+  });
+  newFormulas++;
+}
+const productId = new Map(latest('product').map(e => e.payload.product as Record<string, unknown>).map(p => [normalize(String(p.name)), String(p.id)]));
+const profiles = latest('production_profile');
+for (const pan of recetario.panes) {
+  const product = productId.get(normalize(pan.pan))!;
+  const current = profiles.find(e => String((e.payload.profile as Record<string, unknown>).product_id) === product);
+  const versions = (current?.payload.versions as Record<string, unknown>[] | undefined) ?? [];
+  if (versions.some(v => v.name === recetario.nombreBorrador)) continue;
+  const id = current ? String((current.payload.profile as Record<string, unknown>).id) : stableId(`pan:${pan.catalogo}`);
+  const versionId = stableId(`pan:${pan.catalogo}:${recetario.fecha}`);
+  const finished = current ? String((current.payload.profile as Record<string, unknown>).finished_item_id) : addItem(finishedCode(pan.catalogo), pan.pan, 'FINISHED_GOOD', 'COUNT', [normalize(pan.pan)]);
+  const payload = current?.payload ?? { profile: { id, product_id: product, active_version_id: null, finished_item_id: finished, revision: 0 }, versions: [], directIngredients: [], formulaRequirements: [] };
+  const profile = payload.profile as Record<string, unknown>;
+  push('production_profile', id, {
+    profile: { ...profile, revision: Number(profile.revision ?? 0) + 1 },
+    versions: [...versions, { id: versionId, profile_id: id, version: versions.length + 1, state: 'DRAFT', name: recetario.nombreBorrador, revision: 1 }],
+    directIngredients: [...(payload.directIngredients as unknown[]), ...(pan.directos ?? []).map((l, i) => ({ profile_version_id: versionId, sequence: i + 1, ...line(l) }))],
+    formulaRequirements: [...(payload.formulaRequirements as unknown[]), ...pan.preparaciones.map((r, i) => {
+      const q = quantity(r.cantidad);
+      return { profile_version_id: versionId, formula_version_id: formulaVersion.get(r.codigo), sequence: i + 1, quantity_atomic: q.atomic, dimension: q.dimension };
+    })],
+  }, current ? 'update' : 'insert');
+  newProfiles++;
+}
+console.log(`Recetario en borrador: ${newItems} artículos de inventario, ${newFormulas} preparaciones y ${newProfiles} panes.`);
 mkdirSync(new URL('./demo/', import.meta.url), { recursive: true });
 const output = new URL('./demo/casamiga-demo.json.gz', import.meta.url);
 writeFileSync(output, gzipSync(JSON.stringify(data), { level: 9 }));
