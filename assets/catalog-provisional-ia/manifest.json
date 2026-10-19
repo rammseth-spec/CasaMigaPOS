@@ -376,5 +376,23 @@
     "job_id": "93af666d-9447-4eee-84e9-46fb85252d09",
     "generated_utc": "2026-10-19T21:04:31Z",
     "sha256": "1ea4c47a426566200efeebe9202bb011096b37e14b85a9022123d353021a621b"
+  },
+  {
+    "sku": "CM-043",
+    "file": "CM-043.jpg",
+    "provenance": "PROVISIONAL",
+    "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+    "job_id": "97fa17cf-af20-49ee-840b-b018a91405ee",
+    "generated_utc": "2026-10-19T21:46:52Z",
+    "sha256": "aa1fe40f81857bf8ce04ba96ecd17086b4c9de94cfc3ce8182b2108a26689a02"
+  },
+  {
+    "sku": "CM-044",
+    "file": "CM-044.jpg",
+    "provenance": "PROVISIONAL",
+    "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+    "job_id": "ea710423-a8a3-45f2-aad2-241852a57f92",
+    "generated_utc": "2026-10-19T21:46:51Z",
+    "sha256": "64b8b08115b328d7607ab84abdb914568a4759be81d132eac46df14ad5eb990c"
   }
 ]

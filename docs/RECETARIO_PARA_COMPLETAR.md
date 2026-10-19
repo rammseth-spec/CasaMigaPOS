@@ -1,6 +1,6 @@
 # Recetario Casa Miga — hoja de trabajo para completarlo
 
-Fecha: 19/10/2026. Fuente: recetario comercial que dio quien elabora el pan (18/10/2026, `docs/PHASE_1K4G_C_RECIPE_MASTER.md`), su matriz y auditoría técnica (1K.4G-C), la lista de insumos preparada en 1K.4G-C-C-B1 y el catálogo autorizado de `main` (42 panes, `docs/catalog/catalogo-autorizado-v2.csv`).
+Fecha: 19/10/2026. Fuente: recetario comercial que dio quien elabora el pan (18/10/2026, `docs/PHASE_1K4G_C_RECIPE_MASTER.md`), su matriz y auditoría técnica (1K.4G-C), la lista de insumos preparada en 1K.4G-C-C-B1 y el catálogo autorizado de `main` (44 panes, `docs/catalog/catalogo-autorizado-v2.csv`).
 
 **Para qué sirve:** tener en un solo lugar todo lo que la caja necesita para calcular producción, descontar inventario y sacar el costo y la ganancia de cada pan. Se trabaja **en orden, paso por paso**: llenar los espacios `____`, marcar las casillas `[ ]` y, cuando un paso quede completo, pasar al siguiente. Nada de esto se publica en la caja hasta el paso 7; mientras tanto todo se carga como **borrador**.
 
@@ -20,10 +20,10 @@ Reglas que no cambian: las cantidades se escriben en **gramos (g)**, **mililitro
 | Situación | Panes |
 |---|---:|
 | Con receta documentada que hay que completar o medir (paso 3) | 31 |
-| Sin receta todavía: muffins, café, pay de elote, bisquet (paso 4.1) | 5 |
+| Sin receta todavía: muffins, café, pay de elote, bisquet y los dos panes de muerto de masa madre (paso 4.1) | 7 |
 | Reventa, sin receta: leches Kirkland (paso 4.2) | 2 |
 | Retirados en el catálogo comercial de QA; decidir si se desactivan (paso 4.3) | 4 |
-| **Total del catálogo** | **42** |
+| **Total del catálogo** | **44** |
 
 Hoy ningún pan está listo para que la caja calcule su consumo solo: faltan rendimientos medidos, costos y cantidades exactas.
 
@@ -344,6 +344,8 @@ Todas: [ ] aceite de fritura según el paso 0.
 | 24 | Vaso de café | [ ] café por vaso ____ g · [ ] agua ____ ml · [ ] vaso, tapa, azúcar o crema ____ |
 | 29 | Pay de elote | [ ] receta completa · [ ] ¿lleva base de galleta como el de queso? · [ ] cuántos salen |
 | 30 | Bisquet | [ ] receta completa · [ ] gramos por pieza · [ ] cuántos salen |
+| 43 | Pan de muerto chico de masa madre | [ ] masa de pan de muerto con masa madre: harina, agua, masa madre y lo demás ____ · [ ] cuánta masa madre por tanda ____ g · [ ] cómo y cada cuándo se alimenta la masa madre ____ · [ ] tiempos de fermentación ____ · [ ] gramos por pieza (¿como el 13, 64 g?) ____ · [ ] cuántos salen |
+| 44 | Pan de muerto grande de masa madre | [ ] ¿misma masa que el 43? ____ · [ ] gramos por pieza (¿como el 27, 120 g?) ____ · [ ] cuántos salen |
 
 ### 4.2 Reventa (se compran listos, sin receta)
 

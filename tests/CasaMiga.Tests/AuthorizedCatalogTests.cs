@@ -20,7 +20,7 @@ public sealed class AuthorizedCatalogTests
         var table = File.ReadAllLines(Catalog("phase1k2c-provisional-map.md"))
             .Select(l => Regex.Match(l, @"^\| (\d+) \| (.+?) \| \$(\d+)\.00 \| (.+?) \|")).Where(m => m.Success).ToList();
 
-        Assert.HasCount(42, rows, "26 de la tabla v2 + pan de muerto grande, pay de queso, pay de elote y bisquet (12/10/2026), baguette (15/10/2026) y las 11 altas del catálogo comercial de QA 1K.4G-C-B (19/10/2026).");
+        Assert.HasCount(44, rows, "26 de la tabla v2 + pan de muerto grande, pay de queso, pay de elote y bisquet (12/10/2026), baguette (15/10/2026), las 11 altas del catálogo comercial de QA 1K.4G-C-B y los dos panes de muerto de masa madre (19/10/2026).");
         Assert.HasCount(26, table);
         for (int i = 0; i < 26; i++)
         {
@@ -32,7 +32,8 @@ public sealed class AuthorizedCatalogTests
         Assert.AreEqual(rows.Count, rows.Select(r => r[1]).Distinct(StringComparer.Ordinal).Count());
         CollectionAssert.AreEqual(Enumerable.Range(1, rows.Count).Select(i => i.ToString(CultureInfo.InvariantCulture)).ToArray(), rows.Select(r => r[0]).ToArray(), "Ids consecutivos.");
         CollectionAssert.AreEqual(new[] { "Pan de muerto grande,22,Pan dulce", "Pay de queso,22,Pays", "Pay de elote,22,Pays", "Bisquet,13,Pan dulce", "Baguette,9,Pan salado",
-            "Rosquita de ajonjolí,13,Pan dulce", "Bollo con ajonjolí,13,Pan dulce", "Dona de chocolate negro con chispas,15,Dona", "Dona de chocolate blanco con coco,15,Dona", "Dona de chocolate con nuez,15,Dona", "Dona combinada de chocolate negro y blanco,15,Dona", "Berlinesa rellena de crema pastelera,15,Dona", "Berlinesa rellena de zarzamora,16,Dona", "Galleta de nuez,15,Galleta", "Galleta de coco,15,Galleta", "Galleta multigrano,15,Galleta" },
+            "Rosquita de ajonjolí,13,Pan dulce", "Bollo con ajonjolí,13,Pan dulce", "Dona de chocolate negro con chispas,15,Dona", "Dona de chocolate blanco con coco,15,Dona", "Dona de chocolate con nuez,15,Dona", "Dona combinada de chocolate negro y blanco,15,Dona", "Berlinesa rellena de crema pastelera,15,Dona", "Berlinesa rellena de zarzamora,16,Dona", "Galleta de nuez,15,Galleta", "Galleta de coco,15,Galleta", "Galleta multigrano,15,Galleta",
+            "Pan de muerto chico de masa madre,18,Pan dulce", "Pan de muerto grande de masa madre,25,Pan dulce" },
             rows.Skip(26).Select(r => $"{r[1]},{r[2]},{r[3]}").ToArray());
         Assert.IsTrue(rows.All(r => int.Parse(r[2], CultureInfo.InvariantCulture) > 0));
         // La siembra crea las categorías en el orden en que aparecen: «Pays» (12/10/2026) y «Pan salado» (15/10/2026) quedan al final.

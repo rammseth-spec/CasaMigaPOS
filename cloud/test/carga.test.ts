@@ -85,8 +85,8 @@ test('a till starts empty and gets the catalog with photos, the supplies and the
   // 1ª vuelta: todo el catálogo con sus fotos, los insumos y las preparaciones; sus borradores esperan a que la caja tenga los insumos.
   let first = plan(await state(q), catalogRows, recetario, photo);
   assert.equal(count(first.steps, 'category.save'), 6);
-  assert.equal(count(first.steps, 'product.save'), 42);
-  assert.equal(count(first.steps, 'product.photo'), 42);
+  assert.equal(count(first.steps, 'product.save'), catalogRows.length);
+  assert.equal(count(first.steps, 'product.photo'), catalogRows.length);
   assert.equal(count(first.steps, 'inventory.item.save'), recetario.insumos.length + recetario.panes.length);
   assert.equal(count(first.steps, 'recipe.formula.create'), recetario.preparaciones.length);
   assert.equal(count(first.steps, 'recipe.formula.draft'), 0);
