@@ -1,3 +1,11 @@
+# FASE 1K.4G-C-B IMPLEMENTADA EN COPIA AISLADA — SMOKE HUMANO PENDIENTE, 18/10/2026
+
+Con las decisiones comerciales aprobadas, la copia `work/phase1k4g-c-b-review-20261018` contiene 36 productos activos y cinco históricos inactivos. Se crearon diez, se editaron once conservando ID/SKU existente cuando procedía y se desactivaron cinco sin borrar ventas. Se asignaron códigos únicos CM-027–CM-040 a nuevas identidades y a cuatro productos existentes sin SKU. Los precios confirmados para C-B se aplicaron; los otros 24 se conservaron del origen y requieren revisión comercial. El origen 1K.4F-R2, la base protegida y la evidencia cerrada 1K.4G-B-R2 conservan sus SHA-256.
+
+En la copia únicamente cambiaron `product` y `audit_entry`; ventas, pagos, caja, recibos, inventario, recetas, vínculos, fotos y archivos de configuración permanecieron iguales por digest. `integrity_check=ok`, 0 violaciones FK, schema 17; sin migración 018. `scripts/verify.ps1`: **799/799**, sin fallas/omisiones; Release sin errores ni warnings. Build/launcher identificados `Phase1K4G-C-B`, DataDirectory exclusivo, título de desarrollo. La prueba visual humana de Catálogo/POS sigue pendiente. Ver [reporte C-B](PHASE_1K4G_C_B_REPORT.md). No se inició C-C ni se hizo push.
+
+## Registro anterior — 1K.4G-C-A
+
 # FASE 1K.4G-C-A COMPLETADA DOCUMENTALMENTE — DECISIONES COMERCIALES PENDIENTES, 18/10/2026
 
 La conciliación del catálogo maestro de 36 productos contra el catálogo de revisión de 31 productos encontró 27 candidatos y nueve altas inequívocas. La matriz clasifica 14 CONSERVAR, 11 RENOMBRAR, nueve AGREGAR, un REVISAR DUPLICADO y un REQUIERE DECISIÓN COMERCIAL. Puerquito y Coronita se retiran; la Galleta de nuez y coco se sustituirá por dos identidades nuevas; el bollo duplicado y Dona especial requieren decisión antes de C-B.

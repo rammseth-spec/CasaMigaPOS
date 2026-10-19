@@ -1,3 +1,15 @@
+# Próximo paso — smoke humano de FASE 1K.4G-C-B
+
+Abrir únicamente `work/Abrir-Casa-Miga-1K4G-C-B.cmd`. Verificar el título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-C-B` y el DataDirectory `work/phase1k4g-c-b-review-20261018`. La aplicación queda preparada en acceso; las credenciales de esta copia se entregan en la conversación, no se versionan aquí.
+
+1. En Catálogo comprobar los 36 activos, las diez altas, nombres, SKU, categorías y precios de la [tabla final C-B](PHASE_1K4G_C_B_REPORT.md). Los 24 precios marcados H son heredados, no aprobados expresamente.
+2. Mostrar inactivos y comprobar CM-018, Dona especial, Galleta de nuez y coco, Puerquito y Coronita de nuez. CM-017 debe quedar activo a $15 y CM-019 a $16.
+3. Revisar las dos fotos reales, las 21 provisionales y el placeholder de trece productos activos sin foto; ninguna foto se reasignó.
+4. En Punto de venta revisar búsqueda por nombre/SKU, variedades separadas, tarjetas, categorías y navegación. No confirmar venta, imprimir ni modificar inventario.
+5. Reportar recortes, identidades incorrectas o cualquier anomalía antes de aprobar la subfase. No iniciar 1K.4G-C-C ni hacer push sin autorización separada.
+
+## Registro anterior — decisiones previas a C-B (resueltas para la copia aislada)
+
 # Próximo paso — resolver decisiones comerciales para FASE 1K.4G-C-B
 
 Revisar `docs/PHASE_1K4G_C_CATALOG_RECONCILIATION.md`. No iniciar C-B hasta recibir como mínimo:
