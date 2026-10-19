@@ -1,5 +1,7 @@
 # Casa Miga POS
 
+**FASE 1K.4G-C-A COMPLETADA DOCUMENTALMENTE.** La conciliación del catálogo maestro de 36 productos encontró 27 candidatos y nueve altas inequívocas: 14 CONSERVAR, 11 RENOMBRAR, nueve AGREGAR, un REVISAR DUPLICADO y un REQUIERE DECISIÓN COMERCIAL. No se modificaron bases, código, pruebas o migraciones. C-B no inició y espera decisiones de precio, SKU, categorías, bollo duplicado y Dona especial. Ver [conciliación del catálogo](docs/PHASE_1K4G_C_CATALOG_RECONCILIATION.md).
+
 **FASES 1K.4F-R2 Y 1K.4E-R2 TÉCNICAMENTE COMPLETADAS; SMOKE HUMANO/FÍSICO PENDIENTE.** El header separa estado real de caja, resumen operativo, reloj clickable y F11. El ticket configura `461 276 7429`, muestra «Pedidos por WhatsApp» y un icono térmico 1-bit antes del primer separador, tanto en original como reimpresión. Focales A 21/21 y B 27/27; suite conjunta 783/783; Release 0 errores/advertencias; schema protegido 16 y fixture 17, sin migración 018. Ver [reporte 1K.4F-R2](docs/PHASE_1K4F_R2_REPORT.md), [reporte 1K.4E-R2](docs/PHASE_1K4E_R2_REPORT.md) y [auditoría de bytes](docs/evidence/phase1k4e-r2-byte-audit.json). No iniciar 1K.4G/1K.5 ni publicar antes del smoke.
 
 **Registro anterior — 1K.4F-R1.** Centro operativo orientado a la lista: editores de timer y nota colapsados, creación/edición inline con autocierre, tarjetas compactas y Posponer 5/10/15. Suite 779/779. Ver [reporte 1K.4F-R1](docs/PHASE_1K4F_R1_REPORT.md).

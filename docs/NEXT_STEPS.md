@@ -1,4 +1,20 @@
-# Próximo paso — continuar smoke manual de FASE 1K.4G-B-R2 con merma
+# Próximo paso — resolver decisiones comerciales para FASE 1K.4G-C-B
+
+Revisar `docs/PHASE_1K4G_C_CATALOG_RECONCILIATION.md`. No iniciar C-B hasta recibir como mínimo:
+
+1. DataDirectory exacta que será origen autorizado; no modificar la base protegida ni reutilizar la fixture R2 cerrada.
+2. Confirmación de si las familias maestras serán categorías visibles o si se conservan las cinco categorías actuales.
+3. ID, precio y foto canónicos del Bollo relleno de crema pastelera (`CM-017` recomendado frente a `CM-018`).
+4. Decisión sobre la equivalencia entre Dona especial y Dona combinada de chocolate negro y blanco.
+5. Precios de las nueve altas y validación de los precios actuales.
+6. Convención/asignación de los 13 o 14 SKU pendientes.
+7. Política `track_inventory` para las altas y los cuatro candidatos que hoy tienen el flag activo.
+8. Confirmación de desactivar Galleta de nuez y coco después de crear Galleta de nuez y Galleta de coco.
+9. Fotos reales cuando estén disponibles; no generar ni copiar imágenes entre productos.
+
+C-B debe usar `CatalogService` sobre una copia aislada, preservar IDs al renombrar, crear IDs sólo para faltantes, no mover ventas/snapshots y no tocar recetas, vínculos o saldos. No requiere migración 018 según el análisis actual. Modelo recomendado: **GPT-6 Sol, esfuerzo alto**.
+
+## Registro anterior — smoke manual de FASE 1K.4G-B-R2
 
 Usar exclusivamente `work/Abrir-Casa-Miga-1K4G-B-R2.cmd`, título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-B-R2`, DataDirectory `work/phase1k4g-b-r2-smoke-20261011` y las credenciales verificadas entregadas en la conversación.
 

@@ -1,8 +1,16 @@
-# FASE 1K.4G-B-R2 TÉCNICAMENTE COMPLETADA — SMOKE HUMANO DE MERMA PENDIENTE, 11/10/2026
+# FASE 1K.4G-C-A COMPLETADA DOCUMENTALMENTE — DECISIONES COMERCIALES PENDIENTES, 18/10/2026
+
+La conciliación del catálogo maestro de 36 productos contra el catálogo de revisión de 31 productos encontró 27 candidatos y nueve altas inequívocas. La matriz clasifica 14 CONSERVAR, 11 RENOMBRAR, nueve AGREGAR, un REVISAR DUPLICADO y un REQUIERE DECISIÓN COMERCIAL. Puerquito y Coronita se retiran; la Galleta de nuez y coco se sustituirá por dos identidades nuevas; el bollo duplicado y Dona especial requieren decisión antes de C-B.
+
+La revisión fue de sólo lectura sobre la base protegida schema 16, el catálogo 1K.4F-R2 schema 17 y la evidencia cerrada 1K.4G-B-R2. La base protegida conserva SHA-256 `CFEE3F12175EC5C7EAFF636CE5CD6599AE8C754958201A90D14C80E5B008EB6D`. No se modificaron bases, código, pruebas o migraciones; no se inició C-B/C-C. Ver [PHASE_1K4G_C_CATALOG_RECONCILIATION.md](PHASE_1K4G_C_CATALOG_RECONCILIATION.md).
+
+## Registro anterior — 1K.4G-B-R2
+
+# FASE 1K.4G-B-R2 CERRADA — APROBADA CON OBSERVACIONES NO BLOQUEANTES, 18/10/2026
 
 Presentation cuenta con un sistema global reusable de tablas: encabezados con wrapping, texto humano completo, filas automáticas, mínimos seguros, cantidades centradas, importes a la derecha, selección Casa Miga y foco de teclado visible. Se auditaron Catálogo, Inventario, asociaciones, movimientos, Recetas, Producción, Caja, Historial de ventas y Reporte diario. El historial de movimientos se recompuso en Fecha, Operación, Movimiento, Existencia, Usuario y Detalle, sin perder valores ni unidades.
 
-Suite oficial **799/799** (584 general + 215 WPF), 0 fallidas/omitidas; Release `src/CasaMiga.Presentation/bin/Phase1K4G-B-R2/` con 0 errores/advertencias. Fixture `work/phase1k4g-b-r2-smoke-20261011`, schema 17, conserva A=2, B=2, Harina=9.58 kg, Huevo=28 y Agua=4.86 L. Base protegida intacta, sin migración 018, venta, impresión, cajón o merma. Ver [PHASE_1K4G_B_R2_REPORT.md](PHASE_1K4G_B_R2_REPORT.md). No push/PR ni inicio de 1K.4G-C/1K.4H-B.
+Suite oficial **799/799** (584 general + 215 WPF), 0 fallidas/omitidas; Release `src/CasaMiga.Presentation/bin/Phase1K4G-B-R2/` con 0 errores/advertencias. El smoke humano posterior confirmó producción A=2/B=2, venta de una pieza de cada producto y merma única de A; saldos finales A=0, B=1, Harina=9.58 kg, Huevo=28 y Agua=4.86 L. La auditoría read-only verificó integridad SQLite/FK/saldos, una sola operación WASTE y ausencia de efectos financieros o consumos duplicados. La fixture `work/phase1k4g-b-r2-smoke-20261011`, schema 17, quedó cerrada como evidencia; la base protegida permaneció intacta y no existe migración 018. Ver [PHASE_1K4G_B_R2_REPORT.md](PHASE_1K4G_B_R2_REPORT.md). No push/PR ni inicio de C-B/1K.4H-B.
 
 ## Registro anterior — 1K.4G-B-R1
 
