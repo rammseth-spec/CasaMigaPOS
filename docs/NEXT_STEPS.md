@@ -1,4 +1,18 @@
-# Próximo paso — smoke humano de FASE 1K.4G-C-B
+# Próximo paso — preparar FASE 1K.4G-C-C-B sin publicar recetas incompletas
+
+La consolidación documental C-C-A está cerrada. Antes de implementar C-C-B, resolver los bloqueos del [recetario maestro](PHASE_1K4G_C_RECIPE_MASTER.md), la [matriz de 36 productos](PHASE_1K4G_C_RECIPE_MATRIX.md) y la [auditoría técnica](PHASE_1K4G_C_RECIPE_TECHNICAL_AUDIT.md).
+
+1. Medir rendimientos exactos de masa dulce, salada, dona, polvorón, galleta y pan de muerto; conciliar costra y salidas mixtas.
+2. Confirmar cantidades marcadas aproximadas, barnices, acabados, muffins, café y mezcla multigrano.
+3. Definir unidades y política COUNT para huevos, sobres de Tradi Pan y otros insumos indivisibles.
+4. Resolver la esencia de vainilla informada en MASS y VOLUME sin inventar conversión.
+5. Autorizar un diseño para masa enriquecida derivada y consumos fijos por tanda; el motor vigente no los representa fielmente.
+6. Definir aceite reutilizable, sobrantes/reproceso, degustación y consumo interno como destinos separados.
+7. En C-C-B usar una copia aislada, cargar sólo datos exactos y mantener el consumo automático desactivado hasta validar producción, inventario y venta sin doble consumo.
+
+No modificar la evidencia C-B ni las bases protegidas. No crear recetas comerciales directamente sobre una instalación de uso. Modelo recomendado para C-C-B: **GPT-6.1 Sol, esfuerzo alto**.
+
+## Registro anterior — smoke humano de FASE 1K.4G-C-B (aprobado)
 
 Abrir únicamente `work/Abrir-Casa-Miga-1K4G-C-B.cmd`. Verificar el título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-C-B` y el DataDirectory `work/phase1k4g-c-b-review-20261018`. La aplicación queda preparada en acceso; las credenciales de esta copia se entregan en la conversación, no se versionan aquí.
 
@@ -6,7 +20,7 @@ Abrir únicamente `work/Abrir-Casa-Miga-1K4G-C-B.cmd`. Verificar el título `Cas
 2. Mostrar inactivos y comprobar CM-018, Dona especial, Galleta de nuez y coco, Puerquito y Coronita de nuez. CM-017 debe quedar activo a $15 y CM-019 a $16.
 3. Revisar las dos fotos reales, las 21 provisionales y el placeholder de trece productos activos sin foto; ninguna foto se reasignó.
 4. En Punto de venta revisar búsqueda por nombre/SKU, variedades separadas, tarjetas, categorías y navegación. No confirmar venta, imprimir ni modificar inventario.
-5. Reportar recortes, identidades incorrectas o cualquier anomalía antes de aprobar la subfase. No iniciar 1K.4G-C-C ni hacer push sin autorización separada.
+5. La revisión fue aprobada antes de C-C-A. Cualquier corrección futura debe partir del reporte C-B y conservar sus IDs/historial.
 
 ## Registro anterior — decisiones previas a C-B (resueltas para la copia aislada)
 

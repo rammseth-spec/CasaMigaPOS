@@ -1,8 +1,16 @@
-# FASE 1K.4G-C-B IMPLEMENTADA EN COPIA AISLADA — SMOKE HUMANO PENDIENTE, 18/10/2026
+# FASE 1K.4G-C-C-A COMPLETADA DOCUMENTALMENTE, 18/10/2026
+
+El recetario comercial maestro conserva las fórmulas y prácticas aportadas por el usuario sin convertir aproximaciones en datos exactos. La matriz cubre los 36 productos activos de la copia C-B con SKU, ProductId, preparación, directos, rendimiento, bloqueo técnico y control contra doble consumo. La auditoría confirma que el motor actual consolida fórmulas compartidas, múltiples requisitos y salidas reales, pero no soporta fórmulas derivadas, requisitos fijos por tanda, rendimiento intermedio variable ni destinos operativos específicos para degustación o consumo interno.
+
+No se crearon Formula, FormulaVersion, ProductionProfile, InventoryItem, ProductInventoryLink ni movimientos. C-C-B no inició. No cambiaron código, pruebas, migraciones o bases. La suite 799/799 y el Release limpio de C-B se conservan como último baseline funcional; no se repitieron por tratarse de un cierre exclusivamente documental. Ver [recetario maestro](PHASE_1K4G_C_RECIPE_MASTER.md), [matriz](PHASE_1K4G_C_RECIPE_MATRIX.md) y [auditoría](PHASE_1K4G_C_RECIPE_TECHNICAL_AUDIT.md).
+
+## Registro anterior — 1K.4G-C-B
+
+# FASE 1K.4G-C-B CERRADA TRAS REVISIÓN HUMANA, 18/10/2026
 
 Con las decisiones comerciales aprobadas, la copia `work/phase1k4g-c-b-review-20261018` contiene 36 productos activos y cinco históricos inactivos. Se crearon diez, se editaron once conservando ID/SKU existente cuando procedía y se desactivaron cinco sin borrar ventas. Se asignaron códigos únicos CM-027–CM-040 a nuevas identidades y a cuatro productos existentes sin SKU. Los precios confirmados para C-B se aplicaron; los otros 24 se conservaron del origen y requieren revisión comercial. El origen 1K.4F-R2, la base protegida y la evidencia cerrada 1K.4G-B-R2 conservan sus SHA-256.
 
-En la copia únicamente cambiaron `product` y `audit_entry`; ventas, pagos, caja, recibos, inventario, recetas, vínculos, fotos y archivos de configuración permanecieron iguales por digest. `integrity_check=ok`, 0 violaciones FK, schema 17; sin migración 018. `scripts/verify.ps1`: **799/799**, sin fallas/omisiones; Release sin errores ni warnings. Build/launcher identificados `Phase1K4G-C-B`, DataDirectory exclusivo, título de desarrollo. La prueba visual humana de Catálogo/POS sigue pendiente. Ver [reporte C-B](PHASE_1K4G_C_B_REPORT.md). No se inició C-C ni se hizo push.
+En la copia únicamente cambiaron `product` y `audit_entry`; ventas, pagos, caja, recibos, inventario, recetas, vínculos, fotos y archivos de configuración permanecieron iguales por digest. `integrity_check=ok`, 0 violaciones FK, schema 17; sin migración 018. `scripts/verify.ps1`: **799/799**, sin fallas/omisiones; Release sin errores ni warnings. Build/launcher identificados `Phase1K4G-C-B`, DataDirectory exclusivo, título de desarrollo. La revisión visual humana fue aprobada antes de autorizar C-C-A. Ver [reporte C-B](PHASE_1K4G_C_B_REPORT.md). No se hizo push.
 
 ## Registro anterior — 1K.4G-C-A
 
