@@ -1,4 +1,11 @@
+# FASE 1K.4G-C-C-B2 — APROBADA TÉCNICAMENTE Y CERRADA CON COMMIT LOCAL, 19/10/2026
+
+Fixture sintética nueva `work/phase1k4g-c-c-b2-demo-20261019` (DEMO - NO COMERCIAL, schema 17, 36 productos, 48 artículos, 7 producciones confirmadas y 3 borradores; sin ventas, caja ni impresión). Validación funcional en copia scratch 34/34 sin defectos del motor. Producción mejoró lista adaptable, columnas, filas acotadas, plan inicial vacío y explicaciones de acciones deshabilitadas, sólo en Presentation. `scripts/verify.ps1` **806/806**, Release 0 errores / 0 advertencias. Bases protegidas sin cambios. Reinicio del desplazamiento comprobado automáticamente sobre copia. Checkpoint local en la rama `phase/1k4g-c-c-b2-production-ux`; sin push ni merge a `master`. Pendientes no bloqueantes y prueba física de DPI en el [reporte B2](PHASE_1K4G_C_C_B2_REPORT.md).
+
+## Registro anterior — 1K.4G-C-C-B1-R1
+
 # FASE 1K.4G-C-C-B1-R1 — LAYOUT ADAPTABLE COMPLETADO TÉCNICAMENTE, SMOKE HUMANO PENDIENTE, 19/10/2026
+
 
 Inventario, Catálogo, Recetas y Producción usan listas principales que crecen con el espacio disponible; POS evita recortar nombre y precio, y la barra lateral/encabezado/acceso se adaptan a ventanas estrechas. Caja e Historial permiten desplazar columnas cuando el ancho físico no alcanza; el reporte diario aprovecha mejor pantallas grandes. Los formularios largos conservan scroll. No se alteraron flujos comerciales, datos, migraciones ni impresión. La copia de revisión R1 parte de B1 con SHA-256 idéntico y credencial comprobada en lectura. Véase [reporte R1](PHASE_1K4G_C_C_B1_R1_LAYOUT_REPORT.md). Falta aprobación visual humana; no iniciar C-C-B2 ni hacer push.
 

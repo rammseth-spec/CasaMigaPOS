@@ -103,7 +103,7 @@ public sealed class UsabilityPresentationTests
         recipes.NewProfile();WpfTestHost.Layout(recipeView);AssertVisible(recipeView,"No hay artículos terminados disponibles. Crea primero un artículo de tipo Producto terminado en Inventario.");Assert.IsFalse(Button(recipeView,"Crear perfil").IsEnabled);
         Assert.IsFalse(Button(recipeView,"Crear perfil").IsEnabled);
         var production=fixture.Production();await production.LoadAsync();var productionView=new ProductionView{DataContext=production};production.NewProduction();WpfTestHost.Layout(productionView);
-        AssertVisible(productionView,"No hay productos activos con esta búsqueda.");AssertVisible(productionView,"Selecciona un producto para cada fila.");Assert.IsFalse(Button(productionView,"Calcular necesidades").IsEnabled);Assert.IsFalse(Button(productionView,"Preparar registro de producción").IsEnabled);Assert.IsFalse(Button(productionView,"Quitar seleccionado").IsEnabled);
+        AssertVisible(productionView,"No hay productos activos con esta búsqueda.");AssertVisible(productionView,"Agrega al menos un producto al plan.");Assert.IsFalse(Button(productionView,"Calcular necesidades").IsEnabled);Assert.IsFalse(Button(productionView,"Preparar registro de producción").IsEnabled);Assert.IsFalse(Button(productionView,"Quitar seleccionado").IsEnabled);
         await production.ShowDraftsAsync();WpfTestHost.Layout(productionView);AssertVisible(productionView,"No hay producciones en borrador.");Assert.IsFalse(Button(productionView,"Ver detalle").IsEnabled);
         await production.ShowHistoryAsync();WpfTestHost.Layout(productionView);AssertVisible(productionView,"Aún no hay producciones confirmadas.");
         fixture.AssertNoOperations();

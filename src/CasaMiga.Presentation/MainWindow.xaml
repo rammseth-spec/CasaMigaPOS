@@ -191,7 +191,10 @@
      </Border>
      <Border Style="{StaticResource CardStyle}" Visibility="{Binding IsProduction,Converter={StaticResource VisibleWhen}}" Padding="20" MinHeight="0">
       <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-       <local:ProductionView DataContext="{Binding Production}" MinHeight="560" Height="{Binding ViewportHeight,RelativeSource={RelativeSource AncestorType=ScrollViewer}}"/>
+       <!-- Forms scroll internally, so only list screens keep a taller minimum before the shell scrolls. -->
+       <local:ProductionView DataContext="{Binding Production}" Height="{Binding ViewportHeight,RelativeSource={RelativeSource AncestorType=ScrollViewer}}">
+        <local:ProductionView.Style><Style TargetType="local:ProductionView"><Setter Property="MinHeight" Value="320"/><Style.Triggers><DataTrigger Binding="{Binding IsDrafts}" Value="True"><Setter Property="MinHeight" Value="440"/></DataTrigger><DataTrigger Binding="{Binding IsHistory}" Value="True"><Setter Property="MinHeight" Value="440"/></DataTrigger></Style.Triggers></Style></local:ProductionView.Style>
+       </local:ProductionView>
       </ScrollViewer>
      </Border>
      <Border Style="{StaticResource CardStyle}" Padding="20" Visibility="{Binding IsDashboard,Converter={StaticResource VisibleWhen}}" IsEnabled="{Binding IsReady}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">

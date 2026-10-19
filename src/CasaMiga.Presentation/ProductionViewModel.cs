@@ -100,8 +100,20 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
     }
     public bool CanCalculate=>Ready&&CanCreate&&IsBuilder&&ValidPlan;
     public bool CanCreateDraft=>CanCalculate&&PreviewReady&&PreviewConfirmable;
-    public bool CanRemoveOutput=>Ready&&IsBuilder&&Plan.Count>1&&SelectedPlan is not null&&Plan.Contains(SelectedPlan);
+    public bool CanRemoveOutput=>Ready&&IsBuilder&&SelectedPlan is not null&&Plan.Contains(SelectedPlan);
     public bool CanOpenDetail=>Ready&&SelectedRow is not null;
+    // Visible explanations for actions that are disabled; tooltips alone are not discoverable on touch screens.
+    public string AddProductHint=>SelectedProductChoice is not {} choice?"Selecciona un producto de la lista para agregarlo al plan.":
+        Plan.Any(x=>x.Profile?.ProductId==choice.ProductId)?$"{choice.ProductName} ya está en el plan; ajusta sus piezas en «Plan actual».":
+        !choice.Ready?$"{choice.ProductName}: {choice.Detail}":$"{choice.ProductName} está listo para agregarse.";
+    public string RemoveOutputHint=>Plan.Count==0?"El plan está vacío.":"Selecciona una fila del plan para quitarla.";
+    public string CreateDraftHint=>!ValidPlan?"Para preparar el registro, primero completa un plan válido y calcula sus necesidades.":
+        !PreviewReady?"Pulsa «Calcular necesidades» para revisar insumos y existencias antes de preparar el registro.":
+        !PreviewConfirmable?"No se puede preparar el registro: corrige lo indicado arriba y vuelve a calcular.":"Al preparar el registro, el plan quedará fijado como borrador.";
+    public string OpenDetailHint=>SelectedRow is null?"Selecciona una producción de la lista para ver su detalle.":"";
+    public string WasteHint=>!CanRecordWaste?"No tienes permiso para registrar merma.":SelectedWasteProduct?.FinishedItemId is null?"Selecciona el producto terminado.":
+        !long.TryParse(WasteQuantity,out var pieces)||pieces<=0?"Escribe un número entero de piezas mayor que cero.":SelectedWasteReason is null?"Selecciona el motivo.":
+        SelectedWasteReason.Value==WasteReason.Other&&string.IsNullOrWhiteSpace(WasteNote)?"Con el motivo «Otro» la observación es obligatoria.":"";
     public string EmptyRowsMessage=>IsDrafts?"No hay producciones en borrador.":"Aún no hay producciones confirmadas.";
     public ObservableCollection<ProductionAlternativeEdit> Alternatives{get;}=[];
     public IReadOnlyList<ProductionFormulaRow> FormulaRows{get;private set;}=[];public IReadOnlyList<ProductionRequirementRow> RequirementRows{get;private set;}=[];
@@ -164,14 +176,14 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
                 if(invalidFormulaIngredients){reason="Una preparación no tiene todos sus insumos obligatorios o una alternativa activa.";continue;}
                 var ingredientIds=version.DirectIngredients.Select(x=>x.Ingredient.InventoryItemId).Distinct().ToArray();
                 if(ingredientIds.Any(id2=>!itemRows.Any(x=>x.InventoryItemId==id2&&x.Active))){reason="Un ingrediente directo no existe o está inactivo.";continue;}
-                ready=new(id,product.Product.Id,version.FinishedInventoryItemId,product.Product.Name,version.Name,version.Version,"LISTO PARA PRODUCIR","Receta publicada y salida terminada configurada.");break;
+                ready=new(id,product.Product.Id,version.FinishedInventoryItemId,product.Product.Name,version.Name,version.Version,"LISTO PARA PRODUCIR","Receta y salida configuradas.");break;
             }
             list.Add(ready??new(null,product.Product.Id,finished,product.Product.Name,"",0,"RECETA INCOMPLETA",reason));
         }
         Profiles=list;FilterProducts();
     }
     private void FilterProducts(){var term=(ProductSearch??"").Trim();FilteredProfiles=Profiles.Where(x=>term.Length==0||x.ProductName.Contains(term,StringComparison.CurrentCultureIgnoreCase)||x.ProfileName.Contains(term,StringComparison.CurrentCultureIgnoreCase)||x.Status.Contains(term,StringComparison.OrdinalIgnoreCase)).ToArray();if(SelectedProductChoice is not null&&!FilteredProfiles.Contains(SelectedProductChoice))SelectedProductChoice=null;Notify();}
-    public void NewProduction(){if(!Ready||!CanCreate)return;TrackPlan();Plan.Clear();SelectedPlan=null;SelectedProductChoice=null;ProductSearch="";Plan.Add(new());Alternatives.Clear();FormulaRows=[];RequirementRows=[];PreviewReady=false;PreviewConfirmable=false;createBatchId=Guid.NewGuid();createOperationId=Guid.NewGuid();screen="builder";Message="";Notify();}
+    public void NewProduction(){if(!Ready||!CanCreate)return;TrackPlan();Plan.Clear();SelectedPlan=null;SelectedProductChoice=null;ProductSearch="";Alternatives.Clear();FormulaRows=[];RequirementRows=[];PreviewReady=false;PreviewConfirmable=false;createBatchId=Guid.NewGuid();createOperationId=Guid.NewGuid();screen="builder";Message="";Notify();}
     public void AddOutput(){if(SelectedProductChoice is null){if(Ready&&CanCreate&&IsBuilder&&Plan.All(x=>x.Profile is not null))Plan.Add(new());return;}if(!CanAddSelectedProduct)return;var empty=Plan.FirstOrDefault(x=>x.Profile is null);if(empty is not null){empty.Profile=SelectedProductChoice;empty.Planned="1";SelectedPlan=empty;}else{Plan.Add(new(){Profile=SelectedProductChoice,Planned="1"});SelectedPlan=Plan[^1];}SelectedProductChoice=null;Notify();}
     public void RemoveOutput(){if(!CanRemoveOutput)return;Plan.Remove(SelectedPlan!);SelectedPlan=null;}
     private void TrackPlan()

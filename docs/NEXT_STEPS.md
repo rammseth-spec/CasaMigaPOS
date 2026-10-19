@@ -1,4 +1,25 @@
+# Próximo paso — B2 cerrada; definir el siguiente bloque de Casa Miga POS 1.0
+
+FASE 1K.4G-C-C-B2 aprobada técnicamente y cerrada con commit local en `phase/1k4g-c-c-b2-production-ux` (sin push ni merge). No iniciar otra fase sin autorización. Pendientes no bloqueantes registrados: desplazamiento largo en el detalle de producción a resoluciones pequeñas, mensajes de estado poco visibles, texto redundante en el selector de merma, límites del shell con escalado alto y prueba física de DPI/navegación.
+
+## Smoke físico opcional sobre la fixture DEMO
+
+Abrir únicamente `work/Abrir-Casa-Miga-1K4G-C-C-B2.cmd`, confirmar el título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-C-C-B2` y la terminal `DEMO - NO COMERCIAL · Caja B2`. Usuario `demo-admin`; la contraseña se entrega sólo en la conversación.
+
+1. Producción → Nueva producción: buscar, seleccionar y agregar varios productos; revisar filas visibles, columnas, Detalle con tooltip y textos de acciones deshabilitadas. Calcular necesidades con Concha de chocolate 100 (faltante de cacao) y con Puerquito (piloncillo sin saldo inicial).
+
+2. Borradores: abrir D1/D2/D3, capturar resultados igual, menor, mayor o cero y confirmar si se desea; todo es DEMO. Historial: comprobar filas uniformes y detalle de P1 (Bolillo v1).
+
+3. Recetas: masa salada v1/v2 publicadas y v3 borrador; perfiles incompletos.
+
+4. Revisar 1920×1080 y 1366×768 en ventana, maximizada y F11; anotar cualquier recorte. No imprimir ni operar Caja/POS.
+
+Pendientes reales: escalas físicas en vivo y los bloqueos del recetario comercial antes de cualquier carga real. Modelo recomendado para la carga comercial: esfuerzo alto, otra copia aislada.
+
+## Registro anterior — smoke humano del layout R1 de FASE 1K.4G-C-C-B1
+
 # Próximo paso — smoke humano del layout R1 de FASE 1K.4G-C-C-B1
+
 
 Abrir únicamente `work/Abrir-Casa-Miga-1K4G-C-C-B1-R1.cmd`, confirmar título `Casa Miga POS · Caja · DESARROLLO · 1K.4G-C-C-B1-R1` y revisar la copia aislada `work/phase1k4g-c-c-b1-r1-review-20261019`. Las credenciales verificadas se entregan en la conversación.
 
