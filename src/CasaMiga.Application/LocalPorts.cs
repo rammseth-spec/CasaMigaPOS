@@ -144,4 +144,5 @@ public interface ILocalStore
     ReceiptPrintEvent? FindLatestReceiptPrintEvent(Guid requestId);
     void AddReceiptPrintRequest(ReceiptPrintRequest request);
     void AddReceiptPrintEvent(ReceiptPrintEvent entry);
+    IReadOnlyList<ReceiptActivity> ListReceiptActivity(int limit);
 }

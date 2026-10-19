@@ -1,0 +1,55 @@
+<UserControl x:Class="CasaMiga.Presentation.TicketsView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <StackPanel IsEnabled="{Binding Ready}">
+  <!-- Tickets enviados: estado del último intento y reimpresión. -->
+  <DockPanel Margin="0,0,0,8">
+   <Button DockPanel.Dock="Right" Style="{StaticResource SecondaryButton}" Content="Actualizar" Click="RefreshClick" AutomationProperties.Name="Actualizar tickets y cola"/>
+   <StackPanel>
+    <TextBlock Text="Tickets enviados" Style="{StaticResource SectionTitleText}"/>
+    <TextBlock Text="Cada ticket original, reintento y reimpresión con su último estado · más reciente primero." Style="{StaticResource CaptionText}" FontSize="14"/>
+   </StackPanel>
+  </DockPanel>
+  <TextBlock Text="{Binding TicketsEmptyMessage}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="15" Margin="0,4,0,8"/>
+  <DataGrid ItemsSource="{Binding Tickets}" SelectedItem="{Binding SelectedTicket}" Height="300" AutomationProperties.Name="Tickets enviados" HorizontalScrollBarVisibility="Auto" FontSize="15">
+   <DataGrid.Columns>
+    <DataGridTextColumn Header="Fecha" Binding="{Binding Date}" Width="150"/>
+    <DataGridTextColumn Header="Folio" Binding="{Binding Folio}" Width="130"/>
+    <DataGridTextColumn Header="Total" Binding="{Binding Total}" Width="110"/>
+    <DataGridTextColumn Header="Tipo" Binding="{Binding Kind}" Width="130"/>
+    <DataGridTextColumn Header="Estado" Binding="{Binding State}" Width="*" MinWidth="200"/>
+    <DataGridTextColumn Header="Trabajo" Binding="{Binding Job}" Width="90"/>
+    <DataGridTextColumn Header="Usuario" Binding="{Binding User}" Width="180"/>
+   </DataGrid.Columns>
+  </DataGrid>
+  <WrapPanel Margin="0,12,0,24">
+   <Button Content="{Binding ReprintButtonText}" Click="ReprintClick" IsEnabled="{Binding CanReprint}" ToolTip="Imprime otra vez el ticket de la venta seleccionada (sale como REIMPRESIÓN y no abre el cajón)." ToolTipService.ShowOnDisabled="True" AutomationProperties.Name="Reimprimir ticket seleccionado"/>
+   <TextBlock Text="{Binding ReprintTarget}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0,0,0" FontSize="15" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+  </WrapPanel>
+
+  <!-- Cola de Windows de la impresora de tickets. -->
+  <Border BorderBrush="{DynamicResource HairlineBrush}" BorderThickness="0,1,0,0" Padding="0,20,0,0">
+   <StackPanel>
+    <TextBlock Text="{Binding QueueTitle}" Style="{StaticResource SectionTitleText}"/>
+    <TextBlock Text="Trabajos que Windows todavía no termina de imprimir. Cancelarlos no cambia ninguna venta." Style="{StaticResource CaptionText}" FontSize="14"/>
+    <TextBlock Text="{Binding QueueStatus}" FontSize="15" FontWeight="SemiBold" Margin="0,8,0,8" AutomationProperties.LiveSetting="Polite"/>
+    <TextBlock Text="{Binding QueueEmptyMessage}" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="15" Margin="0,0,0,8"/>
+    <DataGrid ItemsSource="{Binding QueueJobs}" SelectedItem="{Binding SelectedJob}" Height="220" AutomationProperties.Name="Cola de impresión" HorizontalScrollBarVisibility="Auto" FontSize="15">
+     <DataGrid.Columns>
+      <DataGridTextColumn Header="Trabajo" Binding="{Binding JobId}" Width="90"/>
+      <DataGridTextColumn Header="Documento" Binding="{Binding Document}" Width="*" MinWidth="220"/>
+      <DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="200"/>
+      <DataGridTextColumn Header="Enviado" Binding="{Binding Submitted}" Width="170"/>
+      <DataGridTextColumn Header="Páginas" Binding="{Binding Pages}" Width="90"/>
+     </DataGrid.Columns>
+    </DataGrid>
+    <WrapPanel Margin="0,12,0,0">
+     <Button Style="{StaticResource SecondaryButton}" Content="Cancelar trabajo" Click="CancelJobClick" IsEnabled="{Binding CanCancelJob}" Margin="0,0,8,0" AutomationProperties.Name="Cancelar trabajo de impresión seleccionado"/>
+     <Button Style="{StaticResource SecondaryButton}" Content="Vaciar cola" Click="ClearQueueClick" IsEnabled="{Binding CanClearQueue}" AutomationProperties.Name="Vaciar cola de impresión"/>
+    </WrapPanel>
+   </StackPanel>
+  </Border>
+
+  <TextBlock Text="{Binding Message}" TextWrapping="Wrap" FontSize="15" Margin="0,16,0,0" AutomationProperties.LiveSetting="Polite">
+   <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+  </TextBlock>
+ </StackPanel>
+</UserControl>

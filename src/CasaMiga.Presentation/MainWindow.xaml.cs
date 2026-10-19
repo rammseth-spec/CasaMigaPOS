@@ -126,6 +126,7 @@ public partial class MainWindow : Window
     private void PosLogoutRequested(object? sender,EventArgs e)=>LogoutClick(this,new RoutedEventArgs());
     private async void CatalogNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowCatalogAsync();
     private async void SalesNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowSalesHistoryAsync();
+    private async void TicketsNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowTicketsAsync();
     private async void ReportsNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowReportsAsync();
     private async void ConsignmentNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowConsignmentAsync();
     private async void SyncNavigationClick(object sender,RoutedEventArgs e)=>await Model.ShowSyncAsync();

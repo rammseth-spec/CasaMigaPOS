@@ -1,3 +1,12 @@
+# Apartado Tickets, cola de impresión, regreso sin parpadeo y tablas legibles — 19/10/2026
+
+- **Tickets (menú lateral, Administrador/Gerente con `sales.receipt.reprint`):** lista de tickets enviados (original, reintento, reimpresión) con fecha, folio, total, último estado, trabajo del spooler y usuario. Al seleccionar uno, el botón dice «Reimprimir C01-…» y se muestra «Se reimprimirá: venta … · fecha · total · tipo»; la reimpresión usa `ReceiptService.Reprint` (sale como REIMPRESIÓN, no abre cajón).
+- **Cola de impresión:** lee la cola de Windows de la impresora de `printing.json` (winspool `EnumJobsW`) y permite cancelar un trabajo o vaciar la cola, con confirmación; auditoría `receipt.queue.job_cancelled` / `receipt.queue.cleared`. Cancelar no cambia ninguna venta. Probado en lectura contra la cola real `POS-80` (0 trabajos); la cancelación real no se probó físicamente por no haber trabajos pendientes.
+- **Regreso del cobro sin pantalla blanca:** al cerrar el cobro el POS sólo actualiza el ticket y conserva las mismas tarjetas, fotos, búsqueda, categoría y página (antes vaciaba y recargaba el catálogo completo).
+- **Tablas:** Recetas, columna Código más ancha; Historial de ventas, Fecha local más ancha, Cajero y Terminal se reparten el espacio y se quitó la columna técnica `CashSessionId`.
+- Pruebas nuevas: `TicketsApplicationTests` (4), `TicketsPresentationTests` (1), `ReturningFromCheckoutKeepsTheCatalogCardsAndPhotosInsteadOfReloadingThem`.
+- `scripts/verify.ps1`: generales 745/747 (2 omitidas que requieren la nube real), WPF 242/242, compilación Release 0 advertencias / 0 errores.
+
 # Ticket más legible, sección activa visible y entrada directa a Venta — 19/10/2026
 
 - **Ticket (Punto de venta):** nombre de 14 a 17 px (una línea, completo en el tooltip), precio unitario 15 px, cantidad 18 px, importe 17 px, foto 56 px y subtotal 15 px.

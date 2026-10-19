@@ -154,7 +154,7 @@ public sealed class SalesHistoryUsabilityTests
         {
             window.Show();WpfTestHost.Layout(window,contentWidth,contentHeight);
             var grid=Descendants<DataGrid>(view).Single(x=>AutomationProperties.GetName(x)=="Historial de ventas");
-            CollectionAssert.AreEqual(new object[]{"Folio","Fecha local","Total","Devuelto","Pago","Cajero actual","Terminal actual","CashSessionId"},grid.Columns.Select(x=>x.Header).ToArray());
+            CollectionAssert.AreEqual(new object[]{"Folio","Fecha local","Total","Devuelto","Pago","Cajero actual","Terminal actual"},grid.Columns.Select(x=>x.Header).ToArray());
             foreach(var label in new[]{"Buscar folio","Buscar fechas","Limpiar","Hoy","Ayer","Sesión actual"})Assert.IsTrue(Descendants<Button>(view).Any(x=>Equals(x.Content,label)&&x.IsVisible),label);
             var dates=Descendants<TextBox>(view).Where(x=>AutomationProperties.GetName(x) is "Fecha desde" or "Fecha hasta").ToArray();Assert.HasCount(2,dates);
             dates[0].Text="2026-10-06";dates[1].Text="07/10/2026";await vm.SearchDatesAsync();WpfTestHost.Layout(window,contentWidth,contentHeight);

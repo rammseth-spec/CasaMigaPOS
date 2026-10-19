@@ -23,6 +23,9 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
     public SalesHistoryViewModel? SalesHistory { get; private set; }
     public bool IsSalesHistory => screen == "salesHistory";
     public bool CanViewSales { get; private set; }
+    public TicketsViewModel? Tickets { get; private set; }
+    public bool IsTickets => screen == "tickets";
+    public bool CanViewTickets { get; private set; }
     public ReportsViewModel? Reports { get; private set; }
     public SyncViewModel? Sync { get; private set; }
     public ConsignmentViewModel? Consignment { get; private set; }
@@ -100,8 +103,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
     public string Amount { get; set; } = "0.00";
     public bool MessageIsSuccess { get; private set; }
     public string Message { get; private set; } = "";
-    public string Heading => screen switch { "pos"=>"Punto de venta", "catalog" => "Catálogo", "salesHistory"=>"Historial de ventas", "dailyReport"=>"Reporte diario", "reports"=>"Reportes", "consignment"=>"Charolas", "sync"=>"Nube", "inventory" => "Inventario", "recipes"=>"Recetas", "production"=>"Producción", "counting" => "Conteo de caja", "closingResult" => "Resultado de caja", "bootstrap" => "Bienvenido a Casa Miga", "login" => SignInClock.Greeting(clockNow), "changePassword" => "Cambiar contraseña", "users" => "Usuarios", "dashboard" => "Tu caja", "opening" => "Abrir caja", _ => "Preparando Casa Miga" };
-    public string Subtitle => screen switch { "pos"=>"Selecciona productos, revisa el carrito y cobra.", "catalog" => "Categorías y productos · Sin proceso de venta.", "salesHistory"=>"Ventas confirmadas · Consulta de solo lectura.", "dailyReport"=>"Ventas, caja y estado operativo de un día · Solo lectura.", "reports"=>"Ventas, devoluciones y cortes de caja por periodo · Sólo lectura.", "consignment"=>"Charolas en tiendas: entregar, recoger y cobrar · Aparte de la caja del mostrador.", "sync"=>"Envío automático a la base en línea · Las ventas nunca dependen de Internet.", "inventory" => "Existencias y movimientos del almacén principal · consulta abajo el estado del consumo automático por ventas.", "recipes"=>"Fórmulas y perfiles productivos versionados.", "production"=>"Planeación, confirmación e historial de producción.", "counting" => "Cuenta el efectivo sin consultar el esperado. Continuar guarda tu conteo y no permite cambiarlo después.", "closingResult" => "Revisa el resultado y confirma el cierre definitivo.", "bootstrap" => "Configura el primer administrador. No hay contraseñas predeterminadas.", "login" => "Inicia sesión para abrir o consultar esta caja.", "changePassword" => "Confirma tu contraseña actual o temporal y elige una nueva.", "users" => "Crea usuarios y restablece contraseñas olvidadas · Cada acción queda auditada.", "opening" => "Registra el efectivo con el que comienza la sesión.", "dashboard" => "Sesión local · Tus datos permanecen en este equipo.", _ => "Validando base y respaldo…" };
+    public string Heading => screen switch { "pos"=>"Punto de venta", "catalog" => "Catálogo", "salesHistory"=>"Historial de ventas", "tickets"=>"Tickets e impresora", "dailyReport"=>"Reporte diario", "reports"=>"Reportes", "consignment"=>"Charolas", "sync"=>"Nube", "inventory" => "Inventario", "recipes"=>"Recetas", "production"=>"Producción", "counting" => "Conteo de caja", "closingResult" => "Resultado de caja", "bootstrap" => "Bienvenido a Casa Miga", "login" => SignInClock.Greeting(clockNow), "changePassword" => "Cambiar contraseña", "users" => "Usuarios", "dashboard" => "Tu caja", "opening" => "Abrir caja", _ => "Preparando Casa Miga" };
+    public string Subtitle => screen switch { "pos"=>"Selecciona productos, revisa el carrito y cobra.", "catalog" => "Categorías y productos · Sin proceso de venta.", "salesHistory"=>"Ventas confirmadas · Consulta de solo lectura.", "tickets"=>"Tickets enviados, reimpresión y cola de la impresora de tickets.", "dailyReport"=>"Ventas, caja y estado operativo de un día · Solo lectura.", "reports"=>"Ventas, devoluciones y cortes de caja por periodo · Sólo lectura.", "consignment"=>"Charolas en tiendas: entregar, recoger y cobrar · Aparte de la caja del mostrador.", "sync"=>"Envío automático a la base en línea · Las ventas nunca dependen de Internet.", "inventory" => "Existencias y movimientos del almacén principal · consulta abajo el estado del consumo automático por ventas.", "recipes"=>"Fórmulas y perfiles productivos versionados.", "production"=>"Planeación, confirmación e historial de producción.", "counting" => "Cuenta el efectivo sin consultar el esperado. Continuar guarda tu conteo y no permite cambiarlo después.", "closingResult" => "Revisa el resultado y confirma el cierre definitivo.", "bootstrap" => "Configura el primer administrador. No hay contraseñas predeterminadas.", "login" => "Inicia sesión para abrir o consultar esta caja.", "changePassword" => "Confirma tu contraseña actual o temporal y elige una nueva.", "users" => "Crea usuarios y restablece contraseñas olvidadas · Cada acción queda auditada.", "opening" => "Registra el efectivo con el que comienza la sesión.", "dashboard" => "Sesión local · Tus datos permanecen en este equipo.", _ => "Validando base y respaldo…" };
     public string UserLabel => $"Usuario: {user?.Current?.DisplayName}";
     public string TerminalLabel => $"Terminal: {terminal?.Name}";
     public string CurrentUserName => user?.Current?.DisplayName ?? "";
@@ -156,7 +159,8 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
                 var checkout = new CheckoutService(database,user,clock,terminal.Id,journal, new CheckoutReceiptSnapshot(new PrintingConfigurationProvider(options.DataDirectory),TimeZoneInfo.Local));
                 var receipts = new ReceiptService(database,user,clock,terminal.Id,TimeZoneInfo.Local,
                     new PrintingConfigurationProvider(options.DataDirectory),new EscPosReceiptRenderer(),
-                    new SerializedReceiptPrintTransport(new WindowsRawPrintTransport()));
+                    new SerializedReceiptPrintTransport(new WindowsRawPrintTransport()),new WindowsPrintQueueMonitor());
+                Tickets = new(receipts,TimeZoneInfo.Local,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 var photoService=new ProductPhotoService(new SqliteProductPhotoStore(sqlite),new ProductPhotoFileStore(options.DataDirectory),new WpfProductPhotoProcessor(),user,clock,terminal.Id);
                 var photoUi=new ProductPhotoUiGateway(photoService,new BoundedProductPhotoCache());
                 Pos = new(new PosService(database,user,terminal.Id),checkout,receipts,photoUi,()=>UserLabel + " · " + TerminalLabel,(eventName,errorType)=>runtime.TryLog(eventName,errorType)){IsDevelopment=options.IsDevelopment,TerminalName=terminal.Name};
@@ -330,7 +334,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
             !u.Active ? "Inactivo" : u.MustChangePassword ? "Debe cambiar contraseña" : "Activo", u.Role, u.Active)).ToList();
         SelectedUser = Users.FirstOrDefault(u => u.Id == keep);
     }
-    public void Logout() { if (Busy) return; Operations?.ClosePanel(); user?.SignOut(); ClearCashHistory(); Users = []; SelectedUser = null; TemporaryPasswordNotice = ""; CanManageUsers = false; Pos?.ForgetView(); SalesHistory?.Forget(); DailyReport?.Forget(); Reports?.Forget(); Consignment?.Forget(); CashMovements?.Forget(); Inventory?.Forget(); opened = null; closingResult = null; CountedAmount = ""; CanViewSales=false; CanViewDailyReport=false; CanViewInventory=false;CanViewRecipes=false;CanViewProduction=false;CanViewConsignment=false;CurrentRoleLabel=""; screen = "login"; Message = ""; Notify(); RefreshSignInStatus(); }
+    public void Logout() { if (Busy) return; Operations?.ClosePanel(); user?.SignOut(); ClearCashHistory(); Users = []; SelectedUser = null; TemporaryPasswordNotice = ""; CanManageUsers = false; Pos?.ForgetView(); SalesHistory?.Forget(); Tickets?.Forget(); DailyReport?.Forget(); Reports?.Forget(); Consignment?.Forget(); CashMovements?.Forget(); Inventory?.Forget(); opened = null; closingResult = null; CountedAmount = ""; CanViewSales=false; CanViewTickets=false; CanViewDailyReport=false; CanViewInventory=false;CanViewRecipes=false;CanViewProduction=false;CanViewConsignment=false;CurrentRoleLabel=""; screen = "login"; Message = ""; Notify(); RefreshSignInStatus(); }
     public void ShowOpening() { if (Busy || !CanOpen) return; Amount = "0.00"; screen = "opening"; Message = ""; Notify(); }
     public void CancelOpening() { if (Busy) return; screen = "dashboard"; Message = ""; Notify(); }
     public Task OpenAsync() => Execute(async () =>
@@ -345,6 +349,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
     public Task ShowPosAsync() => Execute(async () => {await Pos!.EnterAsync();screen="pos";});
     public Task ShowCatalogAsync() => Execute(async () => {await Catalog!.LoadAsync();screen="catalog";});
     public Task ShowSalesHistoryAsync() => Execute(async () => {await SalesHistory!.LoadAsync();screen="salesHistory";});
+    public Task ShowTicketsAsync() => Execute(async () => {await Tickets!.LoadAsync();screen="tickets";});
     public Task ShowReportsAsync() => Execute(async () => {await Reports!.LoadAsync();screen="reports";});
     public Task ShowConsignmentAsync() => Execute(async () => {await Consignment!.LoadAsync();screen="consignment";});
     public Task ShowSyncAsync() => Execute(() =>
@@ -390,6 +395,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
         CanClose = opened is not null && await Task.Run(()=>catalogService!.Can("cash.close")) && (opened.Session.OpenedBy==user?.Current?.Id || await Task.Run(()=>catalogService!.Can("cash.close.other")));
         await RefreshCashHistory();
         CanViewSales = await Task.Run(() => SalesHistory!.CanView());
+        CanViewTickets = await Task.Run(() => Tickets!.CanView());
         CanViewDailyReport = await Task.Run(() => DailyReport!.CanView());
         CanViewInventory = await Task.Run(() => Inventory!.CanEnter());
         CanViewRecipes=await Task.Run(()=>catalogService!.Can("recipe.view"));

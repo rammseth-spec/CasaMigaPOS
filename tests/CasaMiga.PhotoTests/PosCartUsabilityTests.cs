@@ -148,6 +148,22 @@ public sealed class PosCartUsabilityTests
     {
         for(var i=0;i<VisualTreeHelper.GetChildrenCount(root);i++){var child=VisualTreeHelper.GetChild(root,i);if(child is T value)yield return value;foreach(var nested in Descendants<T>(child))yield return nested;}
     }
+    [TestMethod]
+    public Task ReturningFromCheckoutKeepsTheCatalogCardsAndPhotosInsteadOfReloadingThem()=>WpfTestHost.OnUi(async()=>
+    {
+        using var fixture=new Fixture();var vm=fixture.Pos();await vm.EnterAsync();
+        await WaitUntil(()=>fixture.PhotoLoadCount>=vm.Products.Count);
+        var cards=vm.Products;var loads=fixture.PhotoLoadCount;
+        await vm.AddAsync(fixture.Products[0].Id);await vm.AddAsync(fixture.Products[1].Id);
+        var checkout=new CheckoutViewModel(vm.Checkout,vm.Receipts,vm.TotalMoney,false){Received="100.00"};
+        await checkout.ConfirmAsync(false);Assert.IsNotNull(checkout.Result,checkout.Message);Assert.IsTrue(await checkout.LeaveAsync(),checkout.Message);
+        await vm.AfterCheckoutAsync();
+        Assert.AreSame(cards,vm.Products,"Returning to the POS must not rebuild (and blank) the product cards.");
+        Assert.AreEqual(loads,fixture.PhotoLoadCount,"Returning to the POS must not request the photos again.");
+        Assert.IsTrue(vm.IsEmpty,$"The paid ticket is cleared. {vm.Message}");Assert.AreEqual("$0.00",vm.Total);
+        Assert.IsTrue(vm.Products.All(card=>card.CartQuantity==0),"Card badges follow the cleared ticket.");
+    });
+
     private static async Task WaitUntil(Func<bool> done){var limit=DateTime.UtcNow.AddSeconds(8);while(!done()&&DateTime.UtcNow<limit)await Task.Delay(30);Assert.IsTrue(done());}
 
     private sealed class Fixture:IDisposable

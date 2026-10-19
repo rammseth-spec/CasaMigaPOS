@@ -27,13 +27,12 @@
    <DataGrid x:Name="SalesList" ItemsSource="{Binding Sales}" SelectedItem="{Binding SelectedSale}" Height="260" AutomationProperties.Name="Historial de ventas" HorizontalScrollBarVisibility="Auto">
     <DataGrid.Columns>
      <DataGridTextColumn Header="Folio" Binding="{Binding Folio}" Width="120"/>
-     <DataGridTextColumn Header="Fecha local" Binding="{Binding Date}" Width="175"/>
+     <DataGridTextColumn Header="Fecha local" Binding="{Binding Date}" Width="215"/>
      <DataGridTextColumn Header="Total" Binding="{Binding Total}" Width="100"/>
      <DataGridTextColumn Header="Devuelto" Binding="{Binding Refunded}" Width="100"/>
      <DataGridTextColumn Header="Pago" Binding="{Binding Method}" Width="80"/>
-     <DataGridTextColumn Header="Cajero actual" Binding="{Binding Cashier}" Width="150"/>
-     <DataGridTextColumn Header="Terminal actual" Binding="{Binding Terminal}" Width="160"/>
-     <DataGridTextColumn Header="CashSessionId" Binding="{Binding CashSession}" Width="300"/>
+     <DataGridTextColumn Header="Cajero actual" Binding="{Binding Cashier}" Width="*" MinWidth="170"/>
+     <DataGridTextColumn Header="Terminal actual" Binding="{Binding Terminal}" Width="*" MinWidth="200"/>
     </DataGrid.Columns>
    </DataGrid>
    <DockPanel Margin="0,12,0,0"><Button DockPanel.Dock="Right" Content="Ver detalle" Click="DetailClick" Margin="12,0,0,0"/><WrapPanel DockPanel.Dock="Right"><Button Style="{StaticResource SecondaryButton}" Content="Anterior" Click="PreviousClick" IsEnabled="{Binding HasPrevious}" Margin="0,0,8,0"/><Button Style="{StaticResource SecondaryButton}" Content="Siguiente" Click="NextClick" IsEnabled="{Binding HasNext}"/></WrapPanel><TextBlock Text="{Binding PageLabel}" FontSize="15" VerticalAlignment="Center"/></DockPanel>

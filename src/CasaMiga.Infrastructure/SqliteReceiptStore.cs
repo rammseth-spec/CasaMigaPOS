@@ -89,5 +89,19 @@ public sealed partial class SqliteLocalUnitOfWork
                 ("$at",At(entry.OccurredAt)),("$job",entry.SpoolerJobId),("$error",entry.ErrorCode));
             cmd.ExecuteNonQuery();
         }
+        public IReadOnlyList<ReceiptActivity> ListReceiptActivity(int limit)
+        {
+            // Cada ticket con su último evento (REQUESTED, SUBMITTED, COMPLETED, FAILED o UNKNOWN), más reciente primero.
+            using var cmd=Command("SELECT r.id,r.sale_id,t.name,s.sequence,r.kind,r.requested_utc,u.display_name,e.state,e.spooler_job_id,e.error_code,s.total_cents "+
+                "FROM receipt_print_request r JOIN sale s ON s.id=r.sale_id JOIN terminal t ON t.id=s.terminal_id JOIN app_user u ON u.id=r.requested_by "+
+                "JOIN receipt_print_event e ON e.request_id=r.id AND e.sequence=(SELECT MAX(sequence) FROM receipt_print_event WHERE request_id=r.id) "+
+                "ORDER BY r.requested_utc DESC,r.id LIMIT $limit",("$limit",limit));
+            using var r=cmd.ExecuteReader();
+            var rows=new List<ReceiptActivity>();
+            while(r.Read())
+                rows.Add(new(Guid.Parse(r.GetString(0)),Guid.Parse(r.GetString(1)),r.GetString(2),r.GetInt64(3),CopyKind(r.GetString(4)),
+                    Date(r,5)!.Value,r.GetString(6),PrintState(r.GetString(7)),r.IsDBNull(8)?null:r.GetInt32(8),r.IsDBNull(9)?null:r.GetString(9),r.GetInt64(10)));
+            return rows;
+        }
     }
 }

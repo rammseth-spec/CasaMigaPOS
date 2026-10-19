@@ -13,7 +13,8 @@ public sealed class ReceiptService(
     TimeZoneInfo timeZone,
     IPrintingSettingsProvider settingsProvider,
     IReceiptPayloadRenderer payloadRenderer,
-    IReceiptPrintTransport transport)
+    IReceiptPrintTransport transport,
+    IPrintQueueMonitor? queueMonitor = null)
 {
     private readonly ConcurrentDictionary<Guid, byte> activeReprints = new();
     private sealed record Prepared(ReceiptPrintRequest Request, ReceiptDocument? Document, ReceiptPrintEvent? ExistingEvent);
@@ -45,6 +46,77 @@ public sealed class ReceiptService(
     {
         if (saleId == Guid.Empty) throw new ArgumentException("Venta inválida.");
         return ExecuteReprint(saleId,null);
+    }
+
+    // Apartado Tickets: mismo permiso que reimprimir (Encargado y Administrador).
+    public IReadOnlyList<ReceiptActivity> RecentActivity(int limit=100)=>Read(store=>
+    {
+        _=AuthorizeTickets(store);
+        return store.ListReceiptActivity(Math.Clamp(limit,1,500));
+    });
+
+    /// <summary>Trabajos que siguen en la cola de Windows de la impresora configurada; sólo lectura.</summary>
+    public PrintQueueSnapshot PrintQueue()
+    {
+        Read(AuthorizeTickets);
+        var configuration=settingsProvider.Read();
+        if(configuration.Settings is not { } settings || string.IsNullOrWhiteSpace(settings.QueueName))
+            return new(null,[],configuration.ErrorCode??"CONFIG_MISSING");
+        if(queueMonitor is null)return new(settings.QueueName,[],"QUEUE_UNAVAILABLE");
+        try{return new(settings.QueueName,queueMonitor.List(settings.QueueName),null);}
+        catch(PrintTransportException error){return new(settings.QueueName,[],error.ErrorCode);}
+    }
+
+    /// <summary>Cancela un trabajo pendiente de la cola. No cambia la venta ni el registro del ticket; queda en auditoría.</summary>
+    public void CancelQueueJob(int jobId)
+    {
+        if(jobId<=0)throw new ArgumentException("Trabajo de impresión inválido.");
+        var queue=QueueForChanges();
+        queueMonitor!.Cancel(queue,jobId);
+        database.Run(store=>
+        {
+            var actor=AuthorizeTickets(store);
+            store.AddAudit(new(Guid.NewGuid(),actor,terminalId,"receipt.queue.job_cancelled",terminalId,clock.UtcNow,
+                JsonSerializer.Serialize(new{queue,jobId})));
+            return true;
+        });
+    }
+
+    /// <summary>Cancela todos los trabajos pendientes de la cola de tickets; devuelve cuántos se cancelaron.</summary>
+    public int ClearQueue()
+    {
+        var queue=QueueForChanges();
+        var cancelled=new List<int>();
+        foreach(var job in queueMonitor!.List(queue))
+        {
+            try{queueMonitor.Cancel(queue,job.JobId);cancelled.Add(job.JobId);}
+            catch(PrintTransportException){}// El trabajo pudo terminar de imprimirse entre la lectura y la cancelación.
+        }
+        database.Run(store=>
+        {
+            var actor=AuthorizeTickets(store);
+            store.AddAudit(new(Guid.NewGuid(),actor,terminalId,"receipt.queue.cleared",terminalId,clock.UtcNow,
+                JsonSerializer.Serialize(new{queue,jobIds=cancelled})));
+            return true;
+        });
+        return cancelled.Count;
+    }
+
+    private string QueueForChanges()
+    {
+        Read(AuthorizeTickets);
+        var configuration=settingsProvider.Read();
+        if(configuration.Settings is not { } settings || string.IsNullOrWhiteSpace(settings.QueueName))
+            throw new InvalidOperationException("La impresora de tickets no está configurada.");
+        if(queueMonitor is null)throw new InvalidOperationException("La cola de impresión no está disponible en este equipo.");
+        return settings.QueueName;
+    }
+
+    private Guid AuthorizeTickets(ILocalStore store)
+    {
+        if(identity.Current is not { } actor || store.FindUser(actor.Id) is not {Active:true}
+            || !store.HasPermission(actor.Id,"sales.receipt.reprint"))throw new AccessDeniedException();
+        return actor.Id;
     }
 
     private ReceiptPrintResult ExecuteReprint(Guid saleId,Guid? parent)

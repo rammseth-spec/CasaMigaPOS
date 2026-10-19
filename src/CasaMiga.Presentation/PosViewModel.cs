@@ -176,7 +176,23 @@ public sealed class PosViewModel(PosService service, CheckoutService checkout, R
     public Task RemoveAsync(Guid id)=>RunCart(async()=>cart=await Task.Run(()=>service.Remove(id)));
     public void Discard(bool confirmed){service.Discard(confirmed);cart=null;Message="";NotifyCart();}
     public void ForgetView(){CancelSearch();entered=false;photoLoad.Cancel();cart=null;Products=[];Categories=[];Search="";Message="";Notify();}
-    public Task AfterCheckoutAsync()=>Run(EnterAsync);
+    // Después de cobrar sólo cambia el ticket: se conserva el catálogo en pantalla (búsqueda, categoría, página y las mismas
+    // tarjetas con sus fotos) para no vaciar la vista ni volver a pedir las fotos, que se veía como un parpadeo en blanco.
+    public Task AfterCheckoutAsync()=>Run(RefreshAfterCheckoutAsync);
+    private async Task RefreshAfterCheckoutAsync()
+    {
+        try { RecoveryRequired=checkout.HasPending; }
+        catch { RecoveryRequired=true; }
+        if(RecoveryRequired){Message="Verifica el cobro pendiente antes de continuar.";Notify();return;}
+        if(!entered||Products.Count==0){await EnterAsync();return;}
+        var result=await Task.Run(()=>service.Load(Search,category,page));
+        cart=result.Cart;
+        var rows=result.Products.Items;
+        var unchanged=rows.Count==Products.Count
+            &&rows.Select((row,i)=>row.Product.Id==Products[i].Id&&row.Name==Products[i].Name&&row.Price==Products[i].Price).All(same=>same);
+        if(unchanged){NotifyCart();return;}
+        Apply(result);Notify();
+    }
     private async Task Run(Func<Task> operation)
     {
         if(Busy)return;operationBusy=true;Message="";Notify();
