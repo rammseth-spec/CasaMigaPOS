@@ -57,5 +57,30 @@ jobs:
         shell: pwsh
         run: dotnet build CasaMigaPOS.slnx -c Release --nologo
 
+      # El repo es privado de una cuenta personal: GitHub no permite activar el escaneo de código (requiere plan de pago),
+      # así que los resultados no se suben a la pestaña de seguridad. Se guardan como artefacto y el resumen da el conteo.
       - name: Analyze
         uses: github/codeql-action/analyze@v3
+        with:
+          upload: never
+          output: codeql-results
+
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-results
+          path: codeql-results
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Summary
+        if: always()
+        shell: pwsh
+        run: |
+          $count = 0
+          foreach ($file in Get-ChildItem codeql-results -Filter *.sarif -ErrorAction SilentlyContinue) {
+            $sarif = Get-Content $file.FullName -Raw | ConvertFrom-Json
+            foreach ($run in $sarif.runs) { if ($run.results) { $count += $run.results.Count } }
+          }
+          "### CodeQL`n`nHallazgos: **$count**. Reporte completo: artefacto ``codeql-results`` de esta corrida." | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
