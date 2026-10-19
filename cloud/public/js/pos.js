@@ -107,18 +107,18 @@ function sell(data) {
   let sheet = null, closeSheet = null;
   const charge = print => { if (sheet?.isConnected) closeSheet(); checkout(data, lines(), total(), print, () => { cart.clear(); keepCart(); refresh(); }); };
   const cartLines = () => cart.size
-    ? h('div', { class: 'cart', 'aria-label': 'Partidas del carrito' }, lines().map(({ product: p, quantity }) => h('div', { class: 'cart-line', 'aria-label': p.name },
+    ? h('div', { class: 'cart', 'aria-label': 'Partidas del carrito' }, lines().map(({ product: p, quantity }) => h('div', { class: 'cart-line pos-line', 'aria-label': p.name },
       h('span', { class: 'line-photo' }, p.photo ? h('img', { src: photoUrl(p, branchId), alt: '' }) : null),
       h('span', { class: 'line-body' },
         h('strong', { class: 'line-name', text: p.name, title: p.name }),
-        h('span', { class: 'caption', text: `${fmt(p.price)} / pieza` }),
-        h('span', { class: 'line-controls' },
-          h('span', { class: 'stepper-track' },
-            h('button', { type: 'button', class: 'qty', 'aria-label': 'Disminuir cantidad', disabled: quantity <= 1, onclick: () => set(p.id, quantity - 1) }, '−'),
-            h('b', { class: 'qty-value', text: String(quantity) }),
-            h('button', { type: 'button', class: 'qty', 'aria-label': 'Incrementar cantidad', onclick: () => set(p.id, quantity + 1) }, '+')),
-          h('button', { type: 'button', class: 'qty', 'aria-label': 'Eliminar', title: 'Quitar del ticket', onclick: () => set(p.id, 0) }, icon(ICON.trash)))),
-      h('b', { class: 'line-total num', text: fmt(p.price * quantity) }))))
+        h('span', { class: 'caption', text: `${fmt(p.price)} / pieza` })),
+      h('b', { class: 'line-total num', text: fmt(p.price * quantity) }),
+      h('span', { class: 'line-controls' },
+        h('span', { class: 'stepper-track' },
+          h('button', { type: 'button', class: 'qty', 'aria-label': 'Disminuir cantidad', disabled: quantity <= 1, onclick: () => set(p.id, quantity - 1) }, '−'),
+          h('b', { class: 'qty-value', text: String(quantity) }),
+          h('button', { type: 'button', class: 'qty', 'aria-label': 'Incrementar cantidad', onclick: () => set(p.id, quantity + 1) }, '+')),
+        h('button', { type: 'button', class: 'qty', 'aria-label': 'Eliminar', title: 'Quitar del ticket', onclick: () => set(p.id, 0) }, icon(ICON.trash))))))
     : h('div', { class: 'cart-empty' }, icon(ICON.sale), h('strong', { text: 'Carrito vacío' }), h('span', { class: 'muted', text: 'Toca un pan para agregarlo.' }));
   const totals = () => h('div', { class: 'ticket-foot' },
     h('div', { class: 'ticket-sum' }, h('span', { text: 'Subtotal' }), h('span', { class: 'num', text: fmt(total()) })),
