@@ -115,7 +115,8 @@ if (-not $ConContrasena -and -not $SoloNube -and -not $SinCarga) {
     Push-Location (Join-Path $repo 'cloud')
     try {
         $env:CASAMIGA_USUARIO = $usuarios[0].Username; $env:CASAMIGA_CONTRASENA = $usuarios[0].Password
-        npm run --silent cargar -- $url --enviar --esperar
+        # node directo (como la nube local): en PowerShell, npm.ps1 puede quitar el «--» y las opciones no llegarían al script.
+        node --import tsx scripts/cargar-caja.ts $url --enviar --esperar
         if ($LASTEXITCODE -ne 0) { Write-Warning 'No se completó la carga; vuelve a correr run-local.ps1 o: npm run cargar -- <dirección> --enviar --esperar (desde cloud).' }
     } finally { Remove-Item Env:CASAMIGA_USUARIO, Env:CASAMIGA_CONTRASENA -ErrorAction SilentlyContinue; Pop-Location }
 }
