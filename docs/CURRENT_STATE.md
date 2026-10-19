@@ -1,3 +1,8 @@
+# Prueba local sin ventanas de consola — 19/10/2026
+
+- `scripts/run-local.ps1`: la nube local corre oculta (sin ventana de cmd); su salida queda en `<Datos>\nube\nube.log` y `nube-errores.log`. `-VerNube` la abre en su ventana como antes, `-SinNavegador` no abre la web y `-Apagar` detiene la nube del puerto. Si la nube ya responde en el puerto, se reutiliza en lugar de abrir otra.
+- `scripts/abrir-local.vbs`: doble clic (o `wscript scripts\abrir-local.vbs -Datos <carpeta>`) abre la prueba local sin consola ni navegador: sólo aparece la caja. Probado en Windows 11 con PowerShell 5.1: la nube quedó sin ventana y la caja entró sola.
+
 # Recetario en borrador y carga de la caja por la web — 19/10/2026
 
 - `docs/catalog/recetario-borrador.json`: el recetario de `docs/RECETARIO_PARA_COMPLETAR.md` como datos (34 insumos, 10 preparaciones y 31 panes), con los rendimientos reportados marcados «por medir». La masa enriquecida se reparte por pieza (masa dulce + mantequilla) mientras la caja no admite una preparación dentro de otra.

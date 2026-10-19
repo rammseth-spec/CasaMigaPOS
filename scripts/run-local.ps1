@@ -1,6 +1,9 @@
 ﻿# Prueba local completa en una sola computadora: nube local (con la web) + caja de escritorio, con datos aparte de cualquier
 # instalación real. Los datos se guardan en una carpeta y sobreviven a reinicios.
-# Uso: ./scripts/run-local.ps1 [-Datos <carpeta>] [-Puerto 4173] [-SoloNube] [-ConContrasena] [-SinCarga]
+# Uso: ./scripts/run-local.ps1 [-Datos <carpeta>] [-Puerto 4173] [-SoloNube] [-ConContrasena] [-SinCarga] [-VerNube] [-SinNavegador] [-Apagar]
+# La nube local corre oculta, sin ventana de consola; su salida queda en <Datos>\nube\nube.log y nube-errores.log. -VerNube la abre
+# en su propia ventana como antes. -SinNavegador no abre la web (sólo queda la caja). -Apagar detiene la nube del puerto y termina.
+# Si la nube ya responde en el puerto, se reutiliza.
 # Por ahora (pedido del usuario, temporal) entra solo: la caja crea su administrador y un usuario fijo por rol, inicia sesión y se
 # registra en la nube local, y la web entra sola como administrador (sólo desde esta computadora). Con -ConContrasena todo pide
 # usuario y contraseña como en la sucursal.
@@ -12,10 +15,20 @@ param(
     [int]$Puerto = 4173,
     [switch]$SoloNube,
     [switch]$ConContrasena,
-    [switch]$SinCarga
+    [switch]$SinCarga,
+    [switch]$VerNube,
+    [switch]$SinNavegador,
+    [switch]$Apagar
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
+if ($Apagar) {
+    # La nube oculta no tiene ventana para Ctrl+C: se detiene el node que escucha en el puerto (igual de abrupto que Ctrl+C).
+    $nodos = @(Get-NetTCPConnection -LocalPort $Puerto -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique |
+        ForEach-Object { Get-Process -Id $_ -ErrorAction SilentlyContinue } | Where-Object { $_.ProcessName -eq 'node' })
+    if ($nodos.Count -eq 0) { Write-Host "No hay nube local escuchando en el puerto $Puerto." } else { $nodos | Stop-Process -Force; Write-Host "Nube local del puerto $Puerto apagada." }
+    return
+}
 foreach ($tool in 'dotnet', 'node', 'npm') {
     if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) { throw "Falta $tool. Instala .NET SDK 10 (https://dotnet.microsoft.com/download) y Node.js 24 (https://nodejs.org)." }
 }
@@ -42,19 +55,26 @@ $s = Get-Content $secretos -Raw | ConvertFrom-Json
 Push-Location (Join-Path $repo 'cloud')
 try { if (-not (Test-Path node_modules)) { npm ci; if ($LASTEXITCODE -ne 0) { throw 'Falló npm ci.' } } } finally { Pop-Location }
 
-# Nube local en su propia ventana (ciérrala para apagarla). Sin contraseña sólo escucha en esta computadora.
+# Nube local oculta (o en su propia ventana con -VerNube). Sin contraseña sólo escucha en esta computadora.
 $url = if ($ConContrasena) { "http://localhost:$Puerto" } else { "http://127.0.0.1:$Puerto" }
-$argumentos = @('--import', 'tsx', 'scripts/local-cloud.ts', "`"$nube`"", $Puerto)
-if (-not $ConContrasena) { $argumentos += '--sin-contrasena' }
-$env:ENROLLMENT_SECRET = $s.enrollment; $env:SESSION_SECRET = $s.session; $env:BACKUP_SECRET = $s.backup; $env:CRON_SECRET = $s.cron
-try { Start-Process node -ArgumentList $argumentos -WorkingDirectory (Join-Path $repo 'cloud') }
-finally { Remove-Item Env:ENROLLMENT_SECRET, Env:SESSION_SECRET, Env:BACKUP_SECRET, Env:CRON_SECRET -ErrorAction SilentlyContinue }
-$lista = $false
-for ($i = 0; $i -lt 60 -and -not $lista; $i++) {
-    Start-Sleep -Seconds 1
-    try { $lista = (Invoke-WebRequest "$url/" -UseBasicParsing -TimeoutSec 2).StatusCode -eq 200 } catch { }
+$registro = Join-Path $nube 'nube.log'; $errores = Join-Path $nube 'nube-errores.log'
+$responde = { try { (Invoke-WebRequest "$url/" -UseBasicParsing -TimeoutSec 2).StatusCode -eq 200 } catch { $false } }
+if (& $responde) {
+    Write-Host "La nube local ya responde en $url; se reutiliza." -ForegroundColor Green
+} else {
+    $argumentos = @('--import', 'tsx', 'scripts/local-cloud.ts', "`"$nube`"", $Puerto)
+    if (-not $ConContrasena) { $argumentos += '--sin-contrasena' }
+    $env:ENROLLMENT_SECRET = $s.enrollment; $env:SESSION_SECRET = $s.session; $env:BACKUP_SECRET = $s.backup; $env:CRON_SECRET = $s.cron
+    try {
+        $cloud = Join-Path $repo 'cloud'
+        if ($VerNube) { Start-Process node -ArgumentList $argumentos -WorkingDirectory $cloud }
+        else { Start-Process node -ArgumentList $argumentos -WorkingDirectory $cloud -WindowStyle Hidden -RedirectStandardOutput $registro -RedirectStandardError $errores }
+    }
+    finally { Remove-Item Env:ENROLLMENT_SECRET, Env:SESSION_SECRET, Env:BACKUP_SECRET, Env:CRON_SECRET -ErrorAction SilentlyContinue }
+    $lista = $false
+    for ($i = 0; $i -lt 60 -and -not $lista; $i++) { Start-Sleep -Seconds 1; $lista = & $responde }
+    if (-not $lista) { throw "La nube local no respondió en $url. Revisa $(if ($VerNube) { 'su ventana' } else { $errores })." }
 }
-if (-not $lista) { throw "La nube local no respondió en $url. Revisa su ventana." }
 
 if (-not $SoloNube) {
     # La caja se compila fuera del repositorio y usa su propia carpeta de datos, no la de una instalación real.
@@ -78,10 +98,11 @@ if (-not $SoloNube) {
 }
 
 if (-not $ConContrasena -and -not $SoloNube) {
-    # Cuando la caja ya subió sus usuarios, se abre la web en el navegador y entra sola.
+    # Cuando la caja ya subió sus usuarios, se abre la web en el navegador y entra sola (con -SinNavegador sólo se espera,
+    # porque la carga del final necesita esos usuarios).
     for ($i = 0; $i -lt 90; $i++) {
         Start-Sleep -Seconds 1
-        try { if (@((Invoke-WebRequest "$url/api/web/dev-users" -UseBasicParsing -TimeoutSec 2).Content | ConvertFrom-Json).Count -gt 0) { Start-Process "$url/"; break } } catch { }
+        try { if (@((Invoke-WebRequest "$url/api/web/dev-users" -UseBasicParsing -TimeoutSec 2).Content | ConvertFrom-Json).Count -gt 0) { if (-not $SinNavegador) { Start-Process "$url/" }; break } } catch { }
     }
 }
 
@@ -105,7 +126,8 @@ Write-Host 'Usuarios de prueba (uno por rol):'
 foreach ($u in $usuarios) { Write-Host ('  {0,-14} {1,-12} {2}' -f $u.Rol, $u.Username, $u.Password) }
 Write-Host ''
 Write-Host '  Para vender en la web: Venta → + Nueva caja web.'
-Write-Host 'Para empezar de cero, cierra la caja y la ventana de la nube y borra la carpeta de datos de prueba.'
+if (-not $VerNube) { Write-Host "  Nube local oculta; registro en $registro. Para apagarla: ./scripts/run-local.ps1 -Apagar -Puerto $Puerto" }
+Write-Host 'Para empezar de cero, cierra la caja, apaga la nube y borra la carpeta de datos de prueba.'
 
 if (-not $ConContrasena -and -not $SoloNube -and -not $SinCarga) {
     # Catálogo con fotos y recetario en borrador por la web; la caja los aplica al sincronizar (cada 5 s). Espera hasta que la caja
