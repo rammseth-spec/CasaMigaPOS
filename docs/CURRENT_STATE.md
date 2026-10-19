@@ -1,3 +1,11 @@
+# Ticket más legible, sección activa visible y entrada directa a Venta — 19/10/2026
+
+- **Ticket (Punto de venta):** nombre de 14 a 17 px (una línea, completo en el tooltip), precio unitario 15 px, cantidad 18 px, importe 17 px, foto 56 px y subtotal 15 px.
+- **Menú lateral:** la sección activa usa fondo verde sólido con texto e ícono blancos (antes verde muy pálido); etiquetas de 11 a 13 px e íconos de 22 a 24 px.
+- **Entrada a Venta:** al iniciar sesión (también con dev-autologin), al cambiar la contraseña o al abrir la caja, si hay caja abierta se entra directo a Venta; Caja sigue en el menú. Si Venta no está disponible (conteo confirmado o sin permiso) se queda en Caja y se registra `pos.auto_enter.skipped`.
+- `PosCartUsabilityTests`: el límite de «una línea» del nombre ahora es 1.5 × el tamaño de letra en lugar de 22 px fijos.
+- `scripts/verify.ps1`: generales 741/743 (2 omitidas que requieren la nube real), WPF 238/240 antes del ajuste de una línea; tras el ajuste, focales WPF 29/29 y shell/POS 21/21. Release 0/0.
+
 # Prueba local sin ventanas de consola — 19/10/2026
 
 - `scripts/run-local.ps1`: la nube local corre oculta (sin ventana de cmd); su salida queda en `<Datos>\nube\nube.log` y `nube-errores.log`. `-VerNube` la abre en su ventana como antes, `-SinNavegador` no abre la web y `-Apagar` detiene la nube del puerto. Si la nube ya responde en el puerto, se reutiliza en lugar de abrir otra.

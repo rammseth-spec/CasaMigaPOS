@@ -258,8 +258,17 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
             Message = "Tu contraseña es temporal. Crea una contraseña nueva para continuar."; MessageIsSuccess = true; return;
         }
         if (outcome != LoginOutcome.SignedIn) { Message = "No se pudo iniciar sesión. Revisa tus datos o espera un minuto e inténtalo de nuevo."; return; }
-        await RefreshAsync(); screen = "dashboard";
+        await EnterWorkspaceAsync();
     });
+    // Con la caja abierta se entra directo a Venta; Caja sigue en el menú. Si Venta no está disponible (conteo confirmado,
+    // sin permiso), se queda en Caja como antes.
+    private async Task EnterWorkspaceAsync()
+    {
+        await RefreshAsync(); screen = "dashboard";
+        if (opened is null || closingResult is not null || Pos is null) return;
+        try { await Pos.EnterAsync(); screen = "pos"; }
+        catch (Exception error) when (error is PosException or AccessDeniedException) { runtime?.TryLog("pos.auto_enter.skipped", error.GetType().Name); }
+    }
     public void ShowChangePassword(string name) { if (Busy) return; ChangePasswordUser = name.Trim(); screen = "changePassword"; MessageIsSuccess = false; Message = ""; Notify(); }
     public void CancelChangePassword() { if (Busy) return; screen = "login"; MessageIsSuccess = false; Message = ""; Notify(); }
     public Task ChangePasswordAsync(string current, string next, string confirmation) => Execute(async () =>
@@ -268,7 +277,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
         var name = ChangePasswordUser;
         await Task.Run(() => login!.ChangePassword(name, current, next));
         runtime?.TryLog("identity.password.changed");
-        if (await Task.Run(() => login!.Authenticate(name, next)) == LoginOutcome.SignedIn) { await RefreshAsync(); screen = "dashboard"; }
+        if (await Task.Run(() => login!.Authenticate(name, next)) == LoginOutcome.SignedIn) await EnterWorkspaceAsync();
         else screen = "login";
         MessageIsSuccess = true; Message = "Contraseña actualizada.";
     });
@@ -331,7 +340,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
         var fund = Money.FromPesos(pesos);
         try { opened = await Task.Run(() => cash!.Open(terminal!.Id, fund)); }
         catch (CashAlreadyOpenException) { await RefreshAsync(); screen = "dashboard"; throw; }
-        runtime!.TryLog("cash.opened"); await RefreshAsync(); screen = "dashboard";
+        runtime!.TryLog("cash.opened"); await EnterWorkspaceAsync();
     });
     public Task ShowPosAsync() => Execute(async () => {await Pos!.EnterAsync();screen="pos";});
     public Task ShowCatalogAsync() => Execute(async () => {await Catalog!.LoadAsync();screen="catalog";});

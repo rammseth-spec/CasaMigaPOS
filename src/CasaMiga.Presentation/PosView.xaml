@@ -68,17 +68,17 @@
       <Border BorderBrush="{DynamicResource DividerBrush}" BorderThickness="0,0,0,1" Padding="0,10" Margin="0,0,4,0" AutomationProperties.Name="{Binding Name}">
        <Grid>
         <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-        <Border Width="48" Height="48" CornerRadius="10" Background="{DynamicResource SurfaceSecondaryBrush}" ClipToBounds="True" VerticalAlignment="Top" Margin="0,0,10,0">
+        <Border Width="56" Height="56" CornerRadius="10" Background="{DynamicResource SurfaceSecondaryBrush}" ClipToBounds="True" VerticalAlignment="Top" Margin="0,0,12,0">
          <Image Source="{Binding Photo}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" Visibility="{Binding HasPhoto,Converter={StaticResource VisibleWhen}}"/>
         </Border>
         <StackPanel Grid.Column="1">
-         <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
-         <TextBlock Text="{Binding UnitPrice}" Style="{StaticResource CaptionText}"/>
+         <TextBlock Text="{Binding Name}" FontSize="17" FontWeight="SemiBold" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}"/>
+         <TextBlock Text="{Binding UnitPrice}" Style="{StaticResource CaptionText}" FontSize="15"/>
          <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
           <Border Style="{StaticResource StepperTrack}">
            <StackPanel Orientation="Horizontal">
             <Button Content="−" Tag="{Binding Id}" Click="DecreaseClick" IsEnabled="{Binding CanDecrease}" Style="{StaticResource QuantityButton}" AutomationProperties.Name="Disminuir cantidad"/>
-            <TextBlock Text="{Binding Quantity}" MinWidth="28" TextAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold" Typography.NumeralAlignment="Tabular"/>
+            <TextBlock Text="{Binding Quantity}" MinWidth="32" TextAlignment="Center" VerticalAlignment="Center" FontSize="18" FontWeight="Bold" Typography.NumeralAlignment="Tabular"/>
             <Button Content="+" Tag="{Binding Id}" Click="IncreaseClick" Style="{StaticResource QuantityButton}" AutomationProperties.Name="Incrementar cantidad"/>
            </StackPanel>
           </Border>
@@ -87,7 +87,7 @@
           </Button>
          </StackPanel>
         </StackPanel>
-        <TextBlock Grid.Column="2" Text="{Binding Total}" FontWeight="Bold" Typography.NumeralAlignment="Tabular" Margin="8,0,0,0" VerticalAlignment="Top"/>
+        <TextBlock Grid.Column="2" Text="{Binding Total}" FontSize="17" FontWeight="Bold" Typography.NumeralAlignment="Tabular" Margin="8,0,0,0" VerticalAlignment="Top"/>
        </Grid>
       </Border>
      </DataTemplate></ItemsControl.ItemTemplate></ItemsControl></ScrollViewer>
@@ -95,7 +95,7 @@
     <StackPanel Grid.Row="2" Margin="0,10,0,0">
      <Border BorderBrush="{DynamicResource HairlineBrush}" BorderThickness="0,1,0,0" Padding="0,10,0,0">
       <StackPanel>
-       <DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Subtotal}" Typography.NumeralAlignment="Tabular"/><TextBlock Text="Subtotal" Foreground="{DynamicResource TextSecondaryBrush}"/></DockPanel>
+       <DockPanel><TextBlock DockPanel.Dock="Right" Text="{Binding Subtotal}" FontSize="15" Typography.NumeralAlignment="Tabular"/><TextBlock Text="Subtotal" FontSize="15" Foreground="{DynamicResource TextSecondaryBrush}"/></DockPanel>
        <DockPanel Margin="0,2,0,12"><TextBlock DockPanel.Dock="Right" Text="{Binding Total}" Style="{StaticResource AmountText}" FontSize="34"/><TextBlock Text="Total" FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center"/></DockPanel>
       </StackPanel>
      </Border>
