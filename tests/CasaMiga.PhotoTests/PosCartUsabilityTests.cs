@@ -156,12 +156,46 @@ public sealed class PosCartUsabilityTests
         var cards=vm.Products;var loads=fixture.PhotoLoadCount;
         await vm.AddAsync(fixture.Products[0].Id);await vm.AddAsync(fixture.Products[1].Id);
         var checkout=new CheckoutViewModel(vm.Checkout,vm.Receipts,vm.TotalMoney,false){Received="100.00"};
-        await checkout.ConfirmAsync(false);Assert.IsNotNull(checkout.Result,checkout.Message);Assert.IsTrue(await checkout.LeaveAsync(),checkout.Message);
+        await checkout.ConfirmAsync(false);Assert.IsNotNull(checkout.Result,checkout.Message);
+        Assert.IsTrue(checkout.ReturnsAutomatically,"A confirmed sale with nothing left to do returns to the POS by itself.");
+        Assert.IsTrue(await checkout.LeaveAsync(),checkout.Message);Assert.IsFalse(checkout.ReturnsAutomatically);
         await vm.AfterCheckoutAsync();
         Assert.AreSame(cards,vm.Products,"Returning to the POS must not rebuild (and blank) the product cards.");
         Assert.AreEqual(loads,fixture.PhotoLoadCount,"Returning to the POS must not request the photos again.");
         Assert.IsTrue(vm.IsEmpty,$"The paid ticket is cleared. {vm.Message}");Assert.AreEqual("$0.00",vm.Total);
         Assert.IsTrue(vm.Products.All(card=>card.CartQuantity==0),"Card badges follow the cleared ticket.");
+    });
+
+    [TestMethod]
+    public Task ACheckoutWhoseTicketCanBeRetriedStaysOpenInsteadOfReturningByItself()=>WpfTestHost.OnUi(async()=>
+    {
+        using var fixture=new Fixture();var vm=fixture.Pos();await vm.EnterAsync();
+        var checkout=new CheckoutViewModel(vm.Checkout,vm.Receipts,vm.TotalMoney,false){Received="100.00"};
+        Assert.IsFalse(checkout.ReturnsAutomatically,"Nothing returns before the sale is confirmed.");
+        await vm.AddAsync(fixture.Products[0].Id);
+        checkout=new CheckoutViewModel(vm.Checkout,vm.Receipts,vm.TotalMoney,false){Received="100.00"};
+        await checkout.ConfirmAsync(true);Assert.IsNotNull(checkout.Result,checkout.Message);
+        Assert.IsTrue(checkout.CanRetryPrint,checkout.PrintMessage);
+        Assert.IsFalse(checkout.ReturnsAutomatically,"A ticket that was not printed keeps the result open so it can be retried.");
+        Assert.IsTrue(await checkout.LeaveAsync(),checkout.Message);
+    });
+    [TestMethod]
+    public Task TypingAnywhereInThePosGoesToTheSearchBoxWithoutSelectingItFirst()=>WpfTestHost.OnUi(async()=>
+    {
+        using var fixture=new Fixture();var vm=fixture.Pos();await vm.EnterAsync();
+        var view=new PosView{DataContext=vm};var window=new Window{Content=view,Width=1000,Height=630,ShowInTaskbar=false,WindowStyle=WindowStyle.None};
+        try
+        {
+            window.Show();window.Activate();WpfTestHost.Layout(window,1000,630);
+            var search=Descendants<TextBox>(view).Single(x=>x.Name=="SearchInput");
+            var card=Descendants<Button>(view).First(x=>x.Tag is Guid);Assert.IsTrue(card.Focus(),"A product card can hold the focus.");
+            Assert.IsFalse(view.TypeIntoSearch(" "),"A leading space is not a search.");
+            Assert.IsTrue(view.TypeIntoSearch("C"),"A letter typed on a product card goes to the search box.");
+            Assert.AreEqual("C",vm.Search);Assert.IsTrue(search.IsKeyboardFocused,"The search box keeps the focus for the next letters.");
+            Assert.AreEqual(1,search.CaretIndex);
+            Assert.IsFalse(view.TypeIntoSearch("A"),"Once in the search box, typing goes there normally.");
+        }
+        finally{window.Close();}
     });
 
     private static async Task WaitUntil(Func<bool> done){var limit=DateTime.UtcNow.AddSeconds(8);while(!done()&&DateTime.UtcNow<limit)await Task.Delay(30);Assert.IsTrue(done());}

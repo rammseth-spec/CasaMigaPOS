@@ -36,6 +36,8 @@ public sealed class CheckoutViewModel(CheckoutService service, ReceiptService re
     public string PrintMessage { get; private set; }="";
     public ReceiptPrintResult? PrintResult { get; private set; }
     public bool CanRetryPrint=>!Busy && Result is not null && PrintResult?.State is ReceiptPrintState.Requested or ReceiptPrintState.Failed or ReceiptPrintState.Unknown;
+    /// <summary>Venta confirmada sin nada que atender (ticket enviado o sin imprimir, sin error): el cobro regresa solo al POS.</summary>
+    public bool ReturnsAutomatically=>Result is not null && !Busy && !Acknowledged && !CanRetryPrint && Message.Length==0;
     public string ResultText=>Result is not { } sale ? "" : sale.Payment.Kind==PaymentMethod.Cash
         ? $"Venta confirmada\nFolio: {DisplayFolio.For(TerminalName,sale.Sequence)}\nTotal: {PosViewModel.Format(sale.Total)}\nRecibido: {PosViewModel.Format(sale.Payment.Received)}\nCambio: {PosViewModel.Format(sale.Payment.Change)}"
         : $"Venta confirmada\nFolio: {DisplayFolio.For(TerminalName,sale.Sequence)}\nTotal: {PosViewModel.Format(sale.Total)}\nPago: {Payment.Label(sale.Payment.Kind)}{(sale.Payment.Reference is { } r ? $" · Ref. {r}" : "")}";

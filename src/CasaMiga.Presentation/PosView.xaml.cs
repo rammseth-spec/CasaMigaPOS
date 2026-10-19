@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Threading;
 namespace CasaMiga.Presentation;
@@ -52,7 +53,8 @@ public partial class PosView : UserControl
     }
     private void PosVisibilityChanged(object sender,DependencyPropertyChangedEventArgs e)
     {
-        if(IsVisible)Dispatcher.BeginInvoke(ProductCatalogScroll.ScrollToTop);
+        // Al entrar a Venta el foco queda en el POS para que lo que se escriba busque el pan.
+        if(IsVisible)Dispatcher.BeginInvoke(()=>{ProductCatalogScroll.ScrollToTop();if(Keyboard.FocusedElement is not TextBoxBase)SearchInput.Focus();},DispatcherPriority.Input);
     }
     private void ClearClick(object s,RoutedEventArgs e)
     {
@@ -65,6 +67,17 @@ public partial class PosView : UserControl
         if(item is not null&&CartLinesList.ItemContainerGenerator.ContainerFromItem(item) is FrameworkElement container)
             container.BringIntoView();
     },DispatcherPriority.Loaded);
+    // Escribir en cualquier parte del POS busca el pan: las letras van al buscador sin tener que seleccionarlo antes.
+    private void PosTextInput(object s,TextCompositionEventArgs e){if(TypeIntoSearch(e.Text))e.Handled=true;}
+    public bool TypeIntoSearch(string text)
+    {
+        if(string.IsNullOrEmpty(text)||text.Any(char.IsControl)||Keyboard.FocusedElement is TextBoxBase or PasswordBox)return false;
+        if(SearchInput.Text.Length==0&&string.IsNullOrWhiteSpace(text))return false;
+        if(SearchInput.Text.Length+text.Length>SearchInput.MaxLength)return false;
+        SearchInput.Focus();
+        SearchInput.Text+=text;SearchInput.CaretIndex=SearchInput.Text.Length;
+        return true;
+    }
     private async void PosKeyDown(object s,KeyEventArgs e)
     {
         if(PopupEscape.TryHandle(e))return;

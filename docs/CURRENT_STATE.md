@@ -1,3 +1,10 @@
+# Cobro que regresa solo y búsqueda escribiendo en cualquier parte del POS — 19/10/2026
+
+- **Cobro:** una venta confirmada sin nada pendiente (ticket enviado a la cola o cobro sin imprimir, sin errores) muestra el resultado con «Regresando al POS en 3 segundos…» y vuelve sola al POS (confirma el resultado igual que «Volver al POS»). Si el ticket no se pudo imprimir, el cuadro se queda abierto y aparece «Reintentar ticket»; ese botón ya no se muestra deshabilitado cuando no aplica.
+- **Búsqueda:** al entrar a Venta el foco queda en el buscador, y lo que se escriba con el foco en una tarjeta u otro botón del POS va al buscador, con la búsqueda en vivo de siempre. Se ignora un espacio inicial.
+- Pruebas nuevas: `ACheckoutWhoseTicketCanBeRetriedStaysOpenInsteadOfReturningByItself`, `TypingAnywhereInThePosGoesToTheSearchBoxWithoutSelectingItFirst`; la del regreso sin parpadeo comprueba también el regreso automático.
+- `scripts/verify.ps1`: generales 745/747 (2 omitidas que requieren la nube real), WPF 244/244.
+
 # Apartado Tickets, cola de impresión, regreso sin parpadeo y tablas legibles — 19/10/2026
 
 - **Tickets (menú lateral, Administrador/Gerente con `sales.receipt.reprint`):** lista de tickets enviados (original, reintento, reimpresión) con fecha, folio, total, último estado, trabajo del spooler y usuario. Al seleccionar uno, el botón dice «Reimprimir C01-…» y se muestra «Se reimprimirá: venta … · fecha · total · tipo»; la reimpresión usa `ReceiptService.Reprint` (sale como REIMPRESIÓN, no abre cajón).
