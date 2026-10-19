@@ -270,7 +270,7 @@ td .pieces { min-width: 260px; }
 .pager-buttons { display: flex; gap: 8px; }
 .pager-buttons button { min-width: 100px; min-height: 40px; }
 .pos-operator { margin-top: 8px; }
-.pos-ticket { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; }
+.pos-ticket { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; container: ticket / inline-size; }
 .ticket-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
 .ticket-head h2 { font: 600 20px/1.25 var(--display); margin: 0; }
 .ticket-clear { min-width: 0; min-height: 40px; padding: 0 10px; font-size: 14px; font-weight: 400; }
@@ -290,6 +290,28 @@ button.qty svg { width: 18px; height: 18px; color: var(--muted); stroke-width: 1
 .line-controls > button.qty { margin-left: 6px; }
 .qty-value { min-width: 28px; text-align: center; font-size: 16px; font-variant-numeric: tabular-nums; }
 .line-total { margin-left: 8px; }
+.sheet-cart { container: ticket / inline-size; }
+/* Ticket de la caja: renglones grandes para tocar en mostrador; los controles ocupan el ancho bajo el nombre. Más grandes si el ticket es ancho. */
+.pos-line { grid-template-columns: 64px minmax(0, 1fr) auto; grid-template-areas: "photo body total" "photo controls controls"; gap: 0 12px; padding: 14px 0; }
+.pos-line .line-photo { grid-area: photo; width: 64px; height: 64px; border-radius: 12px; }
+.pos-line .line-body { grid-area: body; }
+.pos-line .line-name { font-size: 16px; }
+.pos-line .caption { font-size: 14px; }
+.pos-line .line-total { grid-area: total; font-size: 17px; }
+.pos-line .line-controls { grid-area: controls; margin-top: 8px; }
+.pos-line .stepper-track { border-radius: 14px; padding: 3px; }
+.pos-line button.qty { width: 46px; min-width: 46px; height: 46px; min-height: 46px; font-size: 22px; }
+.pos-line button.qty svg { width: 20px; height: 20px; }
+.pos-line .qty-value { min-width: 34px; font-size: 18px; }
+@container ticket (min-width: 440px) {
+  .pos-line { grid-template-columns: 84px minmax(0, 1fr) auto; gap: 0 16px; padding: 16px 0; }
+  .pos-line .line-photo { width: 84px; height: 84px; border-radius: 14px; }
+  .pos-line .line-name { font-size: 18px; }
+  .pos-line .caption { font-size: 15px; }
+  .pos-line .line-total { font-size: 19px; }
+  .pos-line button.qty { width: 52px; min-width: 52px; height: 52px; min-height: 52px; font-size: 24px; }
+  .pos-line .qty-value { min-width: 42px; font-size: 20px; }
+}
 .cart-empty { display: grid; justify-items: center; align-content: center; text-align: center; gap: 2px; color: var(--text); }
 .cart-empty svg { width: 44px; height: 44px; color: var(--faint); stroke-width: 1.5; margin-bottom: 8px; }
 .cart-empty strong { font-size: 16px; }
