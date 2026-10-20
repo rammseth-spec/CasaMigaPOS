@@ -17,8 +17,8 @@ public sealed class ProductionService(IProductionUnitOfWork work,UserSession use
     private static ProductionPreview Prepare(IProductionSession s,PrepareProductionCommand command)
     {
         var outputs=command.Outputs.Select(x=>new PlannedOutputLine(s.Recipes.GetProfileVersion(x.ProfileVersionId)?.Value??throw new ProductionException(ProductionFailure.NotFound),x.PlannedCount)).ToArray();
-        var formulas=outputs.SelectMany(x=>x.Profile.Formulas).Select(x=>x.FormulaVersionId).Distinct()
-            .Select(x=>s.Recipes.GetFormulaVersion(x)?.Value??throw new ProductionException(ProductionFailure.NotFound)).ToArray();
+        var formulas=ProductionPlan.RequiredVersions(outputs.SelectMany(x=>x.Profile.Formulas).Select(x=>x.FormulaVersionId),
+            x=>s.Recipes.GetFormulaVersion(x)?.Value??throw new ProductionException(ProductionFailure.NotFound));
         var result=ProductionPlan.Calculate(outputs,formulas,command.Selections);
         var inputs=result.Plan?.Ingredients??[];
         var stock=inputs.Select(x=>x.InventoryItemId).Concat(outputs.Select(x=>x.FinishedInventoryItemId)).Distinct().Select(s.Stock).ToArray();

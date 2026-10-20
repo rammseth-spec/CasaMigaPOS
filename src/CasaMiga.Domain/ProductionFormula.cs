@@ -16,6 +16,21 @@ public sealed record FormulaIngredient
     }
 }
 
+/// <summary>
+/// Otra preparación que esta preparación usa ya hecha, como la masa dulce dentro de la masa enriquecida. La cantidad va en la
+/// dimensión del rendimiento de esa preparación; producir consume sus ingredientes una sola vez, junto con los demás usos de esa masa.
+/// </summary>
+public sealed record FormulaPreparation
+{
+    public Guid FormulaVersionId { get; }
+    public InventoryQuantity Quantity { get; }
+    public FormulaPreparation(Guid formulaVersionId, InventoryQuantity quantity)
+    {
+        FormulaVersionId = ProductionGuard.Id(formulaVersionId);
+        Quantity = ProductionGuard.Positive(quantity, ProductionError.InvalidRecipeQuantity);
+    }
+}
+
 public sealed record IngredientAlternativeOption
 {
     public Guid Id { get; }
@@ -55,6 +70,7 @@ public sealed class FormulaVersion
     public InventoryQuantity BaseYield { get; }
     public IReadOnlyList<FormulaIngredient> Ingredients { get; }
     public IReadOnlyList<IngredientAlternativeGroup> Alternatives { get; }
+    public IReadOnlyList<FormulaPreparation> Preparations { get; }
     public string? Notes { get; }
     public DateTimeOffset CreatedAt { get; }
     public DateTimeOffset? PublishedAt { get; }
@@ -62,7 +78,7 @@ public sealed class FormulaVersion
 
     public FormulaVersion(Guid id, Guid formulaId, int version, string name, InventoryQuantity baseYield,
         IEnumerable<FormulaIngredient> ingredients, IEnumerable<IngredientAlternativeGroup> alternatives,
-        DateTimeOffset createdAt, string? notes = null)
+        DateTimeOffset createdAt, string? notes = null, IEnumerable<FormulaPreparation>? preparations = null)
     {
         Id = ProductionGuard.Id(id); FormulaId = ProductionGuard.Id(formulaId);
         ProductionGuard.Require(version > 0 && !string.IsNullOrWhiteSpace(name), ProductionError.InvalidVersion);
@@ -70,7 +86,11 @@ public sealed class FormulaVersion
         BaseYield = ProductionGuard.Positive(baseYield, ProductionError.InvalidFormulaYield);
         Ingredients = ProductionGuard.Freeze(ingredients.OrderBy(x => x.InventoryItemId));
         Alternatives = ProductionGuard.Freeze(alternatives.OrderBy(x => x.Id));
-        ProductionGuard.Require(Ingredients.Count + Alternatives.Count > 0, ProductionError.InvalidRecipeQuantity);
+        Preparations = ProductionGuard.Freeze((preparations ?? []).OrderBy(x => x.FormulaVersionId));
+        ProductionGuard.Require(Ingredients.Count + Alternatives.Count + Preparations.Count > 0, ProductionError.InvalidRecipeQuantity);
+        ProductionGuard.Require(Preparations.Select(x => x.FormulaVersionId).Distinct().Count() == Preparations.Count,
+            ProductionError.DuplicateIngredient);
+        ProductionGuard.Require(Preparations.All(x => x.FormulaVersionId != Id), ProductionError.PreparationCycle, Id);
         ProductionGuard.Require(Alternatives.Select(x => x.Id).Distinct().Count() == Alternatives.Count,
             ProductionError.InvalidAlternative);
         var ids = Ingredients.Select(x => x.InventoryItemId)
@@ -80,7 +100,7 @@ public sealed class FormulaVersion
     }
     private FormulaVersion(FormulaVersion draft, DateTimeOffset at)
         : this(draft.Id, draft.FormulaId, draft.Version, draft.Name, draft.BaseYield, draft.Ingredients,
-            draft.Alternatives, draft.CreatedAt, draft.Notes)
+            draft.Alternatives, draft.CreatedAt, draft.Notes, draft.Preparations)
     {
         ProductionGuard.Require(at.ToUniversalTime() >= CreatedAt && draft.State == ProductionVersionState.Draft,
             ProductionError.InvalidVersion);

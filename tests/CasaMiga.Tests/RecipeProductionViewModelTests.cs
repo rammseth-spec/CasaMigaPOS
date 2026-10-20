@@ -22,6 +22,34 @@ public sealed partial class RecipePersistenceTests
         vm.SelectedVersion=vm.Versions.Single();await vm.EditFormulaVersionAsync();Assert.IsFalse(vm.IsFormulaEditor);StringAssert.Contains(vm.Message,"publicadas");
     }
 
+
+    [TestMethod] public async Task RecipeUiAddsAPreparationInsideAnotherAndEditsTheDraftAgain()
+    {
+        var butter=Item("BUTTER",InventoryDimension.Mass);
+        var vm=RecipeVm();await vm.LoadAsync();vm.NewFormula();vm.Code="UI-ENRIQUECIDA";vm.Name="Enriquecida de prueba";await vm.CreateFormulaAsync();
+        vm.NewFormulaVersion();vm.Name="Versión de prueba";vm.Yield="100";vm.YieldUnit="g";
+        Assert.IsFalse(vm.PreparationChoices.Any(x=>x.Name.StartsWith("Enriquecida",StringComparison.Ordinal)),"A recipe never offers itself.");
+        vm.AddFormulaPreparation();vm.FormulaPreparations[0].Formula=vm.PreparationChoices.Single(x=>x.Id==version.Id);vm.FormulaPreparations[0].Quantity="0.05";vm.FormulaPreparations[0].Unit="g";
+        StringAssert.Contains(vm.PreparationChoices.Single(x=>x.Id==version.Id).Name,"(borrador)");
+        vm.AddIngredient(false);vm.Ingredients[0].Item=vm.Items.Single(x=>x.Id==butter.Id);vm.Ingredients[0].Quantity="0.05";vm.Ingredients[0].Unit="g";
+        Assert.IsTrue(vm.CanSaveFormulaDraft);await vm.SaveFormulaVersionAsync();Assert.IsTrue(vm.MessageIsSuccess,vm.Message);
+        vm.SelectedVersion=vm.Versions.Single();await vm.EditFormulaVersionAsync();Assert.IsTrue(vm.IsFormulaEditor,vm.Message);
+        Assert.AreEqual(version.Id,vm.FormulaPreparations.Single().Formula!.Id,"The draft comes back with its preparation.");
+        vm.FormulaPreparations[0].Quantity="0.06";await vm.SaveFormulaVersionAsync();Assert.IsTrue(vm.MessageIsSuccess,"Editing an existing draft saves: "+vm.Message);
+        Assert.AreEqual(60L,RecipeApplication().GetFormulaVersion(vm.Versions.Single().Id)!.Value.Preparations.Single().Quantity.AtomicUnits);
+        vm.SelectedVersion=vm.Versions.Single();await vm.PublishAsync();StringAssert.Contains(vm.Message,"Publica primero las preparaciones");
+    }
+
+    [TestMethod] public async Task RecipeUiEditsAProfileDraftAgain()
+    {
+        ProductionSetup();var next=catalog.CreateProduct(product.CategoryId,"UI-EDIT","Edición sintética UI","",new Money(100));var nextItem=inventory.CreateInventoryItem("UI-EDIT","Edición sintética UI",InventoryItemKind.FinishedGood,InventoryDimension.Count);
+        var vm=RecipeVm();await vm.LoadAsync();await vm.ShowProfilesAsync();vm.NewProfile();vm.ProfileProduct=vm.Products.Single(x=>x.Id==next.Id);vm.ProfileFinishedItem=vm.Items.Single(x=>x.Id==nextItem.Id);await vm.CreateProfileAsync();
+        vm.NewProfileVersion();vm.Name="Perfil sintético";vm.AddDirectIngredient();vm.DirectIngredients[0].Item=vm.Items.Single(x=>x.Id==flour.Id);vm.DirectIngredients[0].Quantity="10";vm.DirectIngredients[0].Unit="g";
+        await vm.SaveProfileVersionAsync();Assert.IsTrue(vm.MessageIsSuccess,vm.Message);
+        vm.SelectedVersion=vm.Versions.Single();await vm.EditProfileVersionAsync();vm.DirectIngredients[0].Quantity="12";await vm.SaveProfileVersionAsync();
+        Assert.IsTrue(vm.MessageIsSuccess,"Editing an existing profile draft saves: "+vm.Message);
+        Assert.AreEqual(12_000L,RecipeApplication().GetProfileVersion(vm.Versions.Single().Id)!.Value.DirectIngredients.Single().Ingredient.Quantity.AtomicUnits);
+    }
     [TestMethod] public async Task RecipeUiSupportsAlternativeGroupsAndOperationalUnits()
     {
         var vm=RecipeVm();await vm.LoadAsync();Assert.IsTrue(vm.Items.Any(x=>x.Id==flour.Id),vm.Message);vm.NewFormula();vm.Code="UI-ALT";vm.Name="Alternativas sintéticas";await vm.CreateFormulaAsync();vm.NewFormulaVersion();vm.Name="Alternativas";vm.Yield="100";vm.YieldUnit="g";

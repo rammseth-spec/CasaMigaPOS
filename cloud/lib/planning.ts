@@ -81,6 +81,35 @@ export async function productionPlan(q: Query, branch: string, request: PlanRequ
         if (r.error) issues.push({ code: r.error, subject: d.itemId }); else add(totals, d.itemId, d.dimension, BigInt(r.quantity!));
       }
     }
+    // Preparaciones dentro de preparaciones (masa dulce → masa enriquecida), como la caja: cada una suma lo que necesita a la
+    // preparación que usa, en orden de dependencias, para que una masa compartida se calcule una sola vez con todos sus usos.
+    const order: string[] = [];
+    const visiting = new Map<string, boolean>();
+    const visit = (versionId: string) => {
+      const seen = visiting.get(versionId);
+      if (seen !== undefined) { if (!seen) throw Object.assign(new Error('PreparationCycle'), { code: 'PreparationCycle' }); return; }
+      const f = formulas.get(versionId);
+      if (!f) throw Object.assign(new Error('InvalidVersion'), { code: 'InvalidVersion' });
+      visiting.set(versionId, false);
+      for (const p of f.version.preparations) visit(p.formulaVersionId);
+      visiting.set(versionId, true);
+      order.push(versionId);
+    };
+    for (const versionId of [...required.keys()].sort()) visit(versionId);
+    for (const versionId of order.reverse()) {
+      const f = formulas.get(versionId)!;
+      const need = required.get(versionId);
+      if (!need || f.version.preparations.length === 0) continue;
+      if (f.version.state !== 'PUBLISHED') return answer(fail('InvalidVersion'));
+      if (f.version.yieldDimension !== need.dimension) return answer(fail('DimensionMismatch'));
+      const factor = ratio(need.atomic, BigInt(f.version.yieldAtomic));
+      for (const p of f.version.preparations) {
+        const exact = ratio(factor.num * BigInt(p.atomic), factor.den);
+        if (exact.num > LIMIT) issues.push({ code: 'Overflow', subject: p.formulaVersionId });
+        else if (exact.den !== 1n) issues.push({ code: 'NonRepresentableScale', subject: p.formulaVersionId });
+        else add(required, p.formulaVersionId, p.dimension, exact.num);
+      }
+    }
     for (const s of request.selections) {
       const f = formulas.get(s.formulaVersionId);
       if (!required.has(s.formulaVersionId) || !f || !f.version.groups.some(g => g.id === s.groupId && g.options.some(x => x.id === s.optionId))) return answer(fail('InvalidAlternative'));

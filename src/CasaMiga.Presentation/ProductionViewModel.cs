@@ -164,10 +164,14 @@ public sealed class ProductionViewModel(ProductionService service,RecipeService 
                 var version=stored.Value;var output=itemRows.FirstOrDefault(x=>x.InventoryItemId==version.FinishedInventoryItemId);
                 if(output is null||!output.Active||output.Kind!=InventoryItemKind.FinishedGood||output.Dimension!=InventoryDimension.Count){reason="El producto terminado debe ser un artículo activo de inventario contado en piezas.";continue;}
                 var missingFormula=false;var invalidFormulaIngredients=false;
-                foreach(var requirement in version.Formulas)
+                // También las preparaciones que usan otras preparaciones (la masa dulce dentro de la masa enriquecida).
+                var pendingFormulas=new Queue<Guid>(version.Formulas.Select(x=>x.FormulaVersionId));var checkedFormulas=new HashSet<Guid>();
+                while(pendingFormulas.TryDequeue(out var formulaVersionId))
                 {
-                    var formula=await Task.Run(()=>recipes.GetFormulaVersion(requirement.FormulaVersionId));
+                    if(!checkedFormulas.Add(formulaVersionId))continue;
+                    var formula=await Task.Run(()=>recipes.GetFormulaVersion(formulaVersionId));
                     if(formula is null||formula.Value.State!=ProductionVersionState.Published){missingFormula=true;break;}
+                    foreach(var preparation in formula.Value.Preparations)pendingFormulas.Enqueue(preparation.FormulaVersionId);
                     if(formula.Value.Ingredients.Any(x=>!itemRows.Any(i=>i.InventoryItemId==x.InventoryItemId&&i.Active))||
                         formula.Value.Alternatives.Any(group=>!group.Options.Any(option=>itemRows.Any(i=>i.InventoryItemId==option.Ingredient.InventoryItemId&&i.Active))))
                         invalidFormulaIngredients=true;

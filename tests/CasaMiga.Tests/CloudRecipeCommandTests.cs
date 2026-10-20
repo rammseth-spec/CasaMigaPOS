@@ -70,6 +70,39 @@ public sealed class CloudRecipeCommandTests : SalesFixture
         Assert.AreEqual("rejected", Commands.Apply(Command("recipe.formula.draft", Draft(Recipes.GetFormulaVersion(version)!.Revision, 1))).Status, "A published version is never edited.");
     }
 
+
+    [TestMethod]
+    public void AFormulaFromTheWebCarriesItsPreparationsOrKeepsTheOnesItHad()
+    {
+        var flour = Inventory.CreateInventoryItem("HAR", "Harina", InventoryItemKind.RawMaterial, InventoryDimension.Mass).Id;
+        var butter = Inventory.CreateInventoryItem("MAN", "Mantequilla", InventoryItemKind.RawMaterial, InventoryDimension.Mass).Id;
+        var sweet = Guid.NewGuid(); var sweetVersion = Guid.NewGuid();
+        Recipes.CreateFormula(new Formula(sweet, "MASA-DULCE"), "Masa dulce");
+        Recipes.SaveFormulaDraft(new FormulaVersion(sweetVersion, sweet, 1, "Base", new(InventoryDimension.Mass, 1_000_000),
+            [new(flour, new(InventoryDimension.Mass, 500_000), IngredientCountPolicy.NotApplicable)], [], clock.UtcNow));
+        var enriched = Guid.NewGuid(); var version = Guid.NewGuid();
+        Ok(Commands.Apply(Command("recipe.formula.create", new() { ["id"] = enriched.ToString(), ["code"] = "MASA-ENRIQUECIDA", ["name"] = "Masa enriquecida" })));
+        JsonObject Draft(long? revision, JsonArray? preparations)
+        {
+            var body = new JsonObject
+            {
+                ["formulaId"] = enriched.ToString(), ["versionId"] = version.ToString(), ["revision"] = revision, ["name"] = "Prueba",
+                ["yield"] = new JsonObject { ["dimension"] = "Mass", ["atomic"] = 1_000_000 },
+                ["ingredients"] = new JsonArray(Line(butter, 100_000)), ["groups"] = new JsonArray(),
+            };
+            if (preparations is not null) body["preparations"] = preparations;
+            return body;
+        }
+        Ok(Commands.Apply(Command("recipe.formula.draft", Draft(null, new JsonArray(new JsonObject { ["formulaVersionId"] = sweetVersion.ToString(), ["atomic"] = 900_000 })))));
+        var stored = Recipes.GetFormulaVersion(version)!;
+        Assert.AreEqual(new FormulaPreparation(sweetVersion, new(InventoryDimension.Mass, 900_000)), stored.Value.Preparations.Single(), "The dimension comes from the yield of the dough used.");
+        Ok(Commands.Apply(Command("recipe.formula.draft", Draft(stored.Revision, null))));
+        Assert.AreEqual(1, Recipes.GetFormulaVersion(version)!.Value.Preparations.Count, "A change without preparations keeps the ones the draft had.");
+        var own = Draft(Recipes.GetFormulaVersion(version)!.Revision, new JsonArray(new JsonObject { ["formulaVersionId"] = version.ToString(), ["atomic"] = 1 }));
+        Assert.AreEqual("Una receta no puede usar otra versión de sí misma.", Commands.Apply(Command("recipe.formula.draft", own)).Message);
+        var revision = Recipes.GetFormulaVersion(version)!.Revision;
+        StringAssert.Contains(Commands.Apply(Command("recipe.formula.publish", new() { ["versionId"] = version.ToString(), ["revision"] = revision })).Message, "Masa dulce · versión 1");
+    }
     [TestMethod]
     public void ProductProfilesFromTheWebUsePublishedPreparations()
     {

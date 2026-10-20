@@ -14,6 +14,7 @@ public static class RecipeProblems
         ProductionError.DuplicateIngredient => "Un mismo artículo no puede repetirse en la receta.",
         ProductionError.InvalidAlternative => "Cada grupo de alternativas requiere al menos dos opciones válidas y un orden de preferencia.",
         ProductionError.Overflow => "Una cantidad excede el límite permitido.",
+        ProductionError.PreparationCycle => "Una receta no puede usarse a sí misma, ni directamente ni a través de otras preparaciones.",
         _ => "Revisa cantidades, unidades, duplicados y alternativas de la receta."
     };
 }

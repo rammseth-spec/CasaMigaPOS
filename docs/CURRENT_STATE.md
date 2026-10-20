@@ -1,3 +1,27 @@
+# Preparaciones dentro de preparaciones, respaldo de las ventas reales y recetas contra el recetario — 20/10/2026
+
+- **Ventas reales protegidas:**
+  - Respaldo oficial completo de la caja real (`CasaMiga.Maintenance backup`, con la caja cerrada): 23 ventas, $1,633.
+  - Copia en `C:\Users\ramms\CasaMiga-Ventas\respaldos\20261020-completo`, junto con `printing.json` y `sync.json`.
+  - Restaurado en una carpeta nueva (`restore-installation`): las 69 tablas coinciden fila por fila con la base real. No se cerró la caja ni se registró nada.
+- **Cambios del amigo** (`394ddc1`, `4e8ec88`, íconos del menú): avance directo de `main`. `verify.ps1` dio 746/748 generales (2 omitidas) y 244/244 WPF. Instalados en `CasaMiga-Ventas\programa`, sin cambio de base; el programa anterior quedó en `programa-6139e86-anterior`.
+- **Preparaciones dentro de preparaciones** (migración 031, `formula_preparation`):
+  - Una receta puede usar otras ya preparadas (masa dulce → masa enriquecida; masa dulce + relleno → tanda de 13 roles).
+  - Producir consolida cada masa una sola vez con todos sus usos, en orden de dependencias; se rechazan los ciclos.
+  - La cantidad interna debe ser exacta (sin redondeos por pieza), así que la tanda de roles se produce en tandas completas.
+  - Sólo se publica una receta cuando las que usa ya están publicadas: lo revisa la caja con nombres y lo exige la base con un disparador.
+  - Va también en la sincronización (`preparations`), en el cálculo de producción de la web, en los cambios de recetas desde la web (si no vienen, se conservan las del borrador), en el costo de Ganancia y en las pantallas Recetas de la caja y de la web.
+- **Corrección:** en la pantalla Recetas, volver a guardar un borrador ya guardado (de receta o de perfil) respondía «La receta cambió». Ahora conserva su fecha de creación.
+- **Recetas reales contra el recetario maestro:** `docs/RECETAS_ESTADO.md`, que separa completas, bloqueadas por datos y bloqueadas por el programa.
+  - Ningún pan tiene hoy todos sus datos confirmados.
+  - El borrador de masa dulce de la caja pasó la vainilla de 20 g/kg a 60 ml sin aprobación; está anotado para corregirlo cuando se decida la unidad.
+  - Ensayo en una copia (`C:\Users\ramms\CasaMiga-Revision\recetas-copia-20261020`): la tanda de rol se capturó en borrador con sus dos preparaciones y su publicación se rechazó mientras la masa dulce y el relleno siguen en borrador.
+- **Plan acordado y pendientes:** `docs/PLAN_SEGUIMIENTO.md` (compromiso, estado real, pendiente y documentos que se contradicen).
+- **Pruebas nuevas:** `ProductionPreparationDomainTests` (5), `RecipePersistenceTests.Preparations` (3), `CloudRecipeCommandTests` (1), `RecipeUiAddsAPreparationInsideAnotherAndEditsTheDraftAgain`, `RecipeUiEditsAProfileDraftAgain` y `cloud/test/production.test.ts` (1).
+- **Verificación:** `verify.ps1` 757/759 generales (2 omitidas) y 244/244 WPF; nube 77/77 y `tsc` limpio.
+- **Sin probar todavía:** las pruebas de navegador de la nube.
+- **No instalado en la caja real:** la migración 031 lleva la base a la versión 31 y espera aprobación.
+
 # Íconos ilustrados del menú lateral — 20/10/2026
 
 - Pedido del usuario: los íconos del menú lateral de la caja y de la web se cambian por ilustraciones planas a color generadas con IA (Higgsfield, `gpt_image_2_5`), con la paleta de la panadería: canasta (Venta), caja registradora (Caja), charola con pan (Charolas), tickets con reloj (Ventas), impresora térmica (Tickets), gráfica (Reportes), calendario (Diario), carta con panes (Catálogo), costal de harina y caja (Inventario), recetario con batidor (Recetas), gorro y rodillo (Producción), dos panaderos (Usuarios), nube con flechas (Nube) y puerta (Salir).

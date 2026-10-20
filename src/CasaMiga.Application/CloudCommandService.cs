@@ -338,8 +338,16 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
                 var groups = (p["groups"] as JsonArray ?? throw new InvalidCommandException()).Select(g => g as JsonArray ?? throw new InvalidCommandException())
                     .Select(options => options.Select(o => o as JsonObject ?? throw new InvalidCommandException()).Select(o => new IngredientAlternativeOption(Id(o, "id"), Line(o))).ToArray())
                     .Select(options => new IngredientAlternativeGroup(Guid.NewGuid(), options, options.Select(o => o.Id))).ToArray();
+                // Otras preparaciones que usa (masa dulce dentro de la enriquecida); la dimensión es la del rendimiento de esa preparación.
+                // Si el cambio no las trae se conservan las que ya tenía el borrador, para no perderlas desde una pantalla que no las muestra.
+                var preparations = p["preparations"] is null ? stored?.Value.Preparations.ToArray() ?? [] : Rows(p, "preparations").Select(x =>
+                {
+                    var used = recipes.GetFormulaVersion(Id(x, "formulaVersionId")) ?? throw new ArgumentException("Una preparación usada ya no existe.");
+                    if (used.Value.FormulaId == formula.Id) throw new ArgumentException("Una receta no puede usar otra versión de sí misma.");
+                    return new FormulaPreparation(used.Value.Id, new(used.Value.BaseYield.Dimension, Long(x, "atomic")));
+                }).ToArray();
                 recipes.SaveFormulaDraft(new FormulaVersion(id, formula.Id, number, Text(p, "name"), new(Choice<InventoryDimension>(yield, "dimension"), Long(yield, "atomic")),
-                    Rows(p, "ingredients").Select(Line).ToArray(), groups, stored?.Value.CreatedAt ?? clock.UtcNow, Optional(p, "notes")), revision);
+                    Rows(p, "ingredients").Select(Line).ToArray(), groups, stored?.Value.CreatedAt ?? clock.UtcNow, Optional(p, "notes"), preparations), revision);
                 break;
             }
             case "recipe.formula.publish":

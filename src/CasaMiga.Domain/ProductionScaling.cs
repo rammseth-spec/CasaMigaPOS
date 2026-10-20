@@ -5,7 +5,9 @@ public enum ProductionError
     InvalidRecipeQuantity, InvalidFormulaYield, DimensionMismatch, InvalidAlternative,
     AlternativeNotEligible, NonRepresentableScale, Overflow, DuplicateIngredient,
     DuplicateOutput, InvalidActualOutput, InvalidVersion, ConflictingDefinition,
-    CountPolicyRequired
+    CountPolicyRequired,
+    /// <summary>Una preparación termina usándose a sí misma a través de otras preparaciones.</summary>
+    PreparationCycle
 }
 
 public sealed class ProductionDomainException(ProductionError code, Guid? subjectId = null)

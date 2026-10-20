@@ -1,3 +1,9 @@
+# Seguimiento del plan acordado (20/10/2026)
+
+El plan original, su estado real y la lista de pendientes en orden están en [PLAN_SEGUIMIENTO.md](PLAN_SEGUIMIENTO.md); el estado de las recetas reales, en [RECETAS_ESTADO.md](RECETAS_ESTADO.md). No se cambia el alcance ni se aplaza nada sin aprobación del usuario.
+
+---
+
 # Siguiente: piloto en sucursal (10/10/2026)
 
 Caja y web completas (docs/PLAN_COMPLETAR.md: W1–W8, D1–D5, I1). Estabilización hecha: pruebas en navegador, de punta a punta, de volumen y simulacro de respaldo ([VOLUME.md](VOLUME.md)). **No se agregan funciones**: lo que sigue es usarlo.

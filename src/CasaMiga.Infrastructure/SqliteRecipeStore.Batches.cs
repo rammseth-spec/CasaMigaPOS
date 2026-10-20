@@ -25,8 +25,8 @@ public sealed partial class SqliteRecipeStore
                 (ReadProfile(c,t,o.Profile.Id) ?? throw new KeyNotFoundException()).Value,o.PlannedCount)).ToArray();
             if (actual.Keys.Any(key => !lines.Any(line => line.ProductId==key)))
                 throw new ArgumentException("Cantidad real de un producto ajeno a los perfiles persistidos.");
-            var formulas = lines.SelectMany(o => o.Profile.Formulas).Select(f => f.FormulaVersionId).Distinct()
-                .Select(f => (ReadFormula(c,t,f) ?? throw new KeyNotFoundException()).Value).ToArray();
+            var formulas = ProductionPlan.RequiredVersions(lines.SelectMany(o => o.Profile.Formulas).Select(f => f.FormulaVersionId),
+                f => (ReadFormula(c,t,f) ?? throw new KeyNotFoundException()).Value);
             var result = ProductionPlan.Calculate(lines,formulas,choices);
             var fatal = result.Issues.FirstOrDefault(i => i.Code is not (ProductionError.NonRepresentableScale or ProductionError.CountPolicyRequired or ProductionError.AlternativeNotEligible));
             if (fatal is not null) throw new ProductionDomainException(fatal.Code,fatal.SubjectId);

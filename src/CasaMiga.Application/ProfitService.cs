@@ -103,13 +103,23 @@ public sealed class ProfitService(ILocalReadUnitOfWork database, IProductionUnit
             (double Cost, HashSet<string> Missing)? Formula(Guid versionId)
             {
                 if (formulaCost.TryGetValue(versionId, out var known)) return known;
+                // Mientras se calcula queda sin costo: una preparación que terminara usándose a sí misma no se repite sin fin.
+                formulaCost[versionId] = null;
                 var version = s.Recipes.GetFormulaVersion(versionId)?.Value;
                 (double, HashSet<string>)? value = null;
                 if (version is not null)
                 {
                     var missing = new HashSet<string>();
                     var preferred = version.Alternatives.Select(g => g.Options.First(o => o.Id == (g.PreferenceOrder.Count > 0 ? g.PreferenceOrder[0] : g.Options[0].Id)).Ingredient);
-                    value = (LineCost(version.Ingredients.Concat(preferred), missing) / Math.Max(1, version.BaseYield.AtomicUnits), missing);
+                    var cost = LineCost(version.Ingredients.Concat(preferred), missing);
+                    // Las preparaciones que usa (la masa dulce dentro de la enriquecida) cuestan lo que cuesta cada gramo de ellas.
+                    foreach (var preparation in version.Preparations)
+                    {
+                        if (Formula(preparation.FormulaVersionId) is not { } inner) { missing.Add("Preparación"); continue; }
+                        missing.UnionWith(inner.Missing);
+                        cost += inner.Cost * preparation.Quantity.AtomicUnits;
+                    }
+                    value = (cost / Math.Max(1, version.BaseYield.AtomicUnits), missing);
                 }
                 formulaCost[versionId] = value;
                 return value;

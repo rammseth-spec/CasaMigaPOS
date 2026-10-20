@@ -44,10 +44,14 @@ public sealed partial class SqliteRecipeStore(Database database) : IRecipeStore
                 Changed(Execute(c,t,"UPDATE formula_version SET name=$1,yield_dimension=$2,yield_atomic=$3,notes=$4,revision=revision+1 WHERE id=$0 AND formula_id=$5 AND version=$6 AND created_utc=$7 AND state='DRAFT' AND revision=$8",
                     value.Id,value.Name,Dimension(value.BaseYield.Dimension),value.BaseYield.AtomicUnits,value.Notes,value.FormulaId,value.Version,At(value.CreatedAt),expectedRevision));
                 Execute(c,t,"DELETE FROM formula_alternative_option WHERE version_id=$0; DELETE FROM formula_alternative_group WHERE version_id=$0; DELETE FROM formula_ingredient WHERE version_id=$0",value.Id);
+                if (HasPreparations(c,t)) Execute(c,t,"DELETE FROM formula_preparation WHERE version_id=$0",value.Id);
             }
             int sequence = 0;
             foreach (var line in value.Ingredients)
                 Execute(c,t,"INSERT INTO formula_ingredient VALUES($0,$1,$2,$3,$4,$5)",value.Id,++sequence,line.InventoryItemId,Dimension(line.Quantity.Dimension),line.Quantity.AtomicUnits,Policy(line.CountPolicy));
+            sequence = 0;
+            foreach (var line in value.Preparations)
+                Execute(c,t,"INSERT INTO formula_preparation VALUES($0,$1,$2,$3,$4)",value.Id,++sequence,line.FormulaVersionId,Dimension(line.Quantity.Dimension),line.Quantity.AtomicUnits);
             sequence = 0;
             foreach (var group in value.Alternatives)
             {
@@ -78,7 +82,9 @@ public sealed partial class SqliteRecipeStore(Database database) : IRecipeStore
             return new IngredientAlternativeGroup(G(g,0),options.Select(o => new IngredientAlternativeOption(G(o,4),Ingredient(o))),
                 options.Where(o => o[5] is not DBNull).OrderBy(o => L(o,5)).Select(o => G(o,4)));
         }).ToArray();
-        var value = new FormulaVersion(id,G(row,0),checked((int)L(row,1)),S(row,2),Quantity(row,3,4),ingredients,groups,Date(row,6),row[5] as string);
+        var preparations = !HasPreparations(c,t) ? Array.Empty<FormulaPreparation>() : Rows(c,t,"SELECT preparation_version_id,dimension,quantity_atomic FROM formula_preparation WHERE version_id=$0 ORDER BY sequence",id)
+            .Select(p => new FormulaPreparation(G(p,0),Quantity(p,1,2))).ToArray();
+        var value = new FormulaVersion(id,G(row,0),checked((int)L(row,1)),S(row,2),Quantity(row,3,4),ingredients,groups,Date(row,6),row[5] as string,preparations);
         if (row[7] is not DBNull) value = new Formula(value.FormulaId,"REHYDRATION").PublishVersion(value,Date(row,7)).Versions.Single();
         return new(value,L(row,8));
     }
@@ -130,6 +136,10 @@ public sealed partial class SqliteRecipeStore(Database database) : IRecipeStore
     {
         var version = ReadFormula(c,t,id) ?? throw new KeyNotFoundException();
         _ = new Formula(version.Value.FormulaId,"VALIDATION").PublishVersion(version.Value,at);
+        // Lo mismo revisa la base al publicar; aquí se explica con los nombres.
+        var unpublished = version.Value.Preparations.Select(p => Rows(c,t,"SELECT f.name,v.version,v.state FROM formula_version v JOIN formula f ON f.id=v.formula_id WHERE v.id=$0",p.FormulaVersionId).Single())
+            .Where(r => S(r,2) != "PUBLISHED").Select(r => $"{S(r,0)} · versión {L(r,1)}").ToArray();
+        if (unpublished.Length != 0) throw new ArgumentException($"Publica primero las preparaciones que usa esta receta: {string.Join(", ",unpublished)}.");
         Publish(c,t,"formula_version",id,expectedRevision,at);
     });
     public void PublishProfile(Guid id, long expectedRevision, DateTimeOffset at) => Write((c,t) =>
@@ -176,6 +186,8 @@ public sealed partial class SqliteRecipeStore(Database database) : IRecipeStore
         using var cmd=Command(c,t,sql,values); using var reader=cmd.ExecuteReader(); var rows=new List<object[]>();
         while (reader.Read()) { var row=new object[reader.FieldCount]; reader.GetValues(row); rows.Add(row); } return rows;
     }
+    // Una base anterior a la migración 031 (copias de prueba de migraciones viejas) no tiene preparaciones dentro de preparaciones.
+    private static bool HasPreparations(SqliteConnection c, SqliteTransaction t) => Rows(c,t,"SELECT 1 FROM sqlite_master WHERE type='table' AND name='formula_preparation'").Count == 1;
     private static void Changed(int count) { if(count!=1) throw new RecipeConcurrencyException(); }
     private static int Limit(int value) => value is >=1 and <=200 ? value : throw new ArgumentOutOfRangeException(nameof(value));
     private static int Offset(int value) => value>=0 ? value : throw new ArgumentOutOfRangeException(nameof(value));

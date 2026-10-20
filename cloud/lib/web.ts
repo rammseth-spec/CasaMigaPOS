@@ -487,11 +487,16 @@ export async function recipes(q: Query, branch: string | null) {
   const formulaVersionLabel = new Map<string, { label: string; dimension: string }>();
   const policy = (v: unknown) => ({ EXACT_WHOLE_COUNT: 'ExactWholeCount', CEILING_WHOLE_COUNT: 'CeilingWholeCount', UNSPECIFIED: 'Unspecified' } as Record<string, string>)[s(v)] ?? 'NotApplicable';
   const line = (l: Row) => ({ itemId: s(l.item_id), item: item.get(s(l.item_id)) ?? 'Insumo', dimension: s(l.dimension), atomic: n(l.quantity_atomic), policy: policy(l.count_policy) });
+  // Nombre de cada versión, para mostrar las preparaciones que usa otra (masa dulce dentro de la masa enriquecida).
+  const versionLabel = new Map<string, string>();
+  for (const x of formulas) { const p = x.payload as { formula: Row; versions: Row[] }; for (const v of p.versions) versionLabel.set(s(v.id), `${s(p.formula.name)} · versión ${n(v.version)}${s(v.state) === 'DRAFT' ? ' (borrador)' : ''}`); }
   const formulaList = formulas.map(x => {
-    const p = x.payload as { formula: Row; versions: Row[]; ingredients: Row[]; groups: Row[]; options: Row[] };
+    const p = x.payload as { formula: Row; versions: Row[]; ingredients: Row[]; groups: Row[]; options: Row[]; preparations?: Row[] };
     const detail = (v: Row) => ({ id: s(v.id), version: n(v.version), name: s(v.name), state: s(v.state), revision: n(v.revision), notes: s(v.notes),
       yieldDimension: s(v.yield_dimension), yieldAtomic: n(v.yield_atomic),
       ingredients: p.ingredients.filter(i => s(i.version_id) === s(v.id)).map(line),
+      preparations: (p.preparations ?? []).filter(x => s(x.version_id) === s(v.id)).sort((a, b) => n(a.sequence) - n(b.sequence))
+        .map(x => ({ formulaVersionId: s(x.preparation_version_id), formula: versionLabel.get(s(x.preparation_version_id)) ?? 'Preparación', dimension: s(x.dimension), atomic: n(x.quantity_atomic) })),
       groups: p.groups.filter(g => s(g.version_id) === s(v.id)).map(g => ({ id: s(g.id),
         options: p.options.filter(o => s(o.version_id) === s(v.id) && s(o.group_id) === s(g.id))
           .sort((a, b) => (n(a.preference_rank) || 999) - (n(b.preference_rank) || 999) || n(a.sequence) - n(b.sequence))

@@ -25,7 +25,7 @@ Candidata a 1.0 para el piloto en sucursal ([PILOTO.md](PILOTO.md)). Manual del 
 
 ## Versiones de datos
 
-- Caja: migraciones hasta **030** (029 copia de ventas web, 030 índices de reportes).
+- Caja: migraciones hasta **031** (029 copia de ventas web, 030 índices de reportes, 031 preparaciones dentro de preparaciones).
 - Nube: migraciones hasta **009** (008 cambios al momento, 009 índices de reportes).
 - Las migraciones se aplican solas al abrir la caja o al arrancar la nube; ninguna borra datos.
 

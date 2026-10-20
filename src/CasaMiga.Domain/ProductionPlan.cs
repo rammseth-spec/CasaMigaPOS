@@ -109,6 +109,22 @@ public sealed class ProductionPlan
                 else Add(totals, ingredient.InventoryItemId, result.Quantity!.Value);
             }
         }
+        // Preparaciones dentro de preparaciones (masa dulce → masa enriquecida): cada una suma lo que necesita a la preparación que usa,
+        // en orden de dependencias, para que una masa compartida se calcule una sola vez con el total de todos sus usos.
+        foreach (var version in DependencyOrder(required.Keys.ToArray(), byId))
+        {
+            // Sin necesidad: la preparación que la usa ya no pudo calcularse exactamente y ese problema quedó anotado.
+            if (version.Preparations.Count == 0 || !required.TryGetValue(version.Id, out var need)) continue;
+            ProductionGuard.Require(version.State == ProductionVersionState.Published, ProductionError.InvalidVersion, version.Id);
+            var factor = ProductionScaling.Factor(need, version.BaseYield);
+            foreach (var preparation in version.Preparations)
+            {
+                var exact = factor.Multiply(preparation.Quantity.AtomicUnits);
+                if (exact.Denominator != 1)
+                    issues.Add(new(ProductionError.NonRepresentableScale, preparation.FormulaVersionId, version.Id, ExactAtomic: exact));
+                else Add(required, preparation.FormulaVersionId, new(preparation.Quantity.Dimension, exact.Numerator));
+            }
+        }
         var choices = selections.OrderBy(x => x.FormulaVersionId).ThenBy(x => x.GroupId).ToArray();
         ProductionGuard.Require(choices.Select(x => (x.FormulaVersionId, x.GroupId)).Distinct().Count() == choices.Length,
             ProductionError.InvalidAlternative);
@@ -170,6 +186,44 @@ public sealed class ProductionPlan
         if (issues.Count != 0) return new(null, issues, ineligible, requestedFormulas);
         return new(new(lines, formulas, totals.OrderBy(x => x.Key).Select(x => new PlannedIngredientTotal(x.Key, x.Value))),
             [], ineligible, requestedFormulas);
+    }
+
+    /// <summary>
+    /// Las versiones que necesita un plan: las que piden los perfiles y, dentro de ellas, las preparaciones que usan.
+    /// <paramref name="find"/> decide qué hacer con una versión que no existe.
+    /// </summary>
+    public static IReadOnlyList<FormulaVersion> RequiredVersions(IEnumerable<Guid> roots, Func<Guid, FormulaVersion> find)
+    {
+        var found = new Dictionary<Guid, FormulaVersion>();
+        var pending = new Queue<Guid>(roots);
+        while (pending.Count > 0)
+        {
+            var id = pending.Dequeue();
+            if (found.ContainsKey(id)) continue;
+            var version = find(id);
+            found.Add(id, version);
+            foreach (var preparation in version.Preparations) pending.Enqueue(preparation.FormulaVersionId);
+        }
+        return found.Values.ToArray();
+    }
+
+    /// <summary>Cada preparación antes de las que usa; una preparación que termina usándose a sí misma se rechaza.</summary>
+    private static IReadOnlyList<FormulaVersion> DependencyOrder(IEnumerable<Guid> roots, IReadOnlyDictionary<Guid, FormulaVersion> byId)
+    {
+        var order = new List<FormulaVersion>();
+        var done = new Dictionary<Guid, bool>();
+        void Visit(Guid id)
+        {
+            if (done.TryGetValue(id, out var finished)) { ProductionGuard.Require(finished, ProductionError.PreparationCycle, id); return; }
+            ProductionGuard.Require(byId.TryGetValue(id, out var version), ProductionError.InvalidVersion, id);
+            done[id] = false;
+            foreach (var preparation in version!.Preparations) Visit(preparation.FormulaVersionId);
+            done[id] = true;
+            order.Add(version);
+        }
+        foreach (var id in roots.OrderBy(x => x)) Visit(id);
+        order.Reverse();
+        return order;
     }
 
     private static InventoryQuantity Multiply(InventoryQuantity value, long count) =>

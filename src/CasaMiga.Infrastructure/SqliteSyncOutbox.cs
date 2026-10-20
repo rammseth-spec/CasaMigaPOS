@@ -155,6 +155,8 @@ public sealed class SqliteSyncOutbox(Database database)
                     ["ingredients"] = Many("SELECT i.* FROM formula_ingredient i JOIN formula_version v ON v.id=i.version_id WHERE v.formula_id=$id ORDER BY v.version,i.sequence"),
                     ["groups"] = Many("SELECT g.* FROM formula_alternative_group g JOIN formula_version v ON v.id=g.version_id WHERE v.formula_id=$id ORDER BY v.version,g.sequence"),
                     ["options"] = Many("SELECT o.* FROM formula_alternative_option o JOIN formula_version v ON v.id=o.version_id WHERE v.formula_id=$id ORDER BY v.version,o.group_id,o.sequence"),
+                    // Otras preparaciones que usa cada versión (masa dulce dentro de la masa enriquecida).
+                    ["preparations"] = Many("SELECT p.* FROM formula_preparation p JOIN formula_version v ON v.id=p.version_id WHERE v.formula_id=$id ORDER BY v.version,p.sequence"),
                 }
                 : null,
             "production_profile" => One("SELECT * FROM production_profile WHERE id=$id") is { } profile
