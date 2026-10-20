@@ -39,7 +39,7 @@ Candidata a 1.0 para el piloto en sucursal ([PILOTO.md](PILOTO.md)). Manual del 
 ## Limitaciones conocidas
 
 - La web necesita Internet; imprime con el navegador (mismo diseño de ticket que la caja) y no abre el cajón.
-- El ticket de la caja dice «Pago CASH» en efectivo (formato validado en la impresora; cambiarlo requiere probar en la impresora).
+- El ticket de la caja imprime «Pago: Efectivo», «Tarjeta» o «Transferencia» (ticket 1K.4E integrado de QA el 19/10/2026, con pruebas); el diseño vigente aún debe aprobarse en papel.
 - Las ventas web no descuentan inventario en la caja (el consumo automático está apagado).
 - Si una caja rechaza un producto nuevo que ya se vendió en la web, la venta queda registrada con un producto que la caja no tiene.
 - El instalador no está firmado digitalmente (Windows puede advertir al instalar).

@@ -14,6 +14,9 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Falló la publicación de la aplicación.' }
     & $Dotnet publish src/CasaMiga.Maintenance -c Release -r win-x64 --self-contained true "-p:Version=$Version" -o artifacts/tools
     if ($LASTEXITCODE -ne 0) { throw 'Falló la publicación de la herramienta de mantenimiento.' }
+    # Un instalador comercial nunca lleva el modo de prueba ni la entrada automática de una copia de desarrollo.
+    $dev = Get-ChildItem artifacts/win-x64, artifacts/tools -Recurse -File -Include development.settings.json, dev-autologin.json
+    if ($dev) { throw "La publicación contiene archivos de desarrollo: $($dev.FullName -join ', ')" }
     & $Iscc "/DAppVersion=$Version" installer/CasaMigaPOS.iss
     if ($LASTEXITCODE -ne 0) { throw 'Falló la compilación del instalador.' }
     $setup = Get-Item "artifacts/installer/CasaMigaPOS-$Version-setup.exe"

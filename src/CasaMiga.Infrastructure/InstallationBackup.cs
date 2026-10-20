@@ -11,6 +11,12 @@ public sealed class InstallationBackup(string dataDirectory)
         string? TerminalSha256 = null, int SchemaVersion = 0, Entry[]? Files = null);
     private const long MaxTotal = 16L * 1024 * 1024 * 1024;
     private const long MaxMedia = 5L * 1024 * 1024 * 1024;
+    private const long MaxSettings = 1024 * 1024;
+    /// <summary>
+    /// Configuración que también se respalda si existe. sync.json no: su llave sólo sirve en este equipo y usuario de Windows,
+    /// así que después de restaurar la caja se vuelve a registrar en la nube.
+    /// </summary>
+    private static readonly string[] SettingsFiles = ["printing.json", "operations-hub.json"];
     private static string Hash(string path) => ProductPhotoFileStore.Hash(path);
     private static TerminalIdentity ValidatePair(string directory)
     {
@@ -60,13 +66,24 @@ public sealed class InstallationBackup(string dataDirectory)
                     var destination = Path.Combine(temporary, entry.Path); Directory.CreateDirectory(Path.GetDirectoryName(destination)!); File.Copy(source, destination);
                     paths.Add(entry.Path);
                 }
-                manifest = new(2, terminal.Id, SchemaVersion: schema, Files: [Describe(temporary, "casamiga.db", "database"), Describe(temporary, "terminal.json", "terminal"), .. media]);
+                // Configuración de la caja que no vive en la base: la impresora de tickets y las notas y temporizadores del Centro operativo.
+                var settings = new List<Entry>();
+                foreach (var name in SettingsFiles)
+                {
+                    var source = Path.Combine(dataDirectory, name);
+                    if (!File.Exists(source)) continue;
+                    if (new FileInfo(source).Length is < 1 or > MaxSettings) throw new InvalidDataException($"El archivo de configuración {name} no tiene un tamaño válido.");
+                    File.Copy(source, Path.Combine(temporary, name)); paths.Add(name); settings.Add(Describe(temporary, name, "settings"));
+                }
+                manifest = new(2, terminal.Id, SchemaVersion: schema, Files: [Describe(temporary, "casamiga.db", "database"), Describe(temporary, "terminal.json", "terminal"), .. media, .. settings]);
             }
             File.WriteAllText(Path.Combine(temporary, "manifest.json"), JsonSerializer.Serialize(manifest)); paths.Add("manifest.json");
             using (var archive = ZipFile.Open(target + ".partial", ZipArchiveMode.Create))
                 foreach (var path in paths) archive.CreateEntryFromFile(Path.Combine(temporary, path), path);
             Directory.CreateDirectory(validation); ExtractValidated(target + ".partial", validation);
-            File.Move(target + ".partial", target, false); return target;
+            File.Move(target + ".partial", target, false);
+            Prune(backups, DateTime.UtcNow);
+            return target;
         }
         finally
         {
@@ -92,6 +109,32 @@ public sealed class InstallationBackup(string dataDirectory)
         return target;
     }
 
+    /// <summary>Respaldos locales que se conservan siempre (los más recientes), aunque tengan más de <see cref="KeepDays"/> días.</summary>
+    public const int KeepAtLeast = 20;
+    /// <summary>Días que se conserva un respaldo local; la misma retención que la nube (docs/BACKUPS.md).</summary>
+    public const int KeepDays = 30;
+    /// <summary>
+    /// Limpieza de la carpeta backups: sólo borra respaldos con más de 30 días y nunca los 20 más recientes, así que el único
+    /// respaldo existente nunca se borra. Sólo toca archivos con el nombre que pone <see cref="Create"/>; si uno no se puede borrar, se deja.
+    /// </summary>
+    public static IReadOnlyList<string> Prune(string backups, DateTime nowUtc)
+    {
+        var dated = Directory.GetFiles(backups, "casamiga-*.cmbackup").Select(path => (Path: path, At: CreatedAt(path)))
+            .Where(x => x.At is not null).OrderByDescending(x => x.At).ToArray();
+        var removed = new List<string>();
+        foreach (var (path, at) in dated.Skip(KeepAtLeast).Where(x => nowUtc - x.At!.Value > TimeSpan.FromDays(KeepDays)))
+        {
+            try { File.Delete(path); removed.Add(path); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+        }
+        return removed;
+    }
+    private static DateTime? CreatedAt(string path)
+    {
+        var name = Path.GetFileName(path);
+        return name.Length > 28 && DateTime.TryParseExact(name.AsSpan(9, 19), "yyyyMMddTHHmmssfffZ", System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var at) ? at : null;
+    }
+
     public string[] History() => Directory.Exists(Path.Combine(dataDirectory, "backups"))
         ? Directory.GetFiles(Path.Combine(dataDirectory, "backups"), "*.cmbackup").OrderDescending().ToArray() : [];
     private static void Extract(ZipArchiveEntry entry, string destination, long maximum)
@@ -108,7 +151,7 @@ public sealed class InstallationBackup(string dataDirectory)
     private static void ExtractValidated(string backup, string directory)
     {
         using var archive = ZipFile.OpenRead(backup);
-        if (archive.Entries.Count is < 3 or > 20003 || archive.Entries.Any(e => !ProductPhotoFileStore.SafeRelative(e.FullName))
+        if (archive.Entries.Count is < 3 or > 20005 || archive.Entries.Any(e => !ProductPhotoFileStore.SafeRelative(e.FullName))
             || archive.Entries.Select(e => e.FullName).Distinct(StringComparer.OrdinalIgnoreCase).Count() != archive.Entries.Count)
             throw new InvalidDataException("Rutas o contenido de backup inválidos.");
         var manifestEntry = archive.GetEntry("manifest.json") ?? throw new InvalidDataException("Falta manifiesto.");
@@ -123,7 +166,7 @@ public sealed class InstallationBackup(string dataDirectory)
             entries = [new("casamiga.db", archive.GetEntry("casamiga.db")?.Length ?? -1, manifest.DatabaseSha256 ?? "", "database"),
                 new("terminal.json", archive.GetEntry("terminal.json")?.Length ?? -1, manifest.TerminalSha256 ?? "", "terminal")];
         }
-        else if (manifest.Version == 2 && manifest.Files is { Length: >= 2 and <= 20002 }) entries = manifest.Files;
+        else if (manifest.Version == 2 && manifest.Files is { Length: >= 2 and <= 20004 }) entries = manifest.Files;
         else throw new InvalidDataException("Versión de backup no admitida.");
         if (entries.Length != archive.Entries.Count - 1
             || entries.Any(e => e is null || e.Path is null || e.Sha256 is null || !AllowedEntry(e) || e.Bytes < 1 || e.Bytes > MaxTotal
@@ -133,7 +176,7 @@ public sealed class InstallationBackup(string dataDirectory)
         foreach (var entry in entries)
         {
             var item = archive.GetEntry(entry.Path) ?? throw new InvalidDataException("Falta archivo listado.");
-            long limit = entry.Role switch { "original" => ProductPhotoService.MaxOriginalBytes, "thumbnail" => 2 * 1024 * 1024, "terminal" => 65536, "database" => MaxTotal, _ => 0 };
+            long limit = entry.Role switch { "original" => ProductPhotoService.MaxOriginalBytes, "thumbnail" => 2 * 1024 * 1024, "terminal" => 65536, "database" => MaxTotal, "settings" => MaxSettings, _ => 0 };
             if (item.Length != entry.Bytes || item.Length > limit) throw new InvalidDataException("Tamaño o rol inválido.");
             var path = Path.Combine(directory, entry.Path); Extract(item, path, limit); ProductPhotoFileStore.Verify(path, entry.Bytes, entry.Sha256);
         }
@@ -150,6 +193,7 @@ public sealed class InstallationBackup(string dataDirectory)
     {
         if (e.Role == "database") return e.Path == "casamiga.db";
         if (e.Role == "terminal") return e.Path == "terminal.json";
+        if (e.Role == "settings") return SettingsFiles.Contains(e.Path, StringComparer.Ordinal);
         if (!ProductPhotoFileStore.SafeRelative(e.Path)) return false;
         var parts = e.Path.Split('/');
         if (parts.Length != 4 || parts[0] != "product-images" || parts[1] != "v1" || !Guid.TryParseExact(parts[2], "N", out var id)

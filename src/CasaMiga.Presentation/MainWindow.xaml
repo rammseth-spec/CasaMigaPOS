@@ -81,7 +81,7 @@
       </StackPanel>
       <TextBlock Text="{Binding Message}" Margin="0,12,0,0" AutomationProperties.LiveSetting="Polite"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/><Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock>
       <TextBlock Text="Procesando…" Margin="0,10,0,0" Foreground="{DynamicResource TextSecondaryBrush}" Visibility="{Binding Busy,Converter={StaticResource VisibleWhen}}"/>
-      <TextBlock Text="Aplicación local · Versión de desarrollo" Style="{StaticResource CaptionText}" TextAlignment="Center" Margin="0,28,0,0"/>
+      <TextBlock Text="{Binding VersionCaption}" Style="{StaticResource CaptionText}" TextAlignment="Center" Margin="0,28,0,0"/>
      </StackPanel>
     </Grid>
    </Grid>

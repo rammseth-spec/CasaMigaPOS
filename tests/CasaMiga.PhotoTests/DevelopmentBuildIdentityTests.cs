@@ -16,4 +16,14 @@ public sealed class DevelopmentBuildIdentityTests
             expected += " · " + DevelopmentBuildIdentity.ReviewBuild;
         Assert.AreEqual(expected, DevelopmentBuildIdentity.WindowTitle(commercialTitle, true));
     }
+
+    [TestMethod]
+    public void TheSignInScreenShowsTheVersionAndOnlyACopyForTestingSaysDevelopment()
+    {
+        var normal = DevelopmentBuildIdentity.LoginCaption(false);
+        StringAssert.StartsWith(normal, "Aplicación local · Versión ");
+        Assert.DoesNotContain("desarrollo", normal);
+        Assert.DoesNotContain("+", normal, "The technical commit suffix is not shown.");
+        StringAssert.Contains(DevelopmentBuildIdentity.LoginCaption(true), "Versión de desarrollo");
+    }
 }

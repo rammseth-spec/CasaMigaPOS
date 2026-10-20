@@ -24,6 +24,10 @@ Salida: `artifacts/installer/CasaMigaPOS-<versión>-setup.exe` y su `.sha256`. `
 
 Instalación silenciosa por usuario en carpeta temporal, presencia de app/herramienta/desinstalador, `init` y `reset-admin` (rechazo correcto sin administrador) desde la instalación, desinstalación silenciosa con datos conservados.
 
+## Protección contra el modo de prueba (20/10/2026)
+
+`build-installer.ps1` se detiene si la publicación trae `development.settings.json` o `dev-autologin.json`; el `.iss` los excluye de la copia y, al instalar o actualizar, borra un `development.settings.json` que alguien hubiera dejado en la carpeta del programa. Así una instalación comercial nunca arranca en modo de prueba ni con entrada automática.
+
 ## Pendiente
 
 - Sin firma: SmartScreen mostrará «editor desconocido» (Más información → Ejecutar de todas formas).

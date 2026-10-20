@@ -44,13 +44,16 @@ Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "desktopicon"; Description: "Crear acceso directo en el escritorio"; GroupDescription: "Accesos directos:"
 
 [Files]
-Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "{#ToolsDir}\*"; DestDir: "{app}\tools"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Los archivos de una copia de desarrollo (modo de prueba y entrada automática) nunca entran en el instalador.
+Source: "{#SourceDir}\*"; DestDir: "{app}"; Excludes: "development.settings.json,dev-autologin.json"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#ToolsDir}\*"; DestDir: "{app}\tools"; Excludes: "development.settings.json,dev-autologin.json"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [InstallDelete]
 ; Archivos de la versión anterior se reemplazan completos para no mezclar ensamblados.
 Type: filesandordirs; Name: "{app}\*.dll"
 Type: filesandordirs; Name: "{app}\tools"
+; Una instalación comercial nunca arranca en modo de prueba aunque alguien haya copiado ese archivo a mano.
+Type: files; Name: "{app}\development.settings.json"
 
 [Icons]
 Name: "{group}\Casa Miga POS"; Filename: "{app}\CasaMiga.Presentation.exe"; WorkingDir: "{app}"

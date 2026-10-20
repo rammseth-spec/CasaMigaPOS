@@ -1,3 +1,17 @@
+# Arreglos para la entrega — 20/10/2026
+
+- **Versión visible:** la pantalla de entrada muestra «Aplicación local · Versión X.Y.Z» (la versión que pone el instalador, sin el sufijo del commit). Sólo una copia de desarrollo dice «Versión de desarrollo» con su identificador.
+- **Respaldos locales (`.cmbackup`):**
+  - incluyen `printing.json` y `operations-hub.json` si existen (rol `settings`, 1 MB máximo cada uno) y se restauran con lo demás;
+  - `sync.json` no se incluye: su llave sólo funciona en ese equipo;
+  - después de cada respaldo se borran sólo los de más de 30 días y se conservan siempre los 20 más recientes; un archivo con otro nombre no se toca. Documentado en `docs/BACKUPS.md`.
+- **Instalador:** `build-installer.ps1` se detiene si la publicación trae `development.settings.json` o `dev-autologin.json`. El `.iss` los excluye y borra un `development.settings.json` dejado en la carpeta del programa. La regla se probó en una carpeta de prueba. El instalador no se generó: esta sesión no ve Inno Setup.
+- **«Pago CASH»:** ya estaba resuelto; el ticket 1K.4E integrado de QA imprime «Pago: Efectivo» y tiene pruebas. Se corrigió `RELEASE_NOTES_1.0.md`.
+- **Escala:** WPF ya se adapta a la escala de Windows; falta probarlo en la pantalla de la tienda. No se cambió código.
+- **Pruebas nuevas:** `DeliveryHardeningTests` (3) y `TheSignInScreenShowsTheVersionAndOnlyACopyForTestingSaysDevelopment`.
+- **Verificación:** `verify.ps1` dio 760/762 generales (2 omitidas) y 245/245 WPF.
+- **Caja real:** no se instaló, porque `main` ya incluye la migración 031 (pendiente de aprobación).
+
 # Preparaciones dentro de preparaciones, respaldo de las ventas reales y recetas contra el recetario — 20/10/2026
 
 - **Ventas reales protegidas:**

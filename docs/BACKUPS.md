@@ -44,3 +44,12 @@ Probado de punta a punta con la nube local: la base restaurada coincide con la o
 3. La tarea está en `vercel.json` → `crons`.
 
 Espacio aproximado (copia demo de 4 semanas): base 5 MB → 1 MB comprimida; fotos 2.6 MB una sola vez. Con cambios cada hora en horario de tienda y la regla de 48 h / 30 días: unos 60–80 MB por caja.
+
+## Respaldos locales en la caja (20/10/2026)
+
+- **Cuándo:** al abrir la app (antes y después de migrar) y con `CasaMiga.Maintenance backup <carpeta de datos>`. Quedan en `<carpeta de datos>\backups` como `.cmbackup`.
+- **Qué llevan:** la base, la identidad de la caja (`terminal.json`), las fotos de los productos y, si existen, `printing.json` (impresora de tickets) y `operations-hub.json` (notas y temporizadores del Centro operativo).
+  - `sync.json` **no** va: su llave sólo funciona en ese equipo y usuario de Windows; después de restaurar se vuelve a registrar la caja en **Nube**.
+  - Un respaldo con configuración no lo restaura una versión anterior del programa: usa la herramienta de la misma versión o una más nueva.
+- **Cuánto se conserva:** se borran sólo los respaldos con más de **30 días**, y **siempre** se quedan los **20 más recientes**, aunque sean viejos. Así el único respaldo existente nunca se borra. Los archivos con otro nombre (una copia manual, por ejemplo) no se tocan.
+- **Fuera del equipo:** los respaldos locales viven en el mismo disco. Hasta publicar la nube, copia la carpeta `backups` a una USB.

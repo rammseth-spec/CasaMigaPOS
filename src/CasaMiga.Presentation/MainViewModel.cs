@@ -140,10 +140,14 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 
+    /// <summary>Pie de la pantalla de entrada con la versión instalada (o «Versión de desarrollo» en una copia de prueba).</summary>
+    public string VersionCaption { get; private set; } = DevelopmentBuildIdentity.LoginCaption(false);
+
     public async Task InitializeAsync(FoundationOptions options)
     {
         Operations = new OperationCenterViewModel(options.DataDirectory);
         runtime = new(options);
+        VersionCaption = DevelopmentBuildIdentity.LoginCaption(options.IsDevelopment);
         await Execute(async () =>
         {
             await Task.Run(() =>

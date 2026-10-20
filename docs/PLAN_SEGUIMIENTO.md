@@ -25,7 +25,7 @@ Fuente del plan: `docs/USER_REQUIREMENTS.md` ("UR", pedido original), `docs/road
 | 15 | Cajón: se abre al cobrar en efectivo y hay apertura manual auditada (UR 783–805) | Bloqueado en el código por falta de cajón | Hacerlo cuando haya cajón físico |
 | 16 | Roles, permisos y contraseñas (UR 688–718) | Hecho, con alta, restablecimiento y recuperación | En la caja real: cambiar la contraseña del administrador y quitar los usuarios de prueba |
 | 17 | Bitácora de auditoría (UR 722–743) | Hecho | — |
-| 18 | Respaldos manual y automático con restauración probada (UR 917–931) | Automático al abrir y manual; restauración probada el 20/10 con las 23 ventas | Copia fuera del equipo; limpiar respaldos viejos; incluir la configuración de la impresora |
+| 18 | Respaldos manual y automático con restauración probada (UR 917–931) | Automático al abrir y manual; restauración probada el 20/10 con las 23 ventas | Copia fuera del equipo (la limpieza de respaldos viejos y la configuración de la impresora en el respaldo están en `main` desde el 20/10, sin instalar) |
 | 19 | Reportes (UR 1099–1105) | Diario, comparativo, ganancia y CSV | Impresión de reportes |
 | 20 | v0.1 sin Internet: abrir → vender → cobrar → imprimir → corte → cajón → cierre (UR 1318–1346) | Todo menos el cajón; falta un cierre real | Cajón y primer cierre real |
 | 21 | Instalador (fuera en 1A y 1G; aprobado sin firma el 06/10) | Hecho y sin firma; el candidato es anterior a los cambios del 19 y 20/10 | Generarlo desde `main` y probarlo en Windows 10/11 limpios |
@@ -53,13 +53,13 @@ Fuente del plan: `docs/USER_REQUIREMENTS.md` ("UR", pedido original), `docs/road
 4. **Recetas reales** — datos del recetario (`RECETAS_ESTADO.md` B y `RECETARIO_PARA_COMPLETAR.md` paso 0). Después: publicar en una copia, recorrido completo y aprobación.
 5. **Programa para recetas** — degustación y consumo interno; aceite reutilizable. Ambos necesitan tu decisión.
 6. **Conteo real de inventario** y, después, encender el descuento por venta.
-7. **Instalar en la caja real lo ya verificado**: íconos (`4e8ec88`) y preparaciones dentro de preparaciones. Esto último cambia la base a la versión 31 y requiere tu aprobación.
-8. **Arreglos para la entrega**:
-   - quitar «Versión de desarrollo» del inicio de sesión y mostrar la versión;
-   - limpiar los respaldos viejos y respaldar la configuración de la impresora;
-   - evitar que el modo de prueba se cuele en el instalador;
-   - escala en pantallas con zoom;
-   - «Pago CASH» en el ticket.
+7. **Instalar en la caja real lo que está en `main`**: los íconos (`4e8ec88`) ya están instalados desde el 20/10. Faltan las preparaciones dentro de preparaciones y los arreglos del punto 8: cambian la base a la versión 31 y requieren tu aprobación.
+8. **Arreglos para la entrega** — hechos en `main` el 20/10, sin instalar todavía en la caja real:
+   - el inicio de sesión muestra «Versión 1.0.0» (sólo una copia de prueba dice «Versión de desarrollo»);
+   - los respaldos locales llevan la configuración de la impresora y del Centro operativo, y se borran sólo los de más de 30 días, conservando siempre los 20 más recientes;
+   - el instalador se detiene si la publicación trae archivos del modo de prueba y nunca los instala;
+   - «Pago CASH» ya estaba resuelto: el ticket integrado de QA imprime «Pago: Efectivo»;
+   - escala en pantallas con zoom: el programa ya se adapta a la escala de Windows. Sólo falta probarlo en la pantalla de la tienda (punto 10), no hace falta cambiar código.
 9. **Instalador** desde `main`, probado en Windows 10/11 limpios.
 10. **Pruebas físicas** — ticket en papel; cancelar un trabajo real de la cola; computadora de la tienda.
 11. **Publicar la nube** (Vercel) y revisar el CI de `main`.
