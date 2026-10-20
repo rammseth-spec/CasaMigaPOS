@@ -147,15 +147,16 @@ Sirve para: conchas, rol de canela, bollos, rosquita y masa enriquecida (cuernit
 | **Total** | **140 g** | ✅ |
 
 - Tanda: 1,100 g de masa dulce → 13 roles ✅
-- La caja no maneja cantidades fijas por tanda (ver paso 5). [ ] ¿Aceptan anotarlo por pieza redondeado? (≈84.6 g de masa y ≈10.8 g de relleno por rol) → ____
+- La caja la guarda tal cual (desde el 20/10/2026): **Tanda de rol de canela** = 1,100 g de masa dulce + 140 g de relleno → 13 roles. Se produce en tandas completas (13, 26…), sin repartir ni redondear por rol.
+- [ ] ¿Se hacen siempre tandas completas de 13? Si a veces se hacen menos, ¿cuántos? → ____
 
 ### 2.4 Masa dulce enriquecida
 
 Se toma masa dulce ya hecha y se le agregan **80 g de mantequilla por preparación** ✅.
 
 - Reparto habitual ✅: 12 cuernitos de mantequilla × 80 g, 7 daneses × 80 g, 5 cuernitos de almendra (bigote) × 70 g = 1,870 g.
-- [ ] **Medir:** ¿cuánta masa dulce se toma para cada preparación de masa enriquecida? ____ g
-- La caja no maneja "masa hecha con otra masa" (ver paso 5).
+- [ ] **Medir:** ¿cuánta masa dulce se toma para cada preparación de masa enriquecida? ____ g (no se supone 1,790 g)
+- La caja ya maneja "masa hecha con otra masa" (desde el 20/10/2026): **Masa enriquecida** = esa masa dulce + 80 g de mantequilla. Los cuernitos, daneses y bigotes usan la masa enriquecida, y al producir la masa dulce se descuenta una sola vez, junto con la de conchas y bollos. Sólo falta el dato de arriba.
 
 ### 2.5 Masa salada
 
@@ -379,16 +380,22 @@ Nombres que QA propone; elegir si se cambian en la caja:
 
 ---
 
-## Paso 5 — Lo que la caja todavía no sabe representar
+## Paso 5 — Lo que la caja sabe representar y lo que todavía no
 
-Para que nada se cuente dos veces, la caja necesita que cada ingrediente se descuente una sola vez. Hoy hay dos casos que no caben tal como se hacen en la panadería:
+Para que nada se cuente dos veces, cada ingrediente se descuenta una sola vez.
 
-1. **Masa hecha con otra masa** (masa enriquecida = masa dulce + 80 g de mantequilla). Opciones:
-   - [ ] a) Capturar la masa enriquecida con sus propios ingredientes (los de la masa dulce más la mantequilla), con su propio rendimiento medido (paso 2.4).
-   - [ ] b) Pedir a desarrollo que la caja permita usar una masa dentro de otra.
-2. **Cantidades fijas por tanda** (relleno del rol: 140 g para 13 roles; mantequilla de la masa enriquecida: 80 g por preparación). Opciones:
-   - [ ] a) Repartirlas por pieza y aceptar el redondeo (paso 2.3).
-   - [ ] b) Pedir a desarrollo cantidades fijas por tanda.
+**Resuelto el 20/10/2026** (ya no hay que repartir ni aproximar):
+
+1. **Masa hecha con otra masa:** una preparación puede usar otras ya hechas. La masa enriquecida usa masa dulce + 80 g de mantequilla, y al producir la masa dulce se calcula una sola vez con todos sus usos.
+2. **Cantidades fijas por tanda:** la tanda es una preparación que rinde piezas. La tanda de rol rinde 13 roles con 1,100 g de masa dulce y 140 g de relleno, y se produce en tandas completas.
+
+Una receta que usa otras sólo se publica cuando las que usa ya están publicadas.
+
+**Todavía no está en la caja** (primero necesita tu decisión, paso 0):
+
+- **Degustación y consumo interno** (la galleta de 50 g, el bolillo pequeño interno): hoy no hay cómo registrarlos aparte de la venta y la merma.
+- **Aceite de fritura que se reutiliza varios días:** no se descuenta por tanda; falta la regla de carga, reposición y descarte.
+- **Vainilla en gramos y en mililitros:** cada insumo se mide de una sola forma. Hay que elegir una unidad o separar dos insumos.
 
 ---
 
@@ -413,12 +420,15 @@ npm run cargar -- https://<dirección de la web> --enviar --esperar
 - Lo de cada pan espera a que sus preparaciones estén **publicadas** (la caja lo exige); volver a correr el script después de publicarlas.
 - En la prueba local de Windows (`scripts/run-local.ps1`) corre solo al final; la demo de la web (`npm run local -- … --demo`) ya trae todo en borrador.
 - Cuando el paso 2 tenga los rendimientos medidos, se corrige `recetario-borrador.json` y la versión en borrador en la caja.
+- Una preparación que usa otras (tanda de rol, masa enriquecida) se manda cuando la caja ya tiene esas otras. Si le falta una cantidad, va como `"cantidad": "por medir"` y **no se manda** hasta tener el dato: nunca se supone.
 
 Mientras algo esté en borrador **no descuenta inventario ni calcula producción**.
 
 ## Paso 7 — Revisar y publicar
 
-Por cada familia (empezar por una sola, por ejemplo donas):
+**Primera receta: polvorón** (es la que menos datos necesita; lista corta en `docs/RECETAS_ESTADO.md`). Con su rendimiento medido se publica primero en una copia y se comprueba el recorrido completo antes de tocar la caja real.
+
+Por cada familia (empezar por una sola):
 
 - [ ] Hacer una tanda real y registrarla en **Producción** con lo que salió.
 - [ ] Comparar lo que la caja calculó de insumos contra lo que realmente se usó.

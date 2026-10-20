@@ -41,6 +41,8 @@ Es una preparación derivada: se toma masa dulce base y se incorporan 80 g de ma
 
 La dependencia masa dulce → masa enriquecida → productos es obligatoria para evitar duplicar ingredientes. El motor actual no admite fórmula→fórmula; véase la auditoría técnica.
 
+> **Actualización 20/10/2026:** la caja ya admite una preparación dentro de otra (migración 031). La masa enriquecida se representa como masa dulce + 80 g de mantequilla, sin repartos por pieza; sólo falta el dato medido de la masa dulce que se toma. Ver `docs/RECETAS_ESTADO.md`.
+
 ## 5. Bollos y rosquita
 
 - Bollo de crema: masa dulce 80 g, crema pastelera comprada 15 g antes de hornear, azúcar glass 3 g y aproximadamente 1 ml de barnizado de huevo. Es el mismo producto que el antiguo CM-018, ya inactivo.

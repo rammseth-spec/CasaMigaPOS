@@ -43,6 +43,30 @@ Datos del recetario sin "aproximadamente", "pendiente" ni diferencias. Cada una 
 | Aceite de fritura que se reutiliza varios días | Falta en el programa; necesita la política de carga, reposición y descarte |
 | Vainilla en g y en ml | Cada insumo se mide de una sola forma; necesita tu decisión (una unidad o dos insumos distintos) |
 
+## Primera receta real: polvorón (CM-010)
+
+Es la que menos datos necesita: una sola masa, sin acabados ni barnizado (el barnizado es del polvorón **de nuez**) y con todos sus artículos ya dados de alta en la caja.
+
+**Lo que ya sé (recetario maestro, sección 8):**
+- Media tanda, la habitual: harina 900 g, manteca vegetal 500 g, azúcar estándar 500 g, huevo 1 pieza y Royal 40 g.
+- Sabor, uno de los dos: ralladura de 2 naranjas **o** esencia de vainilla 60 ml.
+- 100 g de masa cruda por polvorón.
+- En la caja: la masa de polvorón está en borrador; la receta del pan, en borrador en la copia de revisión; el artículo terminado «Polvorón» (PT-CM-010) existe.
+
+**Lo único que falta (4 datos):**
+1. **Peso de la masa cruda de una media tanda**, pesada completa antes de dividirla: ____ g. Hoy sólo está el reporte de 18 × 100 g = 1,800 g, que no cuadra con los ingredientes; no se usa.
+2. **Huevo y naranjas cuando se hace menos de una media tanda:** ¿se redondea hacia arriba (por ejemplo, 1 huevo aunque toque medio) o sólo se producen medias tandas completas? → ____
+3. **Sabor por omisión:** ¿naranja o vainilla? (el otro queda como alternativa) → ____
+4. **¿Cuántos polvorones salen de esa media tanda?** → ____ (si no son peso ÷ 100 g, decir qué pasa con lo que sobra)
+
+**En cuanto lleguen**, la herramienta `tools/recorrido-receta` (`dotnet run --project tools/recorrido-receta -- recorrido <copia> <rinde g> <arriba|exacto> <naranja|vainilla> [piezas]`) corre el recorrido completo en una copia. Hace esto:
+- pone el rendimiento medido y publica;
+- carga existencias de prueba marcadas «PRUEBA»;
+- produce;
+- comprueba que se descontó cada ingrediente y entró el pan.
+
+La herramienta ya se probó en una copia desechable con el rendimiento reportado. Ese ensayo no valida la receta y la copia se borró.
+
 ## Recorrido completo (preparaciones → pan terminado → producción → consumo → entrada de pan)
 
-**No se puede validar todavía con recetas reales:** ningún pan tiene todos sus datos confirmados (los rellenos completos dependen de la masa dulce o de la galleta). El recorrido sí está comprobado con recetas de prueba, incluida la forma de la masa enriquecida y de la tanda de roles. Se repetirá con datos reales en una copia en cuanto se confirme la primera masa.
+**Con recetas reales todavía no:** espera los 4 datos del polvorón. El recorrido está comprobado con recetas de prueba, incluidas la masa enriquecida y la tanda de roles, y la herramienta de arriba ya lo hace completo con la receta del polvorón.

@@ -71,12 +71,33 @@
     {
       "codigo": "RELLENO-ROL", "nombre": "Relleno de rol de canela", "tanda": "1 tanda (13 roles)",
       "rinde": "140 g",
-      "notas": "Va por tanda (140 g para 13 roles); en cada rol se reparte 1/13. Manteca: tipo por confirmar.",
+      "notas": "Va completo en la tanda de 13 roles (TANDA-ROL). Manteca: tipo por confirmar.",
       "ingredientes": [
         { "insumo": "MP-MAR-001", "cantidad": "80 g" },
         { "insumo": "MP-MAN-VEG", "cantidad": "20 g", "estado": "por medir" },
         { "insumo": "MP-CAN-001", "cantidad": "20 g" },
         { "insumo": "MP-AZU-EST", "cantidad": "20 g" }
+      ]
+    },
+    {
+      "codigo": "TANDA-ROL", "nombre": "Tanda de rol de canela", "tanda": "1 tanda (13 roles)",
+      "rinde": "13 pz",
+      "notas": "Recetario 18/10/2026, confirmado: 1,100 g de masa dulce y 140 g de relleno por tanda de 13 roles. Se produce en tandas completas; no se reparte ni se redondea por rol.",
+      "ingredientes": [],
+      "preparaciones": [
+        { "codigo": "MASA-DULCE", "cantidad": "1100 g" },
+        { "codigo": "RELLENO-ROL", "cantidad": "140 g" }
+      ]
+    },
+    {
+      "codigo": "MASA-ENRIQUECIDA", "nombre": "Masa dulce enriquecida", "tanda": "1 preparación",
+      "rinde": "1870 g", "rindeEstado": "por medir",
+      "notas": "Masa dulce ya hecha + 80 g de mantequilla por preparación; se reparte en 12 cuernitos de 80 g, 7 daneses de 80 g y 5 bigotes de 70 g (1,870 g). Falta medir cuánta masa dulce se toma: no se supone 1,790 g.",
+      "ingredientes": [
+        { "insumo": "MP-MAN-001", "cantidad": "80 g" }
+      ],
+      "preparaciones": [
+        { "codigo": "MASA-DULCE", "cantidad": "por medir" }
       ]
     },
     {
@@ -174,14 +195,14 @@
   "panes": [
     { "catalogo": 1, "pan": "Concha de vainilla", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "80 g" }, { "codigo": "COSTRA", "cantidad": "30 g", "estado": "aproximado" }] },
     { "catalogo": 2, "pan": "Concha de chocolate", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "80 g" }, { "codigo": "COSTRA", "cantidad": "30 g", "estado": "aproximado" }], "notas": "Falta el cacao por pieza (25 g a la parte de chocolate de la costra)." },
-    { "catalogo": 6, "pan": "Rol de canela", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "84.615 g" }, { "codigo": "RELLENO-ROL", "cantidad": "10.769 g" }], "notas": "1,100 g de masa dulce y 140 g de relleno para 13 roles, repartidos por pieza." },
+    { "catalogo": 6, "pan": "Rol de canela", "preparaciones": [{ "codigo": "TANDA-ROL", "cantidad": "1 pz" }], "notas": "Cada rol es 1 de los 13 de su tanda (TANDA-ROL: 1,100 g de masa dulce y 140 g de relleno); se produce en tandas completas." },
     { "catalogo": 17, "pan": "Bollo relleno de crema pastelera", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "80 g" }], "directos": [{ "insumo": "MP-CRE-PAS", "cantidad": "15 g" }, { "insumo": "MP-AZU-GLA", "cantidad": "3 g" }], "notas": "Barnizado de huevo ≈1 ml, por definir." },
     { "catalogo": 19, "pan": "Bollo relleno de zarzamora", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "85 g" }], "directos": [{ "insumo": "MP-REL-ZAR", "cantidad": "15 g" }] },
     { "catalogo": 32, "pan": "Rosquita de ajonjolí", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "80 g" }], "directos": [{ "insumo": "MP-AJO-001", "cantidad": "1.5 g", "estado": "aproximado" }] },
     { "catalogo": 33, "pan": "Bollo con ajonjolí", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "80 g" }], "directos": [{ "insumo": "MP-AJO-001", "cantidad": "6 g" }], "notas": "Barnizado: 1 huevo alcanza para ≈35 bollos, por definir." },
-    { "catalogo": 4, "pan": "Cuernito de mantequilla", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "76.578 g", "estado": "por medir" }], "directos": [{ "insumo": "MP-MAN-001", "cantidad": "3.422 g", "estado": "por medir" }], "notas": "Masa enriquecida (80 g) repartida en masa dulce y mantequilla, suponiendo 1,790 g de masa dulce + 80 g de mantequilla por preparación. Barnizado por definir." },
-    { "catalogo": 16, "pan": "Danés con crema pastelera", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "76.578 g", "estado": "por medir" }], "directos": [{ "insumo": "MP-MAN-001", "cantidad": "3.422 g", "estado": "por medir" }, { "insumo": "MP-CRE-PAS", "cantidad": "21 g" }], "notas": "Masa enriquecida (80 g) repartida como en el cuernito. Barnizado por definir." },
-    { "catalogo": 5, "pan": "Cuernito especial con almendra", "preparaciones": [{ "codigo": "MASA-DULCE", "cantidad": "67.005 g", "estado": "por medir" }], "directos": [{ "insumo": "MP-MAN-001", "cantidad": "2.995 g", "estado": "por medir" }, { "insumo": "MP-ALM-001", "cantidad": "6 g" }, { "insumo": "MP-AZU-GLA", "cantidad": "2 g" }], "notas": "Bigote: masa enriquecida (70 g) repartida como en el cuernito." },
+    { "catalogo": 4, "pan": "Cuernito de mantequilla", "preparaciones": [{ "codigo": "MASA-ENRIQUECIDA", "cantidad": "80 g" }], "notas": "80 g de masa enriquecida (MASA-ENRIQUECIDA). Barnizado de huevo por definir." },
+    { "catalogo": 16, "pan": "Danés con crema pastelera", "preparaciones": [{ "codigo": "MASA-ENRIQUECIDA", "cantidad": "80 g" }], "directos": [{ "insumo": "MP-CRE-PAS", "cantidad": "21 g" }], "notas": "80 g de masa enriquecida y 21 g de crema pastelera comprada antes de hornear. Barnizado por definir." },
+    { "catalogo": 5, "pan": "Cuernito especial con almendra", "preparaciones": [{ "codigo": "MASA-ENRIQUECIDA", "cantidad": "70 g" }], "directos": [{ "insumo": "MP-ALM-001", "cantidad": "6 g" }, { "insumo": "MP-AZU-GLA", "cantidad": "2 g" }], "notas": "Bigote: 70 g de masa enriquecida, 6 g de almendra fileteada y 2 g de azúcar glass." },
     { "catalogo": 31, "pan": "Baguette", "preparaciones": [{ "codigo": "MASA-SALADA", "cantidad": "100 g" }], "directos": [{ "insumo": "MP-AJO-001", "cantidad": "5 g", "estado": "aproximado" }], "notas": "Barnizado de huevo por definir." },
     { "catalogo": 3, "pan": "Bolillo mantequilla", "preparaciones": [{ "codigo": "MASA-SALADA", "cantidad": "100 g" }], "directos": [{ "insumo": "MP-MAN-001", "cantidad": "7 g", "estado": "aproximado" }] },
     { "catalogo": 8, "pan": "Dona de azúcar", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "85 g" }], "directos": [{ "insumo": "MP-AZU-EST", "cantidad": "9 g" }] },

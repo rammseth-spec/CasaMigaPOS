@@ -2,6 +2,9 @@
 
 Fecha de corte: 18/10/2026. Catálogo de referencia: copia aislada `work/phase1k4g-c-b-review-20261018`, consultada en modo de sólo lectura. Contiene 36 productos activos. La matriz no publica fórmulas ni perfiles y no autoriza movimientos de inventario.
 
+
+> **Actualización 20/10/2026:** la masa enriquecida (cuernito, danés, bigote) y el rol de canela ya no son inelegibles por el motor: la caja admite preparaciones dentro de otras y tandas. Siguen bloqueados por datos (masa dulce medida, cuánta masa dulce lleva la enriquecida, barnizados). Estado vigente: `docs/RECETAS_ESTADO.md`.
+
 ## Criterio de clasificación
 
 - **COMPATIBLE DESPUÉS DE RESOLVER DATOS:** el modelo vigente puede representar la estructura, pero faltan rendimientos exactos, cantidades, unidades o políticas COUNT.

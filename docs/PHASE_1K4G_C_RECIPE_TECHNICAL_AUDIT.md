@@ -14,6 +14,8 @@ La evidencia de código revisada fue `ProductionFormula.cs`, `ProductionProfile.
 
 ## B. ¿Puede una fórmula consumir otra fórmula?
 
+> **Actualización 20/10/2026:** sí, desde la migración 031 (`formula_preparation`). Una versión puede usar otras versiones ya preparadas; producir las consolida una sola vez en orden de dependencias, rechaza ciclos y sólo publica cuando las usadas ya están publicadas. Lo que sigue describe el estado del 18/10/2026.
+
 No. Los ingredientes de una fórmula son InventoryItems y no hay relación Formula→Formula. Esto bloquea una representación fiel de **masa enriquecida = masa dulce ya preparada + 80 g de mantequilla por tanda**. Aplanar los ingredientes de masa dulce dentro de la enriquecida duplicaría mantenimiento y puede duplicar consumo cuando la tanda comparte masa con otros productos. Se requiere una extensión explícita para preparaciones derivadas o un diseño de subpreparaciones antes de C-C-B.
 
 ## C. ¿Cómo se relaciona un producto con preparaciones e ingredientes?
@@ -29,6 +31,8 @@ Sí. `ProductionPlan` agrupa la demanda total por FormulaVersion antes de escala
 MASS y VOLUME se manejan en unidades atómicas exactas (miligramos y microlitros). Si el cociente no es representable de forma exacta, el plan falla con `NonRepresentableScale`; no redondea silenciosamente. COUNT exige una política explícita `ExactWholeCount` o `CeilingWholeCount`. Por ello 1,100 g / 13 roles y los sobres indivisibles de Tradi Pan no deben aproximarse durante la carga.
 
 ## F. ¿Soporta cantidades fijas por tanda?
+
+> **Actualización 20/10/2026:** se representan como una preparación que rinde piezas (la tanda de 13 roles = 1,100 g de masa dulce + 140 g de relleno) y que se produce en tandas completas. No se reparte ni se redondea por pieza. Lo que sigue describe el estado del 18/10/2026.
 
 No. Los requisitos del perfil son por pieza y la fórmula escala proporcionalmente respecto a su rendimiento. No existe un requisito fijo que se aplique una vez por tanda independientemente de las piezas. El relleno del rol (140 g por una tanda de 13) y los 80 g de mantequilla de la masa enriquecida requieren conservarse como cantidades de tanda o contar con una medición exacta compatible; dividir y redondear por pieza sería incorrecto.
 
@@ -80,6 +84,8 @@ Inventario soporta movimientos trazables y merma (`WASTE`), pero la operación v
 8. Diseñar y revisar fórmulas/perfiles antes de publicar; mantener consumo por ventas desactivado hasta un smoke completo.
 
 ## Cambios técnicos candidatos para una fase posterior
+
+> **Actualización 20/10/2026:** las dos primeras viñetas (subpreparaciones y requisitos por tanda) ya están hechas; ver `docs/RECETAS_ESTADO.md`.
 
 Estos cambios no se implementaron y requieren autorización separada:
 

@@ -1,3 +1,28 @@
+# Actualización a la versión 31 probada, contenido del instalador y primera receta preparada — 20/10/2026
+
+- **Actualización a la versión 31 sobre copias recientes de la caja real** (23 ventas, $1,633):
+  - Respaldo oficial con la caja cerrada, restaurado en una carpeta nueva (incluye `printing.json`).
+  - Arranque del programa nuevo sobre una copia en versión 30: respalda antes y después y sube a 31.
+  - Todas las tablas comparadas renglón por renglón con la base real: sólo cambian el registro de la migración 31 y la tabla nueva, vacía.
+- **Vuelta atrás probada:**
+  - La versión anterior (`4e8ec88`) no abre una base en 31 y no la daña.
+  - Sí abre la copia de la carpeta tomada antes de actualizar.
+  - No puede restaurar un `.cmbackup` hecho por la versión nueva, porque lleva la configuración de la impresora.
+  - Procedimiento en `docs/ACTUALIZAR_CAJA.md`. No se tocó la caja real.
+- **Instalador:**
+  - Inno Setup 6 no está en esta computadora (requisito: `winget install JRSoftware.InnoSetup`); el `.exe` no se generó.
+  - Lo que lleva sí se publicó y se probó: versión 1.0.0 autocontenida, 283 archivos, sin archivos de prueba.
+  - En una instalación aislada (carpeta propia y datos vacíos) abre sin «DESARROLLO», muestra «Versión 1.0.0», pide crear el primer administrador sin contraseñas predeterminadas, y su `CasaMiga.Maintenance` funciona.
+- **Primera receta real: polvorón.**
+  - Lo que ya se sabe y los 4 datos que faltan están en `docs/RECETAS_ESTADO.md`.
+  - `tools/recorrido-receta` prepara la receta en borrador en una copia. Con el rendimiento medido publica, pone existencias de prueba, produce y comprueba el descuento y la entrada de pan.
+  - Probada en una copia desechable con el rendimiento reportado (no valida la receta; la copia se borró).
+- **Recetario sin instrucciones viejas:**
+  - `recetario-borrador.json` tiene la tanda de rol (13 piezas = 1,100 g de masa dulce + 140 g de relleno) y la masa enriquecida (masa dulce «por medir» + 80 g de mantequilla); cuernito, danés y bigote la usan, sin repartos por pieza.
+  - El cargador (`cloud/scripts`) manda una preparación que usa otras cuando la caja ya las tiene, y nunca manda una cantidad «por medir». La demo hace lo mismo.
+  - `RECETARIO_PARA_COMPLETAR.md` (pasos 2.3, 2.4, 5, 6 y 7), el recetario maestro, la matriz y la auditoría técnica tienen la actualización.
+- **Pruebas:** nube 77/77, navegador 11/11 y `tsc` limpio. No hubo cambios de código de la caja en este bloque (la última `verify.ps1` es la de `2604333`: 760/762 y 245/245).
+
 # Arreglos para la entrega — 20/10/2026
 
 - **Versión visible:** la pantalla de entrada muestra «Aplicación local · Versión X.Y.Z» (la versión que pone el instalador, sin el sufijo del commit). Sólo una copia de desarrollo dice «Versión de desarrollo» con su identificador.

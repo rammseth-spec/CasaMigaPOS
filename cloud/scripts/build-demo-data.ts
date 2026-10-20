@@ -5,7 +5,7 @@ import { existsSync, readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 import { identityHash } from '../lib/auth.js';
-import { finishedCode, loadRecetario, namesOf, normalize, quantity, stableId, validate, type Line } from './recetario.js';
+import { finishedCode, loadRecetario, namesOf, normalize, POR_MEDIR, quantity, stableId, validate, type Line } from './recetario.js';
 
 const PASSWORDS: Record<string, string> = { Administrator: 'Admin#2026', Manager: 'Encargado#2026', Cashier: 'Cajero#2026' };
 const file = process.argv[2];
@@ -86,12 +86,19 @@ const formulas = latest('formula');
 for (const p of recetario.preparaciones) {
   const existing = formulas.find(f => normalize(String((f.payload.formula as Record<string, unknown>).code)) === normalize(p.codigo));
   const versionId = stableId(`preparacion:${p.codigo}:${recetario.fecha}`);
+  const id = stableId(`preparacion:${p.codigo}`), y = quantity(p.rinde), group = (g: number) => stableId(`preparacion:${p.codigo}:alternativa:${g}`);
+  // Una preparación con una cantidad «por medir» de otra queda sin versión, como en la caja: no se supone el dato.
+  const inner = p.preparaciones ?? [];
+  if (inner.some(r => r.cantidad === POR_MEDIR || !formulaVersion.has(r.codigo))) {
+    if (!existing) { push('formula', id, { formula: { id, code: p.codigo, name: p.nombre, active_version_id: null, revision: 1 }, versions: [], ingredients: [], groups: [], options: [], preparations: [] }); newFormulas++; }
+    continue;
+  }
   formulaVersion.set(p.codigo, versionId);
   if (existing) continue;
-  const id = stableId(`preparacion:${p.codigo}`), y = quantity(p.rinde), group = (g: number) => stableId(`preparacion:${p.codigo}:alternativa:${g}`);
   push('formula', id, {
     formula: { id, code: p.codigo, name: p.nombre, active_version_id: null, revision: 1 },
     versions: [{ id: versionId, formula_id: id, version: 1, state: 'DRAFT', yield_dimension: y.dimension, yield_atomic: y.atomic, name: recetario.nombreBorrador, notes: p.notas ?? null, revision: 1 }],
+    preparations: inner.map((r, i) => { const q = quantity(r.cantidad); return { version_id: versionId, sequence: i + 1, preparation_version_id: formulaVersion.get(r.codigo), dimension: q.dimension, quantity_atomic: q.atomic }; }),
     ingredients: p.ingredientes.map((l, i) => ({ version_id: versionId, sequence: i + 1, ...line(l) })),
     groups: (p.alternativas ?? []).map((_, g) => ({ version_id: versionId, id: group(g), sequence: g + 1, name: `Alternativa ${g + 1}` })),
     options: (p.alternativas ?? []).flatMap((options, g) => options.map((l, o) => ({ version_id: versionId, group_id: group(g), id: stableId(`preparacion:${p.codigo}:alternativa:${g}:${l.insumo}`),
@@ -106,6 +113,7 @@ for (const pan of recetario.panes) {
   const current = profiles.find(e => String((e.payload.profile as Record<string, unknown>).product_id) === product);
   const versions = (current?.payload.versions as Record<string, unknown>[] | undefined) ?? [];
   if (versions.some(v => v.name === recetario.nombreBorrador)) continue;
+  if (pan.preparaciones.some(r => !formulaVersion.has(r.codigo))) continue; // su preparación espera un dato por medir
   const id = current ? String((current.payload.profile as Record<string, unknown>).id) : stableId(`pan:${pan.catalogo}`);
   const versionId = stableId(`pan:${pan.catalogo}:${recetario.fecha}`);
   const finished = current ? String((current.payload.profile as Record<string, unknown>).finished_item_id) : addItem(finishedCode(pan.catalogo), pan.pan, 'FINISHED_GOOD', 'COUNT', [normalize(pan.pan)]);

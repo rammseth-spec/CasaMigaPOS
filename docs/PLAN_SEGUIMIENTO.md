@@ -50,17 +50,17 @@ Fuente del plan: `docs/USER_REQUIREMENTS.md` ("UR", pedido original), `docs/road
 1. **Ventas reales protegidas** — hecho el 20/10: respaldo completo y restauración probada en una carpeta aparte. Falta una copia fuera del equipo (USB o nube).
 2. **Cierre de la caja del 19/10** — con tus cantidades reales; no se registra nada sin ellas.
 3. **Acceso** — cambiar la contraseña del administrador y desactivar `encargado` y `cajero` en la caja real.
-4. **Recetas reales** — datos del recetario (`RECETAS_ESTADO.md` B y `RECETARIO_PARA_COMPLETAR.md` paso 0). Después: publicar en una copia, recorrido completo y aprobación.
+4. **Recetas reales** — la primera es el **polvorón**: faltan 4 datos (`RECETAS_ESTADO.md`, «Primera receta real»). Con ellos: publicar en una copia y correr el recorrido completo, que ya está automatizado. Después, el resto del recetario (`RECETAS_ESTADO.md` B y `RECETARIO_PARA_COMPLETAR.md` paso 0) y tu aprobación.
 5. **Programa para recetas** — degustación y consumo interno; aceite reutilizable. Ambos necesitan tu decisión.
 6. **Conteo real de inventario** y, después, encender el descuento por venta.
-7. **Instalar en la caja real lo que está en `main`**: los íconos (`4e8ec88`) ya están instalados desde el 20/10. Faltan las preparaciones dentro de preparaciones y los arreglos del punto 8: cambian la base a la versión 31 y requieren tu aprobación.
+7. **Instalar en la caja real lo que está en `main`**: los íconos (`4e8ec88`) ya están instalados desde el 20/10. Faltan las preparaciones dentro de preparaciones y los arreglos del punto 8, que cambian la base a la versión 31. La actualización y la vuelta atrás están probadas sobre copias recientes y explicadas en `ACTUALIZAR_CAJA.md`; espera tu aprobación.
 8. **Arreglos para la entrega** — hechos en `main` el 20/10, sin instalar todavía en la caja real:
    - el inicio de sesión muestra «Versión 1.0.0» (sólo una copia de prueba dice «Versión de desarrollo»);
    - los respaldos locales llevan la configuración de la impresora y del Centro operativo, y se borran sólo los de más de 30 días, conservando siempre los 20 más recientes;
    - el instalador se detiene si la publicación trae archivos del modo de prueba y nunca los instala;
    - «Pago CASH» ya estaba resuelto: el ticket integrado de QA imprime «Pago: Efectivo»;
    - escala en pantallas con zoom: el programa ya se adapta a la escala de Windows. Sólo falta probarlo en la pantalla de la tienda (punto 10), no hace falta cambiar código.
-9. **Instalador** desde `main`, probado en Windows 10/11 limpios.
+9. **Instalador** — lo que lleva (versión 1.0.0, autocontenida, sin archivos de prueba) ya se probó el 20/10 en una instalación aislada: abre sin «DESARROLLO», muestra «Versión 1.0.0», pide crear el primer administrador y su herramienta funciona. Falta generar el `.exe`: en esta computadora **no está Inno Setup 6** (`winget install JRSoftware.InnoSetup`). Después, probarlo en Windows 10/11 limpios.
 10. **Pruebas físicas** — ticket en papel; cancelar un trabajo real de la cola; computadora de la tienda.
 11. **Publicar la nube** (Vercel) y revisar el CI de `main`.
 12. **Decisiones abiertas** — descuentos e impuestos, pagos mixtos, corte impreso, cajón, compras y proveedores, pedidos, reglas de devolución, fotos reales.
