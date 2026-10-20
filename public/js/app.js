@@ -195,6 +195,11 @@ function setCloud(ok) {
     : 'No se pudo leer la nube; se reintenta sola. Toca para intentarlo ahora.';
 }
 
+// Íconos ilustrados del menú (nav/*.png, generados con IA; los mismos de la caja, assets/menu-ia/manifest.json). Sin ilustración, el de trazo.
+const NAV_ART = { vender: 'venta', caja: 'caja', charolas: 'charolas', ventas: 'ventas', reportes: 'reportes', catalogo: 'catalogo', inventario: 'inventario',
+  recetas: 'recetas', produccion: 'produccion', usuarios: 'usuarios', nube: 'nube', salir: 'salir' };
+const navArt = (id, fallback) => NAV_ART[id] ? h('img', { class: 'nav-art', src: `nav/${NAV_ART[id]}.png`, alt: '', width: 28, height: 28, decoding: 'async' }) : icon(fallback);
+
 function layout() {
   // Mismo orden y grupos que el riel de la caja: Venta, Caja, Charolas | Ventas, Reportes | Catálogo … Nube.
   const links = [];
@@ -202,10 +207,10 @@ function layout() {
   for (const v of allowed().filter(v => !v.hidden)) {
     if (group !== null && v.group !== group) links.push(h('hr', { class: 'nav-sep' }));
     group = v.group;
-    links.push(h('a', { href: `#/${v.id}`, class: 'nav-item', 'data-view': v.id, title: v.hint ?? v.title, onclick: () => document.body.classList.remove('menu-open') }, icon(v.icon), h('span', { text: v.label ?? v.title })));
+    links.push(h('a', { href: `#/${v.id}`, class: 'nav-item', 'data-view': v.id, title: v.hint ?? v.title, onclick: () => document.body.classList.remove('menu-open') }, navArt(v.id, v.icon), h('span', { text: v.label ?? v.title })));
   }
   $('nav-links').replaceChildren(...links);
-  $('logout').replaceChildren(icon(ICON.logout), h('span', { text: 'Salir' }));
+  $('logout').replaceChildren(navArt('salir', ICON.logout), h('span', { text: 'Salir' }));
   $('who-name').textContent = state.me.name;
   $('who-role').textContent = `${ROLE[state.me.role] ?? state.me.role}${state.me.admin ? ' · todas las sucursales' : ' · ' + (state.branches[0]?.name ?? '')}`;
   $('user-initials').textContent = initials(state.me.name);
