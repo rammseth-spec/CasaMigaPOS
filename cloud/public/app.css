@@ -113,6 +113,7 @@ button.link:hover { background: none; color: var(--text); }
 .nav-item:hover { background: color-mix(in srgb, var(--muted) 6%, transparent); }
 .nav-item[aria-current="page"] { background: var(--primary-soft); color: var(--accent-text); }
 .nav-item svg { width: 22px; height: 22px; flex: none; }
+.nav-item .nav-art { width: 28px; height: 28px; flex: none; object-fit: contain; }
 .nav-sep { border: 0; height: 1px; background: var(--line); margin: 6px 14px; flex: none; }
 .nav-bottom { display: flex; flex-direction: column; }
 .nav-bottom .nav-sep { margin: 6px 12px; }

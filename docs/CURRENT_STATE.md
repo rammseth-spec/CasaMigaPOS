@@ -1,3 +1,11 @@
+# Íconos ilustrados del menú lateral — 20/10/2026
+
+- Pedido del usuario: los íconos del menú lateral de la caja y de la web se cambian por ilustraciones planas a color generadas con IA (Higgsfield, `gpt_image_2_5`), con la paleta de la panadería: canasta (Venta), caja registradora (Caja), charola con pan (Charolas), tickets con reloj (Ventas), impresora térmica (Tickets), gráfica (Reportes), calendario (Diario), carta con panes (Catálogo), costal de harina y caja (Inventario), recetario con batidor (Recetas), gorro y rodillo (Producción), dos panaderos (Usuarios), nube con flechas (Nube) y puerta (Salir).
+- Archivos: 128 × 128 PNG con fondo transparente (se quitó también el blanco de los huecos encerrados, como el asa de la canasta). Copias idénticas en `src/CasaMiga.Presentation/Assets/Nav` (recurso del ensamblado) y `cloud/public/nav`; `assets/menu-ia/manifest.json` registra sección, generación, estilo y SHA-256.
+- Caja: `SidebarNavButton` muestra la imagen de su `Tag` (`NavIcon`, 28 × 28, escalado de alta calidad) y cada botón usa su `Nav*` de `Theme.xaml`. Conservan sus colores en la sección activa (verde sólido). Los íconos de trazo siguen para los demás botones.
+- Web: el menú usa `nav/*.png` (28 px) por sección (`NAV_ART` en `app.js`); sin ilustración, el ícono de trazo. Revisado a 1280 px y en celular (375 px, menú abierto), sin desbordes.
+- Pruebas: `MenuIconsTests` (caja: manifiesto, copias idénticas, 128 × 128 RGBA, cada botón con su ilustración) y `cloud/test/menu.test.ts` (cada sección de la web con su archivo). Nube 76/76.
+
 # Cobro que regresa solo y búsqueda escribiendo en cualquier parte del POS — 19/10/2026
 
 - **Cobro:** una venta confirmada sin nada pendiente (ticket enviado a la cola o cobro sin imprimir, sin errores) muestra el resultado con «Regresando al POS en 3 segundos…» y vuelve sola al POS (confirma el resultado igual que «Volver al POS»). Si el ticket no se pudo imprimir, el cuadro se queda abierto y aparece «Reintentar ticket»; ese botón ya no se muestra deshabilitado cuando no aplica.

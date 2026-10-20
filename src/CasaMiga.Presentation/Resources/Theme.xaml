@@ -108,7 +108,7 @@
   <Setter Property="MinWidth" Value="44"/><Setter Property="MinHeight" Value="44"/><Setter Property="Width" Value="44"/><Setter Property="Height" Value="44"/><Setter Property="Padding" Value="0"/><Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}"/>
   <Setter Property="ContentTemplate"><Setter.Value><DataTemplate><Viewbox Width="20" Height="20"><Canvas Width="24" Height="24"><Path Data="{Binding Tag,RelativeSource={RelativeSource AncestorType=Button}}" Stroke="{Binding Foreground,RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.9" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Canvas></Viewbox></DataTemplate></Setter.Value></Setter>
  </Style>
- <!-- Íconos de trazo (cuadrícula de 24): se usan en Tag de SidebarNavButton e IconButton. -->
+ <!-- Íconos de trazo (cuadrícula de 24): se usan en Tag de IconButton y en otras pantallas; el menú lateral usa los ilustrados (Nav*). -->
  <Geometry x:Key="IconSale">M5,8 L19,8 L17.8,20.2 Q17.7,21 16.8,21 L7.2,21 Q6.3,21 6.2,20.2 Z M9,8 L9,7 A3,3 0 0 1 15,7 L15,8</Geometry>
  <Geometry x:Key="IconCash">M5,6 L19,6 Q21,6 21,8 L21,17 Q21,19 19,19 L5,19 Q3,19 3,17 L3,8 Q3,6 5,6 Z M3,10 L21,10 M15.5,14.5 L17.5,14.5</Geometry>
  <Geometry x:Key="IconTray">M3,16 L21,16 L19,19.5 L5,19.5 Z M6,16 A6,6 0 0 1 18,16</Geometry>
@@ -134,6 +134,23 @@
  <Geometry x:Key="IconAlert">M12,3.5 L21.5,20 L2.5,20 Z M12,9.5 L12,14 M12,17 L12,17.2</Geometry>
  <Geometry x:Key="IconCalendar">M6,5 L18,5 Q20,5 20,7 L20,18 Q20,20 18,20 L6,20 Q4,20 4,18 L4,7 Q4,5 6,5 Z M4,10 L20,10 M8,3 L8,7 M16,3 L16,7 M8,14 L12,14</Geometry>
 
+ <!-- Íconos ilustrados del menú lateral (generados con IA, assets/menu-ia/manifest.json): 128 × 128 con fondo transparente, los mismos de la web
+      (cloud/public/nav). Conservan sus colores también en la sección activa. -->
+ <BitmapImage x:Key="NavVenta" UriSource="/CasaMiga.Presentation;component/Assets/Nav/venta.png"/>
+ <BitmapImage x:Key="NavCaja" UriSource="/CasaMiga.Presentation;component/Assets/Nav/caja.png"/>
+ <BitmapImage x:Key="NavCharolas" UriSource="/CasaMiga.Presentation;component/Assets/Nav/charolas.png"/>
+ <BitmapImage x:Key="NavVentas" UriSource="/CasaMiga.Presentation;component/Assets/Nav/ventas.png"/>
+ <BitmapImage x:Key="NavTickets" UriSource="/CasaMiga.Presentation;component/Assets/Nav/tickets.png"/>
+ <BitmapImage x:Key="NavReportes" UriSource="/CasaMiga.Presentation;component/Assets/Nav/reportes.png"/>
+ <BitmapImage x:Key="NavDiario" UriSource="/CasaMiga.Presentation;component/Assets/Nav/diario.png"/>
+ <BitmapImage x:Key="NavCatalogo" UriSource="/CasaMiga.Presentation;component/Assets/Nav/catalogo.png"/>
+ <BitmapImage x:Key="NavInventario" UriSource="/CasaMiga.Presentation;component/Assets/Nav/inventario.png"/>
+ <BitmapImage x:Key="NavRecetas" UriSource="/CasaMiga.Presentation;component/Assets/Nav/recetas.png"/>
+ <BitmapImage x:Key="NavProduccion" UriSource="/CasaMiga.Presentation;component/Assets/Nav/produccion.png"/>
+ <BitmapImage x:Key="NavUsuarios" UriSource="/CasaMiga.Presentation;component/Assets/Nav/usuarios.png"/>
+ <BitmapImage x:Key="NavNube" UriSource="/CasaMiga.Presentation;component/Assets/Nav/nube.png"/>
+ <BitmapImage x:Key="NavSalir" UriSource="/CasaMiga.Presentation;component/Assets/Nav/salir.png"/>
+
  <!-- Menú lateral: riel blanco con ícono arriba y nombre corto abajo; la sección activa en verde suave. -->
  <Style x:Key="SidebarGroupText" TargetType="TextBlock" BasedOn="{StaticResource EyebrowText}">
   <Setter Property="FontSize" Value="10"/><Setter Property="TextAlignment" Value="Center"/><Setter Property="Margin" Value="0,12,0,4"/><Setter Property="Opacity" Value="0.8"/>
@@ -146,7 +163,7 @@
     <Grid>
      <Border x:Name="HoverOverlay" Background="{TemplateBinding Foreground}" Opacity="0" CornerRadius="12" IsHitTestVisible="False"/>
      <StackPanel x:Name="NavGrid" Margin="{TemplateBinding Padding}" VerticalAlignment="Center">
-      <Viewbox Width="24" Height="24" HorizontalAlignment="Center"><Canvas Width="24" Height="24"><Path x:Name="NavIcon" Data="{Binding Tag,RelativeSource={RelativeSource TemplatedParent}}" Stroke="{TemplateBinding Foreground}" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"/></Canvas></Viewbox>
+      <Image x:Name="NavIcon" Source="{Binding Tag,RelativeSource={RelativeSource TemplatedParent}}" Width="28" Height="28" HorizontalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality"/>
       <ContentPresenter x:Name="NavLabel" Margin="0,4,0,0" HorizontalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}" RecognizesAccessKey="True">
        <ContentPresenter.Resources><Style TargetType="TextBlock"><Setter Property="FontSize" Value="13"/><Setter Property="TextAlignment" Value="Center"/><Setter Property="TextWrapping" Value="NoWrap"/></Style></ContentPresenter.Resources>
       </ContentPresenter>

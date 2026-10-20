@@ -10,6 +10,9 @@
     <None Include="../../docs/catalog/catalogo-autorizado-v2.csv" Link="Catalog/catalogo-autorizado-v2.csv" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../docs/phase1k2c-provisional-map.md" Link="Catalog/phase1k2c-provisional-map.md" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../../assets/catalog-provisional-ia/*.*" Link="Catalog/photos/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../assets/menu-ia/manifest.json" Link="Menu/manifest.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../src/CasaMiga.Presentation/Assets/Nav/*.png" Link="Menu/caja/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../cloud/public/nav/*.png" Link="Menu/web/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Compile Include="../../src/CasaMiga.Presentation/InventoryViewModel.cs" Link="Presentation/InventoryViewModel.cs" />
     <Compile Include="../../src/CasaMiga.Presentation/InventoryOperationPreview.cs" Link="Presentation/InventoryOperationPreview.cs" />
     <Compile Include="../../src/CasaMiga.Presentation/InventoryDisplay.cs" Link="Presentation/InventoryDisplay.cs" />

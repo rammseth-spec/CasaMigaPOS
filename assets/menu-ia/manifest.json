@@ -1,0 +1,132 @@
+{
+  "description": "Íconos ilustrados del menú lateral (caja de escritorio y web). 128 × 128 PNG con fondo transparente: el fondo blanco de la imagen generada se quitó también en los huecos encerrados y se recortó al dibujo. Copias idénticas en src/CasaMiga.Presentation/Assets/Nav y cloud/public/nav.",
+  "style_prompt": "Flat vector app icon, simple bold rounded shapes, minimal detail, consistent thick rounded outline in dark chocolate brown, limited warm bakery palette of wheat tan, golden crust, cream, avocado green and a touch of terracotta, cream instead of white for light areas, no gradients, no shadows, no text, single object centered with generous margin, isolated on a pure white background, square composition, part of a consistent icon set",
+  "icons": [
+    {
+      "file": "venta.png",
+      "section": "Venta",
+      "subject": "Canasta con baguette y pan dulce",
+      "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+      "job_id": "7a7680c9-141e-4d46-8d51-d9bbcb3e4504",
+      "generated_utc": "2026-10-20T06:45:08Z",
+      "sha256": "c2537c1072daec60155b3d9a1be652ef246f6b1c894e4b40d24c9dc01f21a0a1"
+    },
+    {
+      "file": "caja.png",
+      "section": "Caja",
+      "subject": "Caja registradora con el cajón abierto",
+      "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+      "job_id": "49cd2bbf-3c69-47f9-ac86-3e2ac5422fba",
+      "generated_utc": "2026-10-20T06:45:09Z",
+      "sha256": "4b43fbb805ea234fda2563fa83ef86d41486e80513a04de276310056fed2d6db"
+    },
+    {
+      "file": "charolas.png",
+      "section": "Charolas",
+      "subject": "Charola con concha y dos panes",
+      "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+      "job_id": "0dabb266-0a61-4cc3-8e2c-0999e3ee6034",
+      "generated_utc": "2026-10-20T06:45:08Z",
+      "sha256": "97622e5022c7097ea05d2e180cb6333017a64495c13bfe30fcad3782c972103b"
+    },
+    {
+      "file": "ventas.png",
+      "section": "Ventas",
+      "subject": "Tickets de venta con reloj",
+      "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+      "job_id": "1ebb3fbc-c8e1-4af3-badb-46bd02bd4d56",
+      "generated_utc": "2026-10-20T06:45:06Z",
+      "sha256": "33fe1c9e7010f080296413e989e63069c5d0a7dc8df64e959d43c2934e224ce7"
+    },
+    {
+      "file": "tickets.png",
+      "section": "Tickets",
+      "subject": "Impresora térmica imprimiendo un ticket",
+      "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+      "job_id": "0ea26a03-f18d-416f-8778-d9648cf277e4",
+      "generated_utc": "2026-10-20T06:45:05Z",
+      "sha256": "ca28a4a63e303b49503600e4d26e3cd29ef85603e7de1a00221ab21af8b8e151"
+    },
+    {
+      "file": "reportes.png",
+      "section": "Reportes",
+      "subject": "Gráfica de barras con flecha hacia arriba",
+      "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+      "job_id": "60efe120-9652-4a8e-b2ed-946a6831900b",
+      "generated_utc": "2026-10-20T06:45:08Z",
+      "sha256": "ae5515eb0046e4e3553d43f6c1abbc4f4b1c79d039783c1e4916bfd17d28cb3d"
+    },
+    {
+      "file": "diario.png",
+      "section": "Diario",
+      "subject": "Hoja de calendario con palomita",
+      "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+      "job_id": "7b2aa46c-843b-4701-8345-0e31e521e4f4",
+      "generated_utc": "2026-10-20T06:45:09Z",
+      "sha256": "8bc3b9bcaa0404976b32a0ad11d321bbee53e6e85fea35939deed426ec78318a"
+    },
+    {
+      "file": "catalogo.png",
+      "section": "Catálogo",
+      "subject": "Carta abierta con cuatro panes",
+      "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+      "job_id": "126f2499-7c42-4954-9f5e-d9a550195ddb",
+      "generated_utc": "2026-10-20T06:45:07Z",
+      "sha256": "cd7861153d949f0e36344d21cd92ba1e6a26a08330bb27cb24ff316abd738fb0"
+    },
+    {
+      "file": "inventario.png",
+      "section": "Inventario",
+      "subject": "Costal de harina y caja",
+      "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+      "job_id": "e7199e80-b81b-4cd0-9ec7-d8d73e5bc93e",
+      "generated_utc": "2026-10-20T06:45:07Z",
+      "sha256": "bcd59e91197703ba0dc682d41cd20a848671c7c7b580e759ed2f15a47d2afbc9"
+    },
+    {
+      "file": "recetas.png",
+      "section": "Recetas",
+      "subject": "Recetario con batidor",
+      "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+      "job_id": "79757f2b-f325-439c-9795-1db4c0e60c92",
+      "generated_utc": "2026-10-20T06:45:09Z",
+      "sha256": "9f3bdd61baef7d25aa947c693ce3d42c96921f2fb894f874f3043d1f495b07f8"
+    },
+    {
+      "file": "produccion.png",
+      "section": "Producción",
+      "subject": "Gorro de panadero con rodillo",
+      "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+      "job_id": "9c5074b2-af4f-40fb-b847-904c901dbc2a",
+      "generated_utc": "2026-10-20T06:45:09Z",
+      "sha256": "798216b1c0e589541a13582f7eb0b7f0c775e5d622974039cd70a45b6f1d58c6"
+    },
+    {
+      "file": "usuarios.png",
+      "section": "Usuarios",
+      "subject": "Dos panaderos con mandil",
+      "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+      "job_id": "6156a164-0c7c-426c-86c5-54db0d41b4fc",
+      "generated_utc": "2026-10-20T06:45:05Z",
+      "sha256": "9a3910d314cf98edbff34af4d4fa729b101363fb5adb02e20b7620c7e5309e2e"
+    },
+    {
+      "file": "nube.png",
+      "section": "Nube",
+      "subject": "Nube con flechas de sincronizar",
+      "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+      "job_id": "cb4137f9-b29e-48ff-b245-a02aecd8eb65",
+      "generated_utc": "2026-10-20T06:45:12Z",
+      "sha256": "468e220029af652f64c0fc61e46d1b7434be5e5e65cb42ba99da192dc25d7304"
+    },
+    {
+      "file": "salir.png",
+      "section": "Salir",
+      "subject": "Puerta con flecha de salida",
+      "source": "IA generativa (Higgsfield, modelo gpt_image_2_5)",
+      "job_id": "ff0bf223-3da8-4f76-9d11-77d4123eff47",
+      "generated_utc": "2026-10-20T06:45:12Z",
+      "sha256": "ba50bcab695b552890891104416fcc14096798acb9d6ed1da8a3283d14e03f37"
+    }
+  ]
+}
