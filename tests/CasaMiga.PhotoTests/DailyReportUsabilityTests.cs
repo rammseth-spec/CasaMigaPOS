@@ -74,11 +74,11 @@ public sealed class DailyReportUsabilityTests
             Assert.IsTrue(VisibleText(view, "Ventas por hora"));
             Assert.IsTrue(model.DailyReport!.HasHourlySales);
             Assert.IsTrue(Descendants<Border>(view).Any(x => AutomationProperties.GetName(x).Contains("ticket", StringComparison.Ordinal)));
-            // Riel del diseño QAv1: nombre corto visible y el completo en el nombre accesible; el ícono es una geometría del tema.
+            // Riel del diseño QAv1: nombre corto visible y el completo en el nombre accesible; el ícono es la ilustración del tema (Assets/Nav, 20/10/2026).
             var navigation = Descendants<Button>(window).Single(x => AutomationProperties.GetName(x) == "Ir a Reporte diario");
             Assert.AreEqual("Diario", navigation.Content);
-            Assert.IsTrue(navigation.Tag is Geometry);
-            Assert.IsTrue(Descendants<System.Windows.Shapes.Path>(navigation).Any(), "The navigation entry must render its vector icon.");
+            Assert.IsTrue(navigation.Tag is System.Windows.Media.Imaging.BitmapSource { PixelWidth: 128 }, "The navigation entry uses its illustrated icon.");
+            Assert.IsTrue(Descendants<Image>(navigation).Any(x => x.Name == "NavIcon" && x.Source is System.Windows.Media.Imaging.BitmapSource), "The navigation entry must render its illustrated icon.");
             var fullScreen = (Button)window.FindName("FullScreenButton");
             Assert.IsTrue(fullScreen.IsVisible);
             Assert.AreEqual("Pantalla completa · F11", fullScreen.ToolTip);
