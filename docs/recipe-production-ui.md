@@ -10,6 +10,8 @@ Disponible desde 1J.4 para instalaciones de desarrollo. `Administrator` ve y con
 
 La lista separa fórmulas y perfiles de producto. Las versiones publicadas son históricas e inmutables; los cambios se realizan creando un nuevo borrador. El editor de fórmulas captura rendimiento, dimensión, ingredientes, cantidades operativas (`g`, `kg`, `ml`, `L`, `pieza`), política COUNT y grupos de alternativas con preferencia. El editor de perfiles vincula producto terminado, artículo terminado, fórmula publicada y requisitos directos. Los identificadores técnicos no son parte del flujo habitual.
 
+**Preparaciones que usa esta receta (20/10/2026):** el editor de fórmulas tiene además una tabla para usar otras recetas ya preparadas, en una unidad compatible con su rendimiento: masa dulce dentro de la masa enriquecida, o masa dulce y relleno en la tanda de 13 roles. Se puede elegir una receta en borrador, pero la que la usa sólo se publica cuando las que usa están publicadas. Al producir, cada masa se calcula una sola vez con todos sus usos.
+
 ## Producción
 
 Nueva producción permite agregar varios productos con cantidad planeada y llama `PrepareProduction` mediante **Calcular necesidades**. El preview muestra preparaciones agregadas, insumos, necesario, disponible y todos los faltantes; no reserva inventario. **Crear producción** persiste un DRAFT bloqueado.

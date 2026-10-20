@@ -112,7 +112,7 @@ En **Reportes** elige el periodo (Hoy, Ayer, Últimos 7 días, Este mes o fechas
 ### Inventario, recetas y producción
 
 - **Inventario**: **Entrada** (lo que llega), **Merma** (con motivo). El **conteo físico** lo hace el administrador.
-- **Recetas**: fórmulas (preparaciones) y perfiles de cada pan, con versiones. Sólo el administrador las configura.
+- **Recetas**: fórmulas (preparaciones) y perfiles de cada pan, con versiones. Una receta puede usar otras ya preparadas (por ejemplo, la masa enriquecida usa masa dulce). Sólo el administrador las configura.
 - **Producción**: plan de piezas → **Calcular necesidades** (dice si falta algo) → **Preparar registro** → al terminar, **Registrar producción** con lo que realmente salió.
 
 ## 4. Administrador

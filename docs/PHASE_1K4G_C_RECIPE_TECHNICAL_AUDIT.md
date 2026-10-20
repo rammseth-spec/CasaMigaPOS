@@ -103,7 +103,7 @@ C-C-B debe comenzar como preparación de datos en copia aislada: inventariar ins
 Plan por etapas verificables:
 
 1. **Ingredientes:** crear en copia aislada InventoryItems verificados, uno por insumo físico y dimensión; resolver primero unidades y alternativas.
-2. **Masas/preparaciones:** comenzar por fórmulas proporcionales con rendimiento exacto. La masa salada, dona y masa dulce son candidatas estructurales, pero ninguna se publica hasta medir el rendimiento. Costra, polvorón, galleta y muerto siguen detrás de sus inconsistencias. Masa enriquecida y rol esperan decisión arquitectónica.
+2. **Masas/preparaciones:** comenzar por fórmulas proporcionales con rendimiento exacto. La masa salada, dona y masa dulce son candidatas estructurales, pero ninguna se publica hasta medir el rendimiento. Costra, polvorón, galleta y muerto siguen detrás de sus inconsistencias. Masa enriquecida y rol esperaban decisión arquitectónica; desde el 20/10/2026 se representan como preparaciones dentro de otras y sólo esperan datos medidos.
 3. **Terminados:** crear InventoryItems COUNT distintos para cada SKU fabricado y para cada artículo de reventa controlado.
 4. **Perfiles/catálogo:** asociar fórmulas y directos sin repetir insumos, y hacer coincidir el terminado del perfil con el vínculo del ProductId.
 5. **Validación:** ejecutar en fixture copiada previews multiproducto, producción real menor/igual/mayor, recuperación, merma separada y venta; auditar ledger y saldos.
