@@ -28,6 +28,23 @@ Instalación silenciosa por usuario en carpeta temporal, presencia de app/herram
 
 `build-installer.ps1` se detiene si la publicación trae `development.settings.json` o `dev-autologin.json`; el `.iss` los excluye de la copia y, al instalar o actualizar, borra un `development.settings.json` que alguien hubiera dejado en la carpeta del programa. Así una instalación comercial nunca arranca en modo de prueba ni con entrada automática.
 
+## Instalador 1.0.0 probado en una instalación aislada (20/10/2026)
+
+Generado en esta computadora con Inno Setup 6.7.3 (instalado por usuario con `winget install JRSoftware.InnoSetup --scope user`) desde `main` `c1a84b4`.
+
+- Archivo: `artifacts/installer/CasaMigaPOS-1.0.0-setup.exe`, 72 MB.
+- SHA-256: `B3BD35F4EAC676293921514068E54E107849D1272AB80E8F5E941C3330BA45CD`.
+
+| Prueba | Resultado |
+|---|---|
+| Instalar sin preguntas sólo para el usuario actual en una carpeta de prueba (`/VERYSILENT /CURRENTUSER /DIR=… /TASKS=""`) | 646 archivos, versión 1.0.0, sin archivos del modo de prueba, registrado en «Programas» del usuario |
+| Abrir con una carpeta de datos vacía | Sin «DESARROLLO», «Aplicación local · Versión 1.0.0», pide crear el primer administrador |
+| Abrir con una copia de la caja real en versión 30 | Respalda antes y después, sube a 31, pide iniciar sesión (sin entrada automática); todas las tablas iguales a la base real salvo el registro de la migración 31 |
+| Instalar otra vez encima, con un `development.settings.json` dejado a mano en la carpeta del programa | Lo borra, deja los mismos 646 archivos y un solo registro; abre normal con los datos existentes |
+| Desinstalar sin preguntas | Quita la carpeta del programa, el registro y el menú Inicio; las carpetas de datos quedan intactas |
+
+Los datos de prueba se pasaron con `CASAMIGA_DATA_DIR`; no se usó `%LOCALAPPDATA%CasaMigaPOS` de esta computadora.
+
 ## Pendiente
 
 - Sin firma: SmartScreen mostrará «editor desconocido» (Más información → Ejecutar de todas formas).

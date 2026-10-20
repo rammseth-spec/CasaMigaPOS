@@ -1,3 +1,16 @@
+# Instalador 1.0.0 generado y probado en una instalación aislada — 20/10/2026
+
+- Inno Setup 6.7.3 instalado para el usuario con winget, con autorización del usuario. `scripts/build-installer.ps1 -Version 1.0.0` generó `CasaMigaPOS-1.0.0-setup.exe` (72 MB, SHA-256 `B3BD35F4EAC676293921514068E54E107849D1272AB80E8F5E941C3330BA45CD`) desde `c1a84b4`. La revisión de archivos del modo de prueba pasó.
+- **Instalación aislada** (sólo para el usuario actual, en `C:\Users\ramms\CasaMiga-Revision\instalador-prueba`, sin acceso directo):
+  - 646 archivos, versión 1.0.0, sin archivos de prueba.
+  - Con datos vacíos abre sin «DESARROLLO» y muestra «Versión 1.0.0».
+  - Con una copia de la caja en versión 30 la sube a 31, y todas las tablas quedan iguales a la base real salvo el registro de la migración.
+  - Instalar encima borra un `development.settings.json` dejado a mano y no duplica el registro.
+  - Desinstalar quita programa, registro y menú, y deja los datos.
+  - Detalle en `docs/INSTALLER.md`.
+- No se tocó la caja real ni `%LOCALAPPDATA%\CasaMigaPOS`, que ya existía desde el 27/09.
+- **Pendiente:** Windows 10/11 limpios y la computadora de la tienda.
+
 # Actualización a la versión 31 probada, contenido del instalador y primera receta preparada — 20/10/2026
 
 - **Actualización a la versión 31 sobre copias recientes de la caja real** (23 ventas, $1,633):

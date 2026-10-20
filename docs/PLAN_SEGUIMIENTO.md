@@ -28,7 +28,7 @@ Fuente del plan: `docs/USER_REQUIREMENTS.md` ("UR", pedido original), `docs/road
 | 18 | Respaldos manual y automático con restauración probada (UR 917–931) | Automático al abrir y manual; restauración probada el 20/10 con las 23 ventas | Copia fuera del equipo (la limpieza de respaldos viejos y la configuración de la impresora en el respaldo están en `main` desde el 20/10, sin instalar) |
 | 19 | Reportes (UR 1099–1105) | Diario, comparativo, ganancia y CSV | Impresión de reportes |
 | 20 | v0.1 sin Internet: abrir → vender → cobrar → imprimir → corte → cajón → cierre (UR 1318–1346) | Todo menos el cajón; falta un cierre real | Cajón y primer cierre real |
-| 21 | Instalador (fuera en 1A y 1G; aprobado sin firma el 06/10) | Hecho y sin firma; el candidato es anterior a los cambios del 19 y 20/10 | Generarlo desde `main` y probarlo en Windows 10/11 limpios |
+| 21 | Instalador (fuera en 1A y 1G; aprobado sin firma el 06/10) | 1.0.0 generado desde `c1a84b4` y probado en una instalación aislada el 20/10 (sin firma) | Probarlo en Windows 10/11 limpios y en la computadora de la tienda |
 | 22 | Nube y web (el pedido original las excluía; aprobadas del 06 al 09/10) | Hechas; no publicadas | Publicar en Vercel |
 | 23 | Pedidos (`orders-future-requirements.md`) | No hecho | Requiere autorización |
 | 24 | Charolas (decisión del 06/10) | Hecho | — |
@@ -60,7 +60,7 @@ Fuente del plan: `docs/USER_REQUIREMENTS.md` ("UR", pedido original), `docs/road
    - el instalador se detiene si la publicación trae archivos del modo de prueba y nunca los instala;
    - «Pago CASH» ya estaba resuelto: el ticket integrado de QA imprime «Pago: Efectivo»;
    - escala en pantallas con zoom: el programa ya se adapta a la escala de Windows. Sólo falta probarlo en la pantalla de la tienda (punto 10), no hace falta cambiar código.
-9. **Instalador** — lo que lleva (versión 1.0.0, autocontenida, sin archivos de prueba) ya se probó el 20/10 en una instalación aislada: abre sin «DESARROLLO», muestra «Versión 1.0.0», pide crear el primer administrador y su herramienta funciona. Falta generar el `.exe`: en esta computadora **no está Inno Setup 6** (`winget install JRSoftware.InnoSetup`). Después, probarlo en Windows 10/11 limpios.
+9. **Instalador** — `CasaMigaPOS-1.0.0-setup.exe` generado el 20/10 desde `c1a84b4` (SHA-256 `B3BD35F4…45CD`) y probado en una instalación aislada: instalar, abrir con datos vacíos y con una copia de la caja, instalar encima y desinstalar sin tocar los datos (`INSTALLER.md`). Falta probarlo en Windows 10/11 limpios y en la computadora de la tienda; va sin firma, así que SmartScreen avisará.
 10. **Pruebas físicas** — ticket en papel; cancelar un trabajo real de la cola; computadora de la tienda.
 11. **Publicar la nube** (Vercel) y revisar el CI de `main`.
 12. **Decisiones abiertas** — descuentos e impuestos, pagos mixtos, corte impreso, cajón, compras y proveedores, pedidos, reglas de devolución, fotos reales.
