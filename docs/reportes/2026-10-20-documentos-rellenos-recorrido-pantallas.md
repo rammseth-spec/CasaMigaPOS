@@ -95,7 +95,7 @@ Nada está publicado. Los datos sin confirmar siguen pendientes:
 
 ## 9. Respaldo técnico
 
-- **Commit:** ver el final del chat de este bloque.
+- **Commit:** `b70d9f6` en `main`. Programa de la copia de revisión compilado desde ese commit en `C:SERSAMMSCASAMIGA-REVISIONPROGRAMA-RECETAS-B70D9F6` (TíTULO «DESARROLLO · RECETAS-B70D9F6»).
 - **Pruebas:**
   - `scripts/verify.ps1` completo: 762/763 generales (1 omitida, la de volumen de un año) y 245/245 WPF; compilación Release limpia;
   - prueba nueva `TheFirstRecipeRouteWorksFromTheNormalScreens`, incluida en lo anterior.
