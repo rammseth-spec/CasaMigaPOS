@@ -1,5 +1,7 @@
 // Recorrido completo de la PRIMERA receta real (polvorón) sobre una COPIA de la caja, nunca sobre la base real.
 //   preparar  <copia>                                  deja en borrador la receta del polvorón (100 g de masa de polvorón por pieza)
+//   rellenos  <copia>                                  deja en borrador las recetas del rol (1 de la tanda de 13) y del pay (relleno + 20 g de galleta)
+//   pantallas <copia>                                  pone existencias de PRUEBA para hacer el recorrido del polvorón desde las pantallas
 //   recorrido <copia> <rinde g> <arriba|exacto> <naranja|vainilla> [piezas]
 //             con el rendimiento MEDIDO de la media tanda: publica en la copia, pone existencias de prueba, produce y comprueba
 //             que se descontaron los ingredientes y entró el pan. La contraseña del administrador de la copia va en CASAMIGA_COPIA_CLAVE.
@@ -41,7 +43,52 @@ if (profileVersion is null)
 }
 Console.WriteLine($"Receta del polvorón: {profileVersion.Value.State} · 100 g de «{dough.Name}» por pieza · masa {doughVersion.Value.State}, rinde {doughVersion.Value.BaseYield.AtomicUnits / 1000m:0.###} g");
 if (mode == "preparar") return 0;
-if (mode != "recorrido") throw new ArgumentException("Modo: preparar o recorrido.");
+
+if (mode == "rellenos")
+{
+    // Recetas de pan en borrador para los rellenos completos: el rol (1 de los 13 de su tanda) y el pay (1 relleno + 20 g de masa de galleta).
+    // Quedan en borrador: la tanda espera la masa dulce y el pay la masa de galleta, ambas sin rendimiento confirmado.
+    Guid Version(string code) => recipes.ListFormulaVersions(recipes.ListFormulas(200).Single(f => f.Code == code).Id).Single(v => v.Value.Version == 1).Value.Id;
+    void Draft(string sku, string name, FormulaRequirement[] needs)
+    {
+        var item = Single("SELECT id FROM product WHERE sku=$v", sku); var output = Single("SELECT id FROM inventory_item WHERE code=$v", "PT-" + sku);
+        var owner = recipes.ListProfiles(200).SingleOrDefault(p => p.ProductId == item);
+        if (owner is null) { recipes.CreateProfile(new ProductProductionProfile(Guid.NewGuid(), item, output)); owner = recipes.ListProfiles(200).Single(p => p.ProductId == item); }
+        if (recipes.ListProfileVersions(owner.Id).Count == 0)
+            recipes.SaveProfileDraft(new ProductProductionProfileVersion(Guid.NewGuid(), owner.Id, 1, item, output, name, needs, [], clock.UtcNow));
+        var saved = recipes.ListProfileVersions(owner.Id).Single().Value;
+        Console.WriteLine($"Receta de {name}: {saved.State} · {string.Join(" + ", saved.Formulas.Select(f => $"{recipes.GetFormulaVersion(f.FormulaVersionId)!.Value.Name} {f.QuantityPerPiece.AtomicUnits}"))}");
+    }
+    Draft("CM-006", "Rol de canela · 1 de la tanda de 13", [new FormulaRequirement(Version("TANDA-ROL"), new(InventoryDimension.Count, 1))]);
+    Draft("CM-028", "Pay de queso · relleno + 20 g de masa de galleta", [new FormulaRequirement(Version("RELLENO-PAY"), new(InventoryDimension.Count, 1)),
+        new FormulaRequirement(Version("MASA-GALLETA"), InventoryQuantity.From(20, InventoryUnits.Gram))]);
+    return 0;
+}
+
+// Existencias de PRUEBA para los ingredientes del polvorón y saldo cero del pan terminado, marcadas en su referencia; sólo en la copia.
+(decimal Amount, string Unit) TestStock(Guid item, InventoryDimension dimension) => item == finished ? (0m, "piece")
+    : dimension switch { InventoryDimension.Count => (30m, "piece"), InventoryDimension.Volume => (1000m, "ml"), _ => (25000m, "g") };
+void LoadTestStock(string reference)
+{
+    var formula = recipes.GetFormulaVersion(doughVersion.Value.Id)!.Value;
+    var items = formula.Ingredients.Select(i => i.InventoryItemId).Concat(formula.Alternatives.SelectMany(g => g.Options).Select(o => o.Ingredient.InventoryItemId)).Append(finished);
+    foreach (var item in items)
+    {
+        var row = store.FindItem(item)!;
+        if (store.FindBalance(item, InventoryLocationIds.Main) is not null) { Console.WriteLine($"  {row.Name}: ya tenía existencia, no se cambia"); continue; }
+        var (amount, unit) = TestStock(item, row.Dimension);
+        inventory.RegisterOpeningBalance(new(Guid.NewGuid(), item, InventoryLocationIds.Main, amount, unit, reference));
+        Console.WriteLine($"  {row.Name}: {amount} {unit} de prueba");
+    }
+}
+if (mode == "pantallas")
+{
+    // Deja la copia lista para hacer el recorrido del polvorón desde las pantallas normales (docs/GUIA_RECORRIDO_POLVORON.md).
+    Console.WriteLine("Existencias de prueba para el recorrido desde las pantallas:");
+    LoadTestStock("PRUEBA · recorrido del polvorón desde las pantallas");
+    return 0;
+}
+if (mode != "recorrido") throw new ArgumentException("Modo: preparar, rellenos, pantallas o recorrido.");
 
 // 1. La masa con el rendimiento medido y las decisiones del panadero; después se publican masa y receta.
 var measured = InventoryQuantity.From(decimal.Parse(args[2], System.Globalization.CultureInfo.InvariantCulture), InventoryUnits.Gram);
@@ -66,12 +113,7 @@ recipes.ActivateProfile(profile.Id, profileVersion.Value.Id, recipes.GetProfile(
 // 2. Existencias de PRUEBA, marcadas en su referencia; sólo existen en esta copia.
 var published = recipes.GetFormulaVersion(draft.Id)!.Value;
 var used = published.Ingredients.Select(i => i.InventoryItemId).Concat(published.Alternatives.SelectMany(g => g.Options).Select(o => o.Ingredient.InventoryItemId)).ToArray();
-foreach (var item in used.Append(finished))
-{
-    var row = store.FindItem(item)!;
-    var (amount, unit) = row.Dimension switch { InventoryDimension.Count => (item == finished ? 0m : 30m, "piece"), InventoryDimension.Volume => (1000m, "ml"), _ => (25000m, "g") };
-    inventory.RegisterOpeningBalance(new(Guid.NewGuid(), item, InventoryLocationIds.Main, amount, unit, "PRUEBA · recorrido del polvorón en copia"));
-}
+LoadTestStock("PRUEBA · recorrido del polvorón en copia");
 long Stock(Guid item) => store.FindBalance(item, InventoryLocationIds.Main)?.QuantityAtomic ?? 0;
 var before = used.Append(finished).ToDictionary(x => x, Stock);
 

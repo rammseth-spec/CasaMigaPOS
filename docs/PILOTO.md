@@ -1,6 +1,6 @@
 # Piloto en sucursal — lista de revisión
 
-Una o dos semanas de uso real en una sucursal antes de dar la versión 1.0 por buena. En el piloto **no se agregan funciones**: se anotan problemas y se corrigen. Manual del personal: [MANUAL.md](MANUAL.md).
+Una o dos semanas de uso real en una sucursal antes de dar la versión 1.0 por buena. En el piloto **no se agregan funciones** sin autorización del usuario: se anotan problemas y se corrigen (lo autorizado después del 10/10 está en PLAN_SEGUIMIENTO.md). Manual del personal: [MANUAL.md](MANUAL.md).
 
 ## Antes del primer día (administrador)
 

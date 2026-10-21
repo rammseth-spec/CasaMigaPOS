@@ -1,6 +1,6 @@
 # Casa Miga POS
 
-**Estado actual (12/10/2026):** versión 1.0 candidata para el piloto: caja de escritorio y web completas, sincronizadas por la nube. Qué hace: [MANUAL.md](docs/MANUAL.md) · estado: [CURRENT_STATE.md](docs/CURRENT_STATE.md) · notas: [RELEASE_NOTES_1.0.md](docs/RELEASE_NOTES_1.0.md). Los párrafos de fase de abajo son históricos.
+**Estado actual (20/10/2026):** versión 1.0 candidata, en piloto. Una caja de escritorio ya registra ventas reales sin Internet; la web y la sincronización por la nube están hechas, pero la nube todavía no está publicada. Plan y pendientes: [PLAN_SEGUIMIENTO.md](docs/PLAN_SEGUIMIENTO.md) · recetas reales: [RECETAS_ESTADO.md](docs/RECETAS_ESTADO.md) · instalador: [INSTALLER.md](docs/INSTALLER.md). Qué hace: [MANUAL.md](docs/MANUAL.md) · estado: [CURRENT_STATE.md](docs/CURRENT_STATE.md) · notas: [RELEASE_NOTES_1.0.md](docs/RELEASE_NOTES_1.0.md). Los párrafos de fase de abajo son históricos.
 
 ## Probar en local (Windows)
 
@@ -75,18 +75,18 @@ Pantallas con el diseño de main y Producción completa de QA; ver `docs/CURRENT
 
 **FASE 1J CLOSED; 1J.5 completada.** Recetas/perfiles versionados, producción multi-output, Planned/Actual, zero-output, validación de stock, recuperación, permisos y backup/restore verificados. UI funcional con refresco y selector de inventario. Schema 15; migraciones 001–015 intactas, sin 016. 533/533 pruebas; Release 0 errores/advertencias. Ver [reporte final](docs/PHASE_1J5_REPORT.md).
 
-Aplicación Windows offline para una panadería mexicana. Versión de desarrollo, NO lista para producción.
+Aplicación Windows para una panadería mexicana que funciona sin Internet. Versión 1.0 candidata, en piloto (ver «Estado actual» arriba); todavía no está aprobada para entregarse como definitiva.
 
 Stack: C# / .NET 10 LTS / WPF / Microsoft.Data.Sqlite / SQLite / MSTest.
 
 ## Continuar
 
-1. Leer [estado](docs/CURRENT_STATE.md), [próximos pasos](docs/NEXT_STEPS.md) y [reporte 1J.4](docs/PHASE_1J4_REPORT.md).
+1. Leer [estado](docs/CURRENT_STATE.md), [próximos pasos](docs/NEXT_STEPS.md) y [seguimiento del plan](docs/PLAN_SEGUIMIENTO.md).
 2. Instalar SDK .NET 10.0.400 x64 o parche compatible y ejecutar `./scripts/verify.ps1`.
 3. Ejecutar `dotnet run --project src/CasaMiga.Presentation`.
 4. En una carpeta nueva, crear el primer administrador desde la pantalla inicial; después iniciar sesión y abrir caja con fondo cero o positivo.
 
-El primer restore requiere Internet; la aplicación no. No hay servicios cloud ni telemetría de aplicación. Datos por defecto en `%LOCALAPPDATA%/CasaMigaPOS`; `CASAMIGA_DATA_DIR` acepta una carpeta local absoluta. Para pruebas aisladas, consultar [operación](docs/operations.md). Nunca usar una carpeta compartida o sincronizada.
+El primer restore requiere Internet; la aplicación no. No hay telemetría. La nube (`docs/SYNC_PLAN.md`, ADR-024) es opcional y todavía no está publicada: sin ella la caja funciona igual. Datos por defecto en `%LOCALAPPDATA%/CasaMigaPOS`; `CASAMIGA_DATA_DIR` acepta una carpeta local absoluta. Para pruebas aisladas, consultar [operación](docs/operations.md). Nunca usar una carpeta compartida o sincronizada.
 
 Al arrancar se respalda, migra y valida la instalación. El paquete .cmbackup incluye base, terminal.json y manifiesto; restauración validada a directorio nuevo. Reiniciar exige login y recupera la caja abierta sin alterar su fondo ni timestamp. Salir del usuario o cerrar la ventana no cierra caja. El cierre requiere confirmar conteo y luego confirmar cierre; volver conserva el conteo. Los importes se ocultan hasta confirmar el conteo ciego.
 

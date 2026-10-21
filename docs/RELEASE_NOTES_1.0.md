@@ -10,7 +10,7 @@ Candidata a 1.0 para el piloto en sucursal ([PILOTO.md](PILOTO.md)). Manual del 
 - Historial de ventas con folio, días, forma de pago y producto; cancelaciones y devoluciones con instrucción de reembolso.
 - Reportes: Resumen, Comparativo, Ventas por hora, Control de caja, Producción y **Ganancia**, con CSV. Incluyen lo vendido en las cajas web de la sucursal.
 - Charolas: ruta del día (entregar, recoger con fotos, cobrar, anular), tiendas, precios, reporte, **entregas y cobros**.
-- Catálogo con fotos; inventario con consumo automático opcional y **costo de referencia**; recetas con versiones; producción en dos pasos.
+- Catálogo con fotos; inventario con **costo de referencia**; recetas con versiones (una receta puede usar otras); producción en dos pasos. El descuento de inventario al vender está programado y **apagado**: se enciende cuando haya recetas aprobadas y conteo real (pendiente del plan, `PLAN_SEGUIMIENTO.md`).
 - Usuarios con roles (cajero, encargado, administrador) y contraseñas temporales.
 - Nube: sincronización cada 5 segundos, cambios hechos en la web, respaldos cifrados cada hora y restauración en una computadora nueva.
 

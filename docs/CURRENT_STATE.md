@@ -1,3 +1,14 @@
+# Documentos coherentes, borradores del rol y el pay, y recorrido del polvorón desde las pantallas — 20/10/2026
+
+- **Contradicciones corregidas** en `AGENTS.md`, `README.md`, `roadmap.md`, `RELEASE_NOTES_1.0.md`, `NEXT_STEPS.md` y `PILOTO.md`. Nuevo `decisions/ADR-024-nube-y-version-web.md`. Lista en `PLAN_SEGUIMIENTO.md`; sólo queda abierta la decisión de Puerquito y CM-018.
+- **Copia de revisión** (`recetas-copia-20261020`), con `tools/recorrido-receta`:
+  - modo `rellenos`: recetas del rol (1 de la tanda de 13) y del pay (relleno + 20 g de galleta) en borrador;
+  - modo `pantallas`: existencias de prueba «PRUEBA» para el polvorón y su terminado en cero.
+- **Guía** `docs/GUIA_RECORRIDO_POLVORON.md`. Prueba `TheFirstRecipeRouteWorksFromTheNormalScreens`: la misma ruta por las pantallas (editar el borrador con el rendimiento medido y el sabor por omisión, publicar, receta del pan, producir y comprobar inventario).
+- **Hallazgo:** al editar un borrador, 1,800 g se muestran como «1.8 kg»; la guía advierte revisar la unidad.
+- **Verificación:** `verify.ps1` dio 762/763 y 245/245.
+- Reporte: `docs/reportes/2026-10-20-documentos-rellenos-recorrido-pantallas.md`. Caja real sin cambios.
+
 # Instalador 1.0.0 generado y probado en una instalación aislada — 20/10/2026
 
 - Inno Setup 6.7.3 instalado para el usuario con winget, con autorización del usuario. `scripts/build-installer.ps1 -Version 1.0.0` generó `CasaMigaPOS-1.0.0-setup.exe` (72 MB, SHA-256 `B3BD35F4EAC676293921514068E54E107849D1272AB80E8F5E941C3330BA45CD`) desde `c1a84b4`. La revisión de archivos del modo de prueba pasó.

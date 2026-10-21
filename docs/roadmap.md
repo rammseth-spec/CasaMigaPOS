@@ -1,3 +1,18 @@
+## Estado actual (20/10/2026)
+
+`main` es la versión 1.0 candidata, en piloto. Las fases de abajo son historia. El seguimiento del plan original y sus pendientes está en [PLAN_SEGUIMIENTO.md](PLAN_SEGUIMIENTO.md). Después de 1K, el usuario autorizó y se implementaron:
+
+- cancelaciones y devoluciones;
+- tarjeta y transferencia;
+- movimientos de caja;
+- charolas;
+- usuarios;
+- instalador;
+- nube y web (ADR-024);
+- recetas dentro de otras (migración 031).
+
+Las fotos de producto son provisionales generadas con IA por decisión del usuario y deben reemplazarse por fotos reales antes de la entrega definitiva (la regla de 1K.2 sigue para las fotos finales).
+
 ## FASE 1K — 1K.1 cerrada
 
 - 1K.1: shell, navegación y sistema visual implementados, verificados y aprobados visualmente el 27/09/2026.
@@ -73,7 +88,7 @@ Definition of Done por tarea: compila sin nuevas advertencias relevantes; prueba
 | 1F: historial y detalle de ventas | **CERRADA**: permiso, lectura deferred, migración 007, 170 pruebas, smoke y restore. |
 | 1G: ticket e impresión | **CERRADA en alcance autorizado**: USB/Winspool, snapshot, CP850, logo, corte y reimpresión validados; 195 pruebas. Cajón diferido por falta de hardware y LAN opcional. |
 | 1H: inventario y movimientos | **CERRADA**: Domain exacto, esquema 10, ledger/balance, Application, UI, permisos, smoke, restart y backup/restore; 290 pruebas. Sin consumo por venta. |
-| 1I: integración venta–inventario | **ABIERTA, 1I.1–1I.4 completadas**: checkout atómico y recovery, schema 12. Flag inicial DISABLED; 1I.4 completada, smoke humano confirmado. |
+| 1I: integración venta–inventario | **CERRADA después (ver «Cierre FASE 1I»); en ese momento: ABIERTA, 1I.1–1I.4 completadas**: checkout atómico y recovery, schema 12. Flag inicial DISABLED; 1I.4 completada, smoke humano confirmado. |
 | 1I.5 y posteriores | Sin iniciar; requieren alcance y autorización nuevos. |
 
 ## Actualización FASE 1B

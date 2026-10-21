@@ -1,7 +1,13 @@
 # Continuidad
 
-Lee README.md, docs/CURRENT_STATE.md y docs/NEXT_STEPS.md antes de trabajar. Luego sólo los ADRs y archivos pertinentes.
-FASE 1F cerrada; recuperación `db6422a1d09c36f1ae038c673d90ef9ec6f13ab4`. FASE 1G Bloque A 1G.1–1G.4 implementado y detenido antes del checkpoint físico Qian. No continuar 1G.5, codepage ESC/POS, corte, cajón, LAN o reimpresión UI sin nueva autorización. Sin cancelaciones, devoluciones, inventario, descuentos, tarjetas, fiscalidad, rediseño ni fullscreen.
+Lee README.md, docs/CURRENT_STATE.md, docs/NEXT_STEPS.md y docs/PLAN_SEGUIMIENTO.md antes de trabajar. Luego sólo los ADRs y archivos pertinentes.
+Estado vigente (20/10/2026): `main` es la versión 1.0 candidata, en piloto.
+- Ya tiene, autorizado por el usuario: cancelaciones, devoluciones, tarjeta y transferencia, inventario, recetas y producción, rediseño, pantalla completa, reimpresión, nube y web.
+- No implementar sin nueva autorización: descuentos, fiscalidad, cajón físico, impresión por LAN, pedidos, compras ni pagos mixtos.
+- El seguimiento del plan y sus pendientes están en docs/PLAN_SEGUIMIENTO.md. Las fases anteriores son historia en docs/roadmap.md.
+Caja con ventas reales: datos en `C:\Users\ramms\CasaMiga-Revision\local-main-c2fb393\caja`, programa en `C:\Users\ramms\CasaMiga-Ventas\programa`. Nunca usarla para pruebas, cargas ni scripts de desarrollo. Actualizarla sólo con autorización del usuario y siguiendo docs/ACTUALIZAR_CAJA.md. No cerrar su caja ni registrar conteos o movimientos sin las cantidades reales del usuario.
+Recetas: no publicar recetas incompletas ni convertir rendimientos históricos, aproximados o inconsistentes en datos confirmados. Estado en docs/RECETAS_ESTADO.md.
+Al terminar cada bloque, entregar el reporte completo en el chat y guardarlo en docs/reportes/.
 No copiar código copyleft ni elegir licencia del producto sin autorización expresa.
 Domain no referencia infraestructura ni UI. Operaciones críticas atómicas; efectos físicos posteriores al commit.
 No modificar migraciones aplicadas: agregar una nueva. Nunca editar manualmente producción.

@@ -81,6 +81,56 @@ public sealed partial class RecipePersistenceTests
         }
     }
 
+
+    /// <summary>
+    /// El recorrido del polvorón desde las pantallas normales (docs/GUIA_RECORRIDO_POLVORON.md), con datos de prueba: masa con sabor
+    /// alternativo en borrador → editar el borrador con el rendimiento medido y el sabor por omisión → publicar y activar → receta del pan
+    /// → publicar y activar → Producción: calcular, crear y confirmar → los insumos bajan y entra el pan.
+    /// </summary>
+    [TestMethod] public async Task TheFirstRecipeRouteWorksFromTheNormalScreens()
+    {
+        InventoryItem Mass(string code)=>inventory.CreateInventoryItem(code,code,InventoryItemKind.RawMaterial,InventoryDimension.Mass);
+        var harina=Mass("PRUEBA-HARINA");var manteca=Mass("PRUEBA-MANTECA");var vainilla=inventory.CreateInventoryItem("PRUEBA-VAINILLA","PRUEBA-VAINILLA",InventoryItemKind.RawMaterial,InventoryDimension.Volume);
+        var huevo=inventory.CreateInventoryItem("PRUEBA-HUEVO","PRUEBA-HUEVO",InventoryItemKind.RawMaterial,InventoryDimension.Count);var naranja=inventory.CreateInventoryItem("PRUEBA-NARANJA","PRUEBA-NARANJA",InventoryItemKind.RawMaterial,InventoryDimension.Count);
+        var pan=catalog.CreateProduct(product.CategoryId,"PRUEBA-POLVORON","Polvorón de prueba","",new Money(1300));var terminado=inventory.CreateInventoryItem("PT-PRUEBA","Polvorón de prueba",InventoryItemKind.FinishedGood,InventoryDimension.Count);
+        foreach(var (id,unit) in new[]{(harina.Id,"mg"),(manteca.Id,"mg"),(vainilla.Id,"uL"),(huevo.Id,"piece"),(naranja.Id,"piece")})inventory.RegisterOpeningBalance(new(Guid.NewGuid(),id,ProductionContract.Main,unit=="piece"?30:25_000_000,unit,"PRUEBA"));
+        inventory.RegisterOpeningBalance(new(Guid.NewGuid(),terminado.Id,ProductionContract.Main,0,"piece","PRUEBA"));
+
+        // Recetas: la masa en borrador con el rendimiento reportado y naranja como primera opción de sabor.
+        var vm=RecipeVm();await vm.LoadAsync();vm.NewFormula();vm.Code="PRUEBA-MASA";vm.Name="Masa de prueba";await vm.CreateFormulaAsync();
+        vm.NewFormulaVersion();vm.Name="Media tanda";vm.Yield="1800";vm.YieldUnit="g";
+        void Line(IngredientEdit row,Guid item,string quantity,string unit,IngredientCountPolicy? policy=null){row.Item=vm.Items.Single(x=>x.Id==item);row.Quantity=quantity;row.Unit=unit;if(policy is {} p)row.Policy=p;}
+        vm.AddIngredient(false);Line(vm.Ingredients[^1],harina.Id,"900","g");vm.AddIngredient(false);Line(vm.Ingredients[^1],manteca.Id,"500","g");vm.AddIngredient(false);Line(vm.Ingredients[^1],huevo.Id,"1","pieza",IngredientCountPolicy.CeilingWholeCount);
+        vm.AddIngredient(true);Line(vm.Alternatives[^1],naranja.Id,"2","pieza",IngredientCountPolicy.CeilingWholeCount);vm.AddAlternativeOption();Line(vm.Alternatives[^1],vainilla.Id,"60","ml");
+        await vm.SaveFormulaVersionAsync();Assert.IsTrue(vm.MessageIsSuccess,vm.Message);
+
+        // Con la medida real: editar el borrador (2,000 g medidos) y poner vainilla como sabor por omisión (quitar naranja y volver a agregarla).
+        vm.SelectedVersion=vm.Versions.Single();await vm.EditFormulaVersionAsync();Assert.IsTrue(vm.IsFormulaEditor,vm.Message);
+        Assert.AreEqual("kg",vm.YieldUnit,"The saved 1,800 g come back as 1.8 kg: the guide warns to check the unit.");vm.Yield="2000";vm.YieldUnit="g";vm.SelectedAlternative=vm.Alternatives.Single(x=>x.Item!.Id==naranja.Id);vm.RemoveIngredient(true);
+        vm.SelectedAlternative=vm.Alternatives.Single();vm.AddAlternativeOption();Line(vm.Alternatives[^1],naranja.Id,"2","pieza",IngredientCountPolicy.CeilingWholeCount);
+        Assert.AreEqual(1,vm.Alternatives.Single(x=>x.Item!.Id==vainilla.Id).Preference,"Vainilla is now the first option.");
+        await vm.SaveFormulaVersionAsync();Assert.IsTrue(vm.MessageIsSuccess,"Editing the draft saves: "+vm.Message);
+        vm.SelectedVersion=vm.Versions.Single();await vm.PublishAsync();Assert.IsTrue(vm.MessageIsSuccess,vm.Message);vm.SelectedVersion=vm.Versions.Single();await vm.ActivateAsync();Assert.IsTrue(vm.MessageIsSuccess,vm.Message);
+        var masa=vm.Versions.Single().Id;
+
+        // Perfiles: 100 g de masa por pieza; publicar y activar.
+        await vm.ShowProfilesAsync();vm.NewProfile();vm.ProfileProduct=vm.Products.Single(x=>x.Id==pan.Id);vm.ProfileFinishedItem=vm.Items.Single(x=>x.Id==terminado.Id);await vm.CreateProfileAsync();
+        vm.NewProfileVersion();vm.Name="100 g de masa";vm.AddFormulaRequirement();vm.FormulaRequirements[0].Formula=vm.PublishedFormulas.Single(x=>x.Id==masa);vm.FormulaRequirements[0].Quantity="100";vm.FormulaRequirements[0].Unit="g";
+        await vm.SaveProfileVersionAsync();Assert.IsTrue(vm.MessageIsSuccess,vm.Message);vm.SelectedVersion=vm.Versions.Single();await vm.PublishProfileAsync();vm.SelectedVersion=vm.Versions.Single();await vm.ActivateProfileAsync();Assert.IsTrue(vm.MessageIsSuccess,vm.Message);
+
+        // Producción: 18 polvorones → calcular → crear → confirmar las 18 que salieron.
+        long Stock(Guid id)=>new SqliteInventoryStore(db,clock).FindBalance(id,ProductionContract.Main)!.QuantityAtomic;
+        var before=new[]{harina.Id,manteca.Id,vainilla.Id,huevo.Id,naranja.Id,terminado.Id}.ToDictionary(x=>x,Stock);
+        var production=ProductionVm();await production.LoadAsync();production.NewProduction();production.SelectedProductChoice=production.Profiles.Single(x=>x.ProductId==pan.Id);
+        Assert.AreEqual("LISTO PARA PRODUCIR",production.SelectedProductChoice!.Status);production.AddOutput();production.Plan[0].Planned="18";
+        await production.PreviewAsync();Assert.IsTrue(production.PreviewConfirmable,production.PreviewState);
+        await production.CreateDraftAsync();Assert.IsTrue(production.DetailIsDraft,production.Message);production.Actuals[0].Actual="18";await production.ConfirmAsync();Assert.IsTrue(production.DetailIsConfirmed,production.Message);
+
+        // 1,800 g de masa de una media tanda que rinde 2,000 g: 0.9 de cada ingrediente; huevo 0.9 → 1; sabor: 54 ml de vainilla, nada de naranja.
+        Assert.AreEqual(810_000L,before[harina.Id]-Stock(harina.Id));Assert.AreEqual(450_000L,before[manteca.Id]-Stock(manteca.Id));
+        Assert.AreEqual(1L,before[huevo.Id]-Stock(huevo.Id));Assert.AreEqual(54_000L,before[vainilla.Id]-Stock(vainilla.Id));Assert.AreEqual(0L,before[naranja.Id]-Stock(naranja.Id));
+        Assert.AreEqual(18L,Stock(terminado.Id)-before[terminado.Id],"The 18 pieces enter as finished bread.");
+    }
     [TestMethod] public async Task ProductionUiPreviewsCreatesConfirmsAndShowsHistory()
     {
         ProductionSetup();var vm=ProductionVm();await vm.LoadAsync();var profile=vm.Profiles.Single(x=>x.VersionId==profileVersion.Id);StringAssert.Contains(profile.ToString(),"Versión 1");vm.NewProduction();vm.SelectedProductChoice=profile;vm.AddOutput();vm.Plan[0].Planned="2";var beforePreview=AllRows(true);await vm.PreviewAsync();

@@ -15,6 +15,12 @@ Datos del recetario sin "aproximadamente", "pendiente" ni diferencias. Cada una 
 | Relleno de pay de queso (`RELLENO-PAY`) | Queso crema 360 g, leche condensada 250 g, huevo 3, leche evaporada 200 ml, vainilla 10 ml, fécula 15 g → 15 pays | Cómo contar el huevo si se hacen menos de 15 pays (sólo tandas que den huevos enteros, o redondear hacia arriba) |
 | Leche Kirkland entera y deslactosada light | Reventa: no llevan receta | Sólo su artículo terminado y el vínculo para la venta, cuando se autorice el descuento por venta |
 
+**Borradores preparados en la copia de revisión (20/10/2026, `tools/recorrido-receta rellenos`):**
+- receta del **Rol de canela**: 1 pieza de la tanda de 13;
+- receta del **Pay de queso**: 1 relleno de pay + 20 g de masa de galleta.
+
+Quedan en borrador: la tanda espera la masa dulce y el pay la masa de galleta, porque ninguna tiene rendimiento confirmado. Los datos pendientes de arriba (tipo de manteca, huevo del pay) siguen pendientes.
+
 ## B. Bloqueadas por datos que debes confirmar
 
 | Preparación | Qué falta | Panes que bloquea |
@@ -58,6 +64,8 @@ Es la que menos datos necesita: una sola masa, sin acabados ni barnizado (el bar
 2. **Huevo y naranjas cuando se hace menos de una media tanda:** ¿se redondea hacia arriba (por ejemplo, 1 huevo aunque toque medio) o sólo se producen medias tandas completas? → ____
 3. **Sabor por omisión:** ¿naranja o vainilla? (el otro queda como alternativa) → ____
 4. **¿Cuántos polvorones salen de esa media tanda?** → ____ (si no son peso ÷ 100 g, decir qué pasa con lo que sobra)
+
+**Desde las pantallas:** la copia de revisión ya tiene existencias de prueba marcadas «PRUEBA». La guía paso a paso está en `docs/GUIA_RECORRIDO_POLVORON.md` (Recetas → Perfiles → Producción → Inventario), y la misma ruta está comprobada por la prueba `TheFirstRecipeRouteWorksFromTheNormalScreens`.
 
 **En cuanto lleguen**, la herramienta `tools/recorrido-receta` (`dotnet run --project tools/recorrido-receta -- recorrido <copia> <rinde g> <arriba|exacto> <naranja|vainilla> [piezas]`) corre el recorrido completo en una copia. Hace esto:
 - pone el rendimiento medido y publica;

@@ -35,22 +35,26 @@ Fuente del plan: `docs/USER_REQUIREMENTS.md` ("UR", pedido original), `docs/road
 
 ## Documentos que se contradicen
 
-- `AGENTS.md:4` prohíbe cancelaciones, devoluciones, inventario, tarjetas y pantalla completa, pero `main` ya los tiene. Está desactualizado.
-- `NEXT_STEPS.md:3` y `PILOTO.md:3` dicen «no se agregan funciones», pero después se agregaron Tickets, cobro rápido, íconos, carga de recetas y ahora preparaciones dentro de preparaciones.
-- `README.md` dice a la vez «versión 1.0 candidata… por la nube», «NO lista para producción» y «no hay servicios cloud».
-- `RELEASE_NOTES_1.0.md` llama **opcional** al descuento de inventario, mientras el pedido original lo pide al completar cada venta. Tampoco ningún documento aplaza las recetas o el inventario a una 1.1: esa idea fue una sugerencia mía que no aprobaste y la retiro.
-- `roadmap.md` marca la fase 1I como abierta en una línea y cerrada en otra, y no menciona la 1.0, la nube ni el piloto.
-- La nube se decidió sin el ADR que pide `roadmap.md:56`.
-- `roadmap.md:4` y `NEXT_STEPS.md:522` prohíben fotos de IA, pero el catálogo usa fotos provisionales hechas con IA.
-- `CURRENT_STATE.md:50` habla de 31 productos autorizados; el catálogo actual tiene 44.
-- El recetario da por retirados Puerquito y el bollo CM-018, pero en la caja siguen activos.
+**Corregidas el 20/10/2026:**
+- `AGENTS.md`: ahora dice qué tiene `main`, qué no se implementa sin autorización, dónde está la caja real y las reglas de recetas y reportes.
+- `NEXT_STEPS.md` y `PILOTO.md`: la regla «no se agregan funciones» quedó anotada como regla del piloto del 10/10, con lo que se autorizó después.
+- `README.md`: estado al 20/10, la nube como opcional y no publicada, y la versión como candidata en piloto.
+- `RELEASE_NOTES_1.0.md`: el descuento por venta ya no se llama opcional; está apagado y pendiente del plan. Ningún documento aplaza recetas ni inventario a una 1.1.
+- `roadmap.md`: tiene un «Estado actual» y la fase 1I queda marcada como cerrada.
+- Nube: se registró `decisions/ADR-024-nube-y-version-web.md`.
+- Fotos de IA: anotadas en `roadmap.md` y `NEXT_STEPS.md` como provisionales por decisión del usuario, a reemplazar por fotos reales.
+- Recetario y motor: los documentos de recetas ya reflejan las preparaciones dentro de otras y las tandas.
+
+**Siguen abiertas:**
+- `CURRENT_STATE.md:50` habla de 31 productos autorizados y el catálogo actual tiene 44. Es una entrada histórica; el catálogo vigente es `docs/catalog/README.md`.
+- El recetario da por retirados Puerquito y el bollo CM-018, pero en la caja siguen activos. **Decisión tuya.**
 
 ## Pendientes en orden
 
 1. **Ventas reales protegidas** — hecho el 20/10: respaldo completo y restauración probada en una carpeta aparte. Falta una copia fuera del equipo (USB o nube).
 2. **Cierre de la caja del 19/10** — con tus cantidades reales; no se registra nada sin ellas.
 3. **Acceso** — cambiar la contraseña del administrador y desactivar `encargado` y `cajero` en la caja real.
-4. **Recetas reales** — la primera es el **polvorón**: faltan 4 datos (`RECETAS_ESTADO.md`, «Primera receta real»). Con ellos: publicar en una copia y correr el recorrido completo, que ya está automatizado. Después, el resto del recetario (`RECETAS_ESTADO.md` B y `RECETARIO_PARA_COMPLETAR.md` paso 0) y tu aprobación.
+4. **Recetas reales** — la primera es el **polvorón**: faltan 4 datos (`RECETAS_ESTADO.md`, «Primera receta real»). Con ellos: hacer el recorrido completo en la copia, desde las pantallas (`GUIA_RECORRIDO_POLVORON.md`, la copia ya tiene existencias de prueba) o con la herramienta. Las recetas del rol y del pay ya están en borrador en la copia. Después, el resto del recetario (`RECETAS_ESTADO.md` B y `RECETARIO_PARA_COMPLETAR.md` paso 0) y tu aprobación.
 5. **Programa para recetas** — degustación y consumo interno; aceite reutilizable. Ambos necesitan tu decisión.
 6. **Conteo real de inventario** y, después, encender el descuento por venta.
 7. **Instalar en la caja real lo que está en `main`**: los íconos (`4e8ec88`) ya están instalados desde el 20/10. Faltan las preparaciones dentro de preparaciones y los arreglos del punto 8, que cambian la base a la versión 31. La actualización y la vuelta atrás están probadas sobre copias recientes y explicadas en `ACTUALIZAR_CAJA.md`; espera tu aprobación.

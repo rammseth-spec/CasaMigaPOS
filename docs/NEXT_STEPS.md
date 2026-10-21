@@ -6,7 +6,7 @@ El plan original, su estado real y la lista de pendientes en orden están en [PL
 
 # Siguiente: piloto en sucursal (10/10/2026)
 
-Caja y web completas (docs/PLAN_COMPLETAR.md: W1–W8, D1–D5, I1). Estabilización hecha: pruebas en navegador, de punta a punta, de volumen y simulacro de respaldo ([VOLUME.md](VOLUME.md)). **No se agregan funciones**: lo que sigue es usarlo.
+Caja y web completas (docs/PLAN_COMPLETAR.md: W1–W8, D1–D5, I1). Estabilización hecha: pruebas en navegador, de punta a punta, de volumen y simulacro de respaldo ([VOLUME.md](VOLUME.md)). **No se agregan funciones**: lo que sigue es usarlo. *(Regla del piloto del 10/10/2026. Después el usuario autorizó más trabajo: Tickets, cobro rápido, íconos, recetas dentro de otras y arreglos para la entrega; ver PLAN_SEGUIMIENTO.md.)*
 
 1. **Usuario:** desplegar la nube en Vercel (rama `casamiga-web`; migraciones de la nube hasta 009) y capturar las variables ([WEB.md](WEB.md)).
 2. **Usuario:** revisar por qué falló el CI de `main` en 1cb85cc (el CI ahora anota la prueba fallida en el correo) o correr `gh auth login`.
@@ -28,7 +28,7 @@ Tras la integración, pantalla completa es el botón de ícono de la barra (ayud
 
 ## Pendiente heredado de QA (integrado el 19/10/2026)
 
-En main se conserva el diseño de main (sin el acomodo R1 ni las tablas R2); Producción entra completa. El recetario es documentación y todavía no se carga en la caja.
+En main se conserva el diseño de main (sin el acomodo R1 ni las tablas R2); Producción entra completa. El recetario es documentación y todavía no se carga en la caja. *(Actualización 20/10/2026: la caja tiene 10 preparaciones en borrador y ninguna publicada; estado vigente en RECETAS_ESTADO.md.)*
 
 ### Próximo paso según QA — B2 cerrada; definir el siguiente bloque de Casa Miga POS 1.0
 
@@ -525,7 +525,7 @@ Para validar calidad antes de fijar importación: 3–5 fotografías reales con 
 
 1K.1 está aprobada y cerrada. No iniciar 1K.2 automáticamente: preparar un alcance separado y obtener autorización antes de cambiar persistencia, migraciones o catálogo visual.
 
-Requisito formal reservado para 1K.2: el POS usará fotografías reales proporcionadas por Casa Miga, asociadas a Product, con fotografía original, derivado optimizado, tarjeta FOTO + NOMBRE + PRECIO, fallback sin foto, caché/rendimiento, backup/restore y cambio de fotografía. No usar IA, stock, Internet ni productos ajenos. 1K.1 no agrega persistencia ni migración para imágenes.
+Requisito formal reservado para 1K.2: el POS usará fotografías reales proporcionadas por Casa Miga, asociadas a Product, con fotografía original, derivado optimizado, tarjeta FOTO + NOMBRE + PRECIO, fallback sin foto, caché/rendimiento, backup/restore y cambio de fotografía. No usar IA, stock, Internet ni productos ajenos. 1K.1 no agrega persistencia ni migración para imágenes. *(Actualización 20/10/2026: mientras llegan las fotos reales, el catálogo usa fotos provisionales hechas con IA por decisión del usuario, marcadas PROVISIONAL; se reemplazan antes de la entrega definitiva — ver docs/catalog/README.md.)*
 
 Modelo recomendado para 1K.2: **Sol** para diseño WPF/POS; detenerse y reconsiderar si el alcance exige persistencia, migración o cambios de negocio.
 
