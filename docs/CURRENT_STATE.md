@@ -1,3 +1,8 @@
+# Venta en la web: escribir en cualquier parte filtra — 21/10/2026
+
+- Como en la caja (6139e86): en Venta de la web, lo que se escribe va directo al buscador sin tocarlo antes y filtra al momento (`cloud/public/js/pos.js`). No se desvía si ya se escribe en otro campo, con Ctrl/Cmd/Alt, con una ventana abierta (Cobro, Ticket en celular) ni fuera de Venta; la barra espaciadora sigue tocando el pan que tiene el foco.
+- Revisado en el navegador: con el foco en un pan, «concha» deja sólo las dos conchas; con Cobro abierto el buscador no cambia; en Catálogo las teclas no hacen nada.
+
 # Documentos coherentes, borradores del rol y el pay, y recorrido del polvorón desde las pantallas — 20/10/2026
 
 - **Contradicciones corregidas** en `AGENTS.md`, `README.md`, `roadmap.md`, `RELEASE_NOTES_1.0.md`, `NEXT_STEPS.md` y `PILOTO.md`. Nuevo `decisions/ADR-024-nube-y-version-web.md`. Lista en `PLAN_SEGUIMIENTO.md`; sólo queda abierta la decisión de Puerquito y CM-018.
