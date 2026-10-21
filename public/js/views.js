@@ -10,6 +10,7 @@ import { recetas } from './recipes.js';
 import { produccion } from './production.js';
 import { charolas, usesRange as traysUseRange } from './trays.js';
 import { usuarios } from './users.js';
+import { checkVersion, describeVersion, installedVersion, reloadApp } from './version.js';
 
 const branchName = id => state.branches.find(b => b.id === id)?.name ?? '';
 const multi = () => !state.branch && state.branches.length > 1;
@@ -145,7 +146,24 @@ async function cajas() {
         { label: 'Cambio', value: c => [h('strong', { text: KIND[c.kind] ?? c.kind }), h('small', { text: describe(c) })] },
         { label: 'Quién', value: c => c.by },
         { label: 'Estado', value: c => [h('span', { class: 'pill ' + status[c.status][1], text: status[c.status][0] }), c.message ? h('small', { text: c.message }) : c.status === 'pending' && c.terminals > 1 ? h('small', { text: `${c.applied} de ${c.terminals} cajas` }) : null] },
-      ], commands, { empty: 'Todavía no hay cambios hechos en la web.' })));
+      ], commands, { empty: 'Todavía no hay cambios hechos en la web.' })),
+    actualizarApp());
+}
+
+// Versión de la web abierta en este aparato y «Buscar» (js/version.js). El aviso de versión nueva sale solo en cualquier pantalla.
+function actualizarApp() {
+  const installed = h('p', { text: `Versión ${describeVersion(installedVersion(), state.timeZone)}` });
+  const message = h('p', { class: 'muted small', role: 'status', text: 'Se revisa sola al volver a la app y cada 10 minutos; si hay una nueva, sale el aviso «Actualizar».' });
+  const search = h('button', { type: 'button', class: 'secondary', onclick: async () => {
+    search.disabled = true; message.textContent = 'Buscando…';
+    try {
+      if (await checkVersion()) { message.textContent = 'Hay una versión nueva. Actualizando…'; reloadApp(); return; }
+      installed.textContent = `Versión ${describeVersion(installedVersion(), state.timeZone)}`;
+      message.textContent = 'Ya tienes la versión más nueva ✓';
+    } catch (e) { message.textContent = e.message; }
+    search.disabled = false;
+  } }, 'Buscar');
+  return card('Actualizar app', installed, h('div', { class: 'toolbar' }, search), message);
 }
 
 let cloudTab = 'terminals';

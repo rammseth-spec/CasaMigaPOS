@@ -2,8 +2,8 @@
 // Lo usan scripts/dev-web.ts, las pruebas en navegador (test-browser/) y la prueba de punta a punta con la caja (tests/CasaMiga.E2E).
 // Sólo desarrollo y pruebas: scripts/ no se publica (.vercelignore).
 import { createServer, type Server } from 'node:http';
-import { randomBytes } from 'node:crypto';
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { createHash, randomBytes } from 'node:crypto';
+import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AddressInfo } from 'node:net';
@@ -38,6 +38,25 @@ export function localEnv(enrollmentSecret = process.env.ENROLLMENT_SECRET): Loca
  * Arranca el servidor (puerto 0 = uno libre) y devuelve su dirección. noLogin agrega /api/web/dev-users y /api/web/dev-login para entrar
  * eligiendo el usuario, sin contraseña.
  */
+/** Versión de la web local, como la de version.json al publicar (build/version.mjs): cambia en cuanto se edita un archivo de public/,
+ * así el aviso «Hay una versión nueva» también se prueba aquí. La hora es la del archivo más reciente. */
+export function localVersion(root: string) {
+  const hash = createHash('sha256');
+  let latest = 0;
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) { walk(path); continue; }
+      if (entry.name === 'version.json') continue;
+      const stat = statSync(path);
+      hash.update(`${path}:${stat.size}:${stat.mtimeMs}\n`);
+      latest = Math.max(latest, stat.mtimeMs);
+    }
+  };
+  walk(root);
+  return { version: `local-${hash.digest('hex').slice(0, 7)}`, builtAt: new Date(latest).toISOString() };
+}
+
 /** Respaldos en una carpeta (prueba local): sobreviven a reinicios del servidor. */
 function diskStorage(directory: string, base: () => string): Storage {
   mkdirSync(directory, { recursive: true });
@@ -57,7 +76,7 @@ export async function startLocalServer(q: Query, options: { port?: number; noLog
   const env = options.env ?? localEnv();
   const noLogin = options.noLogin ?? false;
   const root = fileURLToPath(new URL('../public/', import.meta.url));
-  const types: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json' };
+  const types: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.png': 'image/png', '.svg': 'image/svg+xml', '.webmanifest': 'application/manifest+json', '.json': 'application/json' };
   let base = '';
   // Respaldos en memoria (o en una carpeta), servidos en /dev-blob/ como lo haría Vercel Blob.
   let storage: Storage | null = null;
@@ -96,6 +115,8 @@ export async function startLocalServer(q: Query, options: { port?: number; noLog
         const user = row ? await toUser(q, row) : null;
         response = !user || !canUseWeb(user.permissions) ? Response.json({ error: 'Usuario sin acceso a la web' }, { status: 403 })
           : Response.json({ ok: true }, { headers: { 'set-cookie': sessionCookie(issueSession(user, env.SESSION_SECRET)) } });
+      } else if (url.pathname === '/version.json') {
+        response = Response.json(localVersion(root), { headers: { 'cache-control': 'no-store' } });
       } else if (url.pathname.startsWith('/api/web/')) {
         response = await handle(q, request(), url.pathname.split('/').pop() ?? '', env);
       } else {
