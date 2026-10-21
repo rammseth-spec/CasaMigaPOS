@@ -5,11 +5,15 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 export type Line = { insumo: string; cantidad: string; estado?: string };
+/** Una preparación usada por otra o por un pan. «por medir» = falta el dato: no se carga hasta tenerlo, nunca se supone. */
+export type Uso = { codigo: string; cantidad: string; estado?: string };
+export const POR_MEDIR = 'por medir';
 export type Recetario = {
   fecha: string; nombreBorrador: string;
   insumos: { codigo: string; nombre: string; mide: 'g' | 'ml' | 'pz'; tambienSeLlama?: string[]; nota?: string }[];
-  preparaciones: { codigo: string; nombre: string; rinde: string; notas?: string; ingredientes: Line[]; alternativas?: Line[][] }[];
-  panes: { catalogo: number; pan: string; preparaciones: { codigo: string; cantidad: string; estado?: string }[]; directos?: Line[]; notas?: string }[];
+  // «preparaciones» dentro de una preparación: otras que usa ya hechas (masa dulce en la masa enriquecida), con cantidad en la unidad de su rendimiento.
+  preparaciones: { codigo: string; nombre: string; rinde: string; notas?: string; ingredientes: Line[]; alternativas?: Line[][]; preparaciones?: Uso[] }[];
+  panes: { catalogo: number; pan: string; preparaciones: Uso[]; directos?: Line[]; notas?: string }[];
 };
 export type Dimension = 'MASS' | 'VOLUME' | 'COUNT';
 
@@ -59,6 +63,18 @@ export function validate(r: Recetario, catalog?: string[]): string[] {
     if (new Set(used).size !== used.length) problems.push(`${p.codigo}: un insumo se repite`);
     p.ingredientes.forEach(l => check(l, p.codigo));
     for (const group of p.alternativas ?? []) { if (group.length < 2) problems.push(`${p.codigo}: alternativa con una sola opción`); group.forEach(l => check(l, p.codigo)); }
+    // Las que usa deben ir antes en la lista (así nunca hay ciclos) y medirse en la unidad de su rendimiento.
+    const before = r.preparaciones.slice(0, r.preparaciones.indexOf(p)).map(x => x.codigo);
+    const inner = p.preparaciones ?? [];
+    if (new Set(inner.map(x => x.codigo)).size !== inner.length) problems.push(`${p.codigo}: una preparación usada se repite`);
+    if (p.ingredientes.length + (p.alternativas ?? []).length + inner.length === 0) problems.push(`${p.codigo}: no lleva nada`);
+    for (const use of inner) {
+      const used = preparaciones.get(use.codigo);
+      if (!used || !before.includes(use.codigo)) { problems.push(`${p.codigo}: usa ${use.codigo}, que debe ir antes en la lista`); continue; }
+      if (use.cantidad === POR_MEDIR) continue;
+      try { if (quantity(use.cantidad).dimension !== quantity(used.rinde).dimension) problems.push(`${p.codigo}: ${use.codigo} rinde en otra unidad`); }
+      catch (e) { problems.push(`${p.codigo}: ${(e as Error).message}`); }
+    }
   }
   for (const pan of r.panes) {
     for (const req of pan.preparaciones) {

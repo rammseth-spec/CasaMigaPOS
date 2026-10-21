@@ -41,6 +41,7 @@ const HELP = {
   direct: 'Un ingrediente que la fórmula o el perfil utiliza directamente: elige el ingrediente, la cantidad y una unidad compatible. El buscador limita los candidatos; no cambia los ingredientes ya asignados.',
   alternatives: 'Un grupo reúne ingredientes que pueden sustituirse entre sí; Opción 1 es la primera preferencia. «Nuevo grupo de alternativas» crea un conjunto; «Agregar opción al grupo» añade otra opción al grupo de la fila elegida. Cada grupo necesita al menos dos opciones.',
   preparations: 'Una preparación es otra receta publicada que forma parte del producto. Elige la preparación, la cantidad por pieza y una unidad compatible con su rendimiento.',
+  formulaPreparations: 'Otra receta que ésta usa ya preparada, como la masa dulce dentro de la masa enriquecida. Elige la receta y cuánto de ella usa esta receta completa. Puede estar en borrador, pero esta receta sólo se publica cuando las que usa ya estén publicadas.',
 };
 
 export async function recetas() {
@@ -152,6 +153,7 @@ function versionView(v, kind) {
   if (kind === 'formula') return h('div', { class: 'recipe-view' },
     h('p', { text: `Rinde ${format(v.yieldAtomic, v.yieldDimension)}${v.notes ? ` · ${v.notes}` : ''}` }),
     v.ingredients.length ? h('ul', { class: 'rows' }, lines(v.ingredients)) : null,
+    v.preparations?.length ? h('div', {}, h('p', { class: 'small', text: 'Usa estas preparaciones:' }), h('ul', { class: 'rows' }, lines(v.preparations))) : null,
     v.groups.map((g, i) => h('p', { class: 'small', text: `Grupo ${i + 1}: ${g.options.map((o, n) => `Opción ${n + 1} ${o.item} ${format(o.atomic, o.dimension)}`).join(' · ')}` })));
   return h('div', { class: 'recipe-view' },
     v.formulas.length ? h('ul', { class: 'rows' }, lines(v.formulas)) : null,
@@ -237,7 +239,8 @@ function startEditor(owner, version, kind) {
     yield: version ? numberOf(version.yieldAtomic, version.yieldDimension) : '1', yieldUnit: version ? unitOf(version.yieldAtomic, version.yieldDimension) : 'g',
     ingredients: (version?.ingredients ?? []).map(ingredientRow),
     alternatives: (version?.groups ?? []).flatMap((g, i) => g.options.map((o, n) => ({ ...ingredientRow(o), group: i + 1, preference: n + 1 }))),
-    selected: null, selectedAlt: null };
+    preparations: (version?.preparations ?? []).map(p => ({ key: crypto.randomUUID(), formulaVersionId: p.formulaVersionId, quantity: numberOf(p.atomic, p.dimension), unit: unitOf(p.atomic, p.dimension) })),
+    selected: null, selectedAlt: null, selectedPrep: null };
   else rec.form = { owner, versionId: version?.id ?? crypto.randomUUID(), revision: version?.revision ?? null, number: version?.version ?? next, name: version?.name ?? '',
     formulas: (version?.formulas ?? []).map(f => ({ key: crypto.randomUUID(), formulaVersionId: f.formulaVersionId, quantity: numberOf(f.atomic, f.dimension), unit: unitOf(f.atomic, f.dimension) })),
     direct: (version?.direct ?? []).map(ingredientRow), selectedPrep: null, selectedDirect: null };
@@ -282,9 +285,13 @@ function searchBox(onChange) {
 function formulaEditor(data) {
   const f = rec.form, branchId = f.owner.branchId;
   const save = h('button', { type: 'button', class: 'primary' }, 'Guardar borrador');
-  const complete = () => !!f.name.trim() && atomic(f.yield, f.yieldUnit) !== null && f.ingredients.length + f.alternatives.length > 0
+  // Otras recetas de la sucursal que ésta puede usar ya preparadas (publicadas o en borrador); nunca ella misma.
+  const usable = data.formulas.filter(fm => fm.branchId === branchId && fm.id !== f.owner.id)
+    .flatMap(fm => fm.list.map(v => ({ id: v.id, label: `${fm.name} · versión ${v.version}${v.state === 'DRAFT' ? ' (borrador)' : ''}`, dimension: v.yieldDimension })));
+  const validPrep = r => { const fm = usable.find(x => x.id === r.formulaVersionId); return !!fm && UNITS[fm.dimension].includes(r.unit) && atomic(r.quantity, r.unit) !== null; };
+  const complete = () => !!f.name.trim() && atomic(f.yield, f.yieldUnit) !== null && f.ingredients.length + f.alternatives.length + f.preparations.length > 0
     && f.ingredients.every(r => validIngredient(r, data, branchId)) && f.alternatives.every(r => validIngredient(r, data, branchId))
-    && groups(f.alternatives).every(g => g.length >= 2);
+    && f.preparations.every(validPrep) && groups(f.alternatives).every(g => g.length >= 2);
   const refresh = () => { save.disabled = !configure() || !complete(); };
   const rows = h('div');
   const draw = () => {
@@ -297,6 +304,21 @@ function formulaEditor(data) {
       h('div', { class: 'toolbar' },
         h('button', { type: 'button', class: 'secondary', disabled: !items(data, branchId).length, onclick: () => { const r = ingredientRow(); f.ingredients.push(r); f.selected = r.key; draw(); } }, 'Agregar ingrediente'),
         h('button', { type: 'button', class: 'secondary', onclick: () => { f.ingredients = f.ingredients.filter(r => r.key !== f.selected); f.selected = null; draw(); } }, 'Quitar ingrediente')),
+      h('h3', { class: 'inv-section', text: 'Preparaciones que usa esta receta' }), h('p', { class: 'caption', text: HELP.formulaPreparations }),
+      f.preparations.length ? h('div', { class: 'table-wrap history-table recipe-table' }, h('table', { class: 'cards', 'aria-label': 'Preparaciones que usa la receta' },
+        h('thead', {}, h('tr', {}, ['Receta que usa', 'Cantidad', 'Unidad compatible'].map(c => h('th', { text: c })))),
+        h('tbody', {}, f.preparations.map(r => { const fm = usable.find(x => x.id === r.formulaVersionId);
+          const tr = h('tr', { class: 'click' + (f.selectedPrep === r.key ? ' selected' : ''), onclick: () => { f.selectedPrep = r.key; for (const x of tr.parentNode.children) x.classList.toggle('selected', x === tr); } },
+            h('td', { 'data-label': 'Receta que usa' }, h('select', { 'aria-label': 'Receta que usa', onchange: e => { r.formulaVersionId = e.target.value; const x = usable.find(p => p.id === r.formulaVersionId);
+              if (x && !UNITS[x.dimension].includes(r.unit)) r.unit = UNITS[x.dimension][0]; draw(); } },
+              h('option', { value: '', text: 'Elige una receta' }), usable.map(p => h('option', { value: p.id, text: p.label, selected: p.id === r.formulaVersionId })))),
+            h('td', { 'data-label': 'Cantidad' }, h('input', { value: r.quantity, inputmode: 'decimal', maxlength: '20', 'aria-label': 'Cantidad de la preparación', oninput: e => { r.quantity = e.target.value; refresh(); } })),
+            h('td', { 'data-label': 'Unidad compatible' }, h('select', { 'aria-label': 'Unidad compatible', disabled: !fm, onchange: e => { r.unit = e.target.value; refresh(); } },
+              (fm ? UNITS[fm.dimension] : []).map(u => h('option', { value: u, text: u, selected: u === r.unit })))));
+          return tr; })))) : h('p', { class: 'catalog-empty', text: 'Esta receta no usa otras recetas.' }),
+      h('div', { class: 'toolbar' },
+        h('button', { type: 'button', class: 'secondary', disabled: !usable.length, onclick: () => { const r = { key: crypto.randomUUID(), formulaVersionId: '', quantity: '1', unit: 'g' }; f.preparations.push(r); f.selectedPrep = r.key; draw(); } }, 'Agregar preparación'),
+        h('button', { type: 'button', class: 'secondary', onclick: () => { f.preparations = f.preparations.filter(r => r.key !== f.selectedPrep); f.selectedPrep = null; draw(); } }, 'Quitar preparación')),
       h('h3', { class: 'inv-section', text: 'Grupos de alternativas' }), h('p', { class: 'caption', text: HELP.alternatives }),
       ingredientTable([...f.alternatives].sort((a, b) => a.group - b.group || a.preference - b.preference), data, branchId,
         { label: 'Grupos y opciones de alternativas', groups: true, selectedKey: f.selectedAlt, onSelect: k => { f.selectedAlt = k; }, onChange: full => full ? draw() : refresh() })
@@ -322,7 +344,8 @@ function formulaEditor(data) {
     try {
       await command(branchId, 'recipe.formula.draft', { formulaId: f.owner.id, versionId: f.versionId, revision: f.revision, name: f.name.trim(), notes: f.notes.trim(),
         yield: { dimension: DIMENSION_NAME[f.yieldDimension], atomic: atomic(f.yield, f.yieldUnit) },
-        ingredients: f.ingredients.map(r => payloadLine(r, data, branchId)).map(({ dimension, ...o }) => o), groups: options });
+        ingredients: f.ingredients.map(r => payloadLine(r, data, branchId)).map(({ dimension, ...o }) => o), groups: options,
+        preparations: f.preparations.map(r => ({ formulaVersionId: r.formulaVersionId, atomic: atomic(r.quantity, r.unit) })) });
       rec.screen = 'detail'; rec.formula = f.owner.id; say('Versión borrador enviada a la caja.', true);
     } catch (error) { say(error.message); }
     redraw();

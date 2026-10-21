@@ -94,29 +94,40 @@ test('a till starts empty and gets the catalog with photos, the supplies and the
   await run(first.steps);
   assert.equal(plan(await state(q), catalogRows, recetario, photo).steps.length, 0, 'What is already queued is never sent again.');
 
-  // 2ª vuelta: con los insumos en la caja, los borradores de las preparaciones; las recetas de cada pan esperan su publicación.
+  // 2ª vuelta: con los insumos en la caja, los borradores de las preparaciones simples; las que usan otras esperan a que la caja
+  // tenga esas, y la masa enriquecida espera el dato «por medir» de cuánta masa dulce lleva. Las recetas de cada pan esperan su publicación.
+  const nested = recetario.preparaciones.filter(p => p.preparaciones?.length);
+  const unmeasured = new Set(nested.filter(p => p.preparaciones!.some(r => r.cantidad === 'por medir')).map(p => p.codigo));
   await applyAsTill(q);
   const second = plan(await state(q), catalogRows, recetario, photo);
-  assert.equal(count(second.steps, 'recipe.formula.draft'), recetario.preparaciones.length);
-  assert.equal(second.steps.length, recetario.preparaciones.length);
+  assert.equal(count(second.steps, 'recipe.formula.draft'), recetario.preparaciones.length - nested.length);
+  assert.equal(second.steps.length, recetario.preparaciones.length - nested.length);
+  assert.ok(second.waits.some(w => w.stage === 3 && w.reason.startsWith('esperando que la caja aplique MASA-DULCE')), 'The roll batch waits for its doughs.');
+  assert.ok(second.waits.some(w => w.stage === 3 && w.reason === 'falta medir cuánto lleva de MASA-DULCE'), 'The enriched dough is never sent with a guessed amount.');
   assert.ok(second.waits.filter(w => w.stage === 4).every(w => w.reason.startsWith('falta publicar')));
   await run(second.steps);
 
-  // Sin publicar nada, no se manda la receta de ningún pan.
+  // 3ª vuelta: con la masa dulce y el relleno en la caja, la tanda de roles (usa las dos); sin publicar nada, no se manda ningún pan.
+  await applyAsTill(q);
+  const batches = plan(await state(q), catalogRows, recetario, photo);
+  assert.deepEqual(batches.steps.map(s => [s.kind, (s.payload as { preparations?: unknown[] }).preparations?.length]), [['recipe.formula.draft', 2]]);
+  await run(batches.steps);
   await applyAsTill(q);
   const waiting = plan(await state(q), catalogRows, recetario, photo);
   assert.equal(waiting.steps.length, 0);
-  assert.equal(waiting.waits.length, recetario.panes.length);
+  assert.equal(waiting.waits.length, recetario.panes.length + unmeasured.size);
 
-  // 3ª vuelta: con las preparaciones publicadas, el perfil y el borrador de cada pan.
+  // 4ª vuelta: con las preparaciones publicadas, el perfil y el borrador de cada pan, menos los que usan la masa enriquecida.
+  const blocked = recetario.panes.filter(p => p.preparaciones.some(r => unmeasured.has(r.codigo))).length;
+  assert.equal(blocked, 3, 'Cuernito, danés and bigote wait for the enriched dough.');
   await applyAsTill(q, true);
   const third = plan(await state(q), catalogRows, recetario, photo);
-  assert.equal(count(third.steps, 'recipe.profile.create'), recetario.panes.length);
-  assert.equal(count(third.steps, 'recipe.profile.draft'), recetario.panes.length);
+  assert.equal(count(third.steps, 'recipe.profile.create'), recetario.panes.length - blocked);
+  assert.equal(count(third.steps, 'recipe.profile.draft'), recetario.panes.length - blocked);
   await run(third.steps);
   await applyAsTill(q);
   const done = plan(await state(q), catalogRows, recetario, photo);
-  assert.deepEqual([done.steps.length, done.waits.length], [0, 0], 'Everything loaded; a new run sends nothing.');
+  assert.deepEqual([done.steps.length, done.waits.length], [0, unmeasured.size + blocked], 'Only what waits for a measured amount is left; a new run sends nothing.');
 });
 
 test('a product photo of the catalog fits through the web command endpoint', { skip }, async () => {

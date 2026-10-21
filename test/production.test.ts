@@ -96,3 +96,32 @@ test('prepare and register from the web are validated before reaching the till',
   assert.deepEqual(pulled.map(c => c.kind), ['production.prepare', 'production.confirm']);
   assert.deepEqual(pulled[1].payload, { batchId, actuals: [{ productId: concha, actual: 4 }] });
 });
+
+test('a dough used inside another dough is counted once, like the till', async () => {
+  const q = await seeded(1_000_000);
+  const cuernito = 'f1000000-0000-4000-8000-000000000002', cuernitoItem = 'aaaaaaaa-0000-4000-8000-000000000006';
+  const enriched = 'b0000000-0000-4000-8000-000000000002', enrichedV1 = 'b6000000-0000-4000-8000-000000000001';
+  const cuernitoProfile = 'b2000000-0000-4000-8000-000000000002', cuernitoV1 = 'b5000000-0000-4000-8000-000000000002';
+  await send(q, caja1, centro, [
+    { entity: 'product', id: cuernito, payload: { product: { id: cuernito, name: 'Cuernito', category_id: category, price_cents: 1300, active: 1 }, inventoryLinks: [] } },
+    item(cuernitoItem, 'PT-CUE', 'Cuernito terminado', 'COUNT', 0, 'FINISHED_GOOD'),
+    { entity: 'formula', id: enriched, payload: {
+      formula: { id: enriched, code: 'MASA-ENR', name: 'Masa enriquecida', active_version_id: enrichedV1, revision: 2 },
+      versions: [{ id: enrichedV1, formula_id: enriched, version: 1, name: 'Enriquecida', state: 'PUBLISHED', yield_dimension: 'MASS', yield_atomic: 1_000_000, notes: null, revision: 2 }],
+      ingredients: [{ version_id: enrichedV1, sequence: 1, item_id: butter, dimension: 'MASS', quantity_atomic: 100_000, count_policy: 'NOT_APPLICABLE' }],
+      groups: [], options: [],
+      preparations: [{ version_id: enrichedV1, sequence: 1, preparation_version_id: formulaV1, dimension: 'MASS', quantity_atomic: 900_000 }] } },
+    { entity: 'production_profile', id: cuernitoProfile, payload: {
+      profile: { id: cuernitoProfile, product_id: cuernito, finished_item_id: cuernitoItem, active_version_id: cuernitoV1, revision: 2 },
+      versions: [{ id: cuernitoV1, profile_id: cuernitoProfile, version: 1, name: 'Cuernito v1', state: 'PUBLISHED', revision: 2 }],
+      directIngredients: [], formulaRequirements: [{ profile_version_id: cuernitoV1, formula_version_id: enrichedV1, sequence: 1, dimension: 'MASS', quantity_atomic: 80_000 }] } },
+  ]);
+  const plan = await productionPlan(q, centro, { outputs: [{ profileVersionId: profileV1, planned: 5 }, { profileVersionId: cuernitoV1, planned: 10 }], selections: [] });
+  // 5 conchas × 60 g = 300 g de masa dulce, más 900 g por cada kilo de los 800 g de masa enriquecida = 720 g: 1,020 g en total.
+  assert.deepEqual(plan.formulas.map(f => [f.name, f.required]), [['Base', 1_020_000], ['Enriquecida', 800_000]]);
+  assert.deepEqual(plan.requirements.map(r => [r.name, r.required]), [['Harina', 612_000], ['Mantequilla', 182_000], ['Huevo', 4]],
+    'Flour and eggs of the sweet dough once; butter = 102 g of the dough option + 80 g of the enriched dough.');
+  const recipes = (await import('../lib/web.js')).recipes;
+  const shown = (await recipes(q, centro)).formulas.find(f => f.id === enriched)!;
+  assert.deepEqual(shown.active?.preparations, [{ formulaVersionId: formulaV1, formula: 'Masa dulce · versión 1', dimension: 'MASS', atomic: 900_000 }]);
+});

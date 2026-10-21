@@ -512,10 +512,20 @@ async function recipe(q: Query, branch: string, kind: Kind, b: Record<string, un
         for (const [o, raw] of options.entries()) group.push({ id: id((raw as Record<string, unknown>)?.id, 'Opción'), ...(await line(raw, `Grupo ${g + 1}, opción ${o + 1}`)) });
         groups.push(group);
       }
-      if (ingredients.length + groups.length === 0) throw new ProtocolError('Agrega al menos un ingrediente o grupo de alternativas');
+      // Otras preparaciones que usa (masa dulce dentro de la enriquecida). Si no vienen, la caja conserva las que ya tenía el borrador.
+      const preparations = b.preparations === undefined ? undefined : list(b.preparations, 'Preparaciones', 20).map((raw, n) => {
+        const x = (raw ?? {}) as Record<string, unknown>;
+        const used = id(x.formulaVersionId, `Preparación ${n + 1}`);
+        const found = formulaVersion(used);
+        if (!found) throw new ProtocolError(`Preparación ${n + 1}: la receta no existe`);
+        if (s(found.formula.id) === formulaId) throw new ProtocolError('Una receta no puede usar otra versión de sí misma');
+        return { formulaVersionId: used, atomic: int(x.atomic, `Preparación ${n + 1}: cantidad`, 1, 1_000_000_000_000) };
+      });
+      if (preparations && new Set(preparations.map(p => p.formulaVersionId)).size !== preparations.length) throw new ProtocolError('Una misma preparación no puede repetirse en la receta');
+      if (ingredients.length + groups.length + (preparations?.length ?? 0) === 0) throw new ProtocolError('Agrega al menos un ingrediente, una preparación o un grupo de alternativas');
       unique([...ingredients.map(i => i.itemId), ...groups.flat().map(o => o.itemId)]);
       return { formulaId, versionId, revision: rev, name: text(b.name, 'Nombre de la versión', 1, 160), notes: text(b.notes ?? '', 'Notas', 0, 500),
-        yield: { dimension: s(y.dimension), atomic: int(y.atomic, 'Rendimiento', 1, 1_000_000_000_000) }, ingredients, groups };
+        yield: { dimension: s(y.dimension), atomic: int(y.atomic, 'Rendimiento', 1, 1_000_000_000_000) }, ingredients, groups, ...(preparations ? { preparations } : {}) };
     }
     case 'recipe.formula.publish': case 'recipe.profile.publish': {
       const versionId = id(b.versionId, 'Versión');

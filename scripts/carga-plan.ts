@@ -2,7 +2,7 @@
 // cada pan. Compara contra lo que la caja ya subió y contra lo que ya va en la fila, así que volver a correrlo nunca duplica nada.
 // Etapas: 1 catálogo y fotos · 2 insumos y productos terminados · 3 preparaciones (borrador) · 4 panes (borrador, sólo con
 // preparaciones publicadas: es lo que pide la caja).
-import { finishedCode, namesOf, normalize, quantity, stableId, type Line, type Recetario } from './recetario.js';
+import { finishedCode, namesOf, normalize, POR_MEDIR, quantity, stableId, type Line, type Recetario } from './recetario.js';
 
 export type CatalogRow = { id: number; name: string; pesos: number; category: string };
 export type Queued = { kind: string; payload: Record<string, unknown> };
@@ -76,6 +76,12 @@ export function plan(state: State, catalog: CatalogRow[], recetario: Recetario, 
 
   // 3. Preparaciones en borrador: la caja sólo acepta ingredientes que ya existen en ella.
   const published = new Map<string, string>();
+  /** La versión que la caja ya tiene de una preparación: la de este recetario si ya está, si no la publicada. */
+  const versionOf = (code: string) => {
+    const f = state.formulas.find(x => same(x.code, code));
+    const own = stableId(`preparacion:${code}:${recetario.fecha}`);
+    return f?.list.find(v => v.id === own || v.name === recetario.nombreBorrador)?.id ?? published.get(code) ?? null;
+  };
   for (const p of recetario.preparaciones) {
     const formula = state.formulas.find(f => same(f.code, p.codigo));
     const formulaId = formula?.id ?? String(queued('recipe.formula.create', x => same(x.code, p.codigo))?.id ?? '');
@@ -86,13 +92,22 @@ export function plan(state: State, catalog: CatalogRow[], recetario: Recetario, 
     if (!formulaId) steps.push({ stage: 3, kind: 'recipe.formula.create', label: `Preparación ${p.nombre}`, payload: { id, code: p.codigo, name: p.nombre } });
     const versionId = stableId(`preparacion:${p.codigo}:${recetario.fecha}`);
     if (versions.some(v => v.name === recetario.nombreBorrador || v.id === versionId) || queued('recipe.formula.draft', x => x.versionId === versionId)) continue;
+    const label = `Borrador de ${p.nombre}`;
     const lines = [...p.ingredientes, ...(p.alternativas ?? []).flat()];
-    if (!ready(lines)) { waits.push({ stage: 3, label: `Borrador de ${p.nombre}`, reason: 'esperando que la caja aplique sus insumos' }); continue; }
+    if (!ready(lines)) { waits.push({ stage: 3, label, reason: 'esperando que la caja aplique sus insumos' }); continue; }
+    // Otras preparaciones que usa ya hechas: sin su cantidad medida no se manda (nunca se supone), y cada una debe estar ya en la caja.
+    const inner = p.preparaciones ?? [];
+    const unmeasured = inner.filter(r => r.cantidad === POR_MEDIR).map(r => r.codigo);
+    if (unmeasured.length) { waits.push({ stage: 3, label, reason: `falta medir cuánto lleva de ${unmeasured.join(', ')}` }); continue; }
+    const used = inner.map(r => ({ r, versionId: versionOf(r.codigo) }));
+    const absent = used.filter(u => !u.versionId).map(u => u.r.codigo);
+    if (absent.length) { waits.push({ stage: 3, label, reason: `esperando que la caja aplique ${absent.join(', ')}` }); continue; }
     const y = quantity(p.rinde);
-    steps.push({ stage: 3, kind: 'recipe.formula.draft', label: `Borrador de ${p.nombre}`, payload: {
+    steps.push({ stage: 3, kind: 'recipe.formula.draft', label, payload: {
       formulaId: id, versionId, revision: null, name: recetario.nombreBorrador, notes: (p.notas ?? '').slice(0, 500),
       yield: { dimension: WEB_DIMENSION[y.dimension], atomic: y.atomic }, ingredients: p.ingredientes.map(line),
-      groups: (p.alternativas ?? []).map((g, n) => g.map(l => ({ id: stableId(`preparacion:${p.codigo}:alternativa:${n}:${l.insumo}`), ...line(l) }))) } });
+      groups: (p.alternativas ?? []).map((g, n) => g.map(l => ({ id: stableId(`preparacion:${p.codigo}:alternativa:${n}:${l.insumo}`), ...line(l) }))),
+      ...(inner.length ? { preparations: used.map(u => ({ formulaVersionId: u.versionId, atomic: quantity(u.r.cantidad).atomic })) } : {}) } });
   }
 
   // 4. Lo que lleva cada pan, en borrador. La caja pide que sus preparaciones ya estén publicadas.
