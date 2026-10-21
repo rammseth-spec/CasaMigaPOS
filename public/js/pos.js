@@ -44,6 +44,19 @@ export async function tillOf(branchId) {
 
 // ---------- Punto de venta ----------
 
+// Como la caja: lo que se escribe en Venta va al buscador sin tocarlo antes. No si ya se escribe en otro campo, con un atajo
+// (Ctrl, Cmd, Alt) o con una ventana abierta; el espacio sigue tocando el pan que tiene el foco.
+let searchBox = null;
+document.addEventListener('keydown', e => {
+  if (!searchBox?.isConnected || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || e.isComposing || e.key.length !== 1 || e.key === ' ') return;
+  const at = document.activeElement;
+  if (at === searchBox || at?.closest?.('input, textarea, select, [contenteditable="true"]') || document.querySelector('dialog[open]')) return;
+  e.preventDefault();
+  searchBox.focus();
+  if (searchBox.value.length < searchBox.maxLength) searchBox.value += e.key;
+  searchBox.dispatchEvent(new Event('input'));
+});
+
 export async function vender(ctx) {
   const data = await loadTill(ctx);
   // Como en la caja de escritorio: con la caja cerrada (o ya contada) no se entra a vender; se va a «Tu caja».
@@ -68,6 +81,7 @@ function sell(data) {
 
   // Buscador con lupa, «Buscar» y «× Limpiar» (sólo con texto).
   const input = h('input', { type: 'search', class: 'pos-search-input', placeholder: 'Buscar pan o SKU', maxlength: '160', value: ui.q, 'aria-label': 'Buscar producto por nombre o SKU', title: 'Buscar nombre o SKU' });
+  searchBox = input;
   const clearSearch = h('button', { type: 'button', class: 'ghost', hidden: !ui.q, onclick: () => { input.value = ''; apply(); input.focus(); } }, '× Limpiar');
   let timer = 0;
   const apply = () => { clearTimeout(timer); ui.q = input.value; ui.page = 0; clearSearch.hidden = !ui.q; drawGrid(); };
