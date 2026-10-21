@@ -112,6 +112,11 @@ button.link:hover { background: none; color: var(--text); }
   border-radius: 12px; border: 0; background: transparent; text-decoration: none; color: var(--muted); font-size: 11px; font-weight: 600; text-align: center; white-space: nowrap; width: 100%; }
 .nav-item:hover { background: color-mix(in srgb, var(--muted) 6%, transparent); }
 .nav-item[aria-current="page"] { background: var(--primary-soft); color: var(--accent-text); }
+.arranque { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; text-align: center; background: var(--bg); color: var(--text); font-size: 17px; }
+.arranque img { width: 150px; }
+.arranque p { margin: 0; }
+.update-notice { position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 40; display: flex; align-items: center; gap: 14px; padding: 8px 8px 8px 16px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); font-weight: 600; max-width: calc(100vw - 24px); }
 .nav-item svg { width: 22px; height: 22px; flex: none; }
 .nav-item .nav-art { width: 28px; height: 28px; flex: none; object-fit: contain; }
 .nav-sep { border: 0; height: 1px; background: var(--line); margin: 6px 14px; flex: none; }
@@ -719,6 +724,7 @@ dialog footer { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: 
   .nav .who { display: grid; gap: 2px; font-size: 13px; padding: 8px 12px 0; }
   .nav .who strong { font-size: 14px; }
   body.menu-open .nav { transform: none; }
+  .update-notice { left: 12px; right: 12px; transform: none; justify-content: space-between; }
   body.menu-open::after { content: ""; position: fixed; inset: 0; background: rgba(42, 30, 21, .3); z-index: 20; }
   .topbar { padding: 10px 16px; gap: 10px; }
   .topbar h1 { font-size: 21px; }

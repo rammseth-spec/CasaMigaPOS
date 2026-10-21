@@ -21,10 +21,11 @@ Detalle completo del funcionamiento: `docs/WEB.md` en el repositorio CasaMigaPOS
 | `db/` | Migraciones de PostgreSQL; se aplican solas en el primer acceso, con candado. |
 | `test/` | Pruebas con PostgreSQL en memoria (PGlite). |
 | `scripts/dev-web.ts` | Servidor local sin Neon ni Vercel. |
+| `build/version.mjs` | Lo corre Vercel al publicar: escribe `public/version.json` (no se versiona). |
 
 ## Publicar (Vercel + Neon)
 
-1. En Vercel: **Add New → Project → Import** este repositorio (framework: Other; sin build).
+1. En Vercel: **Add New → Project → Import** este repositorio (framework: Other). El build lo fija `vercel.json`: `node build/version.mjs` escribe `public/version.json` (commit y hora) para el aviso de versión nueva.
 2. Variables de entorno (Production):
    - `DATABASE_URL`: cadena de conexión de Neon (consola de Neon → Connect).
    - `ENROLLMENT_SECRET`: 24 caracteres o más; se escribe en la pantalla **Nube** de cada caja para registrarla.
@@ -37,6 +38,10 @@ Detalle completo del funcionamiento: `docs/WEB.md` en el repositorio CasaMigaPOS
 4. En cada caja, como administrador → **Nube**: dirección del sitio, nombre de la sucursal y el secreto de alta.
 
 Los valores secretos nunca se guardan en el repositorio.
+
+## Actualizar app
+
+Una pestaña o un acceso directo («Agregar a inicio») puede quedarse abierto días, como la tableta del mostrador. La web compara la versión con la que abrió con `version.json` al volver a la app y cada 10 minutos; si cambió, sale el aviso **«Hay una versión nueva · Actualizar»** (no recarga sola, para no cortar un cobro). En **Nube → Cajas y cambios**, la tarjeta **Actualizar app** muestra la versión abierta y **Buscar** revisa y recarga. Sin service worker: `index.html`, `version.json`, el manifest, `app.css` y `js/` van sin caché (`vercel.json`). Mientras baja la web se ve «Cargando Casa Miga…» (`js/arranque.js`); si tarda o falla un archivo, ofrece **Volver a cargar**. En local, el servidor calcula la versión de los archivos de `public/`: al editar uno, sale el aviso.
 
 ## Desarrollo local
 

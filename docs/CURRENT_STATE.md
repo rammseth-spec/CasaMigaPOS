@@ -1,3 +1,12 @@
+# Web: «Actualizar app» — 21/10/2026
+
+- Pedido del usuario (skill pwa-actualizar-app, adaptado: la web no usa Vite ni service worker). Al publicar, `build/version.mjs` (buildCommand de `vercel.json`; fuera de `scripts/`, que no se sube) escribe `public/version.json` con el commit y la hora; el servidor local la calcula de los archivos de `public/`.
+- `js/version.js`: guarda la versión con la que abrió la web y la compara al volver a la app y cada 10 minutos; si cambió, aviso flotante **«Hay una versión nueva · Actualizar»** (no recarga sola). **Nube → Cajas y cambios → Actualizar app**: versión abierta (hora de la sucursal y commit) y **Buscar**.
+- Arranque que nunca queda en blanco: «Cargando Casa Miga…» en `index.html` y `js/arranque.js` (archivo aparte por la CSP); si tarda 15 s o no baja un archivo, avisa y ofrece **Volver a cargar** (sólo recarga; no borra datos ni la sesión).
+- Manifest (`manifest.webmanifest`, `standalone`) e íconos con el logotipo: 192, 512, 512 enmascarable y `apple-touch-icon.png` de 180 para «Agregar a inicio».
+- `vercel.json`: sin caché `/`, `index.html`, `version.json`, el manifest, `app.css` y `js/`; Vercel ya comprime.
+- Pruebas: `cloud/test/actualizar.test.ts` (4). Nube 81/81. Revisado en el navegador: Buscar al día, aviso tras cambiar un archivo, Actualizar recarga y lo quita, pantalla de carga con Volver a cargar; celular sin desbordes.
+
 # Venta en la web: escribir en cualquier parte filtra — 21/10/2026
 
 - Como en la caja (6139e86): en Venta de la web, lo que se escribe va directo al buscador sin tocarlo antes y filtra al momento (`cloud/public/js/pos.js`). No se desvía si ya se escribe en otro campo, con Ctrl/Cmd/Alt, con una ventana abierta (Cobro, Ticket en celular) ni fuera de Venta; la barra espaciadora sigue tocando el pan que tiene el foco.

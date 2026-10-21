@@ -2,3 +2,5 @@ node_modules/
 .vercel/
 .env*
 test-browser/output/
+# La escribe build/version.mjs al publicar.
+public/version.json

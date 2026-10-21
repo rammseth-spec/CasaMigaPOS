@@ -1,6 +1,7 @@
 // Casa Miga en línea: sesión, rutas, filtros y piezas comunes. Todo texto entra con textContent (nunca HTML).
 import { ICON } from './icons.js';
 import { VIEWS } from './views.js';
+import { watchVersion } from './version.js';
 
 export { ICON };
 
@@ -293,7 +294,7 @@ async function checkAlerts() {
 
 // ---------- Acceso ----------
 export function showLogin(message) {
-  $('app').hidden = true; $('login').hidden = false; $('password-form').hidden = true; $('login-form').hidden = false;
+  $('arranque').hidden = true; $('app').hidden = true; $('login').hidden = false; $('password-form').hidden = true; $('login-form').hidden = false;
   $('login-error').textContent = message || '';
   $('username').focus();
 }
@@ -376,7 +377,7 @@ async function start() {
     me = await api('me');
   }
   state.me = me; state.branches = me.branches; state.timeZone = me.timeZone;
-  $('login').hidden = true; $('app').hidden = false;
+  $('arranque').hidden = true; $('login').hidden = true; $('app').hidden = false;
   layout(); choose(state.period === 'custom' ? 'today' : state.period, false);
   if (!location.hash) location.hash = `#/${allowed()[0]?.id ?? 'resumen'}`; else render();
 }
@@ -406,5 +407,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(() => { if (Date.now() - lastRefresh >= REFRESH_MS) autoRefresh(); if (state.me && Date.now() - lastAlerts >= 60_000) checkAlerts(); }, 5_000);
   $('alert').addEventListener('click', () => { location.hash = '#/nube'; });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - lastRefresh >= 15_000) autoRefresh(); });
+  watchVersion();
   start().catch(e => showLogin(e.status === 401 ? '' : e.message));
 });

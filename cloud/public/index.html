@@ -7,10 +7,19 @@
 <meta name="theme-color" content="#F5F3EF">
 <title>Casa Miga en línea</title>
 <link rel="icon" href="logo.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="app.css">
+<script src="js/arranque.js" defer></script>
 <script type="module" src="js/app.js"></script>
 </head>
 <body>
+<!-- Mientras baja la web se ve esto (js/arranque.js avisa si tarda o falla); app.js lo quita al mostrar la entrada o la app. -->
+<div id="arranque" class="arranque" role="status">
+  <img src="logo.png" alt="Casa Miga Panadería">
+  <p id="arranque-texto">Cargando Casa Miga…</p>
+  <button id="arranque-reintentar" type="button" class="primary" hidden>Volver a cargar</button>
+</div>
 <main id="login" class="login" hidden>
   <form id="login-form" class="login-card" autocomplete="on">
     <img src="logo.png" alt="Casa Miga Panadería">
