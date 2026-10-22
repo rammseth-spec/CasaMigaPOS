@@ -24,7 +24,7 @@ Fecha: 21/10/2026. Sin commit al principio, por instrucción del usuario; el 22/
 | Qué | Dónde |
 |---|---|
 | Código y pruebas | `C:\Users\ramms\Documents\ChatGPT\CasaMigaPOS-main`, rama `main`, subido a GitHub el 22/10 |
-| Caja real | **Sin cambios.** Sigue con el programa `4e8ec88` y la base en versión 30 |
+| Caja real | Actualizada el 22/10 con autorización: programa de `main` `30fad4b` (1.0.0) y base 32; ventas y caja intactas; copias para regresar en `CasaMiga-Ventas` |
 | Copia de revisión (`recetas-copia-20261020`) | Sin cambios; no se abrió ni se actualizó |
 | **Copia de PRUEBA para ver las dos protecciones** | Programa `C:\Users\ramms\CasaMiga-Revision\programa-riesgos-recetas`, compilado del código sin commit, con el título «DESARROLLO · RIESGOS-f00baa2-local». Datos `C:\Users\ramms\CasaMiga-Revision\riesgos-recetas-prueba-20261021`, una base nueva en versión 32 sólo con datos inventados: PRUEBA-MASA en borrador de 1,800 g y PRUEBA-RELLENO en borrador «Por medir». Lanzador `C:\Users\ramms\CasaMiga-Revision\Abrir-Casa-Miga-riesgos-recetas.vbs`. La credencial no está en el repositorio |
 | **Programa de prueba con el máximo (22/10)** | `C:\Users\ramms\CasaMiga-Revision\programa-riesgos-recetas-limite`, con el título «DESARROLLO · RIESGOS-LIMITE-f00baa2-local». Usa los mismos datos de prueba. Lanzador `C:\Users\ramms\CasaMiga-Revision\Abrir-Casa-Miga-riesgos-recetas-limite.vbs`. Sólo se abre después de cerrar la ventana anterior, porque comparten los datos |
@@ -52,7 +52,7 @@ Tu resultado de las dos pruebas en pantalla (A, B, C o D). Sin él no se dan por
 ## 8. Siguiente bloque
 
 - Preparar una copia de revisión **con datos de prueba** para que veas las dos protecciones en pantalla. Abrir la copia con este programa la subiría a la versión 32.
-- Antes de instalar en la caja real, repetir la prueba de actualización sobre una copia nueva con la versión 32 (`ACTUALIZAR_CAJA.md`).
+- Hecho el 22/10: ensayo sobre una copia y, con la autorización del usuario, actualización de la caja real a la 32 (`ACTUALIZAR_CAJA.md`). Las 10 preparaciones reales quedaron «Por medir».
 
 ## 9. Respaldo técnico
 
