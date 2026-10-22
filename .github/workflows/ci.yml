@@ -1,31 +1,8 @@
 name: Casa Miga POS CI
 
+# Sólo a mano (pedido del dueño, 22/10/2026): no corre en cada cambio. Se lanza desde Actions → Run workflow.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "src/**"
-      - "tests/**"
-      - "migrations/**"
-      - "scripts/**"
-      - "*.slnx"
-      - "Directory.Build.props"
-      - "global.json"
-      - "NuGet.Config"
-      - "cloud/**"
-  pull_request:
-    branches: [main]
-    paths:
-      - "src/**"
-      - "tests/**"
-      - "migrations/**"
-      - "scripts/**"
-      - "*.slnx"
-      - "Directory.Build.props"
-      - "global.json"
-      - "NuGet.Config"
-      - "cloud/**"
 
 permissions:
   contents: read

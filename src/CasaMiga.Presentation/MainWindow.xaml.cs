@@ -67,7 +67,7 @@ public partial class MainWindow : Window
     private async void LoginClick(object sender, RoutedEventArgs e)
     {
         var password = LoginPassword.Password; LoginPassword.Clear();
-        await Model.LoginAsync(LoginUser.Text, password);
+        await Model.LoginAsync(LoginUser.Text, password, Model.RememberMe);
         if (Model.CanNavigate) EnterFullScreen();
         else if (Model.IsChangePassword) ChangeCurrent.Focus();
     }

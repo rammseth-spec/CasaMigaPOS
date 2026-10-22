@@ -1,17 +1,8 @@
 name: Casa Miga web CI
 
+# Sólo a mano (pedido del dueño, 22/10/2026): no corre en cada cambio. Se lanza desde Actions → Run workflow.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "cloud/**"
-      - ".github/workflows/ci-cloud.yml"
-  pull_request:
-    branches: [main]
-    paths:
-      - "cloud/**"
-      - ".github/workflows/ci-cloud.yml"
 
 permissions:
   contents: read

@@ -1,23 +1,8 @@
 name: CodeQL
 
+# Sólo a mano (pedido del dueño, 22/10/2026): no corre en cada cambio. Se lanza desde Actions → Run workflow.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "src/**"
-      - "tests/**"
-      - "*.slnx"
-      - "Directory.Build.props"
-      - "global.json"
-  pull_request:
-    branches: [main]
-    paths:
-      - "src/**"
-      - "tests/**"
-      - "*.slnx"
-      - "Directory.Build.props"
-      - "global.json"
 
 permissions:
   actions: read

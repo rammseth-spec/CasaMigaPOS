@@ -160,4 +160,94 @@ public sealed class DevelopmentAutoLoginTests
         }
         finally { model.Sync?.Dispose(); try { Directory.Delete(normal, true); } catch (IOException) { } }
     });
+
+    private void WriteStoreFile(string content) => File.WriteAllText(Path.Combine(directory, StoreAutoLogin.FileName), content);
+
+    [TestMethod]
+    public Task TheNormalTillSignsInWithItsOwnFileAndTheRealPassword() => WpfTestHost.OnUi(async () =>
+    {
+        WriteStoreFile(JsonSerializer.Serialize(new { Username = "admin", Password = password }));
+        var model = await Start(development: false);
+        try
+        {
+            Assert.IsTrue(model.CanNavigate, model.Message);
+            Assert.AreEqual("Administrador", model.CurrentUserName);
+            StringAssert.Contains(model.Message, "Recuérdame", "It says how to turn it off.");
+            Assert.IsFalse(model.HasDevelopmentAccounts, "No development buttons in a normal till.");
+            model.Logout();
+            Assert.IsTrue(model.IsLogin, "Logging out shows the normal login.");
+        }
+        finally { model.Sync?.Dispose(); }
+    });
+
+    [TestMethod]
+    public Task TheNormalTillNeverSignsInWithAWrongPasswordABrokenFileOrInDevelopment() => WpfTestHost.OnUi(async () =>
+    {
+        WriteStoreFile(JsonSerializer.Serialize(new { Username = "admin", Password = password + "x" }));
+        var model = await Start(development: false);
+        try { Assert.IsTrue(model.IsLogin); Assert.IsFalse(model.CanNavigate); StringAssert.Contains(model.Message, "entra con tu usuario y contraseña"); }
+        finally { model.Sync?.Dispose(); }
+
+        WriteStoreFile("{ no es json");
+        model = await Start(development: false);
+        try { Assert.IsTrue(model.IsLogin); StringAssert.Contains(model.Message, "sesión recordada"); }
+        finally { model.Sync?.Dispose(); }
+
+        WriteStoreFile(JsonSerializer.Serialize(new { Username = "admin", Password = "" }));
+        model = await Start(development: false);
+        try { Assert.IsTrue(model.IsLogin, "An empty password is never used."); }
+        finally { model.Sync?.Dispose(); }
+
+        WriteStoreFile(JsonSerializer.Serialize(new { Username = "admin", Password = password }));
+        model = await Start(development: true);
+        try { Assert.IsTrue(model.IsLogin, "A development copy only reads dev-autologin.json."); Assert.IsFalse(model.CanNavigate); }
+        finally { model.Sync?.Dispose(); }
+
+        File.Delete(Path.Combine(directory, StoreAutoLogin.FileName));
+        model = await Start(development: false);
+        try { Assert.IsTrue(model.IsLogin, "Deleting the file asks for the password again."); Assert.IsFalse(model.CanNavigate); }
+        finally { model.Sync?.Dispose(); }
+    });
+
+    [TestMethod]
+    public Task RememberMeKeepsTheSessionEncryptedAndSigningInWithoutItForgetsIt() => WpfTestHost.OnUi(async () =>
+    {
+        var remembered = Path.Combine(directory, StoreAutoLogin.RememberedFileName);
+        WriteStoreFile(JsonSerializer.Serialize(new { Username = "admin", Password = "Equivocada#1" }));
+        var model = await Start(development: false);
+        try
+        {
+            Assert.IsTrue(model.CanRemember); Assert.IsFalse(model.RememberMe, "Nothing remembered yet.");
+            await model.LoginAsync("admin", password + "x", remember: true);
+            Assert.IsFalse(File.Exists(remembered), "A wrong password is never remembered.");
+            await model.LoginAsync("admin", password, remember: true);
+            Assert.IsTrue(model.CanNavigate, model.Message);
+            Assert.IsTrue(File.Exists(remembered));
+            Assert.IsFalse(File.Exists(Path.Combine(directory, StoreAutoLogin.FileName)), "The hand-written file with the wrong password is replaced.");
+            var bytes = File.ReadAllBytes(remembered);
+            Assert.DoesNotContain(password, System.Text.Encoding.UTF8.GetString(bytes), "The password is not readable in the file.");
+            Assert.DoesNotContain(password, System.Text.Encoding.Unicode.GetString(bytes));
+        }
+        finally { model.Sync?.Dispose(); }
+
+        model = await Start(development: false);
+        try
+        {
+            Assert.IsTrue(model.CanNavigate, "The next start signs in by itself: " + model.Message);
+            Assert.IsTrue(model.RememberMe, "The box shows it is remembered.");
+            model.Logout();
+            await model.LoginAsync("admin", password, remember: false);
+            Assert.IsTrue(model.CanNavigate);
+            Assert.IsFalse(File.Exists(remembered), "Signing in without the box forgets it.");
+        }
+        finally { model.Sync?.Dispose(); }
+
+        model = await Start(development: false);
+        try { Assert.IsTrue(model.IsLogin, "Forgotten: asks for the password again."); Assert.IsFalse(model.CanNavigate); }
+        finally { model.Sync?.Dispose(); }
+
+        model = await Start(development: true);
+        try { Assert.IsFalse(model.CanRemember, "A development copy has no Recuérdame box."); }
+        finally { model.Sync?.Dispose(); }
+    });
 }

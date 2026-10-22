@@ -1,3 +1,19 @@
+# Caja real en main y entrada automática — 22/10/2026
+
+- **Caja real actualizada** con autorización del dueño:
+  - programa de `main` `30fad4b` (1.0.0) y base 32;
+  - ventas, caja abierta y catálogo intactos;
+  - las 10 preparaciones quedaron «Por medir»;
+  - detalle y copias para regresar en `ACTUALIZAR_CAJA.md`.
+- **«Recuérdame» en la caja normal** (pedido del dueño, «por el momento»; `StoreAutoLogin`).
+  - Al entrar con la casilla marcada, guarda usuario y contraseña en `recordarme.dat`, cifrados con Windows (DPAPI, sólo el mismo usuario de Windows).
+  - Las siguientes veces entra sola con el login normal; entrar sin la casilla lo olvida.
+  - También acepta `autologin-caja.json` escrito a mano, que se reemplaza al usar «Recuérdame».
+  - La copia de desarrollo no tiene la casilla.
+  - Pruebas en `DevelopmentAutoLoginTests` (8/8). Ver `INSTALLER.md`.
+- **CI de GitHub sólo a mano** (pedido del dueño): `ci.yml`, `ci-cloud.yml` y `codeql.yml` ya no corren en cada cambio. Se lanzan desde Actions → Run workflow.
+- **Sin verificación completa en cada cambio** (pedido del dueño): sólo se corren las pruebas del área tocada. `verify.ps1` completo no se corrió para «Recuérdame».
+
 # Dos riesgos del editor de recetas — 21/10/2026 (subido a `main` el 22/10 a pedido del usuario; prueba en pantalla pendiente)
 
 - **Aviso de rendimiento sospechoso:** al guardar un borrador cuyo rendimiento cambia más de 10 veces, pide confirmación con el antes y el ahora en g, ml o piezas (`RecipeYieldCheck`).

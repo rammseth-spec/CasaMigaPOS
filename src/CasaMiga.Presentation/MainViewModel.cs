@@ -143,8 +143,15 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
     /// <summary>Pie de la pantalla de entrada con la versión instalada (o «Versión de desarrollo» en una copia de prueba).</summary>
     public string VersionCaption { get; private set; } = DevelopmentBuildIdentity.LoginCaption(false);
 
+    // «Recuérdame» (sólo caja normal): al entrar con la casilla marcada se guarda cifrado con Windows; sin ella se olvida.
+    private FoundationOptions? foundation;
+    public bool CanRemember => foundation is { IsDevelopment: false };
+    private bool rememberMe;
+    public bool RememberMe { get => rememberMe; set { rememberMe = value; Notify(); } }
+
     public async Task InitializeAsync(FoundationOptions options)
     {
+        foundation = options; rememberMe = StoreAutoLogin.HasRemembered(options);
         Operations = new OperationCenterViewModel(options.DataDirectory);
         runtime = new(options);
         VersionCaption = DevelopmentBuildIdentity.LoginCaption(options.IsDevelopment);
@@ -211,6 +218,22 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
     public Task LoginAsDevelopmentAsync(string username) =>
         developmentLogin?.Accounts.FirstOrDefault(a => string.Equals(a.Username, username, StringComparison.OrdinalIgnoreCase)) is { } account
             ? LoginAsync(account.Username, account.Password) : Task.CompletedTask;
+    // Caja normal (pedido del dueño, 22/10/2026): con autologin-caja.json entra sola usando el login normal; borrar el archivo lo apaga.
+    private async Task TryStoreAutoLoginAsync(FoundationOptions options)
+    {
+        if (!IsLogin) return;
+        StoreAutoLogin? auto;
+        try { auto = StoreAutoLogin.TryLoad(options); }
+        catch (Exception error) when (error is System.IO.InvalidDataException or System.Text.Json.JsonException or System.IO.IOException or UnauthorizedAccessException or System.Security.Cryptography.CryptographicException)
+        { Message = "No se pudo leer la sesión recordada; inicia sesión manualmente."; Notify(); return; }
+        if (auto is null) return;
+        await LoginAsync(auto.Username, auto.Password);
+        runtime?.TryLog(CanNavigate ? "store.autologin" : "store.autologin.failed");
+        if (CanNavigate) { MessageIsSuccess = true; Message = $"Sesión iniciada automáticamente como {auto.Username.Trim().ToUpperInvariant()}. Para que vuelva a pedir contraseña, sal y entra sin marcar «Recuérdame»."; }
+        else Message = $"No se pudo entrar automáticamente con la sesión recordada: entra con tu usuario y contraseña. {Message}".Trim();
+        Notify();
+    }
+
     private async Task TryDevelopmentAutoLoginAsync(FoundationOptions options)
     {
         if (!IsLogin && !IsBootstrap) return;
@@ -219,7 +242,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
         catch (Exception error) when (error is System.IO.InvalidDataException or System.Text.Json.JsonException or System.IO.IOException or UnauthorizedAccessException)
         { Message = $"No se pudo leer {DevelopmentAutoLogin.FileName}; inicia sesión manualmente."; Notify(); return; }
         developmentLogin = auto;
-        if (auto is null) return;
+        if (auto is null) { await TryStoreAutoLoginAsync(options); return; }
         // Prueba local en una computadora nueva: la instalación está vacía, así que se crea el administrador con esas credenciales.
         if (IsBootstrap) { await BootstrapAsync(auto.Username, "Administrador", auto.Password, auto.Password); if (!IsLogin) return; }
         await LoginAsync(auto.Username, auto.Password);
@@ -257,6 +280,15 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
         Message = "Administrador creado. Inicia sesión con el usuario y la contraseña que acabas de elegir.";
         MessageIsSuccess = true;
     });
+    /// <summary>Entrar desde la pantalla de acceso: con «Recuérdame» guarda la sesión cifrada; sin la casilla la olvida.</summary>
+    public async Task LoginAsync(string name, string password, bool remember)
+    {
+        await LoginAsync(name, password);
+        if (!CanRemember || !CanNavigate) return;
+        try { if (remember) StoreAutoLogin.Remember(foundation!, name, password); else StoreAutoLogin.Forget(foundation!); }
+        catch (Exception error) when (error is System.IO.IOException or UnauthorizedAccessException or System.Security.Cryptography.CryptographicException)
+        { runtime?.TryLog("store.remember.failed", error.GetType().Name); }
+    }
     public Task LoginAsync(string name, string password) => Execute(async () =>
     {
         var outcome = await Task.Run(() => login!.Authenticate(name, password));

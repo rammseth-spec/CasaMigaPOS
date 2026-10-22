@@ -26,7 +26,14 @@ Instalación silenciosa por usuario en carpeta temporal, presencia de app/herram
 
 ## Protección contra el modo de prueba (20/10/2026)
 
-`build-installer.ps1` se detiene si la publicación trae `development.settings.json` o `dev-autologin.json`; el `.iss` los excluye de la copia y, al instalar o actualizar, borra un `development.settings.json` que alguien hubiera dejado en la carpeta del programa. Así una instalación comercial nunca arranca en modo de prueba ni con entrada automática.
+`build-installer.ps1` se detiene si la publicación trae `development.settings.json` o `dev-autologin.json`; el `.iss` los excluye de la copia y, al instalar o actualizar, borra un `development.settings.json` que alguien hubiera dejado en la carpeta del programa. Así una instalación comercial nunca arranca en modo de prueba.
+
+**Excepción pedida por el dueño (22/10/2026, «por el momento»): «Recuérdame».** En la pantalla de acceso de la caja normal, la casilla «Recuérdame en esta computadora» guarda la sesión en la **carpeta de datos**.
+- Se guarda en `recordarme.dat`, cifrado con Windows: sólo el mismo usuario de Windows de esa computadora puede leerlo.
+- Las siguientes veces entra sola con el login normal y la contraseña real. Si la contraseña ya no sirve, muestra la pantalla de acceso con un aviso. Cada intento fallido cuenta y, a los 5, la cuenta se bloquea 1 minuto.
+- Entrar sin marcar la casilla (o borrar el archivo) vuelve a pedir contraseña.
+- También se acepta `autologin-caja.json` (`{"Username":"…","Password":"…"}`) escrito a mano, sin cifrar; usar «Recuérdame» lo reemplaza.
+- El instalador nunca crea estos archivos. Una copia de desarrollo no los lee: usa `dev-autologin.json`.
 
 ## Instalador 1.0.0 probado en una instalación aislada (20/10/2026)
 
