@@ -45,7 +45,7 @@ jobs:
 
       # La prueba de punta a punta (CloudEndToEndTests) levanta la nube local con Node; sin estas dependencias se omite.
       - name: Setup Node.js for the end-to-end test
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
