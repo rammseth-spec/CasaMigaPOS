@@ -532,6 +532,8 @@ async function recipe(q: Query, branch: string, kind: Kind, b: Record<string, un
       const found = kind === 'recipe.formula.publish' ? formulaVersion(versionId) : profileVersion(versionId);
       if (!found) throw new ProtocolError('La versión no existe', 404);
       if (s(found.version.state) !== 'DRAFT') throw new ProtocolError('Esa versión ya está publicada');
+      // La caja también lo rechaza; aquí se avisa antes de mandarlo.
+      if (Number(found.version.pending_measure) === 1) throw new ProtocolError('No se puede publicar: esta versión está marcada «Por medir» porque tiene datos pendientes de confirmar. Quita la marca en la caja cuando las medidas estén confirmadas');
       if (Number(found.version.revision) !== revision(b.revision)) throw new ProtocolError('La receta cambió. Actualiza la información antes de continuar', 409);
       return { versionId, revision: Number(found.version.revision) };
     }

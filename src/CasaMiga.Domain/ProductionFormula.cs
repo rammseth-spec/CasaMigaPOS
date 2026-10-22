@@ -72,13 +72,15 @@ public sealed class FormulaVersion
     public IReadOnlyList<IngredientAlternativeGroup> Alternatives { get; }
     public IReadOnlyList<FormulaPreparation> Preparations { get; }
     public string? Notes { get; }
+    /// <summary>«Por medir»: el borrador tiene datos pendientes de confirmar y no puede publicarse mientras lo esté.</summary>
+    public bool PendingMeasure { get; }
     public DateTimeOffset CreatedAt { get; }
     public DateTimeOffset? PublishedAt { get; }
     public ProductionVersionState State => PublishedAt.HasValue ? ProductionVersionState.Published : ProductionVersionState.Draft;
 
     public FormulaVersion(Guid id, Guid formulaId, int version, string name, InventoryQuantity baseYield,
         IEnumerable<FormulaIngredient> ingredients, IEnumerable<IngredientAlternativeGroup> alternatives,
-        DateTimeOffset createdAt, string? notes = null, IEnumerable<FormulaPreparation>? preparations = null)
+        DateTimeOffset createdAt, string? notes = null, IEnumerable<FormulaPreparation>? preparations = null, bool pendingMeasure = false)
     {
         Id = ProductionGuard.Id(id); FormulaId = ProductionGuard.Id(formulaId);
         ProductionGuard.Require(version > 0 && !string.IsNullOrWhiteSpace(name), ProductionError.InvalidVersion);
@@ -96,12 +98,13 @@ public sealed class FormulaVersion
         var ids = Ingredients.Select(x => x.InventoryItemId)
             .Concat(Alternatives.SelectMany(x => x.Options).Select(x => x.Ingredient.InventoryItemId)).ToArray();
         ProductionGuard.Require(ids.Distinct().Count() == ids.Length, ProductionError.DuplicateIngredient);
-        CreatedAt = createdAt.ToUniversalTime(); Notes = notes;
+        CreatedAt = createdAt.ToUniversalTime(); Notes = notes; PendingMeasure = pendingMeasure;
     }
     private FormulaVersion(FormulaVersion draft, DateTimeOffset at)
         : this(draft.Id, draft.FormulaId, draft.Version, draft.Name, draft.BaseYield, draft.Ingredients,
             draft.Alternatives, draft.CreatedAt, draft.Notes, draft.Preparations)
     {
+        ProductionGuard.Require(!draft.PendingMeasure, ProductionError.PendingMeasure, draft.Id);
         ProductionGuard.Require(at.ToUniversalTime() >= CreatedAt && draft.State == ProductionVersionState.Draft,
             ProductionError.InvalidVersion);
         PublishedAt = at.ToUniversalTime();

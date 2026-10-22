@@ -346,8 +346,11 @@ public sealed class CloudCommandService(ILocalUnitOfWork database, IClock clock,
                     if (used.Value.FormulaId == formula.Id) throw new ArgumentException("Una receta no puede usar otra versión de sí misma.");
                     return new FormulaPreparation(used.Value.Id, new(used.Value.BaseYield.Dimension, Long(x, "atomic")));
                 }).ToArray();
+                // «Por medir» igual: si el cambio no la trae se conserva la del borrador; nunca se quita sin pedirlo.
+                var pendingMeasure = p["pendingMeasure"] is null ? stored?.Value.PendingMeasure ?? false
+                    : p["pendingMeasure"] is JsonValue flag && flag.TryGetValue<bool>(out var marked) ? marked : throw new InvalidCommandException();
                 recipes.SaveFormulaDraft(new FormulaVersion(id, formula.Id, number, Text(p, "name"), new(Choice<InventoryDimension>(yield, "dimension"), Long(yield, "atomic")),
-                    Rows(p, "ingredients").Select(Line).ToArray(), groups, stored?.Value.CreatedAt ?? clock.UtcNow, Optional(p, "notes"), preparations), revision);
+                    Rows(p, "ingredients").Select(Line).ToArray(), groups, stored?.Value.CreatedAt ?? clock.UtcNow, Optional(p, "notes"), preparations, pendingMeasure), revision);
                 break;
             }
             case "recipe.formula.publish":

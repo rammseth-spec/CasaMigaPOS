@@ -17,7 +17,7 @@ Fuente del plan: `docs/USER_REQUIREMENTS.md` ("UR", pedido original), `docs/road
 | 7 | Catálogo con historial (UR 330–346) | Hecho; 44 productos | Fotos reales (hoy son ilustraciones de IA) |
 | 8 | Inventario sólo por movimientos (UR 438–471) | Motor hecho; 0 existencias en la caja real | Conteo inicial real |
 | 9 | Completar la venta crea sus movimientos de inventario (UR 969–985) | Programado y apagado | Encenderlo con recetas aprobadas y conteo real |
-| 10 | Recetas versionadas (UR 379–397) | Motor hecho; desde el 20/10 una preparación puede usar otras | 10 preparaciones reales en borrador, 0 publicadas, 0 recetas de pan (`RECETAS_ESTADO.md`) |
+| 10 | Recetas versionadas (UR 379–397) | Motor hecho; desde el 20/10 una preparación puede usar otras. Desde el 21/10, en el código: aviso de rendimiento sospechoso (más de 10 veces) y marca «Por medir», que impide publicar | 10 preparaciones reales en borrador, 0 publicadas, 0 recetas de pan (`RECETAS_ESTADO.md`) |
 | 11 | Producción por lote (planeado, real, merma) que consume insumos y suma pan (UR 401–434) | Motor hecho y probado sólo con DEMO; 0 lotes reales | Depende de las recetas aprobadas |
 | 12 | Merma como operación propia con costo estimado (UR 624–647) | Merma hecha, sin costo estimado; sin degustación ni consumo interno | Costo estimado; destinos de degustación y consumo interno |
 | 13 | Costos por receta, lote y pieza; compras y proveedores (UR 475–502, 651–684) | Sólo costo de referencia por insumo y reporte de ganancia | Compras, proveedores y costo promedio |
@@ -57,7 +57,7 @@ Fuente del plan: `docs/USER_REQUIREMENTS.md` ("UR", pedido original), `docs/road
 4. **Recetas reales** — la primera es el **polvorón**: faltan 4 datos (`RECETAS_ESTADO.md`, «Primera receta real»). Con ellos: hacer el recorrido completo en la copia, desde las pantallas (`GUIA_RECORRIDO_POLVORON.md`, la copia ya tiene existencias de prueba) o con la herramienta. Las recetas del rol y del pay ya están en borrador en la copia. Después, el resto del recetario (`RECETAS_ESTADO.md` B y `RECETARIO_PARA_COMPLETAR.md` paso 0) y tu aprobación.
 5. **Programa para recetas** — degustación y consumo interno; aceite reutilizable. Ambos necesitan tu decisión.
 6. **Conteo real de inventario** y, después, encender el descuento por venta.
-7. **Instalar en la caja real lo que está en `main`**: los íconos (`4e8ec88`) ya están instalados desde el 20/10. Faltan las preparaciones dentro de preparaciones y los arreglos del punto 8, que cambian la base a la versión 31. La actualización y la vuelta atrás están probadas sobre copias recientes y explicadas en `ACTUALIZAR_CAJA.md`; espera tu aprobación.
+7. **Instalar en la caja real lo que está en `main`**: los íconos (`4e8ec88`) ya están instalados desde el 20/10. Faltan las preparaciones dentro de preparaciones y los arreglos del punto 8, que cambian la base a la versión 31, y las dos protecciones del editor de recetas del 21/10 (versión 32: al actualizar, los 10 borradores reales quedan «Por medir»). La actualización y la vuelta atrás están probadas sobre copias recientes y explicadas en `ACTUALIZAR_CAJA.md`; espera tu aprobación.
 8. **Arreglos para la entrega** — hechos en `main` el 20/10, sin instalar todavía en la caja real:
    - el inicio de sesión muestra «Versión 1.0.0» (sólo una copia de prueba dice «Versión de desarrollo»);
    - los respaldos locales llevan la configuración de la impresora y del Centro operativo, y se borran sólo los de más de 30 días, conservando siempre los 20 más recientes;

@@ -6,12 +6,12 @@ using CasaMiga.Domain;
 
 namespace CasaMiga.Presentation;
 
-public sealed record RecipeVersionRow(Guid Id,int Number,string State,string Name,long Revision,bool Active)
+public sealed record RecipeVersionRow(Guid Id,int Number,string State,string Name,long Revision,bool Active,bool PendingMeasure=false)
 {
     public string VersionLabel=>$"Versión {Number}";
-    public string DisplayState=>Active?"Activa · Publicada":State;
+    public string DisplayState=>Active?"Activa · Publicada":PendingMeasure?$"{State} · Por medir":State;
 }
-public sealed record RecipeFormulaRow(FormulaSummary Summary,string ActiveVersion,string Draft)
+public sealed record RecipeFormulaRow(FormulaSummary Summary,string ActiveVersion,string Draft,string PendingMeasure="No")
 { public string Code=>Summary.Code;public string Name=>Summary.Name; }
 public sealed record RecipeProfileRow(ProfileSummary Summary,string Product,string FinishedItem,string ActiveVersion,string Draft);
 public sealed record RecipeItemChoice(Guid Id,string Code,string DisplayName,InventoryDimension Dimension)
@@ -81,6 +81,14 @@ public sealed class RecipeViewModel(RecipeService service,InventoryService inven
 {
     // Fecha de creación del borrador que se está editando: el borrador se reconoce por ella al guardarlo de nuevo.
     private DateTimeOffset? editingCreatedAt;
+    // Rendimiento guardado de cada versión de la receta abierta, para avisar de un cambio sospechoso al guardar.
+    private IReadOnlyDictionary<Guid,InventoryQuantity> versionYields=new Dictionary<Guid,InventoryQuantity>();
+    /// <summary>Pregunta si se guarda un rendimiento sospechoso; true = guardar. Sin respuesta no se guarda.</summary>
+    public Func<string,bool>? ConfirmYieldChange{get;set;}
+    private bool pendingMeasure;
+    /// <summary>«Por medir»: el borrador tiene datos pendientes de confirmar y no puede publicarse.</summary>
+    public bool PendingMeasure{get=>pendingMeasure;set=>Set(ref pendingMeasure,value);}
+    public string PendingMeasureHelpText=>"Qué es: una marca para los borradores con datos todavía sin confirmar: un rendimiento sin medir, una cantidad aproximada o una unidad en duda.\n\nCómo se usa: márcala al guardar el borrador mientras falte algo. Mientras esté marcada, la versión no puede publicarse. Cuando confirmes las medidas, quítala y guarda el borrador; quitarla no publica nada, la publicación sigue siendo un paso aparte.";
     private string screen="list"; private Guid? formulaId,profileId; private RecipeVersionRow? selectedVersion;
     public bool Busy{get;private set;} public bool Ready=>!Busy; public bool CanView{get;private set;} public bool CanConfigure{get;private set;}
     public bool IsList=>screen=="list"; public bool IsFormula=>screen=="formula"; public bool IsFormulaEditor=>screen=="formulaEditor";
@@ -166,7 +174,7 @@ public sealed class RecipeViewModel(RecipeService service,InventoryService inven
         var products=new List<ProductRow>();for(int page=0;;page++){var result=await Task.Run(()=>catalog.Products(new(IncludeInactive:false,Page:page)));products.AddRange(result.Items);if(products.Count>=result.Total)break;}
         Products=products.Select(x=>new RecipeProductChoice(x.Product.Id,x.Product.Name)).ToArray();
     }
-    private async Task RefreshFormulas(){var summaries=await Task.Run(()=>service.ListFormulas(200));Formulas=summaries.Select(f=>{var versions=service.ListFormulaVersions(f.Id);return new RecipeFormulaRow(f,f.ActiveVersionId is {} active?$"Versión {versions.Single(x=>x.Value.Id==active).Value.Version}":"Sin activar",versions.Any(x=>x.Value.State==ProductionVersionState.Draft)?"Sí":"No");}).ToArray();SelectedFormula=null;LoadPublishedFormulaChoices(summaries);}
+    private async Task RefreshFormulas(){var summaries=await Task.Run(()=>service.ListFormulas(200));Formulas=summaries.Select(f=>{var versions=service.ListFormulaVersions(f.Id);return new RecipeFormulaRow(f,f.ActiveVersionId is {} active?$"Versión {versions.Single(x=>x.Value.Id==active).Value.Version}":"Sin activar",versions.Any(x=>x.Value.State==ProductionVersionState.Draft)?"Sí":"No",versions.Any(x=>x.Value.PendingMeasure)?"Sí":"No");}).ToArray();SelectedFormula=null;LoadPublishedFormulaChoices(summaries);}
     private void LoadPublishedFormulaChoices(IEnumerable<FormulaSummary> summaries)
     {
         var versions=summaries.SelectMany(f=>service.ListFormulaVersions(f.Id).Select(v=>(Formula:f,Version:v.Value))).ToArray();
@@ -182,13 +190,13 @@ public sealed class RecipeViewModel(RecipeService service,InventoryService inven
     public void NewFormula(){if(!CanConfigure)return;formulaId=null;Code="";Name="";IngredientSearch="";screen="formulaEditor";Ingredients.Clear();Alternatives.Clear();FormulaPreparations.Clear();Message="";Notify();}
     public Task CreateFormulaAsync()=>Run(async()=>{var id=Guid.NewGuid();await Task.Run(()=>service.CreateFormula(new(id,Code),Name));formulaId=id;await LoadFormula(id);MessageIsSuccess=true;Message="Receta creada. Agrega su primera versión borrador.";});
     public Task OpenFormulaAsync()=>Run(async()=>{var row=SelectedFormula??throw new ArgumentException("Selecciona una receta.");await LoadFormula(row.Summary.Id);});
-    private async Task LoadFormula(Guid id){await RefreshFormulas();formulaId=id;var f=await Task.Run(()=>service.GetFormula(id))??throw new ArgumentException("La receta ya no existe.");Name=f.Name;Code=f.Code;Versions=(await Task.Run(()=>service.ListFormulaVersions(id))).Select(v=>new RecipeVersionRow(v.Value.Id,v.Value.Version,v.Value.State==ProductionVersionState.Published?"Publicada":"Borrador",v.Value.Name,v.Revision,f.ActiveVersionId==v.Value.Id)).ToArray();selectedVersion=null;screen="formula";}
-    public void NewFormulaVersion(){if(!CanConfigure||formulaId is null)return;selectedVersion=null;editingCreatedAt=null;VersionNumber=(Versions.Select(x=>x.Number).DefaultIfEmpty(0).Max()+1).ToString();Name="";Notes="";Yield="1";YieldDimension=InventoryDimension.Mass;YieldUnit="g";IngredientSearch="";Ingredients.Clear();Alternatives.Clear();FormulaPreparations.Clear();PreparePreparationChoices();screen="formulaEditor";Notify();}
+    private async Task LoadFormula(Guid id){await RefreshFormulas();formulaId=id;var f=await Task.Run(()=>service.GetFormula(id))??throw new ArgumentException("La receta ya no existe.");Name=f.Name;Code=f.Code;var stored=await Task.Run(()=>service.ListFormulaVersions(id));versionYields=stored.ToDictionary(v=>v.Value.Id,v=>v.Value.BaseYield);Versions=stored.Select(v=>new RecipeVersionRow(v.Value.Id,v.Value.Version,v.Value.State==ProductionVersionState.Published?"Publicada":"Borrador",v.Value.Name,v.Revision,f.ActiveVersionId==v.Value.Id,v.Value.PendingMeasure)).ToArray();selectedVersion=null;screen="formula";}
+    public void NewFormulaVersion(){if(!CanConfigure||formulaId is null)return;selectedVersion=null;editingCreatedAt=null;PendingMeasure=false;VersionNumber=(Versions.Select(x=>x.Number).DefaultIfEmpty(0).Max()+1).ToString();Name="";Notes="";Yield="1";YieldDimension=InventoryDimension.Mass;YieldUnit="g";IngredientSearch="";Ingredients.Clear();Alternatives.Clear();FormulaPreparations.Clear();PreparePreparationChoices();screen="formulaEditor";Notify();}
     public Task EditFormulaVersionAsync()=>Run(async()=>
     {
         var row=selectedVersion??throw new ArgumentException("Selecciona una versión.");if(row.State!="Borrador")throw new ArgumentException(PublishedNotice);
         var stored=await Task.Run(()=>service.GetFormulaVersion(row.Id))??throw new ArgumentException("La versión ya no existe.");var v=stored.Value;editingCreatedAt=v.CreatedAt;
-        VersionNumber=v.Version.ToString();Name=v.Name;Notes=v.Notes??"";YieldDimension=v.BaseYield.Dimension;Yield=InventoryDisplay.Number(v.BaseYield.AtomicUnits,v.BaseYield.Dimension);YieldUnit=InventoryDisplay.Unit(v.BaseYield.AtomicUnits,v.BaseYield.Dimension);Ingredients.Clear();Alternatives.Clear();
+        VersionNumber=v.Version.ToString();Name=v.Name;Notes=v.Notes??"";PendingMeasure=v.PendingMeasure;YieldDimension=v.BaseYield.Dimension;Yield=InventoryDisplay.Number(v.BaseYield.AtomicUnits,v.BaseYield.Dimension);YieldUnit=InventoryDisplay.Unit(v.BaseYield.AtomicUnits,v.BaseYield.Dimension);Ingredients.Clear();Alternatives.Clear();
         IngredientSearch="";foreach(var i in v.Ingredients)Ingredients.Add(Edit(i));int group=0;foreach(var g in v.Alternatives){group++;var order=g.PreferenceOrder.ToArray();foreach(var o in g.Options){var e=Edit(o.Ingredient);e.Id=o.Id;e.Group=group;e.Preference=Array.IndexOf(order,o.Id)+1;Alternatives.Add(e);}}
         PreparePreparationChoices();FormulaPreparations.Clear();
         foreach(var p in v.Preparations)FormulaPreparations.Add(Prepare(new FormulaRequirementEdit{Formula=PreparationChoices.SingleOrDefault(x=>x.Id==p.FormulaVersionId),Quantity=InventoryDisplay.Number(p.Quantity.AtomicUnits,p.Quantity.Dimension),Unit=InventoryDisplay.Unit(p.Quantity.AtomicUnits,p.Quantity.Dimension)}));
@@ -209,7 +217,12 @@ public sealed class RecipeViewModel(RecipeService service,InventoryService inven
         var id=selectedVersion?.Id??Guid.NewGuid();var revision=selectedVersion?.Revision;
         var normal=Ingredients.Select(ToIngredient).ToArray();var groups=Alternatives.GroupBy(x=>x.Group).Select(g=>new IngredientAlternativeGroup(Guid.NewGuid(),g.Select(x=>new IngredientAlternativeOption(x.Id,ToIngredient(x))),g.OrderBy(x=>x.Preference<=0?int.MaxValue:x.Preference).Select(x=>x.Id))).ToArray();
         var preparations=FormulaPreparations.Select(x=>{var f=x.Formula??throw new ArgumentException("Selecciona la preparación en cada fila.");return new FormulaPreparation(f.Id,new(f.Dimension,InventoryDisplay.ParseOperational(x.Quantity,f.Dimension,x.Unit)));}).ToArray();
-        var version=new FormulaVersion(id,formulaId.Value,number,Name,new(YieldDimension,InventoryDisplay.ParseOperational(Yield,YieldDimension,YieldUnit)),normal,groups,editingCreatedAt??DateTimeOffset.UtcNow,Notes,preparations);
+        var version=new FormulaVersion(id,formulaId.Value,number,Name,new(YieldDimension,InventoryDisplay.ParseOperational(Yield,YieldDimension,YieldUnit)),normal,groups,editingCreatedAt??DateTimeOffset.UtcNow,Notes,preparations,PendingMeasure);
+        // Se compara con el rendimiento guardado del borrador en edición; en una versión nueva, con el de la última versión de la receta.
+        var compareWith=selectedVersion?.Id??Versions.MaxBy(x=>x.Number)?.Id;
+        InventoryQuantity? previous=compareWith is {} previousId&&versionYields.TryGetValue(previousId,out var stored)?stored:null;
+        if(RecipeYieldCheck.Warning(previous,version.BaseYield) is {} warning&&ConfirmYieldChange?.Invoke(warning)!=true)
+        {Message="No se guardó. Revisa la cantidad y la unidad del rendimiento.";return;}
         await Task.Run(()=>service.SaveFormulaDraft(version,revision));await LoadFormula(formulaId.Value);MessageIsSuccess=true;Message="Versión borrador guardada.";
     });
     private static FormulaIngredient ToIngredient(IngredientEdit row){var item=row.Item??throw new ArgumentException("Selecciona un artículo en cada ingrediente.");return new(item.Id,new(item.Dimension,InventoryDisplay.ParseOperational(row.Quantity,item.Dimension,row.Unit)),row.Policy);}

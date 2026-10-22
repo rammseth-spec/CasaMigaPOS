@@ -2,6 +2,8 @@
 
 Probado el 20/10/2026 sobre copias recientes de la caja real (23 ventas, $1,633, caja del 19/10 abierta, 44 productos). **Todavía no se aplica a la caja real**: espera la aprobación del usuario.
 
+> **Desde el 21/10/2026, `main` sube la base a la versión 32**, no a la 31. La migración 032 agrega la marca «Por medir» y marca así los borradores de receta que ya existen; en la caja real serían las 10 preparaciones. No toca ventas, caja, productos, cantidades ni unidades. Lo de abajo se probó sólo hasta la 31: antes de instalar, hay que repetir la prueba sobre una copia nueva de la caja con la 32 y actualizar este documento.
+
 ## Qué cambia
 
 El programa de `main` (preparaciones dentro de preparaciones y arreglos para la entrega) agrega la migración 031: una tabla nueva, vacía, y sus reglas. No modifica ninguna venta, caja, producto, usuario, ticket ni registro de auditoría. Una vez actualizada, **una versión anterior del programa ya no abre esa base**: se niega con «La base requiere una versión más reciente de la aplicación» y no la daña.

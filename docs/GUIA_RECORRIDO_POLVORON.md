@@ -13,13 +13,14 @@ El mismo recorrido está comprobado con datos de prueba por la prueba automátic
 
 1. **Recetas** → pestaña **Recetas** → selecciona **Masa de polvorón** → **Ver detalle**.
 2. Selecciona la versión 1 (Borrador) → **Editar borrador**.
-3. **Rendimiento:** escribe el peso medido de la media tanda. **Revisa la unidad:** el borrador muestra «1.8 kg». Si escribes gramos, cambia la unidad a **g**.
+3. **Rendimiento:** escribe el peso medido de la media tanda. **Revisa la unidad:** el borrador muestra «1.8 kg». Si escribes gramos, cambia la unidad a **g**. Si el rendimiento cambia más de 10 veces, el programa avisa antes de guardar y muestra el antes y el ahora en gramos: si es un error de unidad, elige **Cancelar** y corrígelo.
 4. **Huevo** (ingredientes directos) → *Política de cantidad*:
    - **Redondear hacia arriba**, si con menos de una media tanda se pone el huevo completo;
    - **Sólo piezas completas**, si sólo se hacen medias tandas.
    - Lo mismo para la **Naranja** en *Grupos de alternativas*.
 5. **Sabor por omisión** (*Grupos de alternativas*): la *Opción 1* es la que se usa. Para que sea la otra, selecciona la que hoy es Opción 1 → **Quitar opción**. Luego selecciona la que queda → **Agregar opción al grupo** y vuelve a capturar la que quitaste (artículo, cantidad y unidad).
-6. **Guardar borrador** → selecciona la versión → **Publicar versión** → **Activar versión**.
+6. **Por medir** (versión 32 del programa en adelante): al actualizar, los borradores que ya existían quedan marcados «Por medir» y no se pueden publicar. Con las medidas ya confirmadas, quita la casilla **Por medir** antes de guardar. Quitarla no publica nada.
+7. **Guardar borrador** → selecciona la versión → **Publicar versión** → **Activar versión**.
 
 ## 2. La receta del pan (Recetas → Perfiles de producto)
 

@@ -104,7 +104,7 @@ var groups = draft.Alternatives.Select(g =>
     return new IngredientAlternativeGroup(g.Id, options, flavor == "naranja" ? [naranja, vainilla] : [vainilla, naranja]);
 }).ToArray();
 recipes.SaveFormulaDraft(new FormulaVersion(draft.Id, draft.FormulaId, draft.Version, draft.Name, measured, draft.Ingredients.Select(Policy), groups, draft.CreatedAt,
-    $"Rendimiento medido de la media tanda: {measured.AtomicUnits / 1000m:0.###} g. Huevo y naranja: {(countPolicy == IngredientCountPolicy.CeilingWholeCount ? "redondear hacia arriba" : "sólo piezas enteras exactas")}. Sabor del día por omisión: {flavor}.", draft.Preparations), doughVersion.Revision);
+    $"Rendimiento medido de la media tanda: {measured.AtomicUnits / 1000m:0.###} g. Huevo y naranja: {(countPolicy == IngredientCountPolicy.CeilingWholeCount ? "redondear hacia arriba" : "sólo piezas enteras exactas")}. Sabor del día por omisión: {flavor}.", draft.Preparations, draft.PendingMeasure), doughVersion.Revision);
 recipes.PublishFormula(draft.Id, recipes.GetFormulaVersion(draft.Id)!.Revision);
 recipes.ActivateFormula(dough.Id, draft.Id, recipes.GetFormula(dough.Id)!.Revision);
 recipes.PublishProfile(profileVersion.Value.Id, recipes.GetProfileVersion(profileVersion.Value.Id)!.Revision);

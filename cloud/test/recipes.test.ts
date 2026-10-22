@@ -23,7 +23,8 @@ const profile = 'b2000000-0000-4000-8000-000000000001';
 const item = (id: string, code: string, name: string, kind: string, dimension: string) =>
   ({ entity: 'inventory_item', id, payload: { item: { id, code, name, kind, dimension, active: 1 }, units: [], balances: [] } });
 
-async function seeded() {
+// draftPendingMeasure: «Por medir» del borrador como lo manda una caja con la migración 032; sin él, como una caja anterior.
+async function seeded(draftPendingMeasure?: number) {
   const { q } = await database();
   await permissions(q, caja1, centro);
   await user(q, caja1, centro, 'a0000000-0000-4000-8000-000000000001', 'admin', 'Administrator', 'Admin#2026centro');
@@ -38,7 +39,8 @@ async function seeded() {
       formula: { id: formula, code: 'MASA', name: 'Masa dulce', active_version_id: published, revision: 3 },
       versions: [
         { id: published, formula_id: formula, version: 1, name: 'Base', state: 'PUBLISHED', yield_dimension: 'MASS', yield_atomic: 1_000_000, notes: null, revision: 2 },
-        { id: draft, formula_id: formula, version: 2, name: 'Más mantequilla', state: 'DRAFT', yield_dimension: 'MASS', yield_atomic: 1_200_000, notes: 'Prueba', revision: 4 }],
+        { id: draft, formula_id: formula, version: 2, name: 'Más mantequilla', state: 'DRAFT', yield_dimension: 'MASS', yield_atomic: 1_200_000, notes: 'Prueba', revision: 4,
+          ...(draftPendingMeasure === undefined ? {} : { pending_measure: draftPendingMeasure }) }],
       ingredients: [
         { version_id: published, sequence: 1, item_id: flour, dimension: 'MASS', quantity_atomic: 600_000, count_policy: 'NOT_APPLICABLE' },
         { version_id: published, sequence: 2, item_id: eggs, dimension: 'COUNT', quantity_atomic: 3, count_policy: 'EXACT_WHOLE_COUNT' },
@@ -114,4 +116,17 @@ test('recipe changes are validated before reaching the till', async () => {
   // Si la caja rechaza el alta, ya se puede volver a usar el código.
   await recordResults(q, { id: caja1, branchId: centro }, { results: [{ id: pulled[0].id, status: 'rejected', message: 'Ya existe una receta con ese código.' }] });
   await createCommand(q, admin, centro, 'recipe.formula.create', { id: randomUUID(), code: 'RELL', name: 'Relleno' });
+});
+
+test('a version marked «Por medir» shows the mark and cannot be published from the web', async () => {
+  const marked = await seeded(1);
+  const data = await recipes(marked, centro);
+  assert.deepEqual(data.formulas[0].list.map(v => [v.version, v.pendingMeasure]), [[1, false], [2, true]]);
+  const admin = await login(marked, 'admin', 'Admin#2026centro');
+  await assert.rejects(createCommand(marked, admin, centro, 'recipe.formula.publish', { versionId: draft, revision: 4 }), /Por medir/);
+
+  // Una caja anterior a la marca no la manda: la versión no aparece marcada y se publica como antes.
+  const older = await seeded();
+  assert.equal((await recipes(older, centro)).formulas[0].list[1].pendingMeasure, false);
+  await createCommand(older, await login(older, 'admin', 'Admin#2026centro'), centro, 'recipe.formula.publish', { versionId: draft, revision: 4 });
 });

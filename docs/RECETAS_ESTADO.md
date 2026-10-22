@@ -4,6 +4,8 @@ Fecha: 20/10/2026. Compara el recetario maestro (`docs/PHASE_1K4G_C_RECIPE_MASTE
 
 **En la caja real hay hoy:** 10 preparaciones en **borrador** (ninguna publicada), **0 recetas de pan**, 34 insumos y 31 panes terminados dados de alta, **0 existencias**, **0 producciones** y el descuento por venta **apagado**. Nada se cambió en esa base.
 
+**«Por medir» (en `main` desde el 21/10/2026, sin instalar en la caja real):** al instalar la versión 32, esas 10 preparaciones quedan marcadas «Por medir» y no podrán publicarse hasta que alguien quite la marca. Hay que quitarla una por una, sólo cuando sus datos de abajo estén confirmados. Quitarla no publica nada. Además, si un rendimiento cambia más de 10 veces al guardar, el editor pide confirmación.
+
 ## A. Completas que pueden validarse
 
 Datos del recetario sin "aproximadamente", "pendiente" ni diferencias. Cada una espera **una sola confirmación tuya** antes de publicarse.

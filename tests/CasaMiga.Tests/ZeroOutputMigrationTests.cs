@@ -84,6 +84,9 @@ public sealed partial class RecipePersistenceTests
                 q.CommandText="SELECT id,username,display_name,password_hash,role_name,active,failed_attempts,locked_until_utc,created_utc FROM app_user";
             if(excludeProductionPermissions && table=="payment")
                 q.CommandText="SELECT id,sale_id,method,applied_cents,received_cents,change_cents FROM payment";
+            // Migration 032 only adds «Por medir» (drafts start marked); every historical column, revision included, must stay equal.
+            if(excludeProductionPermissions && table=="formula_version")
+                q.CommandText="SELECT id,formula_id,version,name,state,yield_dimension,yield_atomic,notes,created_utc,published_utc,revision FROM formula_version";
             if(excludeProductionPermissions && table is "permission" or "role_permission")
                 q.CommandText+=" WHERE "+(table=="permission"?"name":"permission_name")+" NOT IN ('recipe.view','recipe.configure','production.view','production.create','production.confirm','users.manage','sales.refund','consignment.view','consignment.manage','cash.movement','cash.withdrawal')";
             using var r=q.ExecuteReader();var rows=new List<string>();

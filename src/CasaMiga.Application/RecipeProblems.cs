@@ -15,6 +15,7 @@ public static class RecipeProblems
         ProductionError.InvalidAlternative => "Cada grupo de alternativas requiere al menos dos opciones válidas y un orden de preferencia.",
         ProductionError.Overflow => "Una cantidad excede el límite permitido.",
         ProductionError.PreparationCycle => "Una receta no puede usarse a sí misma, ni directamente ni a través de otras preparaciones.",
+        ProductionError.PendingMeasure => "No se puede publicar: esta versión está marcada «Por medir» porque tiene datos pendientes de confirmar. Cuando las medidas estén confirmadas, edita el borrador, quita la marca «Por medir» y guárdalo; después podrás publicarla.",
         _ => "Revisa cantidades, unidades, duplicados y alternativas de la receta."
     };
 }

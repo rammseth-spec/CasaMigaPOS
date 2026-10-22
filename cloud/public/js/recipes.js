@@ -136,7 +136,7 @@ function versionsDetail(owner, kind) {
     h('tbody', {}, rows.map(v => { const tr = h('tr', { class: 'click' + (rec.version === v.id ? ' selected' : ''), tabindex: '0',
       onclick: () => { rec.version = v.id; for (const x of tr.parentNode.children) x.classList.toggle('selected', x === tr); sync(); } },
       h('td', { 'data-label': 'Versión', text: `Versión ${v.version}` }), h('td', { 'data-label': 'Nombre', text: v.name }),
-      h('td', { 'data-label': 'Estado', text: owner.activeVersionId === v.id ? 'Activa · Publicada' : v.state === 'PUBLISHED' ? 'Publicada' : 'Borrador' }));
+      h('td', { 'data-label': 'Estado', text: owner.activeVersionId === v.id ? 'Activa · Publicada' : v.state === 'PUBLISHED' ? 'Publicada' : v.pendingMeasure ? 'Borrador · Por medir' : 'Borrador' }));
       return tr; }))))
     : h('p', { class: 'catalog-empty', text: kind === 'formula' ? 'No hay versiones registradas. Crea la primera versión para definir su fórmula.' : 'No hay versiones registradas. Crea la primera versión del perfil.' });
   sync();

@@ -7,7 +7,9 @@ public enum ProductionError
     DuplicateOutput, InvalidActualOutput, InvalidVersion, ConflictingDefinition,
     CountPolicyRequired,
     /// <summary>Una preparación termina usándose a sí misma a través de otras preparaciones.</summary>
-    PreparationCycle
+    PreparationCycle,
+    /// <summary>La versión está marcada «Por medir»: tiene datos pendientes de confirmar.</summary>
+    PendingMeasure
 }
 
 public sealed class ProductionDomainException(ProductionError code, Guid? subjectId = null)

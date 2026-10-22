@@ -1,3 +1,21 @@
+# Dos riesgos del editor de recetas — 21/10/2026 (subido a `main` el 22/10 a pedido del usuario; prueba en pantalla pendiente)
+
+- **Aviso de rendimiento sospechoso:** al guardar un borrador cuyo rendimiento cambia más de 10 veces, pide confirmación con el antes y el ahora en g, ml o piezas (`RecipeYieldCheck`).
+  - Cancelar no guarda; confirmar guarda lo escrito, sin corregirlo.
+  - Peso, volumen y piezas no se comparan por cantidad.
+  - Error claro al cambiar el tipo de rendimiento de una preparación ya usada.
+  - 22/10, decisión del dueño: también pregunta si una receta rinde más de 20 kg, 50 L o 500 piezas, aunque sea la primera versión (avisa, no bloquea).
+- **«Por medir»** (migración 032): una casilla por versión que impide publicar.
+  - Lo impiden el dominio, el almacén y un trigger, y la web avisa.
+  - Quitarla no publica.
+  - Al migrar, los borradores existentes quedan marcados y las publicadas no cambian.
+  - Se ve en el editor, en las listas y en la web.
+- Pruebas: `RecipeEditorSafetyTests` (16) y una de la nube.
+  - `verify.ps1` completo (22/10, con el máximo): 777/778 (1 omitida) y 245/245 WPF.
+  - Nube: 81/82; la falla es `actualizar.test.ts`, de `f00baa2`, ajena (ruta de archivo en Windows).
+  - Reporte: `docs/reportes/2026-10-21-riesgos-editor-recetas.md`.
+- La caja real, la copia de revisión y las bases comerciales no se tocaron; la migración 032 sólo corrió en bases temporales de prueba.
+
 # Web: «Actualizar app» — 21/10/2026
 
 - Pedido del usuario (skill pwa-actualizar-app, adaptado: la web no usa Vite ni service worker). Al publicar, `build/version.mjs` (buildCommand de `vercel.json`; fuera de `scripts/`, que no se sube) escribe `public/version.json` con el commit y la hora; el servidor local la calcula de los archivos de `public/`.

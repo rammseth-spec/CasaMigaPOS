@@ -36,16 +36,24 @@ public sealed partial class SqliteRecipeStore(Database database) : IRecipeStore
         if (value.State != ProductionVersionState.Draft) throw new InvalidOperationException("Se requiere borrador.");
         Write((c,t) =>
         {
+            var pending = HasPendingMeasure(c,t);
+            if (!pending && value.PendingMeasure) throw new InvalidOperationException("La base de datos no admite la marca «Por medir».");
             if (expectedRevision is null)
                 Execute(c,t,"INSERT INTO formula_version(id,formula_id,version,name,state,yield_dimension,yield_atomic,notes,created_utc) VALUES($0,$1,$2,$3,'DRAFT',$4,$5,$6,$7)",
                     value.Id,value.FormulaId,value.Version,value.Name,Dimension(value.BaseYield.Dimension),value.BaseYield.AtomicUnits,value.Notes,At(value.CreatedAt));
             else
             {
+                // Una preparación que ya usan otras recetas o perfiles no puede cambiar de peso a volumen o piezas: se explica en vez de fallar la base.
+                if (Rows(c,t,"SELECT 1 FROM formula_version WHERE id=$0 AND yield_dimension<>$1",value.Id,Dimension(value.BaseYield.Dimension)).Count == 1 &&
+                    (Rows(c,t,"SELECT 1 FROM profile_formula_requirement WHERE formula_version_id=$0",value.Id).Count != 0 ||
+                     HasPreparations(c,t) && Rows(c,t,"SELECT 1 FROM formula_preparation WHERE preparation_version_id=$0",value.Id).Count != 0))
+                    throw new ArgumentException("No se puede cambiar el tipo de rendimiento (peso, volumen o piezas) de esta preparación porque ya la usan otras recetas o perfiles. Crea una receta nueva para la otra medida.");
                 Changed(Execute(c,t,"UPDATE formula_version SET name=$1,yield_dimension=$2,yield_atomic=$3,notes=$4,revision=revision+1 WHERE id=$0 AND formula_id=$5 AND version=$6 AND created_utc=$7 AND state='DRAFT' AND revision=$8",
                     value.Id,value.Name,Dimension(value.BaseYield.Dimension),value.BaseYield.AtomicUnits,value.Notes,value.FormulaId,value.Version,At(value.CreatedAt),expectedRevision));
                 Execute(c,t,"DELETE FROM formula_alternative_option WHERE version_id=$0; DELETE FROM formula_alternative_group WHERE version_id=$0; DELETE FROM formula_ingredient WHERE version_id=$0",value.Id);
                 if (HasPreparations(c,t)) Execute(c,t,"DELETE FROM formula_preparation WHERE version_id=$0",value.Id);
             }
+            if (pending) Execute(c,t,"UPDATE formula_version SET pending_measure=$1 WHERE id=$0 AND state='DRAFT'",value.Id,value.PendingMeasure ? 1 : 0);
             int sequence = 0;
             foreach (var line in value.Ingredients)
                 Execute(c,t,"INSERT INTO formula_ingredient VALUES($0,$1,$2,$3,$4,$5)",value.Id,++sequence,line.InventoryItemId,Dimension(line.Quantity.Dimension),line.Quantity.AtomicUnits,Policy(line.CountPolicy));
@@ -84,7 +92,8 @@ public sealed partial class SqliteRecipeStore(Database database) : IRecipeStore
         }).ToArray();
         var preparations = !HasPreparations(c,t) ? Array.Empty<FormulaPreparation>() : Rows(c,t,"SELECT preparation_version_id,dimension,quantity_atomic FROM formula_preparation WHERE version_id=$0 ORDER BY sequence",id)
             .Select(p => new FormulaPreparation(G(p,0),Quantity(p,1,2))).ToArray();
-        var value = new FormulaVersion(id,G(row,0),checked((int)L(row,1)),S(row,2),Quantity(row,3,4),ingredients,groups,Date(row,6),row[5] as string,preparations);
+        var pendingMeasure = HasPendingMeasure(c,t) && L(Rows(c,t,"SELECT pending_measure FROM formula_version WHERE id=$0",id).Single(),0) == 1;
+        var value = new FormulaVersion(id,G(row,0),checked((int)L(row,1)),S(row,2),Quantity(row,3,4),ingredients,groups,Date(row,6),row[5] as string,preparations,pendingMeasure);
         if (row[7] is not DBNull) value = new Formula(value.FormulaId,"REHYDRATION").PublishVersion(value,Date(row,7)).Versions.Single();
         return new(value,L(row,8));
     }
@@ -188,6 +197,7 @@ public sealed partial class SqliteRecipeStore(Database database) : IRecipeStore
     }
     // Una base anterior a la migración 031 (copias de prueba de migraciones viejas) no tiene preparaciones dentro de preparaciones.
     private static bool HasPreparations(SqliteConnection c, SqliteTransaction t) => Rows(c,t,"SELECT 1 FROM sqlite_master WHERE type='table' AND name='formula_preparation'").Count == 1;
+    private static bool HasPendingMeasure(SqliteConnection c, SqliteTransaction t) => Rows(c,t,"SELECT 1 FROM pragma_table_info('formula_version') WHERE name='pending_measure'").Count == 1;
     private static void Changed(int count) { if(count!=1) throw new RecipeConcurrencyException(); }
     private static int Limit(int value) => value is >=1 and <=200 ? value : throw new ArgumentOutOfRangeException(nameof(value));
     private static int Offset(int value) => value>=0 ? value : throw new ArgumentOutOfRangeException(nameof(value));
