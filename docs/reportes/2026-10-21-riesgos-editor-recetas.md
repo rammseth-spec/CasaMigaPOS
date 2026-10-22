@@ -198,7 +198,13 @@ Tampoco se publicó ninguna receta real. Todas las pruebas usan bases temporales
 
 ## 9. Riesgos pendientes
 
-1. **El editor de recetas de la web no tiene el aviso de rendimiento ni la casilla «Por medir»**: sólo muestra la marca y no deja publicar una versión marcada. La marca se cambia en la caja.
+1. **Resuelto el 22/10 (el dueño pidió el POS y la web iguales):** el editor de recetas de la web tiene el mismo aviso de rendimiento (más de 10 veces y máximo de 20 kg / 50 L / 500 piezas), la casilla «Por medir» y la columna «Por medir» en la lista.
+   - El aviso usa `cloud/public/js/yield-check.js`, con la misma regla y los mismos textos que `RecipeYieldCheck`; Cancelar no manda nada.
+   - Pruebas de la nube: «the web editor sends «Por medir»…» y «the web warns about suspicious yields…»; la nube completa da 83/84, con la misma falla ajena de `actualizar.test.ts`.
+   - Revisado en el navegador con la web local y los datos de prueba:
+     - 1.8 kg → «2000» con kg avisa (máximo y 1,111 veces);
+     - Cancelar cierra el aviso y deja el editor abierto;
+     - 2,000 g con «Por medir» se manda sin aviso.
 2. **Borradores nuevos que llegan desde la web o con el cargador del recetario** (`cloud/scripts`) entran **sin** marca. Hay que decidir si el cargador debe mandar `pendingMeasure: true` para los rendimientos reportados.
 3. **Instalar la 32 en la caja real** marca las 10 preparaciones como «Por medir». Hay que quitar la marca una por una cuando se confirmen sus datos. Además, `ACTUALIZAR_CAJA.md` se probó sólo hasta la 31 y hay que repetir la prueba sobre una copia.
 4. **Una versión anterior del programa no abre una base en 32**, igual que pasaba con la 31.

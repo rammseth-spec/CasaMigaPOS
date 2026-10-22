@@ -10,7 +10,8 @@
   - Quitarla no publica.
   - Al migrar, los borradores existentes quedan marcados y las publicadas no cambian.
   - Se ve en el editor, en las listas y en la web.
-- Pruebas: `RecipeEditorSafetyTests` (16) y una de la nube.
+- **Web igual que el POS (22/10):** el editor de recetas de la web tiene el mismo aviso de rendimiento (`cloud/public/js/yield-check.js`), la casilla «Por medir» y la columna «Por medir». `recipe.formula.draft` acepta `pendingMeasure` booleano; si no viene, se conserva la marca. Revisado en el navegador con la web local y datos de prueba.
+- Pruebas: `RecipeEditorSafetyTests` (17) y tres de la nube.
   - `verify.ps1` completo (22/10, con el máximo): 777/778 (1 omitida) y 245/245 WPF.
   - Nube: 81/82; la falla es `actualizar.test.ts`, de `f00baa2`, ajena (ruta de archivo en Windows).
   - Reporte: `docs/reportes/2026-10-21-riesgos-editor-recetas.md`.

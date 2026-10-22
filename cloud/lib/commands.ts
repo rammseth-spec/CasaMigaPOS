@@ -524,8 +524,11 @@ async function recipe(q: Query, branch: string, kind: Kind, b: Record<string, un
       if (preparations && new Set(preparations.map(p => p.formulaVersionId)).size !== preparations.length) throw new ProtocolError('Una misma preparación no puede repetirse en la receta');
       if (ingredients.length + groups.length + (preparations?.length ?? 0) === 0) throw new ProtocolError('Agrega al menos un ingrediente, una preparación o un grupo de alternativas');
       unique([...ingredients.map(i => i.itemId), ...groups.flat().map(o => o.itemId)]);
+      // «Por medir»: si no viene, la caja conserva la marca que tenía el borrador.
+      if (b.pendingMeasure !== undefined && typeof b.pendingMeasure !== 'boolean') throw new ProtocolError('«Por medir» inválido');
       return { formulaId, versionId, revision: rev, name: text(b.name, 'Nombre de la versión', 1, 160), notes: text(b.notes ?? '', 'Notas', 0, 500),
-        yield: { dimension: s(y.dimension), atomic: int(y.atomic, 'Rendimiento', 1, 1_000_000_000_000) }, ingredients, groups, ...(preparations ? { preparations } : {}) };
+        yield: { dimension: s(y.dimension), atomic: int(y.atomic, 'Rendimiento', 1, 1_000_000_000_000) }, ingredients, groups, ...(preparations ? { preparations } : {}),
+        ...(typeof b.pendingMeasure === 'boolean' ? { pendingMeasure: b.pendingMeasure } : {}) };
     }
     case 'recipe.formula.publish': case 'recipe.profile.publish': {
       const versionId = id(b.versionId, 'Versión');
