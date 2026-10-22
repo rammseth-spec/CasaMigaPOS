@@ -62,33 +62,45 @@ public sealed class CheckoutInventoryTests : SalesFixture
     [TestMethod] [DataRow("missing",CheckoutInventoryError.InventoryTrackingConfigurationInvalid)]
     [DataRow("untracked",CheckoutInventoryError.InventoryTrackingConfigurationInvalid)]
     [DataRow("inactive",CheckoutInventoryError.InventoryItemInactive)]
-    [DataRow("uninitialized",CheckoutInventoryError.InventoryNotInitialized)]
-    [DataRow("insufficient",CheckoutInventoryError.InsufficientInventory)]
     [DataRow("overflow",CheckoutInventoryError.InventoryConsumptionOverflow)]
     public void PolicyBlocksWholeCheckoutAndKeepsCart(string fault,CheckoutInventoryError expected)
     {
         if(fault=="missing")Sql("UPDATE product SET track_inventory=1");
-        else Seed(fault=="uninitialized"?null:fault is "inactive" or "insufficient"?0:10,fault=="overflow"?long.MaxValue:1);
+        else Seed(fault=="inactive"?0:10,fault=="overflow"?long.MaxValue:1);
         if(fault=="untracked")Sql("UPDATE product SET track_inventory=0");
         if(fault=="inactive")Sql("UPDATE inventory_item SET active=0");
         Enable();var service=Service();var request=Request(service,2);
         var error=Assert.ThrowsExactly<CheckoutInventoryException>(()=>service.Confirm(request));Assert.AreEqual(expected,error.Error);
-        if(fault=="insufficient"){Assert.AreEqual(2L,error.RequiredAtomic);Assert.AreEqual(0L,error.AvailableAtomic);Assert.AreEqual(product.Id,error.ProductId);Assert.AreEqual(InventoryDimension.Count,error.Dimension);}
         NoSale();Assert.AreSame(request.Cart,user.Cart);Assert.IsFalse(service.HasPending);
     }
-    [TestMethod]
-    public void FailedAttemptCanRetryAfterReceiptOrFlagChange()
+    // Decisión del dueño (22/10/2026): sin existencia (o sin saldo inicial) la venta pasa; se ajusta lo que falta con una nota y
+    // se descuenta normal, así la existencia queda en cero, nunca negativa, y el ajuste queda como aviso.
+    [TestMethod] [DataRow(null)] [DataRow(0L)] [DataRow(1L)]
+    public void SaleWithoutStockSellsAndLeavesAnAdjustmentWarning(long? stock)
     {
-        var item=Seed(0);Enable();var service=Service();var request=Request(service);
-        Assert.ThrowsExactly<CheckoutInventoryException>(()=>service.Confirm(request));NoSale();
-        var capture=InventoryCapture.Standard(2,InventoryUnits.Piece);
-        new SqliteInventoryStore(db,clock).Apply(new(Guid.NewGuid(),user.Current!.Id,terminal.Id,InventoryMovementKind.Receipt,[InventoryOperationLine.Change(item,SqliteInventoryStore.MainLocationId,InventoryDelta.Increase(capture.Quantity),capture)]));
+        var item=Seed(stock);Enable();var service=Service();var request=Request(service,2);
+        var sale=service.Confirm(request);service.Acknowledge(request.OperationId);
+        Assert.AreEqual(1L,Sql("SELECT count(*) FROM sale"));Assert.AreEqual("CONSUMED",Sql("SELECT status FROM sale_inventory_evaluation"));
+        Assert.AreEqual(0L,Sql("SELECT quantity_atomic FROM inventory_balance"),"Stock ends at zero, never negative.");
+        Assert.AreEqual(2L-(stock??0),Sql("SELECT sum(m.delta_atomic) FROM inventory_movement m JOIN inventory_operation o ON o.id=m.operation_id WHERE o.kind='ADJUSTMENT_GAIN'"));
+        StringAssert.Contains((string)Sql("SELECT note FROM inventory_operation WHERE kind='ADJUSTMENT_GAIN'")!,"Venta sin existencia");
+        Assert.AreEqual($"VENTA-{sale.Sequence}",Sql("SELECT external_reference FROM inventory_operation WHERE kind='ADJUSTMENT_GAIN'"));
+        Assert.AreEqual(-2L,Sql("SELECT delta_atomic FROM inventory_movement m JOIN inventory_operation o ON o.id=m.operation_id WHERE o.kind='SALE_CONSUMPTION'"));
+        Assert.AreEqual(sale.Id,service.Confirm(request).Id,"Retrying the same checkout does not adjust or consume again.");
+        Assert.AreEqual(1L,Sql("SELECT count(*) FROM inventory_operation WHERE kind='ADJUSTMENT_GAIN'"));
+        db.Validate();Assert.IsEmpty(new SqliteInventoryStore(db,clock).Reconcile());
+    }
+    [TestMethod]
+    public void EnoughStockNeedsNoAdjustmentAndPausedFlagStopsConsumption()
+    {
+        var item=Seed(2);Enable();var service=Service();var request=Request(service,2);
         Assert.AreEqual(1L,service.Confirm(request).Sequence);service.Acknowledge(request.OperationId);
-        var next=Request(service,2);Assert.ThrowsExactly<CheckoutInventoryException>(()=>service.Confirm(next));
+        Assert.AreEqual(0L,Sql("SELECT count(*) FROM inventory_operation WHERE kind='ADJUSTMENT_GAIN'"));
         Sql($"UPDATE inventory_sale_consumption_config SET state='PAUSED',version=3,updated_by='{user.Current!.Id}'");
-        Assert.AreEqual(2L,service.Confirm(next).Sequence);
+        var next=Request(service,2);Assert.AreEqual(2L,service.Confirm(next).Sequence);
         Assert.AreEqual("DISABLED",Sql("SELECT status FROM sale_inventory_evaluation WHERE checkout_operation_id='"+next.OperationId+"'"));
-        Assert.AreEqual(1L,Sql("SELECT quantity_atomic FROM inventory_balance"));
+        Assert.AreEqual(0L,Sql("SELECT quantity_atomic FROM inventory_balance"));
+        Assert.AreEqual(0L,Sql("SELECT count(*) FROM inventory_operation WHERE kind='ADJUSTMENT_GAIN'"),"With the flag paused nothing is adjusted.");
     }
     [TestMethod]
     public void CashierConsumesWithoutAdministrativePermissionsAndNeedsSalesComplete()
@@ -146,16 +158,21 @@ public sealed class CheckoutInventoryTests : SalesFixture
         Assert.AreEqual(1900L,work.Run(s=>s.CashSalesTotal(cash.Id)).Cents);
     }
     [TestMethod]
-    public async Task ConcurrentCheckoutsOnlyOneConsumesFourOfFive()
+    public async Task ConcurrentCheckoutsBothSellAndOnlyTheShortfallIsAdjusted()
     {
         Seed(5);Enable();var j2=new Journal();var other=LoginAgain(j2);var otherPos=new PosService(work,other,terminal.Id);
         var first=Service();var a=Request(first,4);otherPos.Add(product.Id);for(int i=1;i<4;i++)otherPos.Increment(product.Id);
         var second=Service(session:other,journal:j2);var b=second.Prepare(new Money(100000));
         var gate=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        async Task<bool> Run(CheckoutService s,CheckoutRequest r){await gate.Task;try{s.Confirm(r);return true;}catch(CheckoutInventoryException e){Assert.AreEqual(CheckoutInventoryError.InsufficientInventory,e.Error);return false;}}
+        async Task<bool> Run(CheckoutService s,CheckoutRequest r){await gate.Task;try{s.Confirm(r);return true;}catch(CheckoutInventoryException e){Assert.AreEqual(CheckoutInventoryError.InventoryConcurrencyConflict,e.Error);return false;}}
         var t1=Task.Run(()=>Run(first,a));var t2=Task.Run(()=>Run(second,b));gate.SetResult();var results=await Task.WhenAll(t1,t2);
-        Assert.AreEqual(1,results.Count(x=>x));Assert.AreEqual(1L,Sql("SELECT quantity_atomic FROM inventory_balance"));
-        Assert.AreEqual(1L,Sql("SELECT count(*) FROM sale"));Assert.AreEqual(1L,Sql("SELECT count(*) FROM payment"));
+        // Un conflicto momentáneo de la base se reintenta, como en la caja.
+        if(!results[0])first.Confirm(a);
+        if(!results[1])second.Confirm(b);
+        Assert.AreEqual(2L,Sql("SELECT count(*) FROM sale"));Assert.AreEqual(2L,Sql("SELECT count(*) FROM payment"));
+        Assert.AreEqual(0L,Sql("SELECT quantity_atomic FROM inventory_balance"),"8 sold from 5: stock ends at zero.");
+        Assert.AreEqual(3L,Sql("SELECT sum(m.delta_atomic) FROM inventory_movement m JOIN inventory_operation o ON o.id=m.operation_id WHERE o.kind='ADJUSTMENT_GAIN'"));
+        db.Validate();
     }
     [TestMethod] [DataRow("sale","INSERT")] [DataRow("sale_item","INSERT")] [DataRow("payment","INSERT")]
     [DataRow("sale_inventory_evaluation","INSERT")] [DataRow("sale_inventory_line_snapshot","INSERT")]

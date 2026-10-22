@@ -19,6 +19,7 @@ public sealed partial class SqliteLocalUnitOfWork
                 SaleInventoryConsumptionPlan? plan=null;
                 if(SqliteSaleInventoryStore.ReadConfig(connection,transaction).State==InventorySaleConsumptionState.Enabled)
                 {
+                    CoverShortages(sale);
                     var inputs=new List<SaleInventoryLineInput>();
                     for(int i=0;i<sale.Items.Count;i++)
                     {
@@ -48,6 +49,48 @@ public sealed partial class SqliteLocalUnitOfWork
             {throw new CheckoutInventoryException(CheckoutInventoryError.InventoryConcurrencyConflict);}
             catch(Exception e) when(e is not CheckoutException)
             {throw new CheckoutInventoryException(CheckoutInventoryError.InventoryTrackingConfigurationInvalid);}
+        }
+        // Decisión del dueño (22/10/2026): la venta nunca se frena por existencia. Si un pan vinculado no tiene existencia
+        // suficiente (o nunca se inicializó), en la misma transacción del cobro se registra un ajuste «Venta sin existencia»
+        // por lo que falta y después se descuenta normal: la existencia queda en cero, nunca negativa, y el ajuste es el aviso.
+        private void CoverShortages(Sale sale)
+        {
+            var needs=new Dictionary<Guid,(InventoryDimension Dimension,long Required,long? Available)>();
+            foreach(var item in sale.Items)
+            {
+                var product=FindProduct(item.ProductId) ?? throw new InvalidDataException();
+                if(!product.TrackInventory)continue;
+                using var q=Command("SELECT l.inventory_item_id,l.dimension,l.quantity_per_product_unit_atomic,i.active,b.quantity_atomic FROM product_inventory_link l JOIN inventory_item i ON i.id=l.inventory_item_id LEFT JOIN inventory_balance b ON b.item_id=i.id AND b.location_id=$main WHERE l.product_id=$product AND l.active=1",
+                    ("$main",Id(SqliteInventoryStore.MainLocationId)),("$product",Id(product.Id)));
+                using var r=q.ExecuteReader();
+                if(!r.Read()||r.GetInt32(3)!=1)continue; // Sin vínculo o inactivo: lo resuelve la política como antes.
+                var id=Guid.Parse(r.GetString(0));var dimension=Enum.Parse<InventoryDimension>(r.GetString(1),true);
+                // Un desbordamiento lo rechaza la política con su propio error; aquí no se ajusta nada.
+                try
+                {
+                    long required=checked((long)item.Quantity*r.GetInt64(2));
+                    needs[id]=needs.TryGetValue(id,out var before)?(dimension,checked(before.Required+required),before.Available):(dimension,required,r.IsDBNull(4)?null:r.GetInt64(4));
+                }
+                catch(OverflowException){return;}
+            }
+            foreach(var (itemId,need) in needs.OrderBy(x=>x.Key))
+            {
+                var unit=need.Dimension switch{InventoryDimension.Mass=>InventoryUnits.Milligram,InventoryDimension.Volume=>InventoryUnits.Microliter,_=>InventoryUnits.Piece};
+                if(need.Available is null)
+                    SqliteInventoryStore.WriteOperation(connection,transaction,new InventoryOperationRequest(CoverId(sale,itemId,"OPENING"),sale.UserId,sale.TerminalId,InventoryMovementKind.OpeningBalance,
+                        [InventoryOperationLine.Opening(itemId,SqliteInventoryStore.MainLocationId,InventoryCapture.Standard(0,unit))]),null,sale.ConfirmedAt);
+                var missing=need.Required-(need.Available??0);
+                if(missing<=0)continue;
+                var capture=InventoryCapture.Standard(missing,unit);
+                SqliteInventoryStore.WriteOperation(connection,transaction,new InventoryOperationRequest(CoverId(sale,itemId,"GAIN"),sale.UserId,sale.TerminalId,InventoryMovementKind.AdjustmentGain,
+                    [InventoryOperationLine.Change(itemId,SqliteInventoryStore.MainLocationId,InventoryDelta.Increase(capture.Quantity),capture)],"OTHER",SaleWithoutStockNote,$"VENTA-{sale.Sequence}"),null,sale.ConfirmedAt);
+            }
+        }
+        public const string SaleWithoutStockNote="Venta sin existencia registrada: se ajustó lo que faltaba para no frenar el cobro. Revisar la producción capturada.";
+        private static Guid CoverId(Sale sale,Guid item,string kind)
+        {
+            var hash=System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes($"sale-without-stock|{sale.Id:N}|{item:N}|{kind}"));
+            return new Guid(hash.AsSpan(0,16));
         }
         public void ValidateSaleInventoryRecovery(Sale sale)
         {

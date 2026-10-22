@@ -200,7 +200,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
                 var productionWork=new SqliteProductionUnitOfWork(sqlite);
                 var recipeService=new RecipeService(productionWork,user,clock,terminal.Id);
                 Recipes=new(recipeService,inventoryService,catalogService,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
-                Production=new(new ProductionService(productionWork,user,clock,terminal.Id),recipeService,inventoryService,catalogService,user,terminal.Id,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
+                Production=new(new ProductionService(productionWork,user,clock,terminal.Id),recipeService,inventoryService,catalogService,user,terminal.Id,(eventName,errorType)=>runtime.TryLog(eventName,errorType)){Lotes=new(inventoryService,catalogService,photoUi,(eventName,errorType)=>runtime.TryLog(eventName,errorType))};
                 var terminalId = terminal.Id;
                 openCashProbe = () => database.Read(store => store.FindOpenSession(terminalId) is not null);
                 screen = login.NeedsBootstrap() ? "bootstrap" : "login";

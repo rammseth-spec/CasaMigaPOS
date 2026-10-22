@@ -1,3 +1,17 @@
+# Producción por lotes y descuento en la venta — 22/10/2026 (decisiones del dueño)
+
+- **Producción → «Capturar lote»:** la misma cuadrícula de panes con foto que Venta. Al tocar un pan se escriben las piezas que salieron y se suman a su existencia (recepción «LOTE»).
+  - No descuenta insumos mientras las recetas sigan «Por medir».
+  - La primera vez reutiliza el artículo terminado `PT-<código>` (o lo crea), le pone saldo 0, lo vincula 1 pieza por pieza y marca el pan para descontar.
+- **La venta nunca se frena por existencia.** Si falta, en la misma transacción del cobro se registra un «Ajuste por ganancia» con motivo OTHER, nota «Venta sin existencia registrada…» y referencia `VENTA-<n>`, y después se descuenta normal.
+  - La existencia queda en cero, nunca negativa; ese ajuste es el aviso para revisar.
+  - Los errores de configuración, artículo inactivo o desbordamiento siguen deteniendo el cobro como antes.
+- Pruebas:
+  - `CheckoutInventoryTests` (`SaleWithoutStockSellsAndLeavesAnAdjustmentWarning`, concurrencia con ajuste) y `BatchEntryTests`;
+  - se ajustaron las pruebas que esperaban el bloqueo;
+  - filtros de venta, inventario y producción en verde. Sin verificación completa, por pedido del dueño.
+- **Pendiente:** lo mismo en la web (Producción con cuadrícula y lotes).
+
 # Caja real en main y entrada automática — 22/10/2026
 
 - **Caja real actualizada** con autorización del dueño:

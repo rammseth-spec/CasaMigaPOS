@@ -1,0 +1,45 @@
+<UserControl x:Class="CasaMiga.Presentation.BatchEntryView"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:local="clr-namespace:CasaMiga.Presentation"
+ IsVisibleChanged="VisibleChanged">
+ <!-- Producción por lotes: la misma cuadrícula de panes que Venta; al tocar uno se escriben las piezas que salieron. -->
+ <StackPanel>
+  <TextBlock Text="Capturar lote" Style="{StaticResource SectionTitleText}" Margin="0,0,0,4"/>
+  <TextBlock Text="Toca un pan y escribe cuántas piezas salieron del lote. Se suman a su existencia y la venta las va descontando." Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+  <Border Style="{StaticResource CardStyle}" Padding="18" Margin="0,0,0,14" Visibility="{Binding IsEntering,Converter={StaticResource VisibleWhen}}">
+   <StackPanel>
+    <TextBlock Text="{Binding Selected.Name}" FontSize="20" FontWeight="SemiBold"/>
+    <TextBlock Text="{Binding Selected.StockText}" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,10"/>
+    <TextBlock Text="¿Cuántas piezas salieron?" FontWeight="SemiBold"/>
+    <WrapPanel Margin="0,6,0,0">
+     <TextBox x:Name="PiecesBox" Text="{Binding Pieces,UpdateSourceTrigger=PropertyChanged}" Width="160" FontSize="20" MaxLength="5" AutomationProperties.Name="Piezas que salieron" KeyDown="PiecesKeyDown" Margin="0,0,10,0"/>
+     <Button Content="Sumar a la existencia" Click="SaveClick" MinHeight="44" Margin="0,0,8,0"/>
+     <Button Content="Cancelar" Style="{StaticResource SecondaryButton}" Click="CancelClick" MinHeight="44"/>
+    </WrapPanel>
+   </StackPanel>
+  </Border>
+  <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Margin="0,0,0,10" FontSize="15">
+   <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/>
+    <Style.Triggers><DataTrigger Binding="{Binding MessageIsSuccess}" Value="True"><Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+  </TextBlock>
+  <ItemsControl ItemsSource="{Binding Products}" AutomationProperties.Name="Panes para capturar lote">
+   <ItemsControl.ItemsPanel><ItemsPanelTemplate><local:TileGrid MinItemWidth="146" Spacing="12"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+   <ItemsControl.ItemTemplate><DataTemplate>
+    <Button Style="{StaticResource ProductTile}" Tag="{Binding Id}" Click="ProductClick" ToolTip="{Binding Name}" AutomationProperties.Name="{Binding Name}">
+     <Grid>
+      <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <Border Background="{DynamicResource SurfaceSecondaryBrush}" CornerRadius="12" ClipToBounds="True">
+       <Grid>
+        <Image Source="{Binding Photo}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" Visibility="{Binding HasPhoto,Converter={StaticResource VisibleWhen}}"/>
+        <TextBlock Text="Sin imagen" Style="{StaticResource CaptionText}" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding IsFallback,Converter={StaticResource VisibleWhen}}"/>
+       </Grid>
+      </Border>
+      <TextBlock Grid.Row="1" Text="{Binding Name}" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}" FontWeight="SemiBold" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Height="38" Margin="4,8,4,0" VerticalAlignment="Top"/>
+      <TextBlock Grid.Row="2" Text="{Binding StockText}" FontSize="14" Foreground="{DynamicResource AccentTextBrush}" FontWeight="Bold" Margin="4,2,4,2"/>
+     </Grid>
+    </Button>
+   </DataTemplate></ItemsControl.ItemTemplate>
+  </ItemsControl>
+ </StackPanel>
+</UserControl>

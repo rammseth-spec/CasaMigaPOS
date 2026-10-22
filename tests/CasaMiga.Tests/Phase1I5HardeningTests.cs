@@ -62,8 +62,8 @@ public sealed class Phase1I5HardeningTests:SalesFixture
         Assert.AreEqual(ConsumptionError.PreflightBlocked,Assert.ThrowsExactly<ConsumptionException>(()=>config.Change(ConsumptionAction.Resume,paused)).Error);Assert.AreEqual(before,Snapshot(db));
         inventory.LinkProductToInventoryItem(product.Id,item.Id,1);config.Change(ConsumptionAction.Resume,paused);Sell(1);
         Assert.AreEqual(7L,Sql("SELECT quantity_atomic FROM inventory_balance"));Assert.AreEqual(7600L,work.Read(s=>s.CashSalesTotal(cash.Id)).Cents);
-        cp.Add(product.Id);for(int i=1;i<8;i++)cp.Increment(product.Id);var blocked=checkout.Prepare(new Money(20000));before=Snapshot(db);
-        Assert.AreEqual(CheckoutInventoryError.InsufficientInventory,Assert.ThrowsExactly<CheckoutInventoryException>(()=>checkout.Confirm(blocked)).Error);Assert.AreSame(blocked.Cart,cashier.Cart);Assert.AreEqual(before,Snapshot(db));
+        // Desde el 22/10/2026 una venta sin existencia ya no se bloquea (CheckoutInventoryTests.SaleWithoutStockSellsAndLeavesAnAdjustmentWarning).
+        before=Snapshot(db);
         var reopened=new Database(Path.Combine(directory,"casamiga.db"));reopened.Initialize();reopened.Validate();Assert.AreEqual(before,Snapshot(reopened));
         string backup;using(var lease=new DirectoryLease(directory))backup=new InstallationBackup(directory).Create();
         var backupHash=Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(backup)));var size=new FileInfo(backup).Length;

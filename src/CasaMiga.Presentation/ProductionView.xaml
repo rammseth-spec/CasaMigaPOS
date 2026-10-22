@@ -15,10 +15,12 @@
  </UserControl.Resources>
  <Grid IsEnabled="{Binding Ready}">
   <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-  <StackPanel Visibility="{Binding IsHome,Converter={StaticResource VisibleWhen}}" VerticalAlignment="Top">
-   <TextBlock Text="¿Qué deseas hacer?" Style="{StaticResource SectionTitleText}" Margin="0,0,0,12"/>
+  <ScrollViewer Visibility="{Binding IsHome,Converter={StaticResource VisibleWhen}}" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"><StackPanel VerticalAlignment="Top">
+   <!-- Lotes primero (pedido del dueño, 22/10/2026): la cuadrícula de panes como en Venta. -->
+   <local:BatchEntryView DataContext="{Binding Lotes}" Visibility="{Binding DataContext.HasLotes,RelativeSource={RelativeSource AncestorType=UserControl},Converter={StaticResource VisibleWhen}}" Margin="0,0,0,18"/>
+   <TextBlock Text="Producción con receta" Style="{StaticResource SectionTitleText}" Margin="0,0,0,12"/>
    <WrapPanel><Button Content="Nueva producción" Click="NewClick" Visibility="{Binding CanCreate,Converter={StaticResource VisibleWhen}}" Margin="0,0,10,8"/><Button Content="Producciones en borrador" Style="{StaticResource SecondaryButton}" Click="DraftsClick" Margin="0,0,10,8"/><Button Content="Historial" Style="{StaticResource SecondaryButton}" Click="HistoryClick" Margin="0,0,10,8"/><Button Content="Registrar merma terminada" Style="{StaticResource SecondaryButton}" Click="WasteClick" Visibility="{Binding CanRecordWaste,Converter={StaticResource VisibleWhen}}" Margin="0,0,0,8"/></WrapPanel>
-  </StackPanel>
+  </StackPanel></ScrollViewer>
 
   <ScrollViewer x:Name="BuilderScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="{Binding IsBuilder,Converter={StaticResource VisibleWhen}}"><StackPanel>
    <TextBlock Text="Nueva producción" FontSize="24" FontWeight="SemiBold"/>
