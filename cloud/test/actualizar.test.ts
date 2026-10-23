@@ -6,6 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { startLocalServer } from '../scripts/localServer.js';
 import { database } from './helpers.js';
 
@@ -13,7 +14,8 @@ const read = (path: string) => readFileSync(new URL(path, import.meta.url));
 
 test('publishing writes version.json with the commit and the time', () => {
   const file = join(mkdtempSync(join(tmpdir(), 'cm-version-')), 'version.json');
-  execFileSync(process.execPath, [new URL('../build/version.mjs', import.meta.url).pathname, file], { env: { ...process.env, VERCEL_GIT_COMMIT_SHA: '0123456789abcdef' }, stdio: 'ignore' });
+  // fileURLToPath y no .pathname: en Windows .pathname da «/C:/…» y Node no encuentra el script.
+  execFileSync(process.execPath, [fileURLToPath(new URL('../build/version.mjs', import.meta.url)), file], { env: { ...process.env, VERCEL_GIT_COMMIT_SHA: '0123456789abcdef' }, stdio: 'ignore' });
   const v = JSON.parse(readFileSync(file, 'utf8'));
   assert.equal(v.version, '0123456');
   assert.ok(Math.abs(Date.parse(v.builtAt) - Date.now()) < 60_000);
