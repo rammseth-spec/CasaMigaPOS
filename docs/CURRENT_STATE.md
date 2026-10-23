@@ -1,3 +1,8 @@
+# Cobro en la web: la venta confirmada regresa sola al POS — 22/10/2026
+
+- Como en la caja (6139e86) y a pedido del usuario: la «Venta confirmada» ya no se queda fija. Se muestra 3 segundos («Regresando al POS en 3 segundos…») y el cobro regresa solo a Venta (`AUTO_RETURN_MS` en `cloud/public/js/pos.js`). «Imprimir ticket» imprime y vuelve a contar; si el cobro falla, la ventana se queda con el error.
+- Revisado en el navegador con una venta de prueba: a los 3 s regresó a Venta con el ticket vacío. Nube 82/82.
+
 # Producción por lotes y descuento en la venta — 22/10/2026 (decisiones del dueño)
 
 - **Producción → «Capturar lote»:** la misma cuadrícula de panes con foto que Venta. Al tocar un pan se escriben las piezas que salieron y se suman a su existencia (recepción «LOTE»).
