@@ -171,13 +171,17 @@ function discard(reason, done) {
 
 // ---------- Cobro (CheckoutDialog) ----------
 
+/** Como la caja (6139e86): la venta confirmada se muestra este tiempo y el cobro regresa solo al POS; no se queda fija. */
+const AUTO_RETURN_MS = 3000;
+
 function checkout(data, lines, total, printAfter, done) {
   const signature = JSON.stringify(lines.map(l => [l.product.id, l.quantity]));
-  let method = 'CASH', sale = null, busy = false, message = '', printMessage = '';
+  let method = 'CASH', sale = null, busy = false, message = '', printMessage = '', autoReturn = 0;
   const received = h('input', { name: 'received', inputmode: 'decimal', autocomplete: 'off', maxlength: '24', class: 'big-input', 'aria-label': 'Efectivo recibido' });
   const reference = h('input', { name: 'reference', maxlength: '40', autocomplete: 'off', 'aria-label': 'Referencia del pago' });
   const node = h('dialog', { class: 'checkout', 'aria-label': 'Cobro' });
-  const close = () => { node.close(); node.remove(); if (sale) done(); };
+  const close = () => { clearTimeout(autoReturn); if (!node.isConnected) return; node.close(); node.remove(); if (sale) done(); };
+  const returnSoon = () => { clearTimeout(autoReturn); autoReturn = setTimeout(close, AUTO_RETURN_MS); };
   const cents = () => money(received.value);
   const canConfirm = () => !busy && !sale && (method !== 'CASH' || (cents() !== null && cents() >= total));
   const draw = () => {
@@ -200,7 +204,8 @@ function checkout(data, lines, total, printAfter, done) {
         : h('div', { class: 'checkout-result' },
           h('p', { class: 'result-text', text: resultText(sale) }),
           h('p', { class: 'muted', text: printMessage }),
-          h('button', { type: 'button', class: 'secondary', onclick: () => { printTicket(sale); printMessage = 'Ticket enviado a la impresión del navegador.'; draw(); } }, printAfter ? 'Reintentar ticket' : 'Imprimir ticket')),
+          h('button', { type: 'button', class: 'secondary', onclick: () => { printTicket(sale); printMessage = 'Ticket enviado a la impresión del navegador.'; draw(); returnSoon(); } }, printAfter ? 'Reintentar ticket' : 'Imprimir ticket'),
+          h('p', { class: 'caption', text: 'Regresando al POS en 3 segundos…' })),
       h('p', { class: 'error', role: 'alert', text: message }),
       h('div', { class: 'checkout-actions' + (capture ? '' : ' done') },
         h('button', { type: 'button', class: 'secondary', disabled: busy, onclick: close }, 'Volver al POS'),
@@ -226,6 +231,7 @@ function checkout(data, lines, total, printAfter, done) {
       printAfter = print;
       if (print) { printMessage = 'Ticket enviado a la impresión del navegador.'; setTimeout(() => printTicket(sale), 50); }
       else printMessage = 'Venta cobrada correctamente. Quedó registrada en Historial sin imprimir ticket.';
+      returnSoon();
     } catch (error) {
       message = error.status === 0 ? 'No se pudo completar o verificar el cobro. Revisa la conexión y vuelve a tocar Cobrar: si ya se había cobrado, no se duplica.' : error.message;
       if (error.status === 409) setTimeout(() => render({ silent: true }));

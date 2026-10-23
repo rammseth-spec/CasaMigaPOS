@@ -1,7 +1,8 @@
 // Recetas como la caja de escritorio (RecipeView de QAv1): pestañas Recetas / Perfiles de producto, versiones con borrador, publicar
 // y activar, y editores con ingredientes, grupos de alternativas, preparaciones e ingredientes directos.
 // Todo se manda a la caja (lib/commands.ts, recipe.*); la caja pone el número de versión y lo aplica con sus reglas.
-import { api, at, can, command, h, render, state } from './app.js';
+import { api, at, can, command, dialog, h, render, state } from './app.js';
+import { yieldWarning } from './yield-check.js';
 
 const rec = { tab: 'formulas', screen: 'list', selected: null, formula: null, profile: null, version: null, form: null, search: '', message: '', ok: false, pending: [] };
 const say = (message, ok = false) => { rec.message = message; rec.ok = ok; };
@@ -41,6 +42,7 @@ const HELP = {
   direct: 'Un ingrediente que la fórmula o el perfil utiliza directamente: elige el ingrediente, la cantidad y una unidad compatible. El buscador limita los candidatos; no cambia los ingredientes ya asignados.',
   alternatives: 'Un grupo reúne ingredientes que pueden sustituirse entre sí; Opción 1 es la primera preferencia. «Nuevo grupo de alternativas» crea un conjunto; «Agregar opción al grupo» añade otra opción al grupo de la fila elegida. Cada grupo necesita al menos dos opciones.',
   preparations: 'Una preparación es otra receta publicada que forma parte del producto. Elige la preparación, la cantidad por pieza y una unidad compatible con su rendimiento.',
+  pendingMeasure: 'Marca los borradores con datos todavía sin confirmar: un rendimiento sin medir, una cantidad aproximada o una unidad en duda. Mientras esté marcada, la versión no puede publicarse. Quitarla no publica nada; publicar sigue siendo un paso aparte.',
   formulaPreparations: 'Otra receta que ésta usa ya preparada, como la masa dulce dentro de la masa enriquecida. Elige la receta y cuánto de ella usa esta receta completa. Puede estar en borrador, pero esta receta sólo se publica cuando las que usa ya estén publicadas.',
 };
 
@@ -91,7 +93,7 @@ function formulaList(data) {
   const open = f => { rec.formula = f.id; rec.screen = 'detail'; rec.version = null; say(''); redraw(); };
   return h('div', {},
     selectable(data.formulas, [['Código', f => f.code], ['Nombre', f => f.name + (multi() ? ` (${branchName(f.branchId)})` : '')], ['Versión activa', f => versionLabel(f, f.list)],
-      ['Borrador disponible', f => f.list.some(v => v.state === 'DRAFT') ? 'Sí' : 'No']], 'Recetas', 'No hay recetas registradas.', f => f.id, open),
+      ['Borrador disponible', f => f.list.some(v => v.state === 'DRAFT') ? 'Sí' : 'No'], ['Por medir', f => f.list.some(v => v.pendingMeasure) ? 'Sí' : 'No']], 'Recetas', 'No hay recetas registradas.', f => f.id, open),
     h('div', { class: 'catalog-actions' },
       configure() ? h('button', { type: 'button', class: 'primary', onclick: () => { rec.form = { id: crypto.randomUUID(), code: '', name: '', branchId: state.branch || state.me.branchId || state.branches[0]?.id }; rec.screen = 'owner'; say(''); redraw(); } }, 'Nueva receta') : null,
       h('button', { type: 'button', class: 'secondary', onclick: () => { const f = data.formulas.find(x => x.id === rec.selected); if (!f) { say('Selecciona una receta.'); return redraw(); } open(f); } }, 'Ver detalle')));
@@ -136,7 +138,7 @@ function versionsDetail(owner, kind) {
     h('tbody', {}, rows.map(v => { const tr = h('tr', { class: 'click' + (rec.version === v.id ? ' selected' : ''), tabindex: '0',
       onclick: () => { rec.version = v.id; for (const x of tr.parentNode.children) x.classList.toggle('selected', x === tr); sync(); } },
       h('td', { 'data-label': 'Versión', text: `Versión ${v.version}` }), h('td', { 'data-label': 'Nombre', text: v.name }),
-      h('td', { 'data-label': 'Estado', text: owner.activeVersionId === v.id ? 'Activa · Publicada' : v.state === 'PUBLISHED' ? 'Publicada' : 'Borrador' }));
+      h('td', { 'data-label': 'Estado', text: owner.activeVersionId === v.id ? 'Activa · Publicada' : v.state === 'PUBLISHED' ? 'Publicada' : v.pendingMeasure ? 'Borrador · Por medir' : 'Borrador' }));
       return tr; }))))
     : h('p', { class: 'catalog-empty', text: kind === 'formula' ? 'No hay versiones registradas. Crea la primera versión para definir su fórmula.' : 'No hay versiones registradas. Crea la primera versión del perfil.' });
   sync();
@@ -234,7 +236,10 @@ const ingredientRow = (line = null) => ({ key: crypto.randomUUID(), id: line?.id
   quantity: line ? numberOf(line.atomic, line.dimension) : '1', unit: line ? unitOf(line.atomic, line.dimension) : 'g', policy: line?.policy ?? 'NotApplicable', group: 0, preference: 0 });
 function startEditor(owner, version, kind) {
   const next = Math.max(0, ...owner.list.map(v => v.version)) + 1;
+  // Rendimiento con el que se compara al guardar: el del borrador que se edita; en una versión nueva, el de la última versión.
+  const compared = version ?? [...owner.list].sort((a, b) => b.version - a.version)[0];
   if (kind === 'formula') rec.form = { owner, versionId: version?.id ?? crypto.randomUUID(), revision: version?.revision ?? null, number: version?.version ?? next,
+    previousYield: compared ? { dimension: compared.yieldDimension, atomic: compared.yieldAtomic } : null, pendingMeasure: version?.pendingMeasure ?? false,
     name: version?.name ?? '', notes: version?.notes ?? '', yieldDimension: version?.yieldDimension ?? 'MASS',
     yield: version ? numberOf(version.yieldAtomic, version.yieldDimension) : '1', yieldUnit: version ? unitOf(version.yieldAtomic, version.yieldDimension) : 'g',
     ingredients: (version?.ingredients ?? []).map(ingredientRow),
@@ -341,14 +346,18 @@ function formulaEditor(data) {
     if (!complete()) { say('Completa nombre, rendimiento e ingredientes; cada grupo necesita al menos dos opciones.'); return redraw(); }
     const options = groups(f.alternatives).map(g => g.sort((a, b) => a.preference - b.preference)
       .map(r => ({ id: r.id, ...payloadLine(r, data, branchId) })).map(({ dimension, ...o }) => o));
-    try {
+    const send = async () => {
       await command(branchId, 'recipe.formula.draft', { formulaId: f.owner.id, versionId: f.versionId, revision: f.revision, name: f.name.trim(), notes: f.notes.trim(),
-        yield: { dimension: DIMENSION_NAME[f.yieldDimension], atomic: atomic(f.yield, f.yieldUnit) },
+        yield: { dimension: DIMENSION_NAME[f.yieldDimension], atomic: atomic(f.yield, f.yieldUnit) }, pendingMeasure: f.pendingMeasure,
         ingredients: f.ingredients.map(r => payloadLine(r, data, branchId)).map(({ dimension, ...o }) => o), groups: options,
         preparations: f.preparations.map(r => ({ formulaVersionId: r.formulaVersionId, atomic: atomic(r.quantity, r.unit) })) });
-      rec.screen = 'detail'; rec.formula = f.owner.id; say('Versión borrador enviada a la caja.', true);
-    } catch (error) { say(error.message); }
-    redraw();
+      rec.screen = 'detail'; rec.formula = f.owner.id; say('Versión borrador enviada a la caja.', true); redraw();
+    };
+    // Igual que la caja: un rendimiento sospechoso pide confirmación; cancelar no manda nada y el valor nunca se corrige solo.
+    const warning = yieldWarning(f.previousYield, { dimension: f.yieldDimension, atomic: atomic(f.yield, f.yieldUnit) });
+    if (warning) return dialog('Revisa el rendimiento', body => body.append(...warning.split('\n\n').map(text => h('p', { class: 'wide', style: { whiteSpace: 'pre-line' }, text }))),
+      { submit: 'Guardar de todos modos', onSubmit: send });
+    try { await send(); } catch (error) { say(error.message); redraw(); }
   });
   const yieldUnit = h('select', { 'aria-label': 'Unidad del rendimiento', onchange: e => { f.yieldUnit = e.target.value; refresh(); } });
   const units = () => yieldUnit.replaceChildren(...UNITS[f.yieldDimension].map(u => h('option', { value: u, text: u, selected: u === f.yieldUnit })));
@@ -359,7 +368,10 @@ function formulaEditor(data) {
       h('div', {},
         h('label', { class: 'label' }, 'Versión', h('input', { value: String(f.number), readonly: true, 'aria-label': 'Número de versión automático' })),
         h('label', { class: 'label' }, 'Nombre de esta versión', h('input', { maxlength: '160', value: f.name, 'aria-label': 'Nombre de esta versión', oninput: e => { f.name = e.target.value; refresh(); } })),
-        h('label', { class: 'label' }, 'Notas (opcional)', h('textarea', { maxlength: '500', rows: '3', 'aria-label': 'Notas', oninput: e => { f.notes = e.target.value; } }, f.notes))),
+        h('label', { class: 'label' }, 'Notas (opcional)', h('textarea', { maxlength: '500', rows: '3', 'aria-label': 'Notas', oninput: e => { f.notes = e.target.value; } }, f.notes)),
+        h('label', { class: 'check', title: HELP.pendingMeasure }, h('input', { type: 'checkbox', checked: f.pendingMeasure, 'aria-label': 'Por medir', onchange: e => { f.pendingMeasure = e.target.checked; } }),
+          'Por medir: faltan datos por confirmar (no se puede publicar)'),
+        h('p', { class: 'caption', text: HELP.pendingMeasure })),
       h('div', {},
         h('label', { class: 'label' }, 'Rendimiento', h('input', { inputmode: 'decimal', maxlength: '20', value: f.yield, title: HELP.yield, 'aria-label': 'Rendimiento', oninput: e => { f.yield = e.target.value; refresh(); } })),
         h('label', { class: 'label' }, 'Dimensión', h('select', { 'aria-label': 'Dimensión del rendimiento', onchange: e => { f.yieldDimension = e.target.value; f.yieldUnit = UNITS[f.yieldDimension][0]; units(); refresh(); } },

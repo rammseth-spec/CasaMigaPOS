@@ -23,7 +23,8 @@ const profile = 'b2000000-0000-4000-8000-000000000001';
 const item = (id: string, code: string, name: string, kind: string, dimension: string) =>
   ({ entity: 'inventory_item', id, payload: { item: { id, code, name, kind, dimension, active: 1 }, units: [], balances: [] } });
 
-async function seeded() {
+// draftPendingMeasure: «Por medir» del borrador como lo manda una caja con la migración 032; sin él, como una caja anterior.
+async function seeded(draftPendingMeasure?: number) {
   const { q } = await database();
   await permissions(q, caja1, centro);
   await user(q, caja1, centro, 'a0000000-0000-4000-8000-000000000001', 'admin', 'Administrator', 'Admin#2026centro');
@@ -38,7 +39,8 @@ async function seeded() {
       formula: { id: formula, code: 'MASA', name: 'Masa dulce', active_version_id: published, revision: 3 },
       versions: [
         { id: published, formula_id: formula, version: 1, name: 'Base', state: 'PUBLISHED', yield_dimension: 'MASS', yield_atomic: 1_000_000, notes: null, revision: 2 },
-        { id: draft, formula_id: formula, version: 2, name: 'Más mantequilla', state: 'DRAFT', yield_dimension: 'MASS', yield_atomic: 1_200_000, notes: 'Prueba', revision: 4 }],
+        { id: draft, formula_id: formula, version: 2, name: 'Más mantequilla', state: 'DRAFT', yield_dimension: 'MASS', yield_atomic: 1_200_000, notes: 'Prueba', revision: 4,
+          ...(draftPendingMeasure === undefined ? {} : { pending_measure: draftPendingMeasure }) }],
       ingredients: [
         { version_id: published, sequence: 1, item_id: flour, dimension: 'MASS', quantity_atomic: 600_000, count_policy: 'NOT_APPLICABLE' },
         { version_id: published, sequence: 2, item_id: eggs, dimension: 'COUNT', quantity_atomic: 3, count_policy: 'EXACT_WHOLE_COUNT' },
@@ -114,4 +116,55 @@ test('recipe changes are validated before reaching the till', async () => {
   // Si la caja rechaza el alta, ya se puede volver a usar el código.
   await recordResults(q, { id: caja1, branchId: centro }, { results: [{ id: pulled[0].id, status: 'rejected', message: 'Ya existe una receta con ese código.' }] });
   await createCommand(q, admin, centro, 'recipe.formula.create', { id: randomUUID(), code: 'RELL', name: 'Relleno' });
+});
+
+test('a version marked «Por medir» shows the mark and cannot be published from the web', async () => {
+  const marked = await seeded(1);
+  const data = await recipes(marked, centro);
+  assert.deepEqual(data.formulas[0].list.map(v => [v.version, v.pendingMeasure]), [[1, false], [2, true]]);
+  const admin = await login(marked, 'admin', 'Admin#2026centro');
+  await assert.rejects(createCommand(marked, admin, centro, 'recipe.formula.publish', { versionId: draft, revision: 4 }), /Por medir/);
+
+  // Una caja anterior a la marca no la manda: la versión no aparece marcada y se publica como antes.
+  const older = await seeded();
+  assert.equal((await recipes(older, centro)).formulas[0].list[1].pendingMeasure, false);
+  await createCommand(older, await login(older, 'admin', 'Admin#2026centro'), centro, 'recipe.formula.publish', { versionId: draft, revision: 4 });
+});
+
+test('the web editor sends «Por medir» only as true or false', async () => {
+  const q = await seeded();
+  const admin = await login(q, 'admin', 'Admin#2026centro');
+  const draftOf = (pendingMeasure: unknown) => ({ formulaId: formula, versionId: draft, revision: 4, name: 'Más mantequilla', notes: '', pendingMeasure,
+    yield: { dimension: 'Mass', atomic: 1_200_000 }, ingredients: [{ itemId: flour, atomic: 650_000, policy: 'NotApplicable' }], groups: [] });
+  await assert.rejects(createCommand(q, admin, centro, 'recipe.formula.draft', draftOf('sí')), /Por medir/);
+  await createCommand(q, admin, centro, 'recipe.formula.draft', draftOf(true));
+  const sent = (await pendingFor(q, { id: caja1, branchId: centro }, 0)).filter(c => c.kind === 'recipe.formula.draft');
+  assert.equal((sent.at(-1)!.payload as { pendingMeasure?: boolean }).pendingMeasure, true, 'The till receives the mark as chosen.');
+  const { pendingMeasure, ...without } = draftOf(undefined);
+  await createCommand(q, admin, centro, 'recipe.formula.draft', without);
+  const last = (await pendingFor(q, { id: caja1, branchId: centro }, 0)).filter(c => c.kind === 'recipe.formula.draft').at(-1)!;
+  assert.equal('pendingMeasure' in (last.payload as object), false, 'Without the field the till keeps the mark it had.');
+});
+
+test('the web warns about suspicious yields exactly like the till', async () => {
+  const { yieldWarning, MAXIMUM } = await import(new URL('../public/js/yield-check.js', import.meta.url).href);
+  const g = (grams: number) => ({ dimension: 'MASS', atomic: grams * 1000 });
+  assert.equal(yieldWarning(g(1800), g(2000)), null, '1,800 g → 2,000 g is fine.');
+  assert.equal(yieldWarning(g(1800), g(18_000)), null, 'Exactly 10 times is fine.');
+  const slip = yieldWarning(g(1800), g(2_000_000)) as string;
+  assert.match(slip, /Antes: 1,800 g\nAhora: 2,000,000 g \(unas 1,111 veces más\)/);
+  assert.match(slip, /máximo que rinde una receta en Casa Miga: 20,000 g/);
+  assert.equal(slip.split('¿Guardar').length, 2, 'One question for both reasons.');
+  assert.match(yieldWarning({ dimension: 'VOLUME', atomic: 1_000_000 }, { dimension: 'VOLUME', atomic: 50_000 }) as string, /Ahora: 50 ml \(unas 20 veces menos\)/);
+  const kinds = yieldWarning(g(1800), { dimension: 'COUNT', atomic: 18 }) as string;
+  assert.match(kinds, /ahora piezas \(18 piezas\)/); assert.doesNotMatch(kinds, /veces/, 'Mass and pieces are never compared by amount.');
+  assert.equal(yieldWarning(null, g(1800)), null, 'Without a previous yield only the maximum is checked.');
+  assert.equal(yieldWarning(null, { dimension: 'MASS', atomic: MAXIMUM.MASS }), null, 'Exactly 20 kg is allowed.');
+  assert.match(yieldWarning(null, g(25_000)) as string, /25,000 g/);
+  assert.equal(yieldWarning(null, { dimension: 'VOLUME', atomic: 50_000_000 }), null);
+  assert.match(yieldWarning(null, { dimension: 'VOLUME', atomic: 50_001_000 }) as string, /50,000 ml/);
+  assert.equal(yieldWarning(null, { dimension: 'COUNT', atomic: 500 }), null);
+  assert.match(yieldWarning(null, { dimension: 'COUNT', atomic: 501 }) as string, /500 piezas/);
+  assert.equal(yieldWarning({ dimension: 'MASS', atomic: 0 }, g(1800)), null, 'A non-positive previous yield is not a reference.');
+  assert.equal(yieldWarning(g(1800), null), null, 'An invalid value is refused before any comparison.');
 });

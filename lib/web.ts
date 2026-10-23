@@ -493,7 +493,7 @@ export async function recipes(q: Query, branch: string | null) {
   const formulaList = formulas.map(x => {
     const p = x.payload as { formula: Row; versions: Row[]; ingredients: Row[]; groups: Row[]; options: Row[]; preparations?: Row[] };
     const detail = (v: Row) => ({ id: s(v.id), version: n(v.version), name: s(v.name), state: s(v.state), revision: n(v.revision), notes: s(v.notes),
-      yieldDimension: s(v.yield_dimension), yieldAtomic: n(v.yield_atomic),
+      yieldDimension: s(v.yield_dimension), yieldAtomic: n(v.yield_atomic), pendingMeasure: n(v.pending_measure) === 1,
       ingredients: p.ingredients.filter(i => s(i.version_id) === s(v.id)).map(line),
       preparations: (p.preparations ?? []).filter(x => s(x.version_id) === s(v.id)).sort((a, b) => n(a.sequence) - n(b.sequence))
         .map(x => ({ formulaVersionId: s(x.preparation_version_id), formula: versionLabel.get(s(x.preparation_version_id)) ?? 'Preparación', dimension: s(x.dimension), atomic: n(x.quantity_atomic) })),
