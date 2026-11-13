@@ -107,7 +107,7 @@ test('consignment balances, catalog with photos and users without hashes', async
   assert.deepEqual(trays.deliveries.map(d => d.status), ['pending', 'collected']);
 
   const items = await web.catalog(q, centro);
-  assert.deepEqual(items.products[0].photo, { sha: 'ABC', provisional: true });
+  assert.deepEqual(items.products[0].photo, { sha: 'ABC', provisional: true, at: null });
   assert.equal(items.products[0].consignmentPrice, 1500);
   await assert.rejects(web.photo(q, centro, 'p1'), /inválido/);
 

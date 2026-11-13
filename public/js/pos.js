@@ -9,19 +9,24 @@ const saved = {
 };
 const tillKey = branch => `cm-pos-till:${branch}`;
 const cartKey = till => `cm-pos-cart:${till}`;
+/** Ventas en espera de esta caja web (por ejemplo, mientras se empaqueta): carritos guardados aparte, sin cobrar. */
+const heldKey = till => `cm-pos-held:${till}`;
+const MAX_HELD = 10;
 /** Como la caja: 50 panes por página (SqliteCatalogStore). */
 const PAGE = 50;
 const ui = { q: '', category: '', page: 0 };
 let cart = new Map();
+let held = [];
 let cartTill = null;
 // Cobro sin confirmar (por ejemplo, se cayó la red): reintentar el mismo carrito usa el mismo identificador y nunca cobra dos veces.
 let pending = null;
 
 function useCart(till) {
   if (cartTill === till) return;
-  cartTill = till; cart = new Map(saved.get(cartKey(till), []));
+  cartTill = till; cart = new Map(saved.get(cartKey(till), [])); held = saved.get(heldKey(till), []);
 }
 const keepCart = () => saved.set(cartKey(cartTill), cart.size ? [...cart.entries()] : null);
+const keepHeld = () => saved.set(heldKey(cartTill), held.length ? held : null);
 const money = text => { const t = String(text ?? '').trim().replace(/[$\s]/g, '').replace(',', '.'); return /^\d{1,7}(\.\d{1,2})?$/.test(t) ? Math.round(Number(t) * 100) : null; };
 const normal = text => text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 const photoUrl = (product, branchId) => `/api/web/photo?product=${product.id}&branch=${branchId}&v=${product.photo}`;
@@ -115,6 +120,39 @@ function sell(data) {
         h('button', { type: 'button', class: 'secondary', disabled: (ui.page + 1) * PAGE >= list.length, onclick: () => { ui.page++; drawGrid(); } }, 'Siguiente')));
   };
 
+  // Ventas en espera: el carrito se guarda aparte (no se cobra nada) para atender a otro cliente; se retoma tocándolo. Retomar con
+  // otro carrito a medias lo deja a él en espera, así nunca se pierde nada. Los precios son los de hoy al retomar.
+  const heldLines = sale => sale.lines.filter(([id]) => products.has(id));
+  // Cada venta en espera conserva su número («Cliente 2») aunque otras se retomen; se vuelve a contar desde 1 cuando no queda ninguna.
+  const park = lines => held.push({ id: crypto.randomUUID(), n: Math.max(0, ...held.map(x => x.n ?? 0)) + 1, at: new Date().toISOString(), lines });
+  const hold = () => {
+    if (!cart.size) return;
+    if (held.length >= MAX_HELD) { toast(`Ya hay ${MAX_HELD} ventas en espera: cobra o descarta alguna antes.`); return; }
+    park([...cart.entries()]);
+    keepHeld(); cart.clear(); keepCart(); refresh();
+    toast('Venta en espera. Ya puedes cobrar a otro cliente; tócala arriba del ticket para retomarla.');
+  };
+  const resume = id => {
+    const sale = held.find(x => x.id === id);
+    if (!sale) return;
+    held = held.filter(x => x.id !== id);
+    if (cart.size) park([...cart.entries()]);
+    cart = new Map(heldLines(sale));
+    keepHeld(); keepCart(); refresh();
+  };
+  const heldStrip = () => held.length ? h('div', { class: 'held', role: 'group', 'aria-label': 'Ventas en espera' },
+    h('span', { class: 'held-title', text: `En espera (${held.length})` }),
+    held.map((sale, i) => {
+      const n = sale.n ?? i + 1;
+      const lines = heldLines(sale), pz = lines.reduce((a, [, q]) => a + q, 0), sum = lines.reduce((a, [id, q]) => a + products.get(id).price * q, 0);
+      return h('span', { class: 'held-item' },
+        h('button', { type: 'button', class: 'held-resume', title: 'Retomar esta venta', 'aria-label': `Retomar venta en espera del cliente ${n}: ${pz} ${pz === 1 ? 'pieza' : 'piezas'}, ${fmt(sum)}`, onclick: () => resume(sale.id) },
+          h('strong', { text: `Cliente ${n}` }), h('small', { text: `${time(sale.at)} · ${pz} pz · ${fmt(sum)}` })),
+        h('button', { type: 'button', class: 'held-drop', title: 'Descartar esta venta en espera', 'aria-label': `Descartar venta en espera del cliente ${n}`,
+          onclick: () => dialog('Descartar venta en espera', body => body.append(h('p', { class: 'wide muted', text: `Cliente ${n}: ${pz} ${pz === 1 ? 'pieza' : 'piezas'} por ${fmt(sum)}. No se registrará una venta.` })),
+            { submit: 'Descartar', cancel: 'Conservar', onSubmit: async () => { held = held.filter(x => x.id !== sale.id); keepHeld(); refresh(); } }) }, '×'));
+    })) : null;
+
   // Ticket a la derecha (en celular, hoja desde la barra de abajo).
   const ticket = h('aside', { class: 'pos-ticket', 'aria-label': 'Ticket' });
   const bar = h('div', { class: 'pos-bar-mobile' });
@@ -138,22 +176,24 @@ function sell(data) {
     h('div', { class: 'ticket-sum' }, h('span', { text: 'Subtotal' }), h('span', { class: 'num', text: fmt(total()) })),
     h('div', { class: 'ticket-total' }, h('span', { text: 'Total' }), h('strong', { class: 'num', text: fmt(total()) })),
     h('button', { type: 'button', class: 'primary pay', disabled: !cart.size, title: 'Confirmar venta sin imprimir ticket', 'aria-label': 'Cobrar', onclick: () => charge(false) }, `Cobrar ${fmt(total())}`),
-    h('button', { type: 'button', class: 'secondary pay-print', disabled: !cart.size, 'aria-label': 'Cobrar e imprimir ticket', onclick: () => charge(true) }, 'Cobrar + imprimir ticket'));
+    h('button', { type: 'button', class: 'secondary pay-print', disabled: !cart.size, 'aria-label': 'Cobrar e imprimir ticket', onclick: () => charge(true) }, 'Cobrar + imprimir ticket'),
+    h('button', { type: 'button', class: 'ghost pay-hold', disabled: !cart.size, title: 'Guardar este carrito sin cobrar y atender a otro cliente', onclick: hold }, 'Dejar en espera y cobrar a otro'));
   const refresh = () => {
     for (const tile of grid.querySelectorAll('.tile')) {
       const q = cart.get(tile.dataset.id); const badge = tile.querySelector('.count-badge');
       badge.hidden = !q; badge.textContent = q ? String(q) : '';
     }
-    ticket.replaceChildren(
+    ticket.replaceChildren(h('div', {},
       h('div', { class: 'ticket-head' },
         h('div', {}, h('h2', { text: 'Ticket' }), h('p', { class: 'caption', text: 'Venta temporal hasta confirmar el cobro' })),
         h('button', { type: 'button', class: 'ghost ticket-clear', disabled: !cart.size, 'aria-label': 'Limpiar', onclick: () => discard('limpiar el carrito', () => { cart.clear(); keepCart(); refresh(); }) }, icon(ICON.trash), h('span', { text: 'Limpiar' }))),
+      heldStrip()),
       h('div', { class: 'ticket-body' }, cartLines()), totals());
-    if (sheet?.isConnected) sheet.replaceChildren(cartLines(), totals());
+    if (sheet?.isConnected) sheet.replaceChildren(...[heldStrip(), cartLines(), totals()].filter(Boolean));
     bar.replaceChildren(
-      h('button', { type: 'button', class: 'cart-open', disabled: !cart.size, onclick: () => {
+      h('button', { type: 'button', class: 'cart-open', disabled: !cart.size && !held.length, onclick: () => {
         closeSheet = dialog('Ticket', body => { sheet = h('div', { class: 'wide sheet-cart' }); body.append(sheet); }).close; refresh();
-      } }, h('span', { text: cart.size ? `${pieces()} pz` : 'Carrito vacío' }), h('strong', { class: 'num', text: fmt(total()) })),
+      } }, h('span', { text: (cart.size ? `${pieces()} pz` : 'Carrito vacío') + (held.length ? ` · ${held.length} en espera` : '') }), h('strong', { class: 'num', text: fmt(total()) })),
       h('button', { type: 'button', class: 'primary', disabled: !cart.size, onclick: () => charge(false) }, 'Cobrar'));
   };
   drawChips(); drawGrid(); refresh();

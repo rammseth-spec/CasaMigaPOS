@@ -1,10 +1,13 @@
-// Producción como la caja de escritorio (ProductionView de QAv1): «¿Qué deseas hacer?», nueva producción con necesidades y faltantes,
-// alternativas, preparar el borrador, producciones en borrador e historial con detalle y «Registrar producción» con lo que salió.
-// Calcular necesidades sólo consulta (lib/planning.ts); preparar y registrar se mandan a la caja (production.prepare / production.confirm).
-import { api, at, can, command, h, render, state } from './app.js';
+// Producción como la caja de escritorio: primero «Capturar lote» (la cuadrícula de panes con foto de Venta, BatchEntryView; pedido del
+// dueño 22/10/2026) y luego «Producción con receta»: nueva producción con necesidades y faltantes, alternativas, preparar el borrador,
+// producciones en borrador e historial con detalle y «Registrar producción» con lo que salió.
+// Calcular necesidades sólo consulta (lib/planning.ts); preparar y registrar se mandan a la caja (production.prepare / production.confirm);
+// un lote se manda con /api/web/production-batch (lib/commands.ts → captureBatch).
+import { api, at, can, command, h, post, render, state } from './app.js';
 
 const prod = { screen: 'home', plan: [], selected: null, preview: null, choices: {}, batches: [], row: null, batch: null, actuals: {}, message: '', ok: false, ids: null };
 const say = (message, ok = false) => { prod.message = message; prod.ok = ok; };
+const lot = { productId: null, pieces: '', busy: false, message: '', ok: false };
 const redraw = () => render({ silent: true });
 const branchName = id => state.branches.find(b => b.id === id)?.name ?? '';
 const multi = () => !state.branch && state.branches.length > 1;
@@ -32,17 +35,98 @@ export async function produccion() {
   prod.profiles = (recipes?.profiles ?? []).filter(p => p.activeVersionId).map(p => { const v = p.list.find(x => x.id === p.activeVersionId);
     return { versionId: p.activeVersionId, branchId: p.branchId, label: `${p.product} · ${v?.name || 'Perfil'} · Versión ${v?.version ?? ''}` + (multi() ? ` (${branchName(p.branchId)})` : '') }; });
   if (prod.screen === 'drafts' || prod.screen === 'history') prod.batches = await api('production-batches', { branch: state.branch, status: prod.screen === 'drafts' ? 'DRAFT' : 'CONFIRMED' });
-  const body = prod.screen === 'builder' ? builder() : prod.screen === 'drafts' ? list(true) : prod.screen === 'history' ? list(false) : prod.screen === 'detail' ? detail() : home(sent);
+  const batches = prod.screen === 'home' ? await batchData() : null;
+  const body = prod.screen === 'builder' ? builder() : prod.screen === 'drafts' ? list(true) : prod.screen === 'history' ? list(false) : prod.screen === 'detail' ? detail() : [lotes(batches), home(sent, !!batches)];
   return h('div', { class: 'cash-card production' }, body,
     prod.message ? h('p', { class: prod.ok ? 'success' : 'error', role: 'status', text: prod.message, style: { marginTop: '14px' } }) : null);
 }
 
-function home(sent) {
+// ---------- Capturar lote ----------
+/** Como la caja: quien puede recibir y configurar inventario. */
+const canCapture = () => can('inventory.receive') && can('inventory.configure');
+/** El artículo terminado de un pan en la caja: «PT-» + su SKU (PT-CM-001…), o los primeros 12 del id sin SKU (igual que lib/commands.ts). */
+const batchCode = p => 'PT-' + (p.sku?.trim() ? p.sku.trim().toUpperCase() : p.id.replace(/-/g, '').slice(0, 12).toUpperCase());
+/** Un lote necesita una sucursal: la elegida arriba, o la única que hay. */
+const batchBranch = () => state.branch || (state.branches.length === 1 ? state.branches[0].id : null);
+
+async function batchData() {
+  if (!canCapture()) return null;
+  const branchId = batchBranch();
+  if (!branchId) return { branchId: null };
+  const [catalog, inventory, pending] = await Promise.all([api('catalog', { branch: branchId }), api('inventory', { branch: branchId }), api('commands', { branch: branchId, pendientes: '1' })]);
+  const waiting = pending.filter(c => c.status === 'pending');
+  // Artículo de cada pan: el que subió la caja (ligado al pan) o el que ya va en la fila; y las piezas mandadas que la caja aún no suma.
+  const queuedItem = new Map(waiting.filter(c => c.kind === 'inventory.item.save' && c.payload.code).map(c => [String(c.payload.code).toUpperCase(), c.payload.id]));
+  const toAdd = new Map();
+  for (const c of waiting) if (c.kind === 'inventory.receive' && c.payload.reference === 'LOTE') toAdd.set(c.payload.itemId, (toAdd.get(c.payload.itemId) ?? 0) + Number(c.payload.quantity));
+  const products = catalog.products.filter(p => p.active && p.branchId === branchId).sort((a, b) => a.name.localeCompare(b.name, 'es')).map(p => {
+    const code = batchCode(p);
+    const item = inventory.items.find(i => i.code.toUpperCase() === code && i.kind === 'FINISHED_GOOD' && i.active);
+    const linked = item?.links.some(l => l.productId === p.id);
+    const itemId = item?.id ?? queuedItem.get(code);
+    return { ...p, stock: linked ? item.main : null, adding: itemId ? toAdd.get(itemId) ?? 0 : 0 };
+  });
+  return { branchId, products };
+}
+
+function lotes(data) {
+  if (!data) return null;
+  const intro = h('p', { class: 'caption', text: 'Toca un pan y escribe cuántas piezas salieron del lote. Se suman a su existencia y la venta las va descontando.' });
+  if (!data.branchId) return h('section', { class: 'batch-entry' }, h('h2', { class: 'detail-title', text: 'Capturar lote' }), intro,
+    h('p', { class: 'muted', text: 'Elige arriba la sucursal donde salió el lote.' }));
+  const stockText = p => (p.stock === null || p.stock === undefined ? 'Sin lotes capturados' : `Hay ${p.stock} ${p.stock === 1 ? 'pieza' : 'piezas'}`) + (p.adding ? ` · +${p.adding} por confirmar` : '');
+  // Tocar un pan sólo cambia el recuadro de captura; la cuadrícula (con sus fotos) no se vuelve a dibujar.
+  const form = h('div'), message = h('div');
+  const tiles = new Map();
+  const say = (text, ok) => { lot.message = text; lot.ok = ok; message.replaceChildren(text ? h('p', { class: ok ? 'success' : 'error', role: 'status', text }) : ''); };
+  const tileText = p => { const t = tiles.get(p.id); t.querySelector('.tile-price').textContent = stockText(p);
+    const badge = t.querySelector('.count-badge'); badge.hidden = !p.adding; badge.textContent = `+${p.adding}`; };
+  const choose = id => {
+    lot.productId = id; lot.pieces = '';
+    for (const [key, t] of tiles) t.classList.toggle('selected', key === id);
+    const p = data.products.find(x => x.id === id);
+    if (!p) { form.replaceChildren(); return; }
+    const pieces = h('input', { class: 'big-input', inputmode: 'numeric', maxlength: '5', 'aria-label': 'Piezas que salieron', autocomplete: 'off',
+      oninput: e => { lot.pieces = e.target.value; }, onkeydown: e => { if (e.key === 'Enter') save(p, buttons); } });
+    const buttons = [h('button', { type: 'button', class: 'primary', onclick: () => save(p, buttons) }, 'Sumar a la existencia'),
+      h('button', { type: 'button', class: 'secondary', onclick: () => choose(null) }, 'Cancelar')];
+    form.replaceChildren(h('div', { class: 'card batch-form' }, h('h3', { text: p.name }), h('p', { class: 'muted', text: stockText(p) }),
+      h('label', { class: 'label', text: '¿Cuántas piezas salieron?' }), h('div', { class: 'toolbar' }, pieces, ...buttons)));
+    pieces.focus();
+  };
+  const save = async (p, buttons) => {
+    if (lot.busy) return;
+    const count = Number(lot.pieces.trim());
+    if (!/^\d{1,5}$/.test(lot.pieces.trim()) || count < 1 || count > 10_000) { say('Escribe cuántas piezas salieron: un número entero de 1 a 10,000.', false); return; }
+    lot.busy = true; for (const b of buttons) b.disabled = true; say('', false);
+    try {
+      await post('production-batch', { branchId: data.branchId, productId: p.id, pieces: count });
+      p.adding += count; tileText(p); choose(null);
+      say(`Listo: se mandaron ${count} ${count === 1 ? 'pieza' : 'piezas'} de ${p.name}. La caja las suma a su existencia en cuanto se conecta.`, true);
+    } catch (e) { say(`No se capturó el lote: ${e.message}`, false); for (const b of buttons) b.disabled = false; }
+    finally { lot.busy = false; }
+  };
+  const grid = h('div', { class: 'tiles', 'aria-label': 'Panes para capturar lote' }, data.products.length ? data.products.map(p => {
+    const tile = h('button', { type: 'button', class: 'tile', title: p.name, 'aria-label': p.name, onclick: () => { say('', false); choose(p.id); } },
+      h('span', { class: 'tile-photo' },
+        p.photo ? h('img', { src: `/api/web/photo?product=${p.id}&branch=${p.branchId}&v=${p.photo.sha}`, alt: '', loading: 'lazy' }) : h('span', { class: 'tile-fallback' }, h('small', { text: 'Sin imagen' })),
+        h('span', { class: 'count-badge', hidden: !p.adding, text: `+${p.adding}` })),
+      h('span', { class: 'tile-name', text: p.name }),
+      h('span', { class: 'tile-price', text: stockText(p) }));
+    tiles.set(p.id, tile);
+    return tile;
+  }) : [h('p', { class: 'tiles-empty', text: 'No hay panes activos en el catálogo de esta sucursal.' })]);
+  if (lot.message) say(lot.message, lot.ok);
+  if (data.products.some(p => p.id === lot.productId)) setTimeout(() => choose(lot.productId));
+  return h('section', { class: 'batch-entry' }, h('h2', { class: 'detail-title', text: 'Capturar lote' }), intro, form, message, grid);
+}
+
+function home(sent, withBatches = false) {
   const recent = iso => Date.now() - new Date(iso).getTime() < 2 * 86_400_000;
   const waiting = sent.filter(c => c.kind.startsWith('production.') && (c.status === 'pending' || (c.status === 'rejected' && recent(c.at))));
   const label = { 'production.prepare': 'Preparar producción', 'production.confirm': 'Registrar producción', 'production.record': 'Producción' };
-  return h('div', {},
-    h('h2', { class: 'detail-title', text: '¿Qué deseas hacer?' }),
+  return h('div', { class: withBatches ? 'with-batches' : '' },
+    h('h2', { class: 'detail-title', text: withBatches ? 'Producción con receta' : '¿Qué deseas hacer?' }),
     h('div', { class: 'toolbar' },
       can('production.create') ? h('button', { type: 'button', class: 'primary', onclick: start }, 'Nueva producción') : null,
       h('button', { type: 'button', class: 'secondary', onclick: () => go('drafts') }, 'Producciones en borrador'),

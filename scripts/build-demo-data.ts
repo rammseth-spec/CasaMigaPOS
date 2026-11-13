@@ -5,6 +5,7 @@ import { existsSync, readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 import { identityHash } from '../lib/auth.js';
+import { loadCatalog, photoDates } from './catalogo.js';
 import { finishedCode, loadRecetario, namesOf, normalize, POR_MEDIR, quantity, stableId, validate, type Line } from './recetario.js';
 
 const PASSWORDS: Record<string, string> = { Administrator: 'Admin#2026', Manager: 'Encargado#2026', Cashier: 'Cajero#2026' };
@@ -27,7 +28,8 @@ for (const entry of data.entries) {
 // con su categoría (si es nueva) y su foto provisional (assets/catalog-provisional-ia/CM-NNN.jpg, usada tal cual como miniatura).
 type Entry = { seq: number; entity: string; entityId: string; change: string; enqueuedAt: string; payload: Record<string, unknown> };
 const entries = data.entries as unknown as Entry[];
-const catalog = readFileSync(new URL('../../docs/catalog/catalogo-autorizado-v2.csv', import.meta.url), 'utf8').trim().split(/\r?\n/).slice(1).map(l => l.split(','));
+const catalog = loadCatalog().map(r => [String(r.id), r.name, String(r.pesos), r.category] as const);
+const catalogRows = loadCatalog(), dates = photoDates();
 const products = entries.filter(e => e.entity === 'product').map(e => (e.payload.product as Record<string, unknown>));
 const categories = entries.filter(e => e.entity === 'category').map(e => e.payload);
 const categoryId = new Map(categories.map(c => [String(c.name), String(c.id)]));
@@ -35,8 +37,21 @@ const admin = entries.find(e => e.entity === 'app_user' && e.payload.role_name =
 const terminal = (data.terminal as { id: string }).id;
 let seq = Math.max(...entries.map(e => e.seq)), added = 0, newCategories = 0, photos = 0;
 const now = new Date().toISOString();
+// Panes renombrados (docs/catalog/renombres.json): se renombran en la demo en lugar de darlos de alta otra vez.
+type R = Record<string, unknown>;
+const latestOf = (entity: string) => { const map = new Map<string, Entry>(); for (const e of entries) if (e.entity === entity) map.set(e.entityId, e); return map; };
+let renamed = 0, refreshed = 0;
+for (const row of catalogRows) {
+  const current = [...latestOf('product').values()];
+  if (current.some(e => (e.payload.product as R).name === row.name)) continue;
+  const old = current.find(e => (row.before ?? []).includes(String((e.payload.product as R).name)));
+  if (!old) continue;
+  entries.push({ seq: ++seq, entity: 'product', entityId: old.entityId, change: 'update', enqueuedAt: now, payload: { ...old.payload, product: { ...(old.payload.product as R), name: row.name, modified_utc: now } } });
+  renamed++;
+}
+const hasProduct = (name: string) => [...latestOf('product').values()].some(e => (e.payload.product as R).name === name);
 for (const [id, name, price, category] of catalog) {
-  if (products.some(p => p.name === name)) continue;
+  if (hasProduct(name)) continue;
   if (!categoryId.has(category)) {
     const categoryKey = randomUUID();
     entries.push({ seq: ++seq, entity: 'category', entityId: categoryKey, change: 'insert', enqueuedAt: now, payload: { id: categoryKey, name: category, active: 1,
@@ -57,7 +72,24 @@ for (const [id, name, price, category] of catalog) {
     thumbnail: jpeg.toString('base64') } });
   photos++;
 }
-console.log(`${added} panes nuevos del catálogo autorizado agregados a la demo (${photos} con foto, ${newCategories} categorías nuevas).`);
+// Fotos provisionales más nuevas que las de la demo (por ejemplo, la de un pan renombrado); una foto real nunca se cambia.
+const productByName = new Map([...latestOf('product').values()].map(e => [String((e.payload.product as R).name), e.entityId]));
+const currentPhotos = latestOf('product_photo');
+for (const row of catalogRows) {
+  const sku = `CM-${String(row.id).padStart(3, '0')}`, productId = productByName.get(row.name), generated = dates.get(sku);
+  const current = productId ? currentPhotos.get(productId) : undefined;
+  if (!productId || !current || !generated) continue;
+  const asset = current.payload.asset as R, photo = current.payload.photo as R;
+  const at = String(photo.modified_utc ?? asset.created_utc ?? '');
+  if (asset.provenance !== 'PROVISIONAL' || !at || Date.parse(at) >= Date.parse(generated)) continue;
+  const jpeg = readFileSync(new URL(`../../assets/catalog-provisional-ia/${sku}.jpg`, import.meta.url)), photoId = randomUUID();
+  entries.push({ seq: ++seq, entity: 'product_photo', entityId: productId, change: 'update', enqueuedAt: now, payload: {
+    photo: { ...photo, current_photo_id: photoId, revision: Number(photo.revision ?? 1) + 1, last_operation_id: photoId, modified_utc: now },
+    asset: { id: photoId, provenance: 'PROVISIONAL', thumbnail_sha256: createHash('sha256').update(jpeg).digest('hex').toUpperCase(), thumbnail_edge: 768, created_utc: now },
+    thumbnail: jpeg.toString('base64') } });
+  refreshed++;
+}
+console.log(`${added} panes nuevos del catálogo autorizado agregados a la demo (${photos} con foto, ${newCategories} categorías nuevas); ${renamed} renombrados y ${refreshed} con foto nueva.`);
 // Recetario en borrador (docs/catalog/recetario-borrador.json): insumos, preparaciones y lo que lleva cada pan, sin publicar, como si
 // la caja lo hubiera capturado. Reutiliza los insumos que ya existen con el mismo código o nombre y no repite lo ya cargado.
 const recetario = loadRecetario();

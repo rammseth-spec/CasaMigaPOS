@@ -326,12 +326,13 @@ export async function catalog(q: Query, branch: string | null) {
   const [categories, products, photos, prices] = await Promise.all([
     q(`SELECT branch_id, payload, pending_command FROM entity_state WHERE entity = 'category' AND NOT deleted AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
     q(`SELECT branch_id, payload->'product' AS p, pending_command FROM entity_state WHERE entity = 'product' AND NOT deleted AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
-    q(`SELECT branch_id, entity_id, payload->'asset'->>'thumbnail_sha256' AS sha, payload->'asset'->>'provenance' AS provenance, payload->>'thumbnail' IS NOT NULL AS has
+    q(`SELECT branch_id, entity_id, payload->'asset'->>'thumbnail_sha256' AS sha, payload->'asset'->>'provenance' AS provenance, payload->>'thumbnail' IS NOT NULL AS has,
+       COALESCE(payload->'photo'->>'modified_utc', payload->'asset'->>'created_utc') AS at
        FROM entity_state WHERE entity = 'product_photo' AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
     q(`SELECT branch_id, entity_id, (payload->>'price_cents')::bigint AS price FROM entity_state WHERE entity = 'consignment_price' AND NOT deleted AND ($1::uuid IS NULL OR branch_id = $1::uuid)`, [branch]),
   ]);
   const key = (b: unknown, id: unknown) => `${s(b)}/${s(id)}`;
-  const photo = new Map(photos.filter(p => p.has === true).map(p => [key(p.branch_id, p.entity_id), { sha: s(p.sha), provisional: p.provenance === 'PROVISIONAL' }]));
+  const photo = new Map(photos.filter(p => p.has === true).map(p => [key(p.branch_id, p.entity_id), { sha: s(p.sha), provisional: p.provenance === 'PROVISIONAL', at: p.at ? s(p.at) : null }]));
   const price = new Map(prices.map(p => [key(p.branch_id, p.entity_id), n(p.price)]));
   return {
     categories: categories.map(c => { const p = c.payload as Row; return { id: s(p.id), branchId: s(c.branch_id), name: s(p.name), description: s(p.description), sortOrder: n(p.sort_order), active: n(p.active) === 1, pending: pendingOf(c) }; })

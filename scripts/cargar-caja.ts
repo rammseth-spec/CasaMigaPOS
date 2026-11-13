@@ -4,7 +4,8 @@
 // La contraseña se toma de CASAMIGA_CONTRASENA o se pregunta. --esperar repite hasta que la caja aplique todo lo que se puede mandar.
 import { existsSync, readFileSync } from 'node:fs';
 import { createInterface } from 'node:readline/promises';
-import { plan, type CatalogRow, type State, type Step } from './carga-plan.js';
+import { plan, type State, type Step } from './carga-plan.js';
+import { loadCatalog, photoDates } from './catalogo.js';
 import { loadRecetario, validate } from './recetario.js';
 
 const args = process.argv.slice(2);
@@ -13,8 +14,8 @@ const option = (name: string) => { const i = args.indexOf(name); return i >= 0 ?
 const base = args.find(a => /^https?:\/\//.test(a))?.replace(/\/+$/, '');
 if (!base) throw new Error('Uso: npm run cargar -- <dirección de la web> [--enviar] [--esperar] [--sucursal <id>] [--usuario <usuario>]');
 
-const catalog: CatalogRow[] = readFileSync(new URL('../../docs/catalog/catalogo-autorizado-v2.csv', import.meta.url), 'utf8').trim().split(/\r?\n/).slice(1)
-  .map(line => line.split(',')).map(([id, name, pesos, category]) => ({ id: Number(id), name, pesos: Number(pesos), category }));
+const catalog = loadCatalog();
+const dates = photoDates();
 const recetario = loadRecetario();
 const problems = validate(recetario, catalog.map(r => r.name));
 if (problems.length) throw new Error(`El recetario tiene problemas:\n${problems.join('\n')}`);
@@ -59,7 +60,7 @@ console.log(`Sucursal: ${branchName}${flag('--enviar') ? '' : ' · sólo muestra
 const deadline = Date.now() + 15 * 60_000;
 for (let round = 1; ; round++) {
   const state = await load();
-  const { steps, waits } = plan(state, catalog, recetario, photo);
+  const { steps, waits } = plan(state, catalog, recetario, photo, sku => dates.get(sku) ?? null);
   for (let stage = 1; stage <= 4; stage++) {
     const s = steps.filter(x => x.stage === stage), w = waits.filter(x => x.stage === stage);
     if (s.length || w.length) console.log(`\n${stage}. ${STAGES[stage]}: ${s.length} por mandar${w.length ? `, ${w.length} en espera` : ''}`);

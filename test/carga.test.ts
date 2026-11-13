@@ -8,14 +8,15 @@ import { issueSession, login } from '../lib/auth.js';
 import { handle } from '../lib/router.js';
 import { catalog as webCatalog, recipes } from '../lib/web.js';
 import { plan, type CatalogRow, type State, type Step } from '../scripts/carga-plan.js';
+import { loadCatalog, photoDates } from '../scripts/catalogo.js';
 import { loadRecetario } from '../scripts/recetario.js';
 import { caja1, centro, database, permissions, send, user } from './helpers.js';
 
 // Usa el catálogo, el recetario y las fotos del repositorio completo; en la copia que sólo trae la web (casamiga-web) no existen.
 const csv = new URL('../../docs/catalog/catalogo-autorizado-v2.csv', import.meta.url);
 const skip = existsSync(csv) ? false : 'requiere el repositorio completo (docs/ y assets/)';
-const catalogRows: CatalogRow[] = skip ? [] : readFileSync(csv, 'utf8').trim().split(/\r?\n/).slice(1)
-  .map(line => line.split(',')).map(([id, name, pesos, category]) => ({ id: Number(id), name, pesos: Number(pesos), category }));
+const catalogRows: CatalogRow[] = skip ? [] : loadCatalog();
+const dates = skip ? new Map<string, string>() : photoDates();
 const recetario = skip ? (null as never) : loadRecetario();
 const photo = (sku: string) => { const file = new URL(`../../assets/catalog-provisional-ia/${sku}.jpg`, import.meta.url); return existsSync(file) ? readFileSync(file).toString('base64') : null; };
 const KIND: Record<string, string> = { RawMaterial: 'RAW_MATERIAL', FinishedGood: 'FINISHED_GOOD' };
@@ -146,4 +147,30 @@ test('a product photo of the catalog fits through the web command endpoint', { s
   const response = await handle(q, new Request('https://x/api/web/command', { method: 'POST', body,
     headers: { 'content-type': 'application/json', origin: 'https://x', cookie: `cm_web=${issueSession(admin, env.SESSION_SECRET)}` } }), 'command', env);
   assert.equal(response.status, 200, await response.clone().text());
+});
+
+test('a renamed bread is renamed in the till, never added again, and only its older provisional photo is replaced', { skip }, async () => {
+  const { q } = await database();
+  await permissions(q, caja1, centro);
+  await user(q, caja1, centro, 'a0000000-0000-4000-8000-000000000001', 'admin', 'Administrator', 'Admin#2026centro');
+  const admin = await login(q, 'admin', 'Admin#2026centro');
+  const category = 'c2000000-0000-4000-8000-000000000001', dona = 'f2000000-0000-4000-8000-000000000034', baguette = 'f2000000-0000-4000-8000-000000000031';
+  const product = (id: string, sku: string, name: string) => ({ entity: 'product', id, payload: {
+    product: { id, category_id: category, sku, name, description: '', price_cents: 1500, active: 1, track_inventory: 0 }, inventoryLinks: [] } });
+  const photoOf = (id: string, provenance: string, at: string) => ({ entity: 'product_photo', id, payload: {
+    photo: { product_id: id, modified_utc: at }, asset: { id: `${id.slice(0, -1)}9`, provenance, thumbnail_sha256: 'AB' }, thumbnail: 'AAAA' } });
+  // La caja ya tiene la dona con su nombre anterior y una foto provisional vieja; la baguette, con una foto real vieja.
+  await send(q, caja1, centro, [{ entity: 'category', id: category, payload: { id: category, name: 'Dona', description: '', sort_order: 0, active: 1 } },
+    product(dona, 'CM-034', 'Dona de chocolate negro con chispas'), product(baguette, 'CM-031', 'Baguette'),
+    photoOf(dona, 'PROVISIONAL', '2026-10-19T21:00:00Z'), photoOf(baguette, 'REAL', '2026-10-01T00:00:00Z')]);
+  const steps = plan(await state(q), catalogRows, recetario, photo, sku => dates.get(sku) ?? null).steps;
+  const renamed = steps.filter(s => s.kind === 'product.save' && s.payload.name === 'Dona de chocolate negro con chispas de colores');
+  assert.equal(renamed.length, 1, 'One change: the rename, not a new product.');
+  assert.deepEqual([renamed[0].payload.id, renamed[0].payload.sku, renamed[0].payload.categoryId, renamed[0].payload.priceCents], [dona, 'CM-034', category, 1500]);
+  assert.ok(steps.some(s => s.kind === 'product.photo' && s.payload.productId === dona), 'The newer provisional photo replaces the old one.');
+  assert.ok(!steps.some(s => s.kind === 'product.photo' && s.payload.productId === baguette), 'A real photo is never replaced.');
+  // Los cambios pasan la validación de la web y, ya en la fila, no se vuelven a mandar.
+  for (const s of steps.filter(s => s.payload.id === dona || s.payload.productId === dona)) await createCommand(q, admin, centro, s.kind, s.payload);
+  const again = plan(await state(q), catalogRows, recetario, photo, sku => dates.get(sku) ?? null).steps;
+  assert.ok(!again.some(s => (s.kind === 'product.save' || s.kind === 'product.photo') && (s.payload.id === dona || s.payload.productId === dona || s.payload.name === 'Dona de chocolate negro con chispas de colores')));
 });

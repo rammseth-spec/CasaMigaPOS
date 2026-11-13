@@ -3,7 +3,7 @@ import { failure, json, ProtocolError, readJson } from './protocol.js';
 import { changePassword, clearedCookie, issueSession, login, requirePermission, requireUser, scopeBranch, sessionCookie, sessionSecret, type WebUser } from './auth.js';
 import { alerts, dashboard, DEFAULT_TIME_ZONE, MAX_DAYS, parseRange, terminals, branches, type Query, type Range } from './panel.js';
 import * as web from './web.js';
-import { createCommand, listCommands } from './commands.js';
+import { captureBatch, createCommand, listCommands } from './commands.js';
 import * as backups from './backup.js';
 import { profit, trayAnalytics } from './analytics.js';
 import * as pos from './pos.js';
@@ -77,6 +77,11 @@ export async function handle(q: Query, request: Request, op: string, env: Env): 
       // Una foto de producto viaja aquí como cambio product.photo (hasta 1.4 MB en base64; la pantalla de Catálogo la deja en 900 KB).
       const body = (await readJson(request, 1_500_000)) as { branchId?: unknown; kind?: unknown; payload?: unknown } | null;
       return json(200, await createCommand(q, user, body?.branchId, body?.kind, body?.payload));
+    }
+    // Producción por lotes (pantalla Producción → Capturar lote): uno o varios cambios en orden para la caja.
+    if (op === 'production-batch' && request.method === 'POST') {
+      const body = (await readJson(request, 10_000)) as Record<string, unknown> | null;
+      return json(200, await captureBatch(q, user, body?.branchId, body));
     }
     // Punto de venta web (docs/POS_WEB.md).
     const POS: Record<string, (body: Record<string, unknown> | null) => Promise<unknown>> = {
