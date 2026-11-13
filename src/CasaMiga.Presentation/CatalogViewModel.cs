@@ -222,6 +222,13 @@ public sealed class CatalogViewModel(CatalogService service,IProductPhotoUiGatew
     public Task ToggleCategoryAsync()=>Run(async()=>{var c=SelectedCategory??throw new ArgumentException("Selecciona una categoría.");await Task.Run(()=>service.SetCategoryActive(c.Id,!c.IsActive));await Refresh();});
     public Task ToggleProductAsync()=>Run(async()=>{var p=SelectedProduct?.Product??throw new ArgumentException("Selecciona un producto.");await Task.Run(()=>service.SetProductActive(p.Id,!p.IsActive));await Refresh();});
     public Task DemoAsync()=>Run(async()=>{await Task.Run(service.SeedDemo);await Refresh();});
+    /// <summary>«Cargar catálogo Casa Miga»: los panes que falten con su foto provisional (IA), desde la carpeta catalogo\ del programa.</summary>
+    public bool CanLoadCasaMigaCatalog=>CanCreateProduct&&CanEditProduct&&CanCreateCategory&&CasaMigaCatalog.IsAvailable(CasaMigaCatalog.Folder);
+    public Task LoadCasaMigaCatalogAsync()=>Run(async()=>
+    {
+        var result=await CasaMigaCatalog.LoadAsync(service,photos,CasaMigaCatalog.Folder);
+        await Refresh();Message=result.Summary;log("catalog.casamiga.loaded",null);
+    });
     private async Task Run(Func<Task> action)
     {
         if(Busy)return;Busy=true;Message="";Notify();

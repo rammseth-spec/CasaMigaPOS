@@ -52,6 +52,18 @@ Generado en esta computadora con Inno Setup 6.7.3 (instalado por usuario con `wi
 
 Los datos de prueba se pasaron con `CASAMIGA_DATA_DIR`; no se usó `%LOCALAPPDATA%CasaMigaPOS` de esta computadora.
 
+## Catálogo de Casa Miga y sus fotos con IA (13/11/2026)
+
+Pedido del dueño: las fotos provisionales hechas con IA van como archivos en el instalador.
+- `CasaMiga.Presentation.csproj` copia, junto al programa y en la publicación, la carpeta **`catalogo\`**: `catalogo-autorizado-v2.csv`, `renombres.json` y `fotos\CM-001.jpg … CM-047.jpg` con su `manifest.json` (unos 5 MB). El instalador la deja en `C:\Program Files\Casa Miga POS\catalogo` sin cambios en el `.iss`.
+- **Catálogo → «Cargar catálogo Casa Miga (panes y fotos)»** (administrador; pide confirmación):
+  - agrega los panes que falten, con su foto provisional y su categoría;
+  - renombra los que cambiaron de nombre (`renombres.json`) en lugar de dar de alta otro;
+  - pone foto a los panes que no tienen.
+  - Nunca borra panes, nunca cambia precios ni categorías de los que ya existen y nunca reemplaza una foto real. Volver a usarlo no repite nada.
+- Sirve igual en una caja recién instalada (después de crear el administrador) y en la caja de la tienda (después de actualizarla con respaldo, `docs/ACTUALIZAR_CAJA.md`).
+- Prueba: `CasaMigaCatalogTests` (PhotoTests).
+
 ## Pendiente
 
 - Sin firma: SmartScreen mostrará «editor desconocido» (Más información → Ejecutar de todas formas).

@@ -35,6 +35,12 @@ public partial class CatalogView:UserControl
     private async void PreviousClick(object s,RoutedEventArgs e)=>await Model.PageAsync(-1);
     private async void NextClick(object s,RoutedEventArgs e)=>await Model.PageAsync(1);
     private async void DemoClick(object s,RoutedEventArgs e)=>await Model.DemoAsync();
+    private async void CasaMigaCatalogClick(object s,RoutedEventArgs e)
+    {
+        if(MessageBox.Show(Window.GetWindow(this),"Se agregan los panes del catálogo de Casa Miga que falten, con su foto provisional, y se renombran los que cambiaron de nombre. No se borra ningún pan, no cambian precios y una foto real nunca se reemplaza. ¿Deseas continuar?",
+            "Cargar catálogo Casa Miga",MessageBoxButton.YesNo,MessageBoxImage.Question)!=MessageBoxResult.Yes)return;
+        await Model.LoadCasaMigaCatalogAsync();
+    }
     private async void ChangePhotoClick(object s,RoutedEventArgs e)
     {
         var picker=new OpenFileDialog{Title="Seleccionar fotografía del producto",Filter="Fotografías JPEG o PNG|*.jpg;*.jpeg;*.png",CheckFileExists=true,Multiselect=false};

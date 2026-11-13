@@ -65,6 +65,7 @@
    <WrapPanel><Button Style="{StaticResource SecondaryButton}" Content="Cancelar" Click="CancelClick" Margin="0,0,12,8"/><Button Content="Guardar producto" Click="SaveClick" IsEnabled="{Binding CanSave}" Margin="0,0,0,8"/></WrapPanel>
   </StackPanel>
   <TextBlock Text="{Binding Message}" Foreground="{DynamicResource ErrorBrush}" AutomationProperties.LiveSetting="Polite" Margin="0,12,0,0"/>
+  <Button Style="{StaticResource SecondaryButton}" Content="Cargar catálogo Casa Miga (panes y fotos)" Click="CasaMigaCatalogClick" IsEnabled="{Binding Ready}" Visibility="{Binding CanLoadCasaMigaCatalog,Converter={StaticResource VisibleWhen}}" AutomationProperties.Name="Cargar catálogo Casa Miga" ToolTip="Agrega los panes del catálogo de Casa Miga que falten, con su foto provisional, y renombra los que cambiaron. No borra panes ni cambia precios." Margin="0,20,0,0"/>
   <Button Style="{StaticResource SecondaryButton}" Content="Cargar catálogo DEMO (requiere vacío)" Click="DemoClick" Visibility="{Binding IsDevelopment,Converter={StaticResource VisibleWhen}}" Margin="0,20,0,0"/>
  </StackPanel>
 </UserControl>
