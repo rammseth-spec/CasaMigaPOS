@@ -58,14 +58,12 @@ public sealed record ProductionWasteReasonChoice(WasteReason Value,string Label)
     public override string ToString()=>Label;
 }
 
-public sealed class ProductionViewModel(ProductionService service,RecipeService recipes,InventoryService inventory,
+public sealed partial class ProductionViewModel(ProductionService service,RecipeService recipes,InventoryService inventory,
     CatalogService catalog,UserSession user,Guid terminalId,Action<string,string?> log):INotifyPropertyChanged
 {
     private string screen="home";private StoredProductionBatch? batch;private Guid? createBatchId,createOperationId;
     private IReadOnlyDictionary<Guid,RecipeItemChoice> items=new Dictionary<Guid,RecipeItemChoice>();
     public bool Busy{get;private set;} public bool Ready=>!Busy; public bool CanView{get;private set;} public bool CanCreate{get;private set;} public bool CanConfirm{get;private set;}
-    /// <summary>Captura de lotes con la cuadrícula de panes (sólo para quien puede recibir y configurar inventario).</summary>
-    public BatchEntryViewModel? Lotes{get;set;} public bool HasLotes=>Lotes is {CanCapture:true};
     public bool IsHome=>screen=="home";public bool IsBuilder=>screen=="builder";public bool IsDrafts=>screen=="drafts";public bool IsHistory=>screen=="history";public bool IsDetail=>screen=="detail";public bool IsWaste=>screen=="waste";
     public bool DetailIsDraft=>batch?.Status=="DRAFT"; public bool DetailIsConfirmed=>batch?.Status=="CONFIRMED";
     private bool OwnDraft=>DetailIsDraft&&CanConfirm&&batch?.CreatedBy==user.Current?.Id&&batch?.TerminalId==terminalId;
