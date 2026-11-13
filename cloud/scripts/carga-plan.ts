@@ -4,11 +4,13 @@
 // preparaciones publicadas: es lo que pide la caja).
 import { finishedCode, namesOf, normalize, POR_MEDIR, quantity, stableId, type Line, type Recetario } from './recetario.js';
 
-export type CatalogRow = { id: number; name: string; pesos: number; category: string };
+/** Una fila del catálogo autorizado; `before`: nombres anteriores (docs/catalog/renombres.json). */
+export type CatalogRow = { id: number; name: string; pesos: number; category: string; before?: string[] };
 export type Queued = { kind: string; payload: Record<string, unknown> };
 export type State = {
   categories: { id: string; name: string }[];
-  products: { id: string; name: string; photo: unknown }[];
+  products: { id: string; name: string; sku?: string | null; categoryId?: string; description?: string; price?: number; trackInventory?: boolean;
+    photo: { provisional?: boolean; at?: string | null } | null }[];
   items: { id: string; code: string; name: string; kind: string; dimension: string }[];
   formulas: { id: string; code: string; activeVersionId: string | null; list: { id: string; name: string; state: string }[] }[];
   profiles: { id: string; productId: string; finishedItemId: string; list: { id: string; name: string; state: string }[] }[];
@@ -21,7 +23,8 @@ export type Wait = { stage: number; label: string; reason: string };
 const WEB_DIMENSION = { MASS: 'Mass', VOLUME: 'Volume', COUNT: 'Count' } as const;
 const MIDE = { g: 'MASS', ml: 'VOLUME', pz: 'COUNT' } as const;
 
-export function plan(state: State, catalog: CatalogRow[], recetario: Recetario, photo: (sku: string) => string | null): { steps: Step[]; waits: Wait[] } {
+export function plan(state: State, catalog: CatalogRow[], recetario: Recetario, photo: (sku: string) => string | null,
+  photoDate: (sku: string) => string | null = () => null): { steps: Step[]; waits: Wait[] } {
   const steps: Step[] = [], waits: Wait[] = [];
   const queued = (kind: string, test: (p: Record<string, unknown>) => boolean) => state.queued.find(c => c.kind === kind && test(c.payload))?.payload;
   const same = (a: unknown, b: string) => normalize(String(a ?? '')) === normalize(b);
@@ -38,7 +41,12 @@ export function plan(state: State, catalog: CatalogRow[], recetario: Recetario, 
   const productId = new Map<string, string>();
   for (const row of catalog) {
     const sku = `CM-${String(row.id).padStart(3, '0')}`;
-    const existing = state.products.find(p => same(p.name, row.name));
+    // Un pan que cambió de nombre (renombres.json) se renombra en la caja; nunca se da de alta otro.
+    const renamed = state.products.find(p => !state.products.some(x => same(x.name, row.name)) && (row.before ?? []).some(b => same(p.name, b)));
+    if (renamed && !queued('product.save', p => p.id === renamed.id && same(p.name, row.name)))
+      steps.push({ stage: 1, kind: 'product.save', label: `Renombrar «${renamed.name}» a «${row.name}»`, payload: { id: renamed.id, categoryId: renamed.categoryId,
+        sku: renamed.sku ?? null, name: row.name, description: renamed.description ?? '', priceCents: renamed.price, trackInventory: renamed.trackInventory ?? false } });
+    const existing = renamed ?? state.products.find(p => same(p.name, row.name));
     let id = existing?.id ?? String(queued('product.save', p => same(p.name, row.name))?.id ?? '');
     if (!id) {
       id = stableId(`producto:${row.id}`);
@@ -46,9 +54,12 @@ export function plan(state: State, catalog: CatalogRow[], recetario: Recetario, 
         payload: { id, categoryId: categoryId.get(row.category), sku, name: row.name, description: '', priceCents: row.pesos * 100, trackInventory: false } });
     }
     productId.set(normalize(row.name), id);
-    if (existing?.photo || queued('product.photo', p => p.productId === id)) continue;
+    if (queued('product.photo', p => p.productId === id)) continue;
+    // Con foto: sólo se cambia una provisional más vieja que la del catálogo (una foto real nunca se toca).
+    const generated = photoDate(sku), current = existing?.photo;
+    if (current && !(current.provisional && current.at && generated && Date.parse(current.at) < Date.parse(generated))) continue;
     const image = photo(sku);
-    if (image) steps.push({ stage: 1, kind: 'product.photo', label: `Foto de ${row.name}`, payload: { productId: id, image, provenance: 'PROVISIONAL' } });
+    if (image) steps.push({ stage: 1, kind: 'product.photo', label: `${current ? 'Foto nueva' : 'Foto'} de ${row.name}`, payload: { productId: id, image, provenance: 'PROVISIONAL' } });
     else waits.push({ stage: 1, label: `Foto de ${row.name}`, reason: `no se encontró ${sku}.jpg` });
   }
 

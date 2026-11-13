@@ -1,0 +1,6 @@
+{
+  "descripcion": "Panes del catálogo autorizado que cambiaron de nombre. La carga a una caja (cloud/scripts/cargar-caja.ts) y la demo de la web (cloud/scripts/build-demo-data.ts) buscan el pan por su nombre actual y, si no está, por uno anterior de esta lista, y lo renombran en lugar de dar de alta otro.",
+  "renombres": [
+    { "id": 34, "antes": ["Dona de chocolate negro con chispas"], "fecha": "2026-11-05", "motivo": "Sus chispas son de colores, no de chocolate." }
+  ]
+}

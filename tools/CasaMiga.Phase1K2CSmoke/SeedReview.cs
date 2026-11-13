@@ -190,7 +190,7 @@ internal static class SeedReview
         // Popularidad relativa por SKU (conchas, bolillo, cuernito y café se venden más; octubre: pan de muerto).
         var weight = new Dictionary<int, int> { [1] = 12, [2] = 10, [3] = 9, [4] = 7, [5] = 3, [6] = 6, [7] = 6, [8] = 4, [9] = 3, [10] = 4, [11] = 3, [12] = 4, [13] = 6,
             [14] = 3, [15] = 2, [16] = 3, [17] = 4, [18] = 3, [19] = 3, [20] = 6, [21] = 3, [22] = 3, [23] = 3, [24] = 8, [25] = 2, [26] = 2, [27] = 4, [28] = 3, [29] = 3, [30] = 5, [31] = 3,
-            [32] = 3, [33] = 3, [34] = 3, [35] = 2, [36] = 2, [37] = 2, [38] = 3, [39] = 3, [40] = 2, [41] = 2, [42] = 2, [43] = 4, [44] = 3 };
+            [32] = 3, [33] = 3, [34] = 3, [35] = 2, [36] = 2, [37] = 2, [38] = 3, [39] = 3, [40] = 2, [41] = 2, [42] = 2, [43] = 4, [44] = 3, [45] = 3, [46] = 3, [47] = 3 };
         var hours = new (int Hour, int Weight)[] { (7, 6), (8, 10), (9, 9), (10, 6), (11, 4), (12, 3), (13, 4), (14, 3), (15, 3), (16, 4), (17, 7), (18, 9), (19, 7), (20, 3) };
         var reasons = new[] { "Pan aplastado", "Cliente cambió de opinión", "Cobro duplicado" };
         var zone = TimeZoneInfo.Local;

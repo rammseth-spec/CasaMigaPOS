@@ -1,6 +1,6 @@
 # Recetario Casa Miga — hoja de trabajo para completarlo
 
-Fecha: 19/10/2026. Fuente: recetario comercial que dio quien elabora el pan (18/10/2026, `docs/PHASE_1K4G_C_RECIPE_MASTER.md`), su matriz y auditoría técnica (1K.4G-C), la lista de insumos preparada en 1K.4G-C-C-B1 y el catálogo autorizado de `main` (44 panes, `docs/catalog/catalogo-autorizado-v2.csv`).
+Fecha: 19/10/2026. Fuente: recetario comercial que dio quien elabora el pan (18/10/2026, `docs/PHASE_1K4G_C_RECIPE_MASTER.md`), su matriz y auditoría técnica (1K.4G-C), la lista de insumos preparada en 1K.4G-C-C-B1 y el catálogo autorizado de `main` (47 panes, `docs/catalog/catalogo-autorizado-v2.csv`).
 
 **Para qué sirve:** tener en un solo lugar todo lo que la caja necesita para calcular producción, descontar inventario y sacar el costo y la ganancia de cada pan. Se trabaja **en orden, paso por paso**: llenar los espacios `____`, marcar las casillas `[ ]` y, cuando un paso quede completo, pasar al siguiente. Nada de esto se publica en la caja hasta el paso 7; mientras tanto todo se carga como **borrador**.
 
@@ -20,10 +20,10 @@ Reglas que no cambian: las cantidades se escriben en **gramos (g)**, **mililitro
 | Situación | Panes |
 |---|---:|
 | Con receta documentada que hay que completar o medir (paso 3) | 31 |
-| Sin receta todavía: muffins, café, pay de elote, bisquet y los dos panes de muerto de masa madre (paso 4.1) | 7 |
+| Sin receta todavía: muffins, café, pay de elote, bisquet, los dos panes de muerto de masa madre, lima, submarino relleno y campechana (paso 4.1) | 10 |
 | Reventa, sin receta: leches Kirkland (paso 4.2) | 2 |
 | Retirados en el catálogo comercial de QA; decidir si se desactivan (paso 4.3) | 4 |
-| **Total del catálogo** | **44** |
+| **Total del catálogo** | **47** |
 
 Hoy ningún pan está listo para que la caja calcule su consumo solo: faltan rendimientos medidos, costos y cantidades exactas.
 
@@ -89,7 +89,7 @@ Sin costo por insumo la caja no puede calcular el costo ni la ganancia de ningú
 ### 1.2 Insumos que faltan dar de alta
 
 - [ ] **Esencia de vainilla** — unidad según paso 0: ____; presentación ____; costo $____
-- [ ] **Chispas de chocolate** (dona negra con chispas; hoy solo existen chispas de colores) — ¿son chispas de chocolate? ____; costo $____
+- [x] ~~Chispas de chocolate~~ — resuelto (05/11/2026): la dona negra lleva **chispas de colores**, que ya están en la lista (MP-CHI-COL).
 - [ ] **Mezcla de semillas** (galleta multigrano) — ¿se compra ya mezclada o se arma? Si se arma, componentes y gramos: ____
 - [ ] **Insumos del pay de elote** (paso 4) — ____
 - [ ] **Insumos del bisquet** (paso 4) — ____
@@ -299,7 +299,7 @@ Sirve para: galletas y la base del pay de queso.
 | 7 | Dona de chocolate (negro) | 85 g ✅ | chocolate negro 10 g ✅ | — |
 | 21 | Dona sencilla de chocolate blanco | 85 g ✅ | chocolate blanco 10 g ✅ | — |
 | 20 | Dona glaseada | 85 g ✅ | glaseado 15 g ✅ | [ ] rendimiento del glaseado (paso 2.7) |
-| 34 | Dona de chocolate negro con chispas | 85 g ✅ | chocolate negro 10 g ✅ + chispas ≈3 g | [ ] chispas exactas ____ g |
+| 34 | Dona de chocolate negro con chispas de colores | 85 g ✅ | chocolate negro 10 g ✅ + chispas de colores ≈3 g | [ ] chispas exactas ____ g |
 | 35 | Dona de chocolate blanco con coco | 85 g ✅ | chocolate blanco 10 g ✅ + coco ≈5 g | [ ] coco exacto ____ g |
 | 36 | Dona de chocolate con nuez | 85 g ✅ | chocolate 10 g ✅ + nuez 10 g ✅ | [ ] ¿chocolate negro o blanco? ____ |
 | 37 | Dona combinada de chocolate negro y blanco | 85 g ✅ | 10 g de chocolate en total ✅ | [ ] negro ____ g + blanco ____ g |
@@ -347,6 +347,9 @@ Todas: [ ] aceite de fritura según el paso 0.
 | 30 | Bisquet | [ ] receta completa · [ ] gramos por pieza · [ ] cuántos salen |
 | 43 | Pan de muerto chico de masa madre | [ ] masa de pan de muerto con masa madre: harina, agua, masa madre y lo demás ____ · [ ] cuánta masa madre por tanda ____ g · [ ] cómo y cada cuándo se alimenta la masa madre ____ · [ ] tiempos de fermentación ____ · [ ] gramos por pieza (¿como el 13, 64 g?) ____ · [ ] cuántos salen |
 | 44 | Pan de muerto grande de masa madre | [ ] ¿misma masa que el 43? ____ · [ ] gramos por pieza (¿como el 27, 120 g?) ____ · [ ] cuántos salen |
+| 45 | Lima | [ ] ¿qué masa lleva? (¿masa dulce?) ____ · [ ] cubierta o costra ____ · [ ] gramos por pieza ____ · [ ] cuántos salen |
+| 46 | Submarino relleno | [ ] ¿qué masa lleva? (¿masa dulce?) ____ · [ ] relleno: ¿crema pastelera de la que se compra lista? ____ g por pieza · [ ] azúcar por fuera ____ g · [ ] gramos de masa por pieza ____ · [ ] cuántos salen |
+| 47 | Campechana | [ ] hojaldre: ¿se hace aquí o se compra? ____ · [ ] azúcar para caramelizar ____ g por pieza · [ ] gramos por pieza ____ · [ ] cuántos salen |
 
 ### 4.2 Reventa (se compran listos, sin receta)
 

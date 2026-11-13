@@ -387,6 +387,61 @@ export async function createCommand(q: Query, user: WebUser, branchId: unknown, 
   return { id: commandId, kind: kind as Kind, ...(temporary ? { temporaryPassword: temporary } : {}) };
 }
 
+/** El artículo terminado de un pan en la caja: «PT-» + su SKU (PT-CM-001…), o los primeros 12 del id sin SKU (BatchEntryViewModel.Code). */
+export const batchCode = (sku: string | null, productId: string) => 'PT-' + (sku?.trim() ? sku.trim().toUpperCase() : productId.replace(/-/g, '').slice(0, 12).toUpperCase());
+
+/**
+ * Producción por lotes desde la web, como «Capturar lote» de la caja (BatchEntryViewModel, 498a5e7): las piezas que salieron se suman a
+ * la existencia del pan. La primera vez se da de alta su artículo terminado PT-<código> (o se reutiliza), saldo inicial en cero (sólo el
+ * administrador, como en la caja), el vínculo 1 pieza por pieza y el pan se marca para descontar en la venta. Se mandan como los cambios
+ * de siempre y en ese orden; la caja los aplica con sus reglas. No descuenta insumos (las recetas siguen «Por medir»).
+ */
+export async function captureBatch(q: Query, user: WebUser, branchId: unknown, body: unknown): Promise<{ sent: number; itemId: string; code: string }> {
+  const branch = id(branchId, 'Sucursal');
+  if (!user.admin && branch !== user.branchId) throw new ProtocolError('Sin acceso a esa sucursal', 403);
+  requirePermission(user, 'inventory.receive'); requirePermission(user, 'inventory.configure');
+  const b = (body && typeof body === 'object' ? body : {}) as Record<string, unknown>;
+  const productId = id(b.productId, 'Pan');
+  const pieces = Number(b.pieces);
+  if (!Number.isInteger(pieces) || pieces < 1 || pieces > 10_000) throw new ProtocolError('Escribe cuántas piezas salieron: un número entero de 1 a 10,000.');
+  const found = await state(q, branch, 'product', productId) as (Row & { product: Row; inventoryLinks?: Row[] }) | null;
+  if (!found || Number(found.product.active) !== 1) throw new ProtocolError('El pan no existe o está inactivo', 404);
+  const p = found.product;
+  const code = batchCode(p.sku === null || p.sku === undefined ? null : s(p.sku), productId);
+  // Su artículo terminado: el que ya subió la caja o, si otra captura aún no se aplica, el que ya va en la fila.
+  const [synced] = await q(`SELECT payload FROM entity_state WHERE branch_id = $1 AND entity = 'inventory_item' AND NOT deleted AND upper(payload->'item'->>'code') = upper($2)`, [branch, code]);
+  const item = synced?.payload as (Row & { item: Row; balances: Row[] }) | undefined;
+  if (item && s(item.item.kind) !== 'FINISHED_GOOD') throw new ProtocolError(`${code} existe en Inventario pero no es un producto terminado; revísalo ahí.`);
+  if (item && Number(item.item.active) !== 1) throw new ProtocolError(`${code} está inactivo en Inventario; actívalo para capturar lotes.`);
+  const [queuedItem] = item ? [] : await q(`SELECT c.payload FROM branch_command c WHERE c.branch_id = $1 AND c.kind = 'inventory.item.save' AND upper(c.payload->>'code') = upper($2)
+    AND NOT EXISTS (SELECT 1 FROM command_result r WHERE r.command_id = c.id AND r.status = 'rejected')`, [branch, code]);
+  const itemId = item ? s(item.item.id) : queuedItem ? s((queuedItem.payload as Row).id) : randomUUID();
+  const steps: { kind: Kind; payload: Record<string, unknown> }[] = [];
+  if (!item && !queuedItem) steps.push({ kind: 'inventory.item.save', payload: { id: itemId, code, name: s(p.name), kind: 'FinishedGood', dimension: 'Count' } });
+  if (!item?.balances.some(x => s(x.location_id) === MAIN_LOCATION) && !(await sent(q, branch, 'inventory.opening', 'itemId', itemId))) {
+    if (!user.admin) throw new ProtocolError('Es el primer lote de este pan: su saldo inicial lo registra el administrador. Pídele que capture este lote.', 403);
+    requirePermission(user, 'inventory.adjust');
+    steps.push({ kind: 'inventory.opening', payload: { itemId, locationId: MAIN_LOCATION, quantity: '0', unitCode: 'piece' } });
+  }
+  const link = (found.inventoryLinks ?? []).find(l => Number(l.active) === 1);
+  if (link && s(link.inventory_item_id) !== itemId) throw new ProtocolError('Este pan ya está asociado a otro artículo de inventario; revísalo en Inventario.');
+  if (!link && !(await sent(q, branch, 'inventory.link', 'productId', productId))) steps.push({ kind: 'inventory.link', payload: { itemId, productId, atomic: 1 } });
+  // Con el vínculo listo se marca el pan para descontar en la venta (la web ya lo ve marcado; la caja lo confirma).
+  if (Number(p.track_inventory) !== 1) {
+    requirePermission(user, 'products.edit');
+    steps.push({ kind: 'product.save', payload: { id: productId, categoryId: s(p.category_id), sku: p.sku === null || p.sku === undefined ? null : s(p.sku), name: s(p.name),
+      description: s(p.description), priceCents: Number(p.price_cents), trackInventory: true } });
+  }
+  steps.push({ kind: 'inventory.receive', payload: { itemId, locationId: MAIN_LOCATION, quantity: String(pieces), unitCode: 'piece', reference: 'LOTE', note: 'Producción: piezas que salieron del lote' } });
+  for (const step of steps) {
+    const commandId = randomUUID();
+    await q(`INSERT INTO branch_command(id, branch_id, kind, payload, requested_by_id, requested_by_name) VALUES ($1, $2, $3, $4::jsonb, $5, $6)`,
+      [commandId, branch, step.kind, JSON.stringify(step.payload), user.id, user.name]);
+    await project(q, branch, commandId, step.kind, step.payload);
+  }
+  return { sent: steps.length, itemId, code };
+}
+
 /** Entregas, recolecciones, cobros y anulaciones de la ruta: se validan contra lo último que subió la caja y contra lo que ya se mandó. */
 async function route(q: Query, branch: string, kind: Kind, b: Record<string, unknown>): Promise<Record<string, unknown>> {
   const note = text(b.note ?? '', 'Nota', 0, 200);

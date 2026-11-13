@@ -37,7 +37,6 @@
     { "codigo": "MP-POL-HOR", "nombre": "Polvo para hornear (Royal)", "mide": "g" },
     { "codigo": "MP-NAR-RAL", "nombre": "Naranja para ralladura", "mide": "pz" },
     { "codigo": "MP-VAI-001", "nombre": "Esencia de vainilla", "mide": "ml", "nota": "Unidad provisional (paso 0): la masa dulce la reporta en g." },
-    { "codigo": "MP-CHI-CHO", "nombre": "Chispas de chocolate", "mide": "g", "nota": "Alta nueva para la dona negra con chispas; confirmar que son de chocolate." },
     { "codigo": "MP-SEM-MUL", "nombre": "Mezcla de semillas multigrano", "mide": "g", "nota": "Composición por confirmar (paso 1.2)." }
   ],
   "preparaciones": [
@@ -209,7 +208,7 @@
     { "catalogo": 7, "pan": "Dona de chocolate", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "85 g" }], "directos": [{ "insumo": "MP-CHO-NEG", "cantidad": "10 g" }] },
     { "catalogo": 21, "pan": "Dona sencilla de chocolate blanco", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "85 g" }], "directos": [{ "insumo": "MP-CHO-BLA", "cantidad": "10 g" }] },
     { "catalogo": 20, "pan": "Dona glaseada", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "85 g" }, { "codigo": "GLASEADO", "cantidad": "15 g" }] },
-    { "catalogo": 34, "pan": "Dona de chocolate negro con chispas", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "85 g" }], "directos": [{ "insumo": "MP-CHO-NEG", "cantidad": "10 g" }, { "insumo": "MP-CHI-CHO", "cantidad": "3 g", "estado": "aproximado" }] },
+    { "catalogo": 34, "pan": "Dona de chocolate negro con chispas de colores", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "85 g" }], "directos": [{ "insumo": "MP-CHO-NEG", "cantidad": "10 g" }, { "insumo": "MP-CHI-COL", "cantidad": "3 g", "estado": "aproximado" }] },
     { "catalogo": 35, "pan": "Dona de chocolate blanco con coco", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "85 g" }], "directos": [{ "insumo": "MP-CHO-BLA", "cantidad": "10 g" }, { "insumo": "MP-COC-001", "cantidad": "5 g", "estado": "aproximado" }] },
     { "catalogo": 36, "pan": "Dona de chocolate con nuez", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "85 g" }], "directos": [{ "insumo": "MP-CHO-NEG", "cantidad": "10 g", "estado": "por medir" }, { "insumo": "MP-NUE-001", "cantidad": "10 g" }], "notas": "Tipo de chocolate por confirmar (se puso negro)." },
     { "catalogo": 37, "pan": "Dona combinada de chocolate negro y blanco", "preparaciones": [{ "codigo": "MASA-DONA", "cantidad": "85 g" }], "directos": [{ "insumo": "MP-CHO-NEG", "cantidad": "5 g", "estado": "por medir" }, { "insumo": "MP-CHO-BLA", "cantidad": "5 g", "estado": "por medir" }], "notas": "10 g de chocolate en total; el reparto negro/blanco está por confirmar (se puso mitad y mitad)." },

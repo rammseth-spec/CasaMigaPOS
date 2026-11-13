@@ -1,3 +1,29 @@
+# Caja: catálogo y fotos con IA en el instalador; pruebas compilan otra vez — 13/11/2026
+
+- **Pruebas rotas en main desde `498a5e7`** (sin `verify.ps1` completo): `CasaMiga.Tests` (sin WPF) compila `ProductionViewModel.cs`, que ya usaba `BatchEntryViewModel` (con fotos de WPF). La propiedad `Lotes` pasa a `ProductionViewModel.Lotes.cs` (clase parcial), que sólo compilan la app y PhotoTests. Lo encontró el agente de Windows al generar el instalador.
+- **Catálogo y fotos con IA en el instalador** (pedido del dueño): carpeta `catalogo\` junto al programa (CSV, `renombres.json` y las 47 fotos `CM-NNN.jpg`) y botón **Catálogo → «Cargar catálogo Casa Miga (panes y fotos)»** (`CasaMigaCatalog.cs`): agrega los panes que falten con su foto provisional, renombra los que cambiaron y pone foto a los que no tienen; nunca borra, nunca cambia precios y nunca reemplaza una foto real. Para la caja de la tienda, que no tiene nube conectada: actualizarla con respaldo y usar el botón. Ver `docs/INSTALLER.md`.
+- Escrito en Mac sin poder compilar C#: lo verifica el agente de Windows con `verify.ps1` antes de generar el instalador 1.0.1.
+
+# Venta en la web: ventas en espera — 05/11/2026
+
+- Pedido del usuario: poder dejar pendiente una compra (por ejemplo, mientras se empaqueta) y seguir cobrando a otros clientes. En el ticket, **«Dejar en espera y cobrar a otro»** guarda el carrito sin cobrar como «Cliente N» (con hora, piezas y total) y deja el ticket libre; tocar al cliente lo retoma y, si había otro carrito a medias, ése pasa a espera (nunca se pierde nada). «×» descarta con confirmación. Hasta 10 por caja web; se guardan en el dispositivo (`cm-pos-held:<caja>`), con los precios del momento de retomar. En celular, la barra de abajo dice cuántas hay y el ticket las muestra.
+- Revisado en el navegador en computadora y celular: dejar en espera, cobrar otra, retomar (con intercambio), números estables y descartar.
+- Sólo en la web por ahora: la caja de Windows no se puede compilar en esta Mac.
+
+# Catálogo: Lima, Submarino relleno, Campechana y dona con chispas de colores — 05/11/2026
+
+- Pedido del usuario: 45 **Lima** ($13), 46 **Submarino relleno** ($15) y 47 **Campechana** ($15), en «Pan dulce», con foto provisional de IA (CM-045, CM-046, CM-047); la 34 pasa a **Dona de chocolate negro con chispas de colores** con foto nueva (CM-034): sus chispas son de colores, no de chocolate. Catálogo autorizado, manifiesto, `AuthorizedCatalogTests` (47), siembra de revisión y demo de la web.
+- Recetario: la dona 34 lleva `MP-CHI-COL` (chispas de colores); sale `MP-CHI-CHO`, que sólo existía por ella. Lima, submarino y campechana quedan en «sin receta todavía» (paso 4.1).
+- Renombres sin duplicar: `docs/catalog/renombres.json` guarda los nombres anteriores. La carga a una caja (`npm run cargar`) renombra el pan con `product.save` en vez de dar de alta otro, y la demo hace lo mismo. Una foto **provisional** más vieja que la del manifiesto se reemplaza; una foto real nunca. Para eso `/api/web/catalog` dice cuándo subió la caja cada foto (`photo.at`).
+- Pruebas: carga (renombre y foto nueva; una foto real no se toca). Nube 87/87.
+
+# Producción en la web: Capturar lote con la cuadrícula de panes — 22/10/2026
+
+- Pedido del usuario: la producción va con las tarjetas de los panes, no con la lista. Como «Capturar lote» de la caja (498a5e7, que dejó pendiente la web): Producción muestra primero la cuadrícula con foto de Venta; al tocar un pan se escriben las piezas que salieron y «Sumar a la existencia». Cada tarjeta dice «Hay N piezas» o «Sin lotes capturados» y «+N por confirmar» mientras la caja no lo aplica. Debajo sigue «Producción con receta».
+- `POST /api/web/production-batch` (`captureBatch` en `lib/commands.ts`): la primera vez de un pan manda, en orden, su artículo terminado `PT-<SKU>` (o reutiliza el que ya existe o va en la fila), saldo inicial en cero (sólo el administrador, como en la caja), el vínculo 1 pieza por pieza y el pan marcado para descontar; después sólo `inventory.receive` (referencia LOTE). Son cambios que la caja ya sabe aplicar: no hubo que tocar la caja. Pide recibir y configurar inventario, como la caja.
+- Tocar un pan sólo cambia el recuadro de captura (las fotos no se vuelven a cargar). Revisado en el navegador en computadora y celular.
+- Pruebas: `cloud/test/lotes.test.ts` (2). Nube 86/86.
+
 # Cobro en la web: la venta confirmada regresa sola al POS — 22/10/2026
 
 - Como en la caja (6139e86) y a pedido del usuario: la «Venta confirmada» ya no se queda fija. Se muestra 3 segundos («Regresando al POS en 3 segundos…») y el cobro regresa solo a Venta (`AUTO_RETURN_MS` en `cloud/public/js/pos.js`). «Imprimir ticket» imprime y vuelve a contar; si el cobro falla, la ventana se queda con el error.
