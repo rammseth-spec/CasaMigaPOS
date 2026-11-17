@@ -677,11 +677,14 @@ tr.selected td { background: var(--primary-soft) !important; }
 .receipt.on-screen { background: var(--surface-2); border-radius: 12px; padding: 14px; max-width: 360px; margin: 0 auto; }
 .receipt.on-screen .receipt-logo { mix-blend-mode: multiply; }
 #print-area { display: none; }
+/* Impresora térmica de 80 mm (POS-80): el área que imprime mide 72 mm. Sin márgenes del navegador (el papel ya tiene los suyos), fondo
+   blanco (un fondo de color sale como manchas grises) y el ticket centrado en el rollo. */
 @media print {
-  @page { margin: 3mm; }
+  @page { margin: 0; }
+  html, body { background: #fff !important; height: auto; }
   body > *:not(#print-area) { display: none !important; }
   #print-area { display: block; }
-  #print-area .receipt { width: 72mm; color: #000; font-size: 12px; }
+  #print-area .receipt { width: 72mm; margin: 0 auto; padding: 2mm 0 4mm; color: #000; background: #fff; font-size: 12px; }
   #print-area .receipt .receipt-logo { max-width: none; }
   #print-area .receipt hr { border-top-color: #000; }
 }
