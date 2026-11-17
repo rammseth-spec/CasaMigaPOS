@@ -1,3 +1,9 @@
+# Web: ticket para la térmica de 80 mm — 17/11/2026
+
+- La caja imprime bien en la POS-80 (ESC/POS directo); la web imprime con el cuadro del navegador y en la computadora de la caja no salía bien. De nuestro lado: el ticket se mandaba a imprimir sin esperar el logo (podía salir sin él o en blanco), con márgenes del navegador de 3 mm sobre un área útil de 72 mm y con el fondo beige de la página.
+- `cloud/public/js/pos.js`: el logo se precarga y se espera (máximo 2 s) antes de `window.print()`. `app.css` (impresión): márgenes en 0, fondo blanco y el ticket de 72 mm centrado en el rollo.
+- Revisado generando el PDF de impresión con Chrome en papel de 80 mm. En la computadora de la caja: elegir POS-80, márgenes «Ninguno», sin «Gráficos de fondo»; para imprimir sin el cuadro, Chrome con `--kiosk-printing` y POS-80 predeterminada.
+
 # Caja: catálogo y fotos con IA en el instalador; pruebas compilan otra vez — 13/11/2026
 
 - **Pruebas rotas en main desde `498a5e7`** (sin `verify.ps1` completo): `CasaMiga.Tests` (sin WPF) compila `ProductionViewModel.cs`, que ya usaba `BatchEntryViewModel` (con fotos de WPF). La propiedad `Lotes` pasa a `ProductionViewModel.Lotes.cs` (clase parcial), que sólo compilan la app y PhotoTests. Lo encontró el agente de Windows al generar el instalador.

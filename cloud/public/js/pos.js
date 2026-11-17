@@ -296,7 +296,7 @@ function ticketLines(r, copy = false) {
   const row = (left, right, cls) => h('div', { class: `line ${cls ?? ''}`.trim() }, h('span', { text: left }), h('span', { class: 'num', text: right }));
   return [
     copy ? h('p', { class: 'center', text: '*** REIMPRESIÓN ***' }) : null,
-    h('img', { class: 'receipt-logo', src: '/ticket-logo.png', alt: 'Casa Miga Panadería' }),
+    h('img', { class: 'receipt-logo', src: TICKET_LOGO, alt: 'Casa Miga Panadería' }),
     r.branch ? h('p', { class: 'center', text: `Sucursal ${r.branch}` }) : null,
     h('hr'),
     h('p', { text: `Folio: ${r.folio}` }), h('p', { text: `Fecha: ${stamp(r.at)}` }),
@@ -309,10 +309,16 @@ function ticketLines(r, copy = false) {
       : [row('Pago', r.method === 'CARD' ? 'TARJETA' : 'TRANSFERENCIA'), row('Pagado', fmt(r.total)), r.reference ? row('Referencia', r.reference) : null],
     h('hr'), h('p', { class: 'center', text: 'Gracias por su compra.' }), copy ? h('p', { class: 'center', text: 'COPIA' }) : null];
 }
-export function printTicket(r, copy = false) {
+// El logo del ticket se carga desde ya: así está listo cuando se imprime.
+const TICKET_LOGO = '/ticket-logo.png';
+new Image().src = TICKET_LOGO;
+export async function printTicket(r, copy = false) {
   let area = document.getElementById('print-area');
   if (!area) { area = h('div', { id: 'print-area' }); document.body.append(area); }
   area.replaceChildren(h('div', { class: 'receipt' }, ticketLines(r, copy)));
+  // Se imprime con el logo ya dibujado (si no, puede salir sin él o en blanco); si no carga en 2 s, se imprime sin esperar más.
+  const logo = area.querySelector('img');
+  if (logo && !logo.complete) await Promise.race([logo.decode().catch(() => {}), new Promise(done => setTimeout(done, 2000))]);
   window.print();
 }
 
