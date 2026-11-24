@@ -76,6 +76,9 @@ Pedido del dueño: que el instalador deje lista la impresora, sin buscar ni desc
 - Menú Inicio → **«Configurar impresora de tickets»**: hace las dos cosas (pide permiso de administrador sólo si falta la impresora) e imprime la prueba. Sirve si la impresora no estaba conectada al instalar.
 - El script también funciona suelto, con `printing.casamiga.json` al lado, en una caja que ya tenga el programa: `powershell -NoProfile -ExecutionPolicy Bypass -File .\configurar-impresora.ps1`.
 - Para pasar las ventas de otra caja con `restore-installation`, restaurar **antes** de configurar la impresora o de abrir el programa: el destino debe ser una carpeta nueva y el respaldo ya trae su propio `printing.json`.
+- **Pasar la caja a otra computadora** (`installer/caja/`, en `tools\caja` y en el menú Inicio):
+  - **«Respaldar la caja para otra computadora»** (`respaldar-caja.ps1`), en la de antes, con el corte hecho y el programa cerrado: saca el `.cmbackup` completo con `CasaMiga.Maintenance backup` (encuentra `CasaMiga-Ventas\caja` o `%LOCALAPPDATA%\CasaMigaPOS`) y lo copia, verificado, al Escritorio y a la USB. Sólo lee la caja.
+  - **«Traer la caja de otra computadora»** (`traer-caja.ps1`), en la nueva: toma el `.cmbackup` más reciente de la USB, el Escritorio o Descargas, aparta (no borra) lo que hubiera en la carpeta de datos, restaura con `restore-installation` y corre «Configurar impresora de tickets». Si la restauración falla, deja la computadora como estaba.
 - Pendiente: probarlo en Windows (compilar con `build-installer.ps1`, instalar con la térmica conectada y revisar el papel). El formato aprobado en la tienda se validó con el driver de la Qian; con «Generic / Text Only» los bytes que llegan son los mismos, pero falta verlo impreso.
 
 ## Pendiente

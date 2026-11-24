@@ -51,6 +51,8 @@ Name: "impresora"; Description: "Configurar la impresora de tickets POS-80 (cone
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Excludes: "development.settings.json,dev-autologin.json"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#ToolsDir}\*"; DestDir: "{app}\tools"; Excludes: "development.settings.json,dev-autologin.json"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "impresora\*"; DestDir: "{app}\tools\impresora"; Flags: ignoreversion
+; Pasar una caja completa a otra computadora: respaldar en la de antes y traer en la nueva (restaura y configura la impresora).
+Source: "caja\*"; DestDir: "{app}\tools\caja"; Flags: ignoreversion
 
 [InstallDelete]
 ; Archivos de la versión anterior se reemplazan completos para no mezclar ensamblados.
@@ -62,6 +64,8 @@ Type: files; Name: "{app}\development.settings.json"
 [Icons]
 Name: "{group}\Casa Miga POS"; Filename: "{app}\CasaMiga.Presentation.exe"; WorkingDir: "{app}"
 Name: "{group}\Configurar impresora de tickets"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\tools\impresora\configurar-impresora.ps1"""; WorkingDir: "{app}\tools\impresora"; IconFilename: "{app}\CasaMiga.Presentation.exe"
+Name: "{group}\Traer la caja de otra computadora"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\tools\caja\traer-caja.ps1"""; WorkingDir: "{app}\tools\caja"; IconFilename: "{app}\CasaMiga.Presentation.exe"
+Name: "{group}\Respaldar la caja para otra computadora"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\tools\caja\respaldar-caja.ps1"""; WorkingDir: "{app}\tools\caja"; IconFilename: "{app}\CasaMiga.Presentation.exe"
 Name: "{group}\Desinstalar Casa Miga POS"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\Casa Miga POS"; Filename: "{app}\CasaMiga.Presentation.exe"; WorkingDir: "{app}"; Tasks: desktopicon
 
