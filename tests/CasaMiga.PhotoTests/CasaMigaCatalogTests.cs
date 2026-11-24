@@ -37,11 +37,13 @@ public sealed class CasaMigaCatalogTests
             var identity = new IdentityService(work, new LocalPasswords(), clock, user); var password = "Aa1!" + Guid.NewGuid().ToString("N")[..12];
             identity.Bootstrap("admin", "Administrador de prueba", password); Assert.IsTrue(identity.Login("admin", password));
             var catalog = new CatalogService(work, user, clock, terminal.Id);
+            Assert.IsTrue(CasaMigaCatalog.HasNoProducts(catalog), "Una caja recién instalada recibe el catálogo sola al entrar el administrador.");
             // Como la caja de la tienda: la concha con foto real y la dona con su nombre anterior y una foto provisional.
             var pan = catalog.CreateCategory("Pan dulce"); var donas = catalog.CreateCategory("Dona");
             var concha = catalog.CreateProduct(pan.Id, "CM-001", "Concha de vainilla", "", new Money(1400), trackInventory: false);
             var dona = catalog.CreateProduct(donas.Id, "CM-034", "Dona de chocolate negro con chispas", "", new Money(1500), trackInventory: false);
             var photos = new FakePhotos(); photos.Set(concha.Id, "Foto real"); photos.Set(dona.Id, "Foto provisional");
+            Assert.IsFalse(CasaMigaCatalog.HasNoProducts(catalog), "Una base que ya tiene panes (o restaurada) nunca recibe el catálogo sola.");
 
             var result = await CasaMigaCatalog.LoadAsync(catalog, photos, folder);
             Assert.AreEqual((2, 1, 3, 0), (result.Created, result.Renamed, result.Photos, result.Categories), result.Summary);

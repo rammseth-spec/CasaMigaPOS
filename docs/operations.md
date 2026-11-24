@@ -160,7 +160,7 @@ La publicación de desarrollo vigente está en `artifacts/development`. El smoke
 
 El ticket se intenta sólo después del commit de venta. Un fallo, configuración ausente o estado UNKNOWN no cambia venta, pago, carrito ni ExpectedCash. SUBMITTED significa aceptado por la cola Windows; verificar siempre el papel.
 
-La configuración física se guarda como `printing.json` en el directorio de datos y no forma parte de `.cmbackup`. Consultar `docs/printing.example.json`, que está deshabilitado y contiene datos sintéticos. No copiarlo habilitado a una instalación real hasta contar con nombre exacto de cola y datos comerciales aprobados.
+La configuración física se guarda como `printing.json` en el directorio de datos. Desde el 20/10/2026 el respaldo completo (`.cmbackup`) la incluye si existe y `restore-installation` la devuelve. Consultar `docs/printing.example.json`, que está deshabilitado y contiene datos sintéticos. La configuración aprobada de Casa Miga (cola `POS-80`) es `installer/impresora/printing.casamiga.json`, y el instalador la deja con la casilla «Configurar la impresora de tickets» (ver `docs/INSTALLER.md`).
 
 Bloque A no envía comandos ESC/POS de selección de página, corte o cajón. Para el checkpoint USB seguir `docs/PHASE_1G_PHYSICAL_CHECKPOINT.md`. No abrir USB ni puerto 9100 directamente.
 

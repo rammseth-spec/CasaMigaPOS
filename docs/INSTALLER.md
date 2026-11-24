@@ -62,7 +62,21 @@ Pedido del dueño: las fotos provisionales hechas con IA van como archivos en el
   - pone foto a los panes que no tienen.
   - Nunca borra panes, nunca cambia precios ni categorías de los que ya existen y nunca reemplaza una foto real. Volver a usarlo no repite nada.
 - Sirve igual en una caja recién instalada (después de crear el administrador) y en la caja de la tienda (después de actualizarla con respaldo, `docs/ACTUALIZAR_CAJA.md`).
+- **Caja recién instalada (24/11/2026):** la base se crea sola al abrir el programa y, la primera vez que el administrador entra a una base sin ningún pan, el catálogo se carga solo con sus 47 fotos (`MainViewModel.CatalogoInicial.cs`, mensaje «Preparando el catálogo de Casa Miga…»). Una base restaurada o con panes nunca se toca; las copias de desarrollo y las pruebas (`IsDevelopment`) no lo hacen. Si falla, entra igual y queda el botón.
 - Prueba: `CasaMigaCatalogTests` (PhotoTests).
+
+## Impresora de tickets (24/11/2026)
+
+Pedido del dueño: que el instalador deje lista la impresora, sin buscar ni descargar el paquete del fabricante.
+- La caja manda el ticket en crudo (`WindowsRawPrintTransport`, tipo `RAW`): Windows no lo interpreta, así que basta el driver **«Generic / Text Only»** que ya trae Windows. No se descarga ni se reparte el driver de la Qian.
+- Casilla **«Configurar la impresora de tickets POS-80»** (marcada por omisión), con la térmica conectada por USB y encendida:
+  - como administrador, `installer/impresora/configurar-impresora.ps1 -Parte cola` crea la cola **`POS-80`** en el puerto USB de la impresora y, sólo si la acaba de crear, imprime el ticket de prueba de `CasaMiga.Maintenance print-test` (perfil «PRUEBA CASA MIGA» en una carpeta temporal: nunca abre la base);
+  - como el usuario que instaló, `-Parte ticket` copia `printing.casamiga.json` (48 columnas, ibm850 / tabla 2, corte parcial, sin cajón, dirección, WhatsApp y redes de Casa Miga) como `printing.json` en su carpeta de datos.
+  - Nunca cambia una impresora `POS-80` ni un `printing.json` que ya existan: actualizar encima de una caja que ya imprime no la toca.
+- Menú Inicio → **«Configurar impresora de tickets»**: hace las dos cosas (pide permiso de administrador sólo si falta la impresora) e imprime la prueba. Sirve si la impresora no estaba conectada al instalar.
+- El script también funciona suelto, con `printing.casamiga.json` al lado, en una caja que ya tenga el programa: `powershell -NoProfile -ExecutionPolicy Bypass -File .\configurar-impresora.ps1`.
+- Para pasar las ventas de otra caja con `restore-installation`, restaurar **antes** de configurar la impresora o de abrir el programa: el destino debe ser una carpeta nueva y el respaldo ya trae su propio `printing.json`.
+- Pendiente: probarlo en Windows (compilar con `build-installer.ps1`, instalar con la térmica conectada y revisar el papel). El formato aprobado en la tienda se validó con el driver de la Qian; con «Generic / Text Only» los bytes que llegan son los mismos, pero falta verlo impreso.
 
 ## Pendiente
 

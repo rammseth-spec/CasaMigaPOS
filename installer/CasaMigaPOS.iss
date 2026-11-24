@@ -42,11 +42,15 @@ Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Crear acceso directo en el escritorio"; GroupDescription: "Accesos directos:"
+; La caja imprime en crudo (ESC/POS RAW): basta el driver «Generic / Text Only» de Windows, no se descarga nada.
+; Nunca cambia una impresora POS-80 ni un printing.json que ya existan, así que actualizar encima no toca una caja que ya imprime.
+Name: "impresora"; Description: "Configurar la impresora de tickets POS-80 (conectada por USB y encendida; imprime un ticket de prueba)"; GroupDescription: "Impresora de tickets:"
 
 [Files]
 ; Los archivos de una copia de desarrollo (modo de prueba y entrada automática) nunca entran en el instalador.
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Excludes: "development.settings.json,dev-autologin.json"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#ToolsDir}\*"; DestDir: "{app}\tools"; Excludes: "development.settings.json,dev-autologin.json"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "impresora\*"; DestDir: "{app}\tools\impresora"; Flags: ignoreversion
 
 [InstallDelete]
 ; Archivos de la versión anterior se reemplazan completos para no mezclar ensamblados.
@@ -57,10 +61,14 @@ Type: files; Name: "{app}\development.settings.json"
 
 [Icons]
 Name: "{group}\Casa Miga POS"; Filename: "{app}\CasaMiga.Presentation.exe"; WorkingDir: "{app}"
+Name: "{group}\Configurar impresora de tickets"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\tools\impresora\configurar-impresora.ps1"""; WorkingDir: "{app}\tools\impresora"; IconFilename: "{app}\CasaMiga.Presentation.exe"
 Name: "{group}\Desinstalar Casa Miga POS"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\Casa Miga POS"; Filename: "{app}\CasaMiga.Presentation.exe"; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Run]
+; Impresora de tickets: la cola POS-80 se crea como administrador; printing.json va a la carpeta de datos del usuario que instaló.
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\tools\impresora\configurar-impresora.ps1"" -Parte cola"; StatusMsg: "Configurando la impresora de tickets..."; Tasks: impresora; Check: IsAdminInstallMode; Flags: waituntilterminated
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\tools\impresora\configurar-impresora.ps1"" -Parte ticket"; StatusMsg: "Guardando los datos del ticket..."; Tasks: impresora; Flags: runasoriginaluser waituntilterminated
 Filename: "{app}\CasaMiga.Presentation.exe"; Description: "Abrir Casa Miga POS"; Flags: nowait postinstall skipifsilent unchecked
 
 [Messages]

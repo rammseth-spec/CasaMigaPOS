@@ -173,7 +173,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
                     new SerializedReceiptPrintTransport(new WindowsRawPrintTransport()),new WindowsPrintQueueMonitor());
                 Tickets = new(receipts,TimeZoneInfo.Local,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
                 var photoService=new ProductPhotoService(new SqliteProductPhotoStore(sqlite),new ProductPhotoFileStore(options.DataDirectory),new WpfProductPhotoProcessor(),user,clock,terminal.Id);
-                var photoUi=new ProductPhotoUiGateway(photoService,new BoundedProductPhotoCache());
+                var photoUi=new ProductPhotoUiGateway(photoService,new BoundedProductPhotoCache()); starterPhotos=photoUi;
                 Pos = new(new PosService(database,user,terminal.Id),checkout,receipts,photoUi,()=>UserLabel + " · " + TerminalLabel,(eventName,errorType)=>runtime.TryLog(eventName,errorType)){IsDevelopment=options.IsDevelopment,TerminalName=terminal.Name};
                 catalogService = new CatalogService(database,user,clock,terminal.Id,options.IsDevelopment);
                 Catalog = new(catalogService,photoUi,options.IsDevelopment,(eventName,errorType)=>runtime.TryLog(eventName,errorType));
@@ -304,6 +304,7 @@ public sealed partial class MainViewModel : INotifyPropertyChanged
     // sin permiso), se queda en Caja como antes.
     private async Task EnterWorkspaceAsync()
     {
+        await LoadStarterCatalogAsync();
         await RefreshAsync(); screen = "dashboard";
         if (opened is null || closingResult is not null || Pos is null) return;
         try { await Pos.EnterAsync(); screen = "pos"; }
