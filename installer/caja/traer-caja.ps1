@@ -39,7 +39,10 @@ try {
         $encontrado = $lugares | Where-Object { Test-Path $_ } |
             ForEach-Object { Get-ChildItem -Path $_ -Filter '*.cmbackup' -File -ErrorAction SilentlyContinue } |
             Sort-Object LastWriteTime -Descending | Select-Object -First 1
-        if (-not $encontrado) { Detener 'No encontré ningún respaldo (.cmbackup). Ponlo en la USB, en el Escritorio o en Descargas.' }
+        if (-not $encontrado) {
+            Detener ("No encontré ningún respaldo (.cmbackup) en la USB, el Escritorio ni Descargas.`n" +
+                'Si se subió a GitHub: entra a https://github.com/rammseth-spec/CasaMigaPOS/releases, descarga el .cmbackup del borrador «Traspaso de caja» y vuelve a abrir esto.')
+        }
         $Respaldo = $encontrado.FullName
     }
     if (-not (Test-Path $Respaldo)) { Detener "No existe $Respaldo." }
@@ -84,6 +87,7 @@ try {
     Write-Host ''
     Write-Host 'Listo. Abre Casa Miga POS y entra con tu usuario y contraseña de siempre.' -ForegroundColor Green
     Write-Host 'Marca «Recuérdame» si quieres que en esta computadora entre sola.'
+    Write-Host 'Cuando todo funcione, borra el respaldo de Descargas y, si se subió a GitHub, el borrador «Traspaso de caja»: trae ventas y usuarios.' -ForegroundColor Yellow
     Read-Host 'Presiona Enter para cerrar' | Out-Null
 }
 catch { Detener ('Algo falló: ' + $_.Exception.Message) }
