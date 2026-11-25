@@ -1,3 +1,8 @@
+# Caja: rendimiento en computadoras modestas — 25/11/2026
+
+- Pedido del dueño, sólo rendimiento (mismas pantallas): instalador con ReadyToRun, fotos decodificadas al tamaño en que se ven (320 px al 100 %, según escala de pantalla), filas recicladas en las tablas y modo ligero automático sin sombras cuando no hay aceleración gráfica (`LightRendering.cs`; `CASAMIGA_MODO_LIGERO=1/0` para soporte). Sin build de 32 bits.
+- Medido en copia aislada: memoria con Venta abierta −47 MB (236 → 189 MB), sesión iniciada ~1 s antes (7.2 → 6.2 s); instalador 80.9 → 83.6 MB. `verify.ps1` completo y instalador 1.0.3 generado (sin release). Hallazgo: dos respaldos completos en cada arranque (~4 s); queda para decisión. Reporte: `docs/reportes/2026-11-25-rendimiento-equipos-modestos.md`.
+
 # Web: ticket para la térmica de 80 mm — 17/11/2026
 
 - La caja imprime bien en la POS-80 (ESC/POS directo); la web imprime con el cuadro del navegador y en la computadora de la caja no salía bien. De nuestro lado: el ticket se mandaba a imprimir sin esperar el logo (podía salir sin él o en blanco), con márgenes del navegador de 3 mm sobre un área útil de 72 mm y con el fondo beige de la página.

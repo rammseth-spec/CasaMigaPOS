@@ -14,7 +14,7 @@ Salida: `artifacts/installer/CasaMigaPOS-<versión>-setup.exe` y su `.sha256`. `
 
 ## Qué hace
 
-- Publica la app y `CasaMiga.Maintenance` autocontenidas (`win-x64`): las cajas no necesitan .NET instalado.
+- Publica la app y `CasaMiga.Maintenance` autocontenidas (`win-x64`) y precompiladas (ReadyToRun): las cajas no necesitan .NET instalado y arrancan con menos compilación al abrir.
 - Instala en `Program Files\Casa Miga POS` (o sólo para el usuario con `/CURRENTUSER`), con acceso en Inicio y, opcional, en el escritorio. La herramienta queda en `tools\`.
 - Actualizar: mismo `AppId`, cierra la app abierta y reemplaza los ensamblados completos; no la reabre sola.
 - **Nunca toca datos.** Caja, ventas y respaldos viven en `%LOCALAPPDATA%\CasaMigaPOS` de cada usuario de Windows; desinstalar los conserva.
@@ -23,6 +23,14 @@ Salida: `artifacts/installer/CasaMigaPOS-<versión>-setup.exe` y su `.sha256`. `
 ## Verificación realizada
 
 Instalación silenciosa por usuario en carpeta temporal, presencia de app/herramienta/desinstalador, `init` y `reset-admin` (rechazo correcto sin administrador) desde la instalación, desinstalación silenciosa con datos conservados.
+
+## Computadoras modestas (25/11/2026)
+
+- **Requisitos de la caja:** Windows 10 versión 1809 o posterior, o Windows 11, de 64 bits (`MinVersion=10.0.17763`, `ArchitecturesAllowed=x64compatible`). .NET 10 no corre en Windows 7 ni 8.
+- **ReadyToRun** (`-p:PublishReadyToRun=true` en ambos `dotnet publish`): el programa trae su código ya compilado; en procesadores viejos es lo que más se nota al abrir.
+- **Fotos:** se decodifican al tamaño en que se ven (lado corto de 320 px al 100 % de escala de pantalla, más con 125 % o 150 %) y no a los 512-768 px de la miniatura (`ProductPhotoUiGateway.Decode`).
+- **Modo ligero automático:** sin aceleración gráfica (WPF `RenderCapability.Tier` < 2, también por escritorio remoto) se quitan sombras y el desvanecido de menús y las animaciones van a 30 cuadros por segundo (`LightRendering.cs`). Pantallas, botones y textos no cambian. Para soporte, la variable de entorno `CASAMIGA_MODO_LIGERO` lo fuerza: `1` encendido, `0` apagado. No hay opción en pantalla.
+- **32 bits:** no se genera. Si se confirma una caja con Windows de 32 bits, se puede agregar una publicación `win-x86` y un segundo instalador; antes hay que revisar que SQLite y la impresión funcionen ahí.
 
 ## Protección contra el modo de prueba (20/10/2026)
 

@@ -5,7 +5,6 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Effects;
 
 namespace CasaMiga.Presentation;
 
@@ -73,9 +72,10 @@ public partial class ContextHelp : UserControl
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(10),
             Padding = new Thickness(14, 12, 14, 12),
-            Child = text,
-            Effect = new DropShadowEffect { BlurRadius = 16, ShadowDepth = 4, Opacity = 0.2, Color = Color.FromRgb(75, 46, 25) }
+            Child = text
         };
+        // La sombra viene del tema: el modo ligero la quita en computadoras sin aceleración gráfica.
+        card.SetResourceReference(EffectProperty, "ShadowHelp");
         card.SetResourceReference(BackgroundProperty, "SurfaceSecondaryBrush");
         card.SetResourceReference(BorderBrushProperty, "BorderBrush");
         AutomationProperties.SetName(card, "Panel de ayuda contextual");

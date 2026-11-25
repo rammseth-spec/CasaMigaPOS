@@ -10,9 +10,10 @@ if (-not (Test-Path $Iscc)) { throw 'No se encontró Inno Setup 6 (ISCC.exe). In
 Push-Location (Join-Path $PSScriptRoot '..')
 try {
     Remove-Item artifacts/win-x64, artifacts/tools -Recurse -Force -ErrorAction SilentlyContinue
-    & $Dotnet publish src/CasaMiga.Presentation -c Release -r win-x64 --self-contained true "-p:Version=$Version" -o artifacts/win-x64
+    # ReadyToRun: código precompilado para que la caja arranque rápido aun en computadoras modestas (menos compilación JIT al abrir).
+    & $Dotnet publish src/CasaMiga.Presentation -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true "-p:Version=$Version" -o artifacts/win-x64
     if ($LASTEXITCODE -ne 0) { throw 'Falló la publicación de la aplicación.' }
-    & $Dotnet publish src/CasaMiga.Maintenance -c Release -r win-x64 --self-contained true "-p:Version=$Version" -o artifacts/tools
+    & $Dotnet publish src/CasaMiga.Maintenance -c Release -r win-x64 --self-contained true -p:PublishReadyToRun=true "-p:Version=$Version" -o artifacts/tools
     if ($LASTEXITCODE -ne 0) { throw 'Falló la publicación de la herramienta de mantenimiento.' }
     # Un instalador comercial nunca lleva el modo de prueba ni la entrada automática de una copia de desarrollo.
     $dev = Get-ChildItem artifacts/win-x64, artifacts/tools -Recurse -File -Include development.settings.json, dev-autologin.json
