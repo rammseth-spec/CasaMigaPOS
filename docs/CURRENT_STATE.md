@@ -7,7 +7,7 @@
 # Caja: catálogo y fotos con IA en el instalador; pruebas compilan otra vez — 13/11/2026
 
 - **Pruebas rotas en main desde `498a5e7`** (sin `verify.ps1` completo): `CasaMiga.Tests` (sin WPF) compila `ProductionViewModel.cs`, que ya usaba `BatchEntryViewModel` (con fotos de WPF). La propiedad `Lotes` pasa a `ProductionViewModel.Lotes.cs` (clase parcial), que sólo compilan la app y PhotoTests. Lo encontró el agente de Windows al generar el instalador.
-- **Catálogo y fotos con IA en el instalador** (pedido del dueño): carpeta `catalogo\` junto al programa (CSV, `renombres.json` y las 47 fotos `CM-NNN.jpg`) y botón **Catálogo → «Cargar catálogo Casa Miga (panes y fotos)»** (`CasaMigaCatalog.cs`): agrega los panes que falten con su foto provisional, renombra los que cambiaron y pone foto a los que no tienen; nunca borra, nunca cambia precios y nunca reemplaza una foto real. Para la caja de la tienda, que no tiene nube conectada: actualizarla con respaldo y usar el botón. Ver `docs/INSTALLER.md`.
+- **Catálogo y fotos con IA en el instalador** (pedido del dueño): carpeta `catalogo\` junto al programa (CSV, `renombres.json` y las fotos `CM-NNN.jpg`: 52 desde el 25/11) y botón **Catálogo → «Cargar catálogo Casa Miga (panes y fotos)»** (`CasaMigaCatalog.cs`): agrega los panes que falten con su foto provisional, renombra los que cambiaron y pone foto a los que no tienen; nunca borra, nunca cambia precios y nunca reemplaza una foto real. Para la caja de la tienda, que no tiene nube conectada: actualizarla con respaldo y usar el botón. Ver `docs/INSTALLER.md`.
 - Escrito en Mac sin poder compilar C#: lo verifica el agente de Windows con `verify.ps1` antes de generar el instalador 1.0.1.
 
 # Venta en la web: ventas en espera — 05/11/2026
