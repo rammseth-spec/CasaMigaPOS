@@ -2,6 +2,20 @@
 
 Ensayado el 22/10/2026 sobre una copia de la carpeta completa de la caja real: 23 ventas, $1,633, caja del 19/10 abierta y 44 productos con foto.
 
+## Programa 1.0.2 en la caja real — 25/11/2026, con autorización del usuario
+
+- **Programa:** el mismo que va dentro de `CasaMigaPOS-1.0.2-setup.exe` (`main` en `a79d59c`, publicación autocontenida de `artifacts/win-x64`, con `catalogo\` y sus 47 fotos), puesto en `C:\Users\ramms\CasaMiga-Ventas\programa`.
+  - La base no cambia: sigue en 32, sin migraciones nuevas desde el 22/10.
+- **Copias de antes, para regresar:**
+  - datos: `CasaMiga-Ventas\respaldos\caja-antes-1.0.2-20261125` (143 archivos, misma huella que la base);
+  - programa anterior: `CasaMiga-Ventas\programa-498a5e7-anterior`, y además `programa-retirado-20261125`;
+  - respaldo oficial: `casamiga-20261126T003409338Z-….cmbackup`.
+- **Resultado:**
+  - entró solo con «Recuérdame»;
+  - 51 ventas ($4,548), la caja abierta y 54 panes activos, 44 con foto, como antes.
+- Para Lima, Submarino, la dona 34 nueva y las fotos que faltan: Catálogo → «Cargar catálogo Casa Miga». Reconoce los panes por nombre, así que no duplica la «Campechana» dada de alta a mano.
+- Para regresar: cerrar la caja, `programa` → `programa-1.0.2-no-usado`, `programa-498a5e7-anterior` → `programa`, y abrir. Los datos no cambiaron.
+
 ## Aplicado a la caja real el 22/10/2026, con autorización del usuario
 
 - **Programa:** compilado de `main` en `30fad4b` (Release, `Version=1.0.0`, sin etiqueta de revisión ni `development.settings.json`), puesto en `C:\Users\ramms\CasaMiga-Ventas\programa`.
