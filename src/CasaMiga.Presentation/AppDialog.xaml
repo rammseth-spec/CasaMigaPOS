@@ -1,7 +1,6 @@
 <Window x:Class="CasaMiga.Presentation.AppDialog" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" WindowStyle="None" AllowsTransparency="True" Background="Transparent" ResizeMode="NoResize" ShowInTaskbar="False" SizeToContent="Height" Width="520" WindowStartupLocation="CenterOwner" FontFamily="{StaticResource TextFont}" Foreground="{DynamicResource TextPrimaryBrush}" UseLayoutRounding="True">
  <!-- Aviso propio del rediseño A: tarjeta blanca con sombra en lugar de la ventana gris de Windows. -->
- <Border Margin="24" Background="{DynamicResource SurfaceBrush}" CornerRadius="18" Padding="24,22,24,20">
-  <Border.Effect><DropShadowEffect BlurRadius="36" ShadowDepth="10" Direction="270" Opacity="0.22" Color="#2A1E15"/></Border.Effect>
+ <Border Margin="24" Background="{DynamicResource SurfaceBrush}" CornerRadius="18" Padding="24,22,24,20" Effect="{DynamicResource ShadowDialog}">
   <StackPanel>
    <Grid Margin="0,0,0,10">
     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>

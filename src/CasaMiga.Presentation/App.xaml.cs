@@ -49,6 +49,7 @@ public partial class App : System.Windows.Application
             var options = FoundationOptions.Load();
             diagnostics = new(System.IO.Path.Combine(options.DataDirectory, "diagnostics"));
             lease = new DirectoryLease(options.DataDirectory);
+            LightRendering.Apply(this); // Sin aceleración gráfica: sin sombras ni desvanecidos (antes de crear la ventana).
             var model = new MainViewModel(); var window = new MainWindow { DataContext = model };
             if (options.IsDevelopment)
             {
@@ -57,6 +58,9 @@ public partial class App : System.Windows.Application
                 { window.Width = options.PreviewWidth; window.Height = options.PreviewHeight; }
             }
             MainWindow = window; window.Show();
+            // Las fotos se decodifican al tamaño en que se ven, según la escala de pantalla (100 %, 125 %…), antes de cargarlas.
+            var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(window);
+            ProductPhotoUiGateway.DisplayEdge = ProductPhotoUiGateway.DisplayEdgeFor(Math.Max(dpi.DpiScaleX, dpi.DpiScaleY));
             await model.InitializeAsync(options);
             if (options.IsDevelopment && options.DiagnosticCrashOnStartup)
                 _ = Dispatcher.BeginInvoke(new Action(() => throw new InvalidOperationException("DEMO-SECRET-MUST-NOT-BE-LOGGED")));

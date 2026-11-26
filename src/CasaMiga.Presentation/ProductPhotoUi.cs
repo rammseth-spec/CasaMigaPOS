@@ -108,11 +108,41 @@ public sealed class ProductPhotoUiGateway(ProductPhotoService service, BoundedPr
         }
         return new(0, null, null, "Foto actualizada", null, "La foto cambió mientras se cargaba.");
     }
-    public static BitmapSource Decode(byte[] bytes)
+    /// <summary>
+    /// Lado (en píxeles de pantalla al 100 %) del recuadro de foto más grande: la tarjeta de Venta llega a ~300 y el Catálogo mide 240.
+    /// Decodificar la miniatura a este lado y no a sus 512-768 px reduce memoria y tiempo de dibujo en computadoras modestas.
+    /// </summary>
+    public const int DefaultDisplayEdge = 320;
+    private static int displayEdge = DefaultDisplayEdge;
+    /// <summary>Lado al que se decodifican las fotos; la ventana lo ajusta a la escala de pantalla (125 %, 150 %…) al abrir.</summary>
+    public static int DisplayEdge
     {
+        get => Volatile.Read(ref displayEdge);
+        set => Volatile.Write(ref displayEdge, Math.Clamp(value, 64, 2048));
+    }
+    /// <summary>Lado de decodificación para una escala de pantalla (1.0 = 100 %); nunca menor que <see cref="DefaultDisplayEdge"/>.</summary>
+    public static int DisplayEdgeFor(double dpiScale) =>
+        double.IsFinite(dpiScale) && dpiScale > 1 ? (int)Math.Ceiling(DefaultDisplayEdge * Math.Min(dpiScale, 4)) : DefaultDisplayEdge;
+    public static BitmapSource Decode(byte[] bytes) => Decode(bytes, DisplayEdge);
+    /// <summary>Decodifica la foto con su lado corto reducido a <paramref name="maxEdge"/> (sin agrandar nunca la original).</summary>
+    public static BitmapSource Decode(byte[] bytes, int maxEdge)
+    {
+        int width, height;
+        using (var probe = new MemoryStream(bytes, writable: false))
+        {
+            // Sólo lee el encabezado para conocer el tamaño; los píxeles se decodifican una vez, abajo, ya reducidos.
+            var frame = BitmapFrame.Create(probe, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None);
+            width = frame.PixelWidth; height = frame.PixelHeight;
+        }
         using var stream = new MemoryStream(bytes, writable: false);
         var bitmap = new BitmapImage(); bitmap.BeginInit(); bitmap.CacheOption = BitmapCacheOption.OnLoad;
-        bitmap.CreateOptions = BitmapCreateOptions.PreservePixelFormat; bitmap.StreamSource = stream; bitmap.EndInit(); bitmap.Freeze();
+        bitmap.CreateOptions = BitmapCreateOptions.PreservePixelFormat; bitmap.StreamSource = stream;
+        // Se fija un solo lado (el corto) para conservar la proporción; la foto llena su recuadro con UniformToFill.
+        if (Math.Min(width, height) > maxEdge)
+        {
+            if (width <= height) bitmap.DecodePixelWidth = maxEdge; else bitmap.DecodePixelHeight = maxEdge;
+        }
+        bitmap.EndInit(); bitmap.Freeze();
         return bitmap;
     }
     public async Task<ProductPhotoVisual> ImportAsync(Guid productId, long revision, string originalName,
