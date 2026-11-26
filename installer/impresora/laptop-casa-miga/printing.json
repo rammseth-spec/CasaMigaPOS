@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "enabled": true,
+  "queueName": "POS-80",
+  "columns": 48,
+  "encodingName": "ibm850",
+  "cutMode": "Partial",
+  "openCashDrawer": false,
+  "business": {
+    "displayName": "Casa Miga",
+    "address": "Insurgentes 116\nEsquina con Albino Garc\u00EDa\nBarrio de Santiaguito\nC.P. 38000 \u00B7 Celaya, Gto.",
+    "phone": "461 276 7429",
+    "taxId": null,
+    "contact": "Facebook: Casa Miga\nInstagram: @casamiga126",
+    "closingMessage": "Gracias por su compra",
+    "monochromeLogoPath": null
+  },
+  "characterTable": 2
+}
