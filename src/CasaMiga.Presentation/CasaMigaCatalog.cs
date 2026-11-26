@@ -54,10 +54,7 @@ public static class CasaMigaCatalog
         return rows;
     }
 
-    /// <summary>
-    /// Caja recién instalada (pedido del dueño, 24/11/2026): sólo una base sin ningún pan, ni siquiera inactivo, recibe el catálogo sola.
-    /// Una base restaurada o que ya tiene panes nunca se toca.
-    /// </summary>
+    /// <summary>Base sin ningún pan, ni siquiera inactivo: una caja recién instalada, donde la primera carga tarda más.</summary>
     public static bool HasNoProducts(CatalogService catalog) => catalog.Products(new CatalogQuery(IncludeInactive: true)).Total == 0;
 
     public static async Task<CasaMigaCatalogResult> LoadAsync(CatalogService catalog, IProductPhotoUiGateway photos, string folder)
