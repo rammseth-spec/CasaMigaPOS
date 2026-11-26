@@ -1,6 +1,11 @@
 {
   "descripcion": "Panes del catálogo autorizado que cambiaron de nombre. La carga a una caja (cloud/scripts/cargar-caja.ts) y la demo de la web (cloud/scripts/build-demo-data.ts) buscan el pan por su nombre actual y, si no está, por uno anterior de esta lista, y lo renombran en lugar de dar de alta otro.",
   "renombres": [
-    { "id": 34, "antes": ["Dona de chocolate negro con chispas"], "fecha": "2026-11-05", "motivo": "Sus chispas son de colores, no de chocolate." }
+    { "id": 34, "antes": ["Dona de chocolate negro con chispas"], "fecha": "2026-11-05", "motivo": "Sus chispas son de colores, no de chocolate." },
+    { "id": 53, "antes": ["Baguette Ajonjoli/Ajo"], "fecha": "2026-11-25", "motivo": "Pan dado de alta a mano en la caja; nombre corregido al pasar al catálogo." },
+    { "id": 54, "antes": ["Concha muerto"], "fecha": "2026-11-25", "motivo": "Pan dado de alta a mano en la caja; nombre corregido al pasar al catálogo." },
+    { "id": 58, "antes": ["Pan de Muerto Especial Choco"], "fecha": "2026-11-25", "motivo": "Pan dado de alta a mano en la caja; nombre corregido al pasar al catálogo." },
+    { "id": 60, "antes": ["Telera ajinojoli Chica"], "fecha": "2026-11-25", "motivo": "Pan dado de alta a mano en la caja; nombre corregido al pasar al catálogo." },
+    { "id": 61, "antes": ["Telera ajonjoli grande"], "fecha": "2026-11-25", "motivo": "Pan dado de alta a mano en la caja; nombre corregido al pasar al catálogo." }
   ]
 }
